@@ -44,14 +44,8 @@
             "type":"git"
         },
         {
-            "name":"mbedos",
-            "url":"https://github.com/jamesadevine/mbedos",
-            "branch":"master",
-            "type":"git"
-        },
-        {
             "name":"codal-mbedos",
-            "url":"https://github.com/finneyj/codal-mbedos",
+            "url":"https://github.com/lancaster-university/codal-mbedos",
             "branch":"master",
             "type":"git"
         },
