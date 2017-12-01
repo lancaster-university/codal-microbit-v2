@@ -32,6 +32,7 @@ DEALINGS IN THE SOFTWARE.
 #include "codal-core/inc/core/CodalComponent.h"
 #include "codal-core/inc/driver-models/Accelerometer.h"
 #include "codal-core/inc/drivers/Button.h"
+#include "codal-core/inc/driver-models/Timer.h"
 #include "codal-core/inc/drivers/MultiButton.h"
 #include "codal-core/inc/driver-models/Compass.h"
 #include "codal-core/inc/drivers/LEDMatrix.h"

@@ -274,7 +274,7 @@ void MicroBitBLEManager::advertise()
 }
 
 /**
- * A member function used to defer writes to flash, in order to prevent a write collision with 
+ * A member function used to defer writes to flash, in order to prevent a write collision with
  * softdevice.
  * @param handle The handle offered by soft device during pairing.
  * */
@@ -326,7 +326,7 @@ void MicroBitBLEManager::init(ManagedString deviceName, ManagedString serialNumb
     // generate an event when a Bluetooth connection is established
     ble->gap().onConnection(bleConnectionCallback);
 
-#ifdef MICROBIT_V1_MBED_BLE_PATCHES 
+#ifdef MICROBIT_V1_MBED_BLE_PATCHES
     // Configure the stack to hold onto the CPU during critical timing events.
     // mbed-classic performs __disable_irq() calls in its timers that can cause
     // MIC failures on secure BLE channels...
