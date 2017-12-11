@@ -44,6 +44,7 @@ DEALINGS IN THE SOFTWARE.
 #include "Button.h"
 #include "MultiButton.h"
 #include "NRF52Pin.h"
+#include "NRF52Timer.h"
 #include "MbedI2C.h"
 
 #include "MbedSerial.h"
@@ -96,7 +97,8 @@ namespace codal
 
             codal::_mbed::Serial        serial;
             MessageBus                  messageBus;
-            codal::_mbed::Timer         timer;
+            NRF52Timer                  timer;
+            //codal::_mbed::Timer         timer;
             MicroBitIO                  io;
             codal::_mbed::I2C           i2c;
             FXOS8700                    fxos;
