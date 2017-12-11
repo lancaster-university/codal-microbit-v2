@@ -45,13 +45,13 @@
         },
         {
             "name":"codal-mbedos",
-            "url":"https://github.com/jamesadevine/codal-mbedos",
+            "url":"https://github.com/microbit-foundation/codal-mbedos",
             "branch":"master",
             "type":"git"
         },
         {
             "name":"codal-nrf52",
-            "url":"https://github.com/jamesadevine/codal-nrf52",
+            "url":"https://github.com/microbit-foundation/codal-nrf52",
             "branch":"master",
             "type":"git"
         }
