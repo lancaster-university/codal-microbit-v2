@@ -233,13 +233,3 @@ void microbit_dmesg_flush()
 #endif
 }
 
-#ifdef OLD_POOP
-    if (codalLogStore.ptr > 0)
-    {
-        for (uint32_t i=0; i<codalLogStore.ptr; i++)
-            serial.putc(codalLogStore.buffer[i]);
-
-        codalLogStore.ptr = 0;
-    }
-#endif
-
