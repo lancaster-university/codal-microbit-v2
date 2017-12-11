@@ -34,33 +34,27 @@
     "generate_hex": true, 
     "libraries": [
         {
-            "branch": "d7270e90d0b910f803c8d87024d5696bca9ffd41", 
+            "branch": "886c58d9ddcdf77381b733f0abd7af44e1066d9b", 
             "name": "codal-core", 
             "type": "git", 
             "url": "https://github.com/lancaster-university/codal-core"
         }, 
         {
-            "branch": "e17a5049eb792329c3b4b61ed1fdcdc9894ba889", 
-            "name": "mbedos", 
-            "type": "git", 
-            "url": "https://github.com/jamesadevine/mbedos"
-        }, 
-        {
-            "branch": "cbe97420f2481c9ba29d3ec5127d09db228f9dcb", 
+            "branch": "17a43f4637e2bbbe4f868dd856ef7a1517b6c6dc", 
             "name": "codal-mbedos", 
             "type": "git", 
-            "url": "https://github.com/finneyj/codal-mbedos"
+            "url": "https://github.com/microbit-foundation/codal-mbedos"
         }, 
         {
-            "branch": "125382439498768f963e96d626397f51db6b068e", 
+            "branch": "9aac23686a640372dd09074e796f9d4b0eb6e8fd", 
             "name": "codal-nrf52", 
             "type": "git", 
-            "url": "https://github.com/jamesadevine/codal-nrf52"
+            "url": "https://github.com/microbit-foundation/codal-nrf52"
         }
     ], 
     "linker_flags": "-Wl,--no-wchar-size-warning -Wl,-wrap,main -Wl,--gc-sections -Wl,--wrap,exit -Wl,--wrap,atexit -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -Wl,--start-group -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys -Wl,--end-group", 
     "post_process": "", 
     "processor": "NRF52832", 
-    "snapshot_version": "v0.0.2", 
+    "snapshot_version": "v0.0.3", 
     "toolchain": "ARM_GCC"
 }
