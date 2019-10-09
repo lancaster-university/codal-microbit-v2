@@ -1,6 +1,7 @@
 #include "mbed.h"
 #include "codal_target_hal.h"
 #include "CodalDmesg.h"
+#include "rtx_lib.h"
 
 void target_enable_irq()
 {
@@ -77,8 +78,11 @@ PROCESSOR_WORD_TYPE fiber_initial_stack_base()
     uint32_t mbed_stack_base;
 
 #ifdef MBED_CONF_RTOS_PRESENT
-    extern osThreadDef_t os_thread_def_main;
-    mbed_stack_base = (uint32_t)os_thread_def_main.stack_pointer + os_thread_def_main.stacksize;
+    osThreadId_t id = osThreadGetId();
+    osRtxThread_t *thread = osRtxThreadId(id);
+
+    mbed_stack_base = (uint32_t)thread->stack_mem + (uint32_t) thread->stack_size;
+
 #else
     mbed_stack_base = DEVICE_STACK_BASE;
 #endif

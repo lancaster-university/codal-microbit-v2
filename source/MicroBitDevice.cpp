@@ -24,7 +24,10 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitConfig.h"
 #include "MicroBitDevice.h"
+
+#if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
 #include "nrf_sdm.h"
+#endif
 
 using namespace codal;
 
@@ -75,7 +78,7 @@ bool ble_running()
 {
     uint8_t t = 0;
 
-#if CONFIG_ENABLED(MICROBIT_BLE_ENABLED) || CONFIG_ENABLED(MICROBIT_BLE_PAIRING_MODE)
+#if CONFIG_ENABLED(MICROBIT_BLE_ENABLED) 
     sd_softdevice_is_enabled(&t);
 #endif
 

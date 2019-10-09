@@ -24,6 +24,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitDevice.h"
 #include "ErrorNo.h"
 #include "mbed.h"                   // NVIC
+#include "nrf_soc.h"
 
 
 #define MIN(a,b) ((a)<(b)?(a):(b))
@@ -57,7 +58,9 @@ static volatile bool flash_op_complete = false;
 
 static void nvmc_event_handler(uint32_t evt)
 {
+#if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
     if(evt == NRF_EVT_FLASH_OPERATION_SUCCESS)
+#endif
         flash_op_complete = true;
 }
 
@@ -105,6 +108,7 @@ void MicroBitFlash::erase_page(uint32_t* pg_addr)
 {
     if (ble_running())
     {
+#if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
         flash_op_complete = false;
         while(1)
         {
@@ -115,6 +119,7 @@ void MicroBitFlash::erase_page(uint32_t* pg_addr)
         }
         // Wait for SoftDevice to diable the write operation when it completes...
         while(!flash_op_complete);
+#endif
     }
     else
     {
@@ -145,6 +150,7 @@ void MicroBitFlash::flash_burn(uint32_t* addr, uint32_t* buffer, int size)
 {
     if (ble_running())
     {
+#if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
         // Schedule SoftDevice to write this memory for us, and wait for it to complete.
         // This happens ASYNCHRONOUSLY when SD is enabled (and synchronously if disabled!!)
         flash_op_complete = false;
@@ -159,6 +165,7 @@ void MicroBitFlash::flash_burn(uint32_t* addr, uint32_t* buffer, int size)
 
         // Wait for SoftDevice to diable the write operation when it completes...
         while(!flash_op_complete);
+#endif
     }
     else
     {

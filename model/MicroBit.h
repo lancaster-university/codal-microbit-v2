@@ -61,7 +61,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitDevice.h"
 #include "MicroBitCompat.h"
 
-#include "MicroBitBLEManager.h"
+//#include "MicroBitBLEManager.h"
 //#include "MicroBitStorage.h"
 //#include "MicroBitLightSensor.h"
 

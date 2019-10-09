@@ -21,10 +21,13 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitThermometer.h"
 #include "codal-core/inc/driver-models/Timer.h"
-#include "nrf52.h"
-#include "nrf52_bitfields.h"
+#include "nrf52840.h"
+#include "nrf52840_bitfields.h"
 #include "nrf_soc.h"
+
+#if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
 #include "nrf_sdm.h"
+#endif
 
 using namespace codal;
 
@@ -87,18 +90,21 @@ int MicroBitThermometer::updateSample()
     if(isSampleNeeded())
     {
         int32_t processorTemperature;
-        uint8_t sd_enabled;
+        uint8_t sd_enabled = 0;
 
         // For now, we just rely on the nrf senesor to be the most accurate.
         // The compass module also has a temperature sensor, and has the lowest power consumption, so will run the cooler...
         // ...however it isn't trimmed for accuracy during manufacture, so requires calibration.
 
+#if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
         sd_softdevice_is_enabled(&sd_enabled);
-
+#endif
         if (sd_enabled)
         {
             // If Bluetooth is enabled, we need to go through the Nordic software to safely do this
+#if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
             sd_temp_get(&processorTemperature);
+#endif
         }
         else
         {
