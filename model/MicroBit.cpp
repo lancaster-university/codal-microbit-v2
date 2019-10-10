@@ -57,11 +57,7 @@ MicroBit::MicroBit() :
 
     // RED
     ledRowPins{&io.row1, &io.row2, &io.row3, &io.row4, &io.row5},
-    ledColPins{&io.col1, &io.col2, &io.col6, &io.col4, &io.col5, &io.col3},
-
-    // GREEN
-    //ledRowPins{&io.col1, &io.col2, &io.col3, &io.col4, &io.col5},
-    //ledColPins{&io.row1, &io.row2, &io.row3, &io.row4, &io.row5},
+    ledColPins{&io.col1, &io.col2, &io.col4, &io.col4, &io.col5},
 
     ledMatrixMap{ 5, 5, 5, 5, (Pin**)ledRowPins, (Pin**)ledColPins, ledMatrixPositions},
     display(ledMatrixMap),
