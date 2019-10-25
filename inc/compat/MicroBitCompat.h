@@ -30,6 +30,7 @@ DEALINGS IN THE SOFTWARE.
 #include "ErrorNo.h"
 #include "codal-core/inc/types/Event.h"
 #include "codal-core/inc/core/CodalComponent.h"
+#include "codal-core/inc/core/CodalDmesg.h"
 #include "codal-core/inc/driver-models/Accelerometer.h"
 #include "codal-core/inc/drivers/Button.h"
 #include "codal-core/inc/driver-models/Timer.h"
@@ -37,9 +38,11 @@ DEALINGS IN THE SOFTWARE.
 #include "codal-core/inc/driver-models/Compass.h"
 #include "codal-core/inc/drivers/LEDMatrix.h"
 #include "codal-core/inc/drivers/AnimatedDisplay.h"
+#include "codal-core/inc/driver-models/I2C.h"
 #include "MicroBitIO.h"
 #include "NRF52Pin.h"
 #include "MbedSerial.h"
+#include "MbedI2C.h"
 
 //
 // MicroBit types
@@ -54,6 +57,7 @@ typedef codal::Accelerometer MicroBitAccelerometer;
 typedef codal::SerialMode MicroBitSerialMode;
 typedef codal::CodalComponent MicroBitComponent;
 typedef codal::_mbed::Serial MicroBitSerial;
+typedef codal::_mbed::I2C MicroBitI2C;
 typedef codal::EventLaunchMode MicroBitEventLaunchMode;
 
 //
@@ -73,6 +77,7 @@ typedef codal::EventLaunchMode MicroBitEventLaunchMode;
 #define MICROBIT_OK                             DEVICE_OK
 #define MICROBIT_OOM                            DEVICE_OOM
 #define MICROBIT_SERIAL_IN_USE                  DEVICE_SERIAL_IN_USE
+
 
 //
 // MICROBIT CONFIG options
@@ -351,6 +356,14 @@ typedef codal::EventLaunchMode MicroBitEventLaunchMode;
 #define SCK DEVICE_PIN_P13
 #define MISO DEVICE_PIN_P14
 #define MOSI DEVICE_PIN_P15
+
+#define MICROBIT_ACCEL_ADDED_TO_IDLE                            COMPASS_STATUS_ADDED_TO_IDLE
+#define MICROBIT_COMPASS_STATUS_ADDED_TO_IDLE                   COMPASS_STATUS_ADDED_TO_IDLE
+
+namespace codal
+{
+    void fiber_add_idle_component(CodalComponent *c);
+};
 
 using namespace codal;
 

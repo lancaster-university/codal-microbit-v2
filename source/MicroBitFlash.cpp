@@ -26,8 +26,9 @@ DEALINGS IN THE SOFTWARE.
 #include "mbed.h"                   // NVIC
 #include "nrf_soc.h"
 
-
+#ifndef MIN
 #define MIN(a,b) ((a)<(b)?(a):(b))
+#endif
 
 #define WORD_ADDR(x) (((uint32_t)x) & 0xFFFFFFFC)
 

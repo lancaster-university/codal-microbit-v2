@@ -55,6 +55,8 @@ DEALINGS IN THE SOFTWARE.
 #include "FXOS8700.h"
 #include "FXOS8700Accelerometer.h"
 #include "FXOS8700Magnetometer.h"
+#include "LSM303Accelerometer.h"
+#include "LSM303Magnetometer.h"
 #include "MicroBitRadio.h"
 #include "MicroBitThermometer.h"
 #include "MicroBitCompassCalibrator.h"
@@ -100,21 +102,26 @@ namespace codal
             NRF52Timer                  timer;
             //codal::_mbed::Timer         timer;
             MicroBitIO                  io;
-            codal::_mbed::I2C           i2c;
-            FXOS8700                    fxos;
+            MicroBitI2C                 i2c;
             NRF52Pin*                   ledRowPins[5];
-            NRF52Pin*                   ledColPins[6];
+            NRF52Pin*                   ledColPins[5];
             const MatrixMap             ledMatrixMap;
             MicroBitDisplay             display;
             Button                      buttonA;
             Button                      buttonB;
             MultiButton                 buttonAB;
-            MicroBitRadio               radio;
-            MicroBitThermometer         thermometer;
+            //MicroBitRadio               radio;
+            //MicroBitThermometer         thermometer;
             CoordinateSpace             coordinateSpace;
-            FXOS8700Accelerometer       accelerometer;
-            FXOS8700Magnetometer        compass;
-            MicroBitCompassCalibrator   compassCalibrator;
+            FXOS8700                    fxos;
+            FXOS8700Accelerometer       fxosAccelerometer;
+            FXOS8700Magnetometer        fxosCompass;
+            LSM303Accelerometer         lsmAccelerometer;
+            LSM303Magnetometer          lsmCompass;
+            MicroBitAccelerometer &     accelerometer;
+            MicroBitCompass &           compass;
+
+            //MicroBitCompassCalibrator   compassCalibrator;
 
 
             // Persistent key value store

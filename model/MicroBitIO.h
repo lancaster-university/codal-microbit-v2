@@ -115,8 +115,8 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_PIN_SCK                            P0_17
 
 // UART
-#define MICROBIT_PIN_UART_TX                        P1_08
-#define MICROBIT_PIN_UART_RX                        P0_06
+#define MICROBIT_PIN_UART_TX                        P0_06
+#define MICROBIT_PIN_UART_RX                        P1_08
 
 // Unused
 #define MICROBIT_PIN_BUTTON_RESET                   -1                  

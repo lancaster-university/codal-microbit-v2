@@ -48,32 +48,37 @@ static const MatrixPoint ledMatrixPositions[5*5] =
   */
 MicroBit::MicroBit() :
 
-    serial(P0_2, NC),
+    serial(MICROBIT_PIN_UART_TX, NC),
     messageBus(),
     timer(),
     io(),
     i2c(io.sda, io.scl),
-    fxos(i2c, io.irq1),
 
     // RED
     ledRowPins{&io.row1, &io.row2, &io.row3, &io.row4, &io.row5},
-    ledColPins{&io.col1, &io.col2, &io.col4, &io.col4, &io.col5},
+    ledColPins{&io.col1, &io.col2, &io.col3, &io.col4, &io.col5},
 
     ledMatrixMap{ 5, 5, 5, 5, (Pin**)ledRowPins, (Pin**)ledColPins, ledMatrixPositions},
     display(ledMatrixMap),
     buttonA(io.P5, DEVICE_ID_BUTTON_A, DEVICE_BUTTON_ALL_EVENTS, ACTIVE_LOW),
     buttonB(io.P11, DEVICE_ID_BUTTON_B, DEVICE_BUTTON_ALL_EVENTS, ACTIVE_LOW),
     buttonAB(DEVICE_ID_BUTTON_A, DEVICE_ID_BUTTON_B, DEVICE_ID_BUTTON_AB),
-    radio(),
-    thermometer(),
+    //radio(),
+    //thermometer(),
     coordinateSpace(SIMPLE_CARTESIAN, true),
-    accelerometer(fxos, coordinateSpace),
-    compass(fxos, coordinateSpace),
-    compassCalibrator(compass, accelerometer, display)
+    fxos(i2c, io.irq1, 0x3E),
+    fxosAccelerometer(fxos, coordinateSpace),
+    fxosCompass(fxos, coordinateSpace),
+    lsmAccelerometer(i2c, io.irq1, coordinateSpace, 0x32),
+    lsmCompass(i2c, io.irq1, coordinateSpace, 0x3C),
+    accelerometer(lsmAccelerometer),
+    compass(lsmCompass)
+    //compassCalibrator(compass, accelerometer, display)
 {
     // Clear our status
     status = 0;
 
+    /* 
     // Ensure NFC pins are configured as GPIO. If not, update the non-volatile UICR.
     if (NRF_UICR->NFCPINS)
     {
@@ -92,11 +97,16 @@ MicroBit::MicroBit() :
         // Reset, so the changes can take effect.
         NVIC_SystemReset();
     }
+    */
 
     // Configure serial port for debugging
     serial.set_flow_control(mbed::Serial::Disabled);
     serial.baud(115200);
-    i2c.setFrequency(400000);
+
+    //i2c.setFrequency(400000);
+
+    // Add pullup resisitor to IRQ line (it's floating ACTIVE LO)
+    io.irq1.setPull(PullUp);
 
     // Bring up our display pins as high drive.
     for (NRF52Pin *p : ledRowPins)
@@ -127,7 +137,7 @@ int MicroBit::init()
         return DEVICE_NOT_SUPPORTED;
 
     status |= DEVICE_INITIALIZED;
-
+    
     // Bring up fiber scheduler.
     scheduler_init(messageBus);
 
