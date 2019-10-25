@@ -43,7 +43,7 @@
             "url": "https://github.com/microbit-foundation/codal-core"
         }, 
         {
-            "branch": "7f8b96087a38addb7f6cea83e97eacbed6f04800", 
+            "branch": "ed0c700604fd63e2f2baae8a83c69e8f9fc5c5f8", 
             "name": "codal-mbedos", 
             "type": "git", 
             "url": "https://github.com/microbit-foundation/codal-mbedos"
@@ -58,6 +58,6 @@
     "linker_flags": "-Wl,--no-wchar-size-warning -Wl,-wrap,main -Wl,--gc-sections -Wl,--wrap,exit -Wl,--wrap,atexit -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -Wl,--start-group -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys -Wl,--end-group", 
     "post_process": "", 
     "processor": "NRF52840", 
-    "snapshot_version": "v0.0.4", 
+    "snapshot_version": "v0.0.5", 
     "toolchain": "ARM_GCC"
 }
