@@ -32,7 +32,7 @@ DEALINGS IN THE SOFTWARE.
 #include "codal-core/inc/types/Event.h"
 #include "CodalDevice.h"
 #include "ErrorNo.h"
-#include "MbedTimer.h"
+#include "NRFLowLevelTimer.h"
 #include "Matrix4.h"
 #include "CodalCompat.h"
 #include "CodalComponent.h"
@@ -44,7 +44,6 @@ DEALINGS IN THE SOFTWARE.
 #include "Button.h"
 #include "MultiButton.h"
 #include "NRF52Pin.h"
-#include "NRF52Timer.h"
 #include "MbedI2C.h"
 
 #include "MbedSerial.h"
@@ -96,12 +95,12 @@ namespace codal
             // Pin ranges used for LED matrix display.
 
         public:
-
-            codal::_mbed::Serial        serial;
+            NRFLowLevelTimer            tim1;
+            Timer                       timer;
             MessageBus                  messageBus;
-            NRF52Timer                  timer;
             //codal::_mbed::Timer         timer;
             MicroBitIO                  io;
+            codal::_mbed::Serial        serial;
             MicroBitI2C                 i2c;
             NRF52Pin*                   ledRowPins[5];
             NRF52Pin*                   ledColPins[5];

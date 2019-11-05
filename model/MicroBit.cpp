@@ -47,11 +47,11 @@ static const MatrixPoint ledMatrixPositions[5*5] =
   * that represent various device drivers used to control aspects of the micro:bit.
   */
 MicroBit::MicroBit() :
-
-    serial(MICROBIT_PIN_UART_TX, NC),
+    tim1(NRF_TIMER1, TIMER1_IRQn),
+    timer(tim1),
     messageBus(),
-    timer(),
     io(),
+    serial(io.usbTx, io.usbRx),
     i2c(io.sda, io.scl),
 
     // RED
@@ -78,7 +78,7 @@ MicroBit::MicroBit() :
     // Clear our status
     status = 0;
 
-    /* 
+    /*
     // Ensure NFC pins are configured as GPIO. If not, update the non-volatile UICR.
     if (NRF_UICR->NFCPINS)
     {
@@ -137,7 +137,7 @@ int MicroBit::init()
         return DEVICE_NOT_SUPPORTED;
 
     status |= DEVICE_INITIALIZED;
-    
+
     // Bring up fiber scheduler.
     scheduler_init(messageBus);
 

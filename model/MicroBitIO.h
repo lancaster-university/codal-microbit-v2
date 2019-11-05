@@ -33,7 +33,7 @@ DEALINGS IN THE SOFTWARE.
 // Unique Pin number for each pin (synonymous with mbedos PinName)
 //
 
-// IDENTITY MAPPINGS    
+// IDENTITY MAPPINGS
 #define P0_00   P0_0
 #define P0_01   P0_1
 #define P0_02   P0_2
@@ -119,7 +119,7 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_PIN_UART_RX                        P1_08
 
 // Unused
-#define MICROBIT_PIN_BUTTON_RESET                   -1                  
+#define MICROBIT_PIN_BUTTON_RESET                   -1
 
 //
 // Component IDs for each pin.
@@ -234,6 +234,9 @@ namespace codal
             NRF52Pin&         col5;
             NRF52Pin&         buttonA;
             NRF52Pin&         buttonB;
+
+            NRF52Pin          usbTx;
+            NRF52Pin          usbRx;
 
             /**
              * Constructor.

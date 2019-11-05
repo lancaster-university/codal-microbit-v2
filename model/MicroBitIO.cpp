@@ -86,6 +86,8 @@ MicroBitIO::MicroBitIO() :
     col4(P6),
     col5(P10),
     buttonA(P5),
-    buttonB(P11)
+    buttonB(P11),
+    usbTx(ID_PIN_P38, MICROBIT_PIN_UART_TX, PIN_CAPABILITY_DIGITAL),
+    usbRx(ID_PIN_P39, MICROBIT_PIN_UART_RX, PIN_CAPABILITY_DIGITAL)
 {
 }

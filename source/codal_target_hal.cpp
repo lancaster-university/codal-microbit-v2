@@ -28,6 +28,11 @@ void target_reset()
     NVIC_SystemReset();
 }
 
+uint64_t target_get_serial()
+{
+    return ((uint64_t)NRF_FICR->DEVICEID[1] << 32 | NRF_FICR->DEVICEID[0]) ^ ((uint64_t)NRF_FICR->DEVICEID[2] << 16);
+}
+
 void target_panic(int statusCode)
 {
     target_disable_irq();
