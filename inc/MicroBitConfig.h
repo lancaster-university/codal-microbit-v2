@@ -2,6 +2,7 @@
 #define MICROBIT_CONFIG_H
 
 #include "CodalConfig.h"
+#include "yotta_cfg_mappings.h"
 #include "MicroBitCompat.h"
 
 /*
