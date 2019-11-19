@@ -8,6 +8,7 @@
     "config": {
         "CMSIS_VECTAB_VIRTUAL_HEADER_FILE": "\"cmsis_nvic.h\"", 
         "CODAL_DEBUG": "CODAL_DEBUG_DISABLED", 
+        "CODAL_PROVIDE_PRINTF": 0, 
         "CODAL_TIMESTAMP": "uint64_t", 
         "DEVICE_COMPONENT_COUNT": 60, 
         "DEVICE_DEFAULT_PULLMODE": "PullMode::None", 
@@ -31,25 +32,25 @@
     }, 
     "cpp_flags": "-std=c++11 -fwrapv -fno-rtti -fno-threadsafe-statics -fno-exceptions -fno-unwind-tables -Wl,--gc-sections -Wl,--sort-common -Wl,--sort-section=alignment -Wno-array-bounds -Wpragmas", 
     "cpu_opts": "-mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=softfp", 
-    "definitions": "-DARM_MATH_CM4 -DBOARD_PCA10056 -DCMSIS_VECTAB_VIRTUAL -DCOMPONENT_NSPE=1 -DCOMPONENT_PSA_SRV_EMUL=1 -DCOMPONENT_PSA_SRV_IMPL=1 -DCOMPONENT_QSPIF=1 -DCONFIG_NFCT_PINS_AS_GPIOS -DDEVICE_ANALOGIN=1 -DDEVICE_FLASH=1 -DDEVICE_I2C=1 -DDEVICE_I2C_ASYNCH=1 -DDEVICE_INTERRUPTIN=1 -DDEVICE_LPTICKER=1 -DDEVICE_PORTIN=1 -DDEVICE_PORTINOUT=1 -DDEVICE_PORTOUT=1 -DDEVICE_PWMOUT=1 -DDEVICE_QSPI=1 -DDEVICE_SERIAL=1 -DDEVICE_SERIAL_ASYNCH=1 -DDEVICE_SERIAL_FC=1 -DDEVICE_SLEEP=1 -DDEVICE_SPI=1 -DDEVICE_SPI_ASYNCH=1 -DDEVICE_SYSTICK_CLK_OFF_DURING_SLEEP=1 -DDEVICE_TRNG=1 -DDEVICE_USBDEVICE=1 -DDEVICE_USTICKER=1 -DFEATURE_BLE=1 -DMBED_MPU_CUSTOM -DMBED_TICKLESS -DNRF52840_XXAA -DNRF52_PAN_12 -DNRF52_PAN_15 -DNRF52_PAN_20 -DNRF52_PAN_30 -DNRF52_PAN_31 -DNRF52_PAN_36 -DNRF52_PAN_51 -DNRF52_PAN_53 -DNRF52_PAN_54 -DNRF52_PAN_55 -DNRF52_PAN_58 -DNRF52_PAN_62 -DNRF52_PAN_63 -DNRF52_PAN_64 -DNRFX_RNG_ENABLED=1 -DNRF_QUEUE_ENABLED=1 -DRNG_ENABLED=1 -DTARGET_CORDIO -DTARGET_CORDIO_LL -DTARGET_CORTEX -DTARGET_CORTEX_M -DTARGET_LIKE_CORTEX_M4 -DTARGET_LIKE_MBED -DTARGET_M4 -DTARGET_MCU_NRF52840 -DTARGET_NAME=NRF52_MICROBIT_v1_43 -DTARGET_NORDIC -DTARGET_NORDIC_CORDIO -DTARGET_NRF52 -DTARGET_NRF52840 -DTARGET_NRF52_MICROBIT_v1_43 -DTARGET_NRF5x -DTARGET_RELEASE -DTARGET_RTOS_M4_M7 -DTARGET_SDK_15_0 -DTARGET_SOFTDEVICE_NONE -DTOOLCHAIN_GCC -DTOOLCHAIN_GCC_ARM -DWSF_MAX_HANDLERS=10 -D__CMSIS_RTOS -D__CORTEX_M4 -D__FPU_PRESENT=1 -D__MBED_CMSIS_RTOS_CM -D__MBED__=1 -include ../libraries/codal-mbedos/MICROBIT_NEXT/inc/mbed_config.h -I../libraries/codal-mbedos/MICROBIT_NEXT/inc/features -I../libraries/codal-mbedos/MICROBIT_NEXT/inc/features/mbedtls/inc -I../libraries/codal-mbedos/MICROBIT_NEXT/inc/features/mbedtls -I../libraries/codal-mbedos/MICROBIT_NEXT/inc/features/storage", 
+    "definitions": "-DNRF52 -DARM_MATH_CM4 -DBOARD_PCA10056 -DCMSIS_VECTAB_VIRTUAL -DCOMPONENT_NSPE=1 -DCOMPONENT_PSA_SRV_EMUL=1 -DCOMPONENT_PSA_SRV_IMPL=1 -DCOMPONENT_QSPIF=1 -DCONFIG_NFCT_PINS_AS_GPIOS -DDEVICE_ANALOGIN=1 -DDEVICE_FLASH=1 -DDEVICE_I2C=1 -DDEVICE_I2C_ASYNCH=1 -DDEVICE_INTERRUPTIN=1 -DDEVICE_LPTICKER=1 -DDEVICE_PORTIN=1 -DDEVICE_PORTINOUT=1 -DDEVICE_PORTOUT=1 -DDEVICE_PWMOUT=1 -DDEVICE_QSPI=1 -DDEVICE_SERIAL=1 -DDEVICE_SERIAL_ASYNCH=1 -DDEVICE_SERIAL_FC=1 -DDEVICE_SLEEP=1 -DDEVICE_SPI=1 -DDEVICE_SPI_ASYNCH=1 -DDEVICE_SYSTICK_CLK_OFF_DURING_SLEEP=1 -DDEVICE_TRNG=1 -DDEVICE_USBDEVICE=1 -DDEVICE_USTICKER=1 -DFEATURE_BLE=1 -DMBED_MPU_CUSTOM -DMBED_TICKLESS -DNRF52840_XXAA -DNRF52_PAN_12 -DNRF52_PAN_15 -DNRF52_PAN_20 -DNRF52_PAN_30 -DNRF52_PAN_31 -DNRF52_PAN_36 -DNRF52_PAN_51 -DNRF52_PAN_53 -DNRF52_PAN_54 -DNRF52_PAN_55 -DNRF52_PAN_58 -DNRF52_PAN_62 -DNRF52_PAN_63 -DNRF52_PAN_64 -DNRFX_RNG_ENABLED=1 -DNRF_QUEUE_ENABLED=1 -DRNG_ENABLED=1 -DTARGET_CORDIO -DTARGET_CORDIO_LL -DTARGET_CORTEX -DTARGET_CORTEX_M -DTARGET_LIKE_CORTEX_M4 -DTARGET_LIKE_MBED -DTARGET_M4 -DTARGET_MCU_NRF52840 -DTARGET_NAME=NRF52_MICROBIT_v1_43 -DTARGET_NORDIC -DTARGET_NORDIC_CORDIO -DTARGET_NRF52 -DTARGET_NRF52840 -DTARGET_NRF52_MICROBIT_v1_43 -DTARGET_NRF5x -DTARGET_RELEASE -DTARGET_RTOS_M4_M7 -DTARGET_SDK_15_0 -DTARGET_SOFTDEVICE_NONE -DTOOLCHAIN_GCC -DTOOLCHAIN_GCC_ARM -DWSF_MAX_HANDLERS=10 -D__CMSIS_RTOS -D__CORTEX_M4 -D__FPU_PRESENT=1 -D__MBED_CMSIS_RTOS_CM -D__MBED__=1 -include ../libraries/codal-mbedos/MICROBIT_NEXT/inc/mbed_config.h -I../libraries/codal-mbedos/MICROBIT_NEXT/inc/features -I../libraries/codal-mbedos/MICROBIT_NEXT/inc/features/mbedtls/inc -I../libraries/codal-mbedos/MICROBIT_NEXT/inc/features/mbedtls -I../libraries/codal-mbedos/MICROBIT_NEXT/inc/features/storage", 
     "device": "MICROBIT_NEXT", 
     "generate_bin": true, 
     "generate_hex": true, 
     "libraries": [
         {
-            "branch": "e9247e840c340e302528c42d550a06dcfaa8897b", 
+            "branch": "34bed7d14585abd411c997010b2123e3ad4dac8b", 
             "name": "codal-core", 
             "type": "git", 
             "url": "https://github.com/microbit-foundation/codal-core"
         }, 
         {
-            "branch": "43c63ed54bf5d4802d48d81862714df80b3239e1", 
+            "branch": "e3aa44912d45b3867057170aa5d7197084ff90b8", 
             "name": "codal-mbedos", 
             "type": "git", 
             "url": "https://github.com/microbit-foundation/codal-mbedos"
         }, 
         {
-            "branch": "1565f2db93972666f002a0ed03e39dad7f548eeb", 
+            "branch": "daacec4cef85850ea51034aaf261566ae14cdd1a", 
             "name": "codal-nrf52", 
             "type": "git", 
             "url": "https://github.com/microbit-foundation/codal-nrf52"
@@ -58,6 +59,6 @@
     "linker_flags": "-Wl,--no-wchar-size-warning -Wl,-wrap,main -Wl,--gc-sections -Wl,--wrap,exit -Wl,--wrap,atexit -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -Wl,--start-group -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys -Wl,--end-group", 
     "post_process": "", 
     "processor": "NRF52840", 
-    "snapshot_version": "v0.0.6-nrf52833-mbedos.1", 
+    "snapshot_version": "v0.0.6-core-fastforward.0", 
     "toolchain": "ARM_GCC"
 }
