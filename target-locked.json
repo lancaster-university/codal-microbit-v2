@@ -38,19 +38,19 @@
     "generate_hex": true, 
     "libraries": [
         {
-            "branch": "34bed7d14585abd411c997010b2123e3ad4dac8b", 
+            "branch": "951cad8b012382e1343919e8185d0c01ef90260e", 
             "name": "codal-core", 
             "type": "git", 
             "url": "https://github.com/microbit-foundation/codal-core"
         }, 
         {
-            "branch": "e3aa44912d45b3867057170aa5d7197084ff90b8", 
+            "branch": "afc818c289f85f292a3c3101612e0df36aabba8e", 
             "name": "codal-mbedos", 
             "type": "git", 
             "url": "https://github.com/microbit-foundation/codal-mbedos"
         }, 
         {
-            "branch": "daacec4cef85850ea51034aaf261566ae14cdd1a", 
+            "branch": "e0006509416cb6567dda7229d4814043c70f2497", 
             "name": "codal-nrf52", 
             "type": "git", 
             "url": "https://github.com/microbit-foundation/codal-nrf52"
@@ -59,6 +59,6 @@
     "linker_flags": "-Wl,--no-wchar-size-warning -Wl,-wrap,main -Wl,--gc-sections -Wl,--wrap,exit -Wl,--wrap,atexit -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -Wl,--start-group -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys -Wl,--end-group", 
     "post_process": "", 
     "processor": "NRF52840", 
-    "snapshot_version": "v0.0.6-core-fastforward.0", 
+    "snapshot_version": "v0.0.7", 
     "toolchain": "ARM_GCC"
 }
