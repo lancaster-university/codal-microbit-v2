@@ -8,7 +8,7 @@
     "config": {
         "CMSIS_VECTAB_VIRTUAL_HEADER_FILE": "\"cmsis_nvic.h\"", 
         "CODAL_DEBUG": "CODAL_DEBUG_DISABLED", 
-        "CODAL_PROVIDE_PRINTF": 0, 
+        "CODAL_PROVIDE_PRINTF": 1, 
         "CODAL_TIMESTAMP": "uint64_t", 
         "DEVICE_COMPONENT_COUNT": 60, 
         "DEVICE_DEFAULT_PULLMODE": "PullMode::None", 
@@ -44,7 +44,7 @@
             "url": "https://github.com/microbit-foundation/codal-core"
         }, 
         {
-            "branch": "afc818c289f85f292a3c3101612e0df36aabba8e", 
+            "branch": "4db2eb7a0d92d54aa391cb3d14b242a21cc11474", 
             "name": "codal-mbedos", 
             "type": "git", 
             "url": "https://github.com/microbit-foundation/codal-mbedos"
@@ -59,6 +59,6 @@
     "linker_flags": "-Wl,--no-wchar-size-warning -Wl,-wrap,main -Wl,--gc-sections -Wl,--wrap,exit -Wl,--wrap,atexit -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -Wl,--start-group -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys -Wl,--end-group", 
     "post_process": "", 
     "processor": "NRF52840", 
-    "snapshot_version": "v0.0.8", 
+    "snapshot_version": "v0.0.9", 
     "toolchain": "ARM_GCC"
 }
