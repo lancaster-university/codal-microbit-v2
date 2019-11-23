@@ -26,7 +26,7 @@
         "DMESG_SERIAL_DEBUG":1,
         "CODAL_DEBUG":"CODAL_DEBUG_DISABLED",
         "DEVICE_USB":0,
-        "CODAL_PROVIDE_PRINTF":0,
+        "CODAL_PROVIDE_PRINTF":1,
         "CODAL_TIMESTAMP":"uint64_t",
         "PROCESSOR_WORD_TYPE":"uint32_t",
         "CMSIS_VECTAB_VIRTUAL_HEADER_FILE": "\"cmsis_nvic.h\""
