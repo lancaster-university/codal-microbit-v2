@@ -45,19 +45,19 @@
         {
             "name":"codal-core",
             "url":"https://github.com/microbit-foundation/codal-core",
-            "branch":"nrf52833-mbedos",
+            "branch":"master",
             "type":"git"
         },
         {
             "name":"codal-mbedos",
             "url":"https://github.com/microbit-foundation/codal-mbedos",
-            "branch":"nrf52833-mbedos",
+            "branch":"master",
             "type":"git"
         },
         {
             "name":"codal-nrf52",
             "url":"https://github.com/microbit-foundation/codal-nrf52",
-            "branch":"nrf52833-mbedos",
+            "branch":"master",
             "type":"git"
         }
     ]
