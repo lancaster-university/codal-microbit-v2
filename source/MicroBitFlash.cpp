@@ -57,6 +57,15 @@ extern "C" void btle_set_user_evt_handler(void (*func)(uint32_t));
 static bool evt_handler_registered = false;
 static volatile bool flash_op_complete = false;
 
+/*
+ * TODO: Replace the IFDEF wrapping this function
+ * when we get a SoftDevice enabled build...
+ * 
+ * It should really be registered when SD is used, 
+ * regradless of whether or not it is active 
+ * (not stritly the meaning of MICROBIT_BLE_ENABLED)
+ */
+#if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
 static void nvmc_event_handler(uint32_t evt)
 {
 #if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
@@ -64,6 +73,7 @@ static void nvmc_event_handler(uint32_t evt)
 #endif
         flash_op_complete = true;
 }
+#endif
 
 /**
   * Default Constructor
