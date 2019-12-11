@@ -66,11 +66,11 @@ MicroBit::MicroBit() :
     radio(),
     //thermometer(),
     coordinateSpace(NORTH_EAST_DOWN, false, COORDINATE_SPACE_ROTATED_180),
-    fxos(i2c, io.irq1, 0x3E),
+    fxos(i2c, io.irq1, false, 0x3E),
     fxosAccelerometer(fxos, coordinateSpace),
     fxosCompass(fxos, coordinateSpace),
-    lsmAccelerometer(i2c, io.irq1, coordinateSpace, 0x32),
-    lsmCompass(i2c, io.irq1, coordinateSpace, 0x3C),
+    lsmAccelerometer(i2c, io.irq1, false, coordinateSpace, 0x32),
+    lsmCompass(i2c, io.irq1, false, coordinateSpace, 0x3C),
     accelerometer(lsmAccelerometer),
     compass(lsmCompass)
     //compassCalibrator(compass, accelerometer, display)
