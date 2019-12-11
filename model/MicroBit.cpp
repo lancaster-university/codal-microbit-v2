@@ -66,11 +66,11 @@ MicroBit::MicroBit() :
     radio(),
     //thermometer(),
     coordinateSpace(NORTH_EAST_DOWN, false, COORDINATE_SPACE_ROTATED_180),
-    fxos(i2c, io.irq1, false, 0x3E),
+    fxos(i2c, io.irq1, 0x3E),
     fxosAccelerometer(fxos, coordinateSpace),
     fxosCompass(fxos, coordinateSpace),
-    lsmAccelerometer(i2c, io.irq1, false, coordinateSpace, 0x32),
-    lsmCompass(i2c, io.irq1, false, coordinateSpace, 0x3C),
+    lsmAccelerometer(i2c, io.irq1, coordinateSpace, 0x32),
+    lsmCompass(i2c, io.irq1, coordinateSpace, 0x3C),
     accelerometer(lsmAccelerometer),
     compass(lsmCompass)
     //compassCalibrator(compass, accelerometer, display)
@@ -107,6 +107,7 @@ MicroBit::MicroBit() :
 
     // Add pullup resisitor to IRQ line (it's floating ACTIVE LO)
     io.irq1.setPull(PullUp);
+    io.irq1.setActiveLo();
 
     // Bring up our display pins as high drive.
     for (NRF52Pin *p : ledRowPins)
@@ -189,11 +190,15 @@ void MicroBit::onListenerRegisteredEvent(Event evt)
             buttonAB.setEventConfiguration(DEVICE_BUTTON_ALL_EVENTS);
             break;
 
+        case DEVICE_ID_COMPASS:
+            compass.requestUpdate();
+            break;
+
         case DEVICE_ID_ACCELEROMETER:
         case DEVICE_ID_GESTURE:
             // A listener has been registered for the accelerometer.
             // The accelerometer uses lazy instantiation, we just need to read the data once to start it running.
-            //accelerometer.updateSample();
+            accelerometer.requestUpdate();
             break;
 
         case DEVICE_ID_THERMOMETER:
