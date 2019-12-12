@@ -65,14 +65,14 @@ MicroBit::MicroBit() :
     buttonAB(DEVICE_ID_BUTTON_A, DEVICE_ID_BUTTON_B, DEVICE_ID_BUTTON_AB),
     radio(),
     //thermometer(),
-    coordinateSpace(NORTH_EAST_DOWN, false, COORDINATE_SPACE_ROTATED_180),
-    fxos(i2c, io.irq1, 0x3E),
-    fxosAccelerometer(fxos, coordinateSpace),
-    fxosCompass(fxos, coordinateSpace),
-    lsmAccelerometer(i2c, io.irq1, coordinateSpace, 0x32),
-    lsmCompass(i2c, io.irq1, coordinateSpace, 0x3C),
-    accelerometer(lsmAccelerometer),
-    compass(lsmCompass)
+    //coordinateSpace(NORTH_EAST_DOWN, false, COORDINATE_SPACE_ROTATED_180),
+    //fxos(i2c, io.irq1, 0x3E),
+    //fxosAccelerometer(fxos, coordinateSpace),
+    //fxosCompass(fxos, coordinateSpace),
+    //lsmAccelerometer(i2c, io.irq1, coordinateSpace, 0x32),
+    //lsmCompass(i2c, io.irq1, coordinateSpace, 0x3C),
+    accelerometer(i2c),
+    compass(i2c)
     //compassCalibrator(compass, accelerometer, display)
 {
     // Clear our status
@@ -104,10 +104,6 @@ MicroBit::MicroBit() :
     serial.baud(115200);
 
     //i2c.setFrequency(400000);
-
-    // Add pullup resisitor to IRQ line (it's floating ACTIVE LO)
-    io.irq1.setPull(PullUp);
-    io.irq1.setActiveLo();
 
     // Bring up our display pins as high drive.
     for (NRF52Pin *p : ledRowPins)

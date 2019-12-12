@@ -61,6 +61,8 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitCompassCalibrator.h"
 #include "MicroBitDevice.h"
 #include "MicroBitCompat.h"
+#include "MicroBitAccelerometer.h"
+#include "MicroBitCompass.h"
 
 #include "MESEvents.h"
 
@@ -113,14 +115,14 @@ namespace codal
             MultiButton                 buttonAB;
             MicroBitRadio               radio;
             //MicroBitThermometer         thermometer;
-            CoordinateSpace             coordinateSpace;
-            FXOS8700                    fxos;
-            FXOS8700Accelerometer       fxosAccelerometer;
-            FXOS8700Magnetometer        fxosCompass;
-            LSM303Accelerometer         lsmAccelerometer;
-            LSM303Magnetometer          lsmCompass;
-            MicroBitAccelerometer &     accelerometer;
-            MicroBitCompass &           compass;
+            //CoordinateSpace             coordinateSpace;
+            //FXOS8700                    fxos;
+            //FXOS8700Accelerometer       fxosAccelerometer;
+            //FXOS8700Magnetometer        fxosCompass;
+            //LSM303Accelerometer         lsmAccelerometer;
+            //LSM303Magnetometer          lsmCompass;
+            MicroBitAccelerometer       accelerometer;
+            MicroBitCompass             compass;
 
             //MicroBitCompassCalibrator   compassCalibrator;
 
