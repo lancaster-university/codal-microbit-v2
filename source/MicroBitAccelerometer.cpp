@@ -67,7 +67,6 @@ Accelerometer& MicroBitAccelerometer::autoDetect(MicroBitI2C &i2c)
             FXOS8700 *fxos = new FXOS8700(i2c, irq1, 0x3E);
             MicroBitAccelerometer::detectedAccelerometer = new FXOS8700Accelerometer(*fxos, coordinateSpace);
             MicroBitCompass::detectedCompass = new FXOS8700Magnetometer(*fxos, coordinateSpace);
-            DMESG("FXOS8700: DETECTED");
         }
 
         // Now, probe for connected peripherals, if none have already been found.
@@ -75,17 +74,13 @@ Accelerometer& MicroBitAccelerometer::autoDetect(MicroBitI2C &i2c)
         {
             MicroBitAccelerometer::detectedAccelerometer = new LSM303Accelerometer(i2c, irq1, coordinateSpace, 0x32);
             MicroBitCompass::detectedCompass = new LSM303Magnetometer(i2c, irq1, coordinateSpace, 0x3C);
-            DMESG("LSM303: DETECTED");
         }
     
         if (MicroBitAccelerometer::detectedAccelerometer == NULL)
             MicroBitAccelerometer::detectedAccelerometer = new Accelerometer(coordinateSpace);
 
         if (MicroBitCompass::detectedCompass)
-        {
             MicroBitCompass::detectedCompass->setAccelerometer(*MicroBitAccelerometer::detectedAccelerometer);
-            DMESG("REGISTERING ACCELEROMETER WITH MAGNETOMETER");
-        }
     }
     
     return *detectedAccelerometer;
