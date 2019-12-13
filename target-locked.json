@@ -14,11 +14,12 @@
         "DEVICE_DEFAULT_PULLMODE": "PullMode::None", 
         "DEVICE_DEFAULT_SERIAL_MODE": "SYNC_SLEEP", 
         "DEVICE_DMESG": 1, 
-        "DEVICE_DMESG_BUFFER_SIZE": 1024, 
+        "DEVICE_DMESG_BUFFER_SIZE": 2048, 
         "DEVICE_HEAP_ALLOCATOR": 1, 
+        "DEVICE_I2C_IRQ_SHARED": 1, 
         "DEVICE_PANIC_HEAP_FULL": 1, 
         "DEVICE_SRAM_BASE": "0x20000000", 
-        "DEVICE_SRAM_END": "0x20010000", 
+        "DEVICE_SRAM_END": "0x20020000", 
         "DEVICE_STACK_BASE": "DEVICE_SRAM_END", 
         "DEVICE_STACK_SIZE": 2048, 
         "DEVICE_TAG": 0, 
@@ -38,19 +39,19 @@
     "generate_hex": true, 
     "libraries": [
         {
-            "branch": "951cad8b012382e1343919e8185d0c01ef90260e", 
+            "branch": "fce43db64bee7ebd0c48f244c296d4e72d1a6b42", 
             "name": "codal-core", 
             "type": "git", 
             "url": "https://github.com/microbit-foundation/codal-core"
         }, 
         {
-            "branch": "4db2eb7a0d92d54aa391cb3d14b242a21cc11474", 
+            "branch": "e6960710702649ed28597e2451d3438045dcdb6e", 
             "name": "codal-mbedos", 
             "type": "git", 
             "url": "https://github.com/microbit-foundation/codal-mbedos"
         }, 
         {
-            "branch": "e0006509416cb6567dda7229d4814043c70f2497", 
+            "branch": "ec82c60b36608e9f70cac4a7378f17751fb0931a", 
             "name": "codal-nrf52", 
             "type": "git", 
             "url": "https://github.com/microbit-foundation/codal-nrf52"
@@ -59,6 +60,6 @@
     "linker_flags": "-Wl,--no-wchar-size-warning -Wl,-wrap,main -Wl,--gc-sections -Wl,--wrap,exit -Wl,--wrap,atexit -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -Wl,--start-group -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys -Wl,--end-group", 
     "post_process": "", 
     "processor": "NRF52840", 
-    "snapshot_version": "v0.0.9", 
+    "snapshot_version": "v0.0.10", 
     "toolchain": "ARM_GCC"
 }
