@@ -29,6 +29,8 @@
         "DEVICE_I2C_IRQ_SHARED":1,
         "CODAL_PROVIDE_PRINTF":1,
         "CODAL_TIMESTAMP":"uint64_t",
+        "LED_MATRIX_MAXIMUM_BRIGHTNESS": 245,
+        "LED_MATRIX_MINIMUM_BRIGHTNESS": 1,
         "PROCESSOR_WORD_TYPE":"uint32_t",
         "CMSIS_VECTAB_VIRTUAL_HEADER_FILE": "\"cmsis_nvic.h\""
     },
