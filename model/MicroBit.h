@@ -114,16 +114,9 @@ namespace codal
             Button                      buttonB;
             MultiButton                 buttonAB;
             MicroBitRadio               radio;
-            //MicroBitThermometer         thermometer;
-            //CoordinateSpace             coordinateSpace;
-            //FXOS8700                    fxos;
-            //FXOS8700Accelerometer       fxosAccelerometer;
-            //FXOS8700Magnetometer        fxosCompass;
-            //LSM303Accelerometer         lsmAccelerometer;
-            //LSM303Magnetometer          lsmCompass;
+            MicroBitThermometer         thermometer;
             MicroBitAccelerometer       accelerometer;
             MicroBitCompass             compass;
-
             //MicroBitCompassCalibrator   compassCalibrator;
 
 

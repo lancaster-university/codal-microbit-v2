@@ -64,13 +64,7 @@ MicroBit::MicroBit() :
     buttonB(io.P11, DEVICE_ID_BUTTON_B, DEVICE_BUTTON_ALL_EVENTS, ACTIVE_LOW),
     buttonAB(DEVICE_ID_BUTTON_A, DEVICE_ID_BUTTON_B, DEVICE_ID_BUTTON_AB),
     radio(),
-    //thermometer(),
-    //coordinateSpace(NORTH_EAST_DOWN, false, COORDINATE_SPACE_ROTATED_180),
-    //fxos(i2c, io.irq1, 0x3E),
-    //fxosAccelerometer(fxos, coordinateSpace),
-    //fxosCompass(fxos, coordinateSpace),
-    //lsmAccelerometer(i2c, io.irq1, coordinateSpace, 0x32),
-    //lsmCompass(i2c, io.irq1, coordinateSpace, 0x3C),
+    thermometer(),
     accelerometer(i2c),
     compass(i2c)
     //compassCalibrator(compass, accelerometer, display)
