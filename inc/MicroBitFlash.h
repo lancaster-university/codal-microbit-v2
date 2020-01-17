@@ -22,7 +22,7 @@ DEALINGS IN THE SOFTWARE.
 #ifndef MICROBIT_FLASH_H_
 #define MICROBIT_FLASH_H_
 
-#include <mbed.h>
+#include "nrf.h"
 
 #define PAGE_SIZE 1024
 

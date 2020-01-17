@@ -36,26 +36,36 @@ DEALINGS IN THE SOFTWARE.
 #include "codal-core/inc/driver-models/Timer.h"
 #include "codal-core/inc/drivers/MultiButton.h"
 #include "codal-core/inc/driver-models/Compass.h"
+#include "codal-core/inc/driver-models/Serial.h"
 #include "codal-core/inc/drivers/LEDMatrix.h"
 #include "codal-core/inc/drivers/AnimatedDisplay.h"
 #include "codal-core/inc/driver-models/I2C.h"
 #include "MicroBitIO.h"
 #include "NRF52Pin.h"
-#include "MbedSerial.h"
-#include "MbedI2C.h"
+#include "NRF52I2C.h"
+
+//
+// Historic mbed types
+//
+typedef enum {
+    PullNone = 0,
+    PullDown = 1,
+    PullUp = 3,
+    PullDefault = PullUp
+} PinMode;
+
 
 //
 // MicroBit types
 //
 typedef codal::NRF52Pin MicroBitPin;
+typedef codal::NRF52I2C MicroBitI2C;
 typedef codal::Event MicroBitEvent;
 typedef codal::Listener MicroBitListener;
 typedef codal::Image MicroBitImage;
 typedef codal::Button MicroBitButton;
 typedef codal::SerialMode MicroBitSerialMode;
 typedef codal::CodalComponent MicroBitComponent;
-typedef codal::_mbed::Serial MicroBitSerial;
-typedef codal::_mbed::I2C MicroBitI2C;
 typedef codal::EventLaunchMode MicroBitEventLaunchMode;
 
 //

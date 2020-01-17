@@ -25,8 +25,6 @@ DEALINGS IN THE SOFTWARE.
 #ifndef MICROBIT_H
 #define MICROBIT_H
 
-#include "mbed.h"
-
 #include "MicroBitConfig.h"
 #include "CodalHeapAllocator.h"
 #include "codal-core/inc/types/Event.h"
@@ -44,9 +42,8 @@ DEALINGS IN THE SOFTWARE.
 #include "Button.h"
 #include "MultiButton.h"
 #include "NRF52Pin.h"
-#include "MbedI2C.h"
+#include "NRF52I2C.h"
 
-#include "MbedSerial.h"
 #include "MicroBitIO.h"
 #include "MicroBitDisplay.h"
 #include "CodalFiber.h"
@@ -104,8 +101,8 @@ namespace codal
             MessageBus                  messageBus;
             //codal::_mbed::Timer         timer;
             MicroBitIO                  io;
-            codal::_mbed::Serial        serial;
-            MicroBitI2C                 i2c;
+            //codal::_mbed::Serial        serial;
+            NRF52I2C                    i2c;
             NRF52Pin*                   ledRowPins[5];
             NRF52Pin*                   ledColPins[5];
             const MatrixMap             ledMatrixMap;

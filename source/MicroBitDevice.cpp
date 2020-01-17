@@ -24,6 +24,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitConfig.h"
 #include "MicroBitDevice.h"
+#include "nrf52.h"
 
 #if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
 #include "nrf_sdm.h"

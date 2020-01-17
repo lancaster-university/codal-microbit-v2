@@ -308,7 +308,7 @@ void MicroBitCompassCalibrator::calibrateUX(MicroBitEvent)
     const int TIME_STEP = 100;
     const int MSG_TIME = 155 * TIME_STEP; //We require MSG_TIME % TIME_STEP == 0
 
-    wait_ms(100);
+    target_wait(100);
 
     static const Point perimeter[PERIMETER_POINTS] = {{0,0}, {1,0}, {2,0}, {3,0}, {4,0}, {0,1}, {1,1}, {2,1}, {3,1}, {4,1}, {0,2}, {1,2}, {2,2}, {3,2}, {4,2}, {0,3}, {1,3}, {2,3}, {3,3}, {4,3}, {0,4}, {1,4}, {2,4}, {3,4}, {4,4}};
     Point cursor = {2,2};
@@ -405,7 +405,7 @@ void MicroBitCompassCalibrator::calibrateUX(MicroBitEvent)
                 samples_this_period++;
             }
         }
-        wait_ms(TIME_STEP);
+        target_wait(TIME_STEP);
         remaining_scroll_time-=TIME_STEP;
     }
 
@@ -419,7 +419,7 @@ void MicroBitCompassCalibrator::calibrateUX(MicroBitEvent)
     // Show a smiley to indicate that we're done, and continue on with the user program.
     display.clear();
     display.printAsync(smiley, 0, 0, 0, 1500);
-    wait_ms(1000);
+    target_wait(1000);
     display.clear();
 
     // Retore the display brightness to the level it was at before this function was called.

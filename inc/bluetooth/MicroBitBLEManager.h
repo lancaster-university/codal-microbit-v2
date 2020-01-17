@@ -26,7 +26,6 @@ DEALINGS IN THE SOFTWARE.
 #ifndef MICROBIT_BLE_MANAGER_H
 #define MICROBIT_BLE_MANAGER_H
 
-#include "mbed.h"
 #include "MicroBitConfig.h"
 
 /*

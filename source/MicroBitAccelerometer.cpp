@@ -23,6 +23,7 @@ DEALINGS IN THE SOFTWARE.
 */
 
 #include "MicroBitAccelerometer.h"
+#include "MicroBitIO.h"
 #include "ErrorNo.h"
 #include "MicroBitEvent.h"
 #include "MicroBitCompat.h"
@@ -35,6 +36,7 @@ DEALINGS IN THE SOFTWARE.
 #include "FXOS8700Magnetometer.h"
 #include "LSM303Accelerometer.h"
 #include "LSM303Magnetometer.h"
+
 
 Accelerometer* MicroBitAccelerometer::detectedAccelerometer = NULL;
 NRF52Pin MicroBitAccelerometer::irq1(ID_PIN_P25, P0_25, PIN_CAPABILITY_AD);
@@ -56,7 +58,7 @@ Accelerometer& MicroBitAccelerometer::autoDetect(MicroBitI2C &i2c)
 {
     // Add pullup resisitor to IRQ line (it's floating ACTIVE LO)
     irq1.getDigitalValue();
-    irq1.setPull(PullUp);
+    irq1.setPull(PullMode::Up);
     irq1.setActiveLo();
     
     if (MicroBitAccelerometer::detectedAccelerometer == NULL)

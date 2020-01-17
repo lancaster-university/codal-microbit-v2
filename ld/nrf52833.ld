@@ -1,16 +1,23 @@
 MEMORY
 {
+  /* SD (rx) : ORIGIN = 0x00000, LENGTH = 0x27000 */
   FLASH (rx) : ORIGIN = 0x0, LENGTH = 0x80000
-  RAM_NVIC (rwx) : ORIGIN = 0x20000000, LENGTH = 0x100
-  RAM_CRASH_DATA (rwx) : ORIGIN = (0x20000000 + 0x100), LENGTH = 0x100
-  RAM (rwx) : ORIGIN = ((0x20000000 + 0x100) + 0x100), LENGTH = (0x20000 - (0x100 + 0x100))
+  RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x20000
 }
 OUTPUT_FORMAT ("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 ENTRY(Reset_Handler)
 SECTIONS
 {
+    /*
+    .softdevice :
+    {
+        KEEP(*(.softdevice))
+    } > SD
+    */
+    
     .text :
     {
+        KEEP(*(.isr_vector))
         KEEP(*(.Vectors))
         *(.text*)
         KEEP(*(.init))
@@ -28,44 +35,16 @@ SECTIONS
         *(.rodata*)
         KEEP(*(.eh_frame*))
     } > FLASH
-    .sdh_soc_observers :
-    {
-        PROVIDE(__start_sdh_soc_observers = .);
-        KEEP(*(SORT(.sdh_soc_observers*)))
-        PROVIDE(__stop_sdh_soc_observers = .);
-    } > FLASH
-    .sdh_stack_observers :
-    {
-        PROVIDE(__start_sdh_stack_observers = .);
-        KEEP(*(SORT(.sdh_stack_observers*)))
-        PROVIDE(__stop_sdh_stack_observers = .);
-    } > FLASH
-    .sdh_req_observers :
-    {
-        PROVIDE(__start_sdh_req_observers = .);
-        KEEP(*(SORT(.sdh_req_observers*)))
-        PROVIDE(__stop_sdh_req_observers = .);
-    } > FLASH
-    .sdh_state_observers :
-    {
-        PROVIDE(__start_sdh_state_observers = .);
-        KEEP(*(SORT(.sdh_state_observers*)))
-        PROVIDE(__stop_sdh_state_observers = .);
-    } > FLASH
-    .sdh_ble_observers :
-    {
-        PROVIDE(__start_sdh_ble_observers = .);
-        KEEP(*(SORT(.sdh_ble_observers*)))
-        PROVIDE(__stop_sdh_ble_observers = .);
-    } > FLASH
     .ARM.extab :
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
+        . = ALIGN(4);
     } > FLASH
     __exidx_start = .;
     .ARM.exidx :
     {
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+        . = ALIGN(4);
     } > FLASH
     __exidx_end = .;
     __etext = .;
@@ -74,47 +53,30 @@ SECTIONS
         __data_start__ = .;
         *(vtable)
         *(.data*)
-        . = ALIGN(8);
+        . = ALIGN(4);
         PROVIDE_HIDDEN (__preinit_array_start = .);
         KEEP(*(.preinit_array))
         PROVIDE_HIDDEN (__preinit_array_end = .);
-        . = ALIGN(8);
+        . = ALIGN(4);
         PROVIDE_HIDDEN (__init_array_start = .);
         KEEP(*(SORT(.init_array.*)))
         KEEP(*(.init_array))
         PROVIDE_HIDDEN (__init_array_end = .);
-        . = ALIGN(8);
+        . = ALIGN(4);
         PROVIDE_HIDDEN (__fini_array_start = .);
         KEEP(*(SORT(.fini_array.*)))
         KEEP(*(.fini_array))
         PROVIDE_HIDDEN (__fini_array_end = .);
-        . = ALIGN(8);
+        . = ALIGN(4);
         PROVIDE(__start_fs_data = .);
         KEEP(*(.fs_data))
         PROVIDE(__stop_fs_data = .);
         *(.jcr)
-        . = ALIGN(8);
+        . = ALIGN(4);
         __data_end__ = .;
     } > RAM
     __edata = .;
-    .nvictable (NOLOAD) :
-    {
-      PROVIDE(__start_nvictable = .);
-      KEEP(*(.nvictable))
-      PROVIDE(__stop_nvictable = .);
-    } > RAM_NVIC
-    .crash_data_ram :
-    {
-      . = ALIGN(8);
-      __CRASH_DATA_RAM__ = .;
-      __CRASH_DATA_RAM_START__ = .;
-      KEEP(*(.keep.crash_data_ram))
-      *(.m_crash_data_ram)
-      . += 0x100;
-      . = ALIGN(8);
-      __CRASH_DATA_RAM_END__ = .;
-    } > RAM_CRASH_DATA
-    .noinit (NOLOAD) :
+    .noinit :
     {
       PROVIDE(__start_noinit = .);
       KEEP(*(.noinit))
@@ -122,11 +84,11 @@ SECTIONS
     } > RAM
     .bss :
     {
-        . = ALIGN(8);
+        . = ALIGN(4);
         __bss_start__ = .;
         *(.bss*)
         *(COMMON)
-        . = ALIGN(8);
+        . = ALIGN(4);
         __bss_end__ = .;
     } > RAM
     .heap (NOLOAD):
@@ -134,21 +96,10 @@ SECTIONS
         __end__ = .;
         end = __end__;
         *(.heap*);
-        ASSERT(. <= (ORIGIN(RAM) + LENGTH(RAM) - 2048), "heap region overflowed into stack");
-        . = ORIGIN(RAM) + LENGTH(RAM) - 2048;
-        __HeapLimit = .;
-    } > RAM
-    PROVIDE(__heap_start = ADDR(.heap));
-    PROVIDE(__heap_size = SIZEOF(.heap));
-    PROVIDE(__mbed_sbrk_start = ADDR(.heap));
-    PROVIDE(__mbed_krbs_start = ADDR(.heap) + SIZEOF(.heap));
-    .stack (NOLOAD):
-    {
-        __StackLimit = .;
-        *(.stack*)
-        . = ORIGIN(RAM) + LENGTH(RAM);
+        ASSERT(. <= (ORIGIN(RAM) + LENGTH(RAM) - 0x800), "heap region overflowed into stack");
+        . += (ORIGIN(RAM) + LENGTH(RAM) - 0x800) - .;
     } > RAM
     __StackTop = ORIGIN(RAM) + LENGTH(RAM);
-    __StackLimit = __StackTop - 2048;
     PROVIDE(__stack = __StackTop);
 }
+

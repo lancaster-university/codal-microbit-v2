@@ -26,7 +26,6 @@ DEALINGS IN THE SOFTWARE.
 #ifndef MICROBIT_UART_SERVICE_H
 #define MICROBIT_UART_SERVICE_H
 
-#include "mbed.h"
 #include "ble/UUID.h"
 #include "ble/BLE.h"
 #include "MicroBitConfig.h"

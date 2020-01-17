@@ -22,9 +22,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitConfig.h"
 #include "MicroBitFlash.h"
 #include "MicroBitDevice.h"
-#include "ErrorNo.h"
-#include "mbed.h"                   // NVIC
-#include "nrf_soc.h"
+#include "ErrorNo.h"                
 
 #ifndef MIN
 #define MIN(a,b) ((a)<(b)?(a):(b))
@@ -38,21 +36,21 @@ DEALINGS IN THE SOFTWARE.
  * The ARM cc compiler is more tolerant. We don't test __GNUC__ here to detect GCC as ARMCC also typically sets this
  * as a compatability option, but does not support the options used...
  */
-#if !defined(__arm)
-#pragma GCC diagnostic ignored "-Wunused-function"
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif
+//#if !defined(__arm)
+//#pragma GCC diagnostic ignored "-Wunused-function"
+//#pragma GCC diagnostic push
+//#pragma GCC diagnostic ignored "-Wunused-parameter"
+//#endif
 
-#include "nrf_soc.h"
 extern "C" void btle_set_user_evt_handler(void (*func)(uint32_t));
 
 /*
  * Return to our predefined compiler settings.
  */
-#if !defined(__arm)
-#pragma GCC diagnostic pop
-#endif
+
+//#if !defined(__arm)
+//#pragma GCC diagnostic pop
+//#endif
 
 static bool evt_handler_registered = false;
 static volatile bool flash_op_complete = false;

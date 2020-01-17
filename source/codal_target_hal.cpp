@@ -1,7 +1,8 @@
-#include "mbed.h"
+#include "cmsis.h"
 #include "codal_target_hal.h"
 #include "CodalDmesg.h"
-#include "rtx_lib.h"
+#include "CodalCompat.h"
+#include "Timer.h"
 
 void target_enable_irq()
 {
@@ -18,9 +19,9 @@ void target_wait_for_event()
     __WFE();
 }
 
-void target_wait(uint32_t milliseconds)
+uint64_t target_get_serial()
 {
-    wait_ms(milliseconds);
+    return ((uint64_t)NRF_FICR->DEVICEID[1] << 32) | NRF_FICR->DEVICEID[0];
 }
 
 void target_reset()
@@ -28,32 +29,19 @@ void target_reset()
     NVIC_SystemReset();
 }
 
-uint64_t target_get_serial()
-{
-    return ((uint64_t)NRF_FICR->DEVICEID[1] << 32 | NRF_FICR->DEVICEID[0]) ^ ((uint64_t)NRF_FICR->DEVICEID[2] << 16);
-}
 
-void target_panic(int statusCode)
-{
-    target_disable_irq();
+extern "C" void _start();
+extern "C" __attribute__((weak)) void user_init() {}
 
-#if DEVICE_DMESG_BUFFER_SIZE > 0
-    DMESG("*** CODAL PANIC : [%d]", statusCode);
-    while (1)
-    {
-    }
-#else
-    Serial pc(USBTX, USBRX);
-    while (1)
-    {
-        pc.printf("*** CODAL PANIC : [%.3d]\n", statusCode);
-        wait_ms(500);
-    }
-#endif
+extern "C" void target_start()
+{
+    NRF_NVMC->ICACHECNF = NVMC_ICACHECNF_CACHEEN_Enabled;
+    user_init();
+    _start();
 }
 
 /**
-  *  Thread Context for an ARM Cortex M0 core.
+  *  Thread Context for an ARM Cortex core.
   *
   * This is probably overkill, but the ARMCC compiler uses a lot register optimisation
   * in its calling conventions, so better safe than sorry!
@@ -81,16 +69,7 @@ struct PROCESSOR_TCB
 PROCESSOR_WORD_TYPE fiber_initial_stack_base()
 {
     uint32_t mbed_stack_base;
-
-#ifdef MBED_CONF_RTOS_PRESENT
-    osThreadId_t id = osThreadGetId();
-    osRtxThread_t *thread = osRtxThreadId(id);
-
-    mbed_stack_base = (uint32_t)thread->stack_mem + (uint32_t) thread->stack_size;
-
-#else
     mbed_stack_base = DEVICE_STACK_BASE;
-#endif
 
     return mbed_stack_base;
 }
@@ -161,4 +140,3 @@ void tcb_configure_args(void* tcb, PROCESSOR_WORD_TYPE ep, PROCESSOR_WORD_TYPE c
 
 extern PROCESSOR_WORD_TYPE __end__;
 PROCESSOR_WORD_TYPE codal_heap_start = (PROCESSOR_WORD_TYPE)(&__end__);
-
