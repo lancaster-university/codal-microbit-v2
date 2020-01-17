@@ -51,7 +51,7 @@ MicroBit::MicroBit() :
     timer(tim1),
     messageBus(),
     io(),
-    //serial(io.usbTx, io.usbRx),
+    serial(io.usbTx, io.usbRx, NRF_UARTE0),
     i2c(io.sda, io.scl),
 
     // RED
@@ -94,9 +94,9 @@ MicroBit::MicroBit() :
     */
 
     // Configure serial port for debugging
-    
+
     //SERIAL_TODO:
-    //serial.set_flow_control(mbed::Serial::Disabled);
+    // serial.set_flow_control(mbed::Serial::Disabled);
     //serial.baud(115200);
 
     //i2c.setFrequency(400000);
