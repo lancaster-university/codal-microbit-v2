@@ -21,7 +21,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitThermometer.h"
 #include "codal-core/inc/driver-models/Timer.h"
-#include "nrf52.h"
+#include "nrf.h"
 
 #if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
 #include "nrf_sdm.h"
