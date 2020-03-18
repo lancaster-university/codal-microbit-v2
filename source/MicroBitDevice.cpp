@@ -32,6 +32,8 @@ DEALINGS IN THE SOFTWARE.
 
 using namespace codal;
 
+static char friendly_name[MICROBIT_NAME_LENGTH+1];
+
 // internal reference to any created instance of the class - used purely for convenience functions.
 MicroBitDevice *microbit_device_instance = NULL;
 
@@ -68,6 +70,47 @@ void microbit_panic_timeout(int iterations)
 uint32_t microbit_serial_number()
 {
     return NRF_FICR->DEVICEID[1];
+}
+
+/**
+ * Derive the friendly name for this device, based on its serial number.
+ *
+ * @return the friendly name of this device.
+ */
+char* microbit_friendly_name()
+{
+    const uint8_t codebook[MICROBIT_NAME_LENGTH][MICROBIT_NAME_CODE_LETTERS] =
+    {
+        {'z', 'v', 'g', 'p', 't'},
+        {'u', 'o', 'i', 'e', 'a'},
+        {'z', 'v', 'g', 'p', 't'},
+        {'u', 'o', 'i', 'e', 'a'},
+        {'z', 'v', 'g', 'p', 't'}
+    };
+
+    // We count right to left, so create a pointer to the end of the buffer.
+    char *name = friendly_name;
+    name += MICROBIT_NAME_LENGTH;
+
+    // Terminate the string.
+    *name = 0;
+
+    // Derive our name from the MicroBit's serial number.
+    uint32_t n = microbit_serial_number();
+    int ld = 1;
+    int d = MICROBIT_NAME_CODE_LETTERS;
+    int h;
+
+    for (int i=0; i<MICROBIT_NAME_LENGTH; i++)
+    {
+        h = (n % d) / ld;
+        n -= h;
+        d *= MICROBIT_NAME_CODE_LETTERS;
+        ld *= MICROBIT_NAME_CODE_LETTERS;
+        *--name = codebook[i][h];
+    }
+
+    return friendly_name;
 }
 
 /**

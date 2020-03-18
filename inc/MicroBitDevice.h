@@ -29,6 +29,9 @@ DEALINGS IN THE SOFTWARE.
 #include "CodalDevice.h"
 #include "MicroBitConfig.h"
 
+#define MICROBIT_NAME_LENGTH                    5
+#define MICROBIT_NAME_CODE_LETTERS              5
+
 namespace codal
 {
     class MicroBitDevice : public CodalDevice
