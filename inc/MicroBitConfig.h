@@ -28,8 +28,16 @@
 extern uint32_t Image$$ER_IROM1$$RO$$Limit;
 #define FLASH_PROGRAM_END (uint32_t) (&Image$$ER_IROM1$$RO$$Limit)
 #else
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern uint32_t __etext;
-#define FLASH_PROGRAM_END (uint32_t) (&__etext)
+extern uint32_t __data_start__;
+extern uint32_t __data_end__;
+#define FLASH_PROGRAM_END ( (uint32_t) (&__etext) + ( uint32_t)(&__data_end__) - ( uint32_t) (&__data_start__))
+#ifdef __cplusplus
+}
+#endif
 #endif
 
 // Enable/Disable BLE during normal operation.
