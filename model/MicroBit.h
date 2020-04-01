@@ -174,6 +174,7 @@ namespace codal
              */
             //TODO: handle overflow case.
             unsigned long systemTime();
+
     };
 
 
@@ -210,6 +211,7 @@ namespace codal
     {
         return system_timer_current_time();
     }
+
 }
 
 void microbit_dmesg_flush();

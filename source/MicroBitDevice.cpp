@@ -47,6 +47,34 @@ MicroBitDevice::MicroBitDevice()
 
 namespace codal {
 
+/**
+  * Seed the pseudo random number generator using the hardware random number generator.
+  *
+  * @code
+  * uBit.seedRandom();
+  * @endcode
+  */
+void MicroBitDevice::seedRandom()
+{
+    microbit_seed_random();
+}
+
+/**
+  * Seed the pseudo random number generator using the given value.
+  *
+  * @param seed The 32-bit value to seed the generator with.
+  *
+  * @code
+  * uBit.seedRandom(0xBB5EED);
+  * @endcode
+  */
+int MicroBitDevice::seedRandom(uint32_t seed)
+{
+    microbit_seed_random(seed);
+    return DEVICE_OK;
+}
+
+
 int microbit_random(int max)
 {
     return microbit_device_instance ? microbit_device_instance->random(max) : 0;
@@ -136,6 +164,59 @@ void
 microbit_reset()
 {
     NVIC_SystemReset();
+}
+
+static uint32_t random_value = 0;
+
+/**
+  * Seed the random number generator (RNG).
+  *
+  * This function uses the NRF52833's in built cryptographic random number generator to seed a Galois LFSR.
+  * We do this as the hardware RNG is relatively high power, and is locked out by the BLE stack internally,
+  * with a less than optimal application interface. A Galois LFSR is sufficient for our
+  * applications, and much more lightweight.
+  */
+void microbit_seed_random()
+{
+    random_value = 0;
+
+    if(ble_running())
+    {
+        /* Currently no support for the soft device. */
+        random_value = 0xBBC5EED;
+    }
+    else
+    {
+        // Othwerwise we can access the hardware RNG directly.
+
+        // Start the Random number generator. No need to leave it running... I hope. :-)
+        NRF_RNG->TASKS_START = 1;
+
+        for(int i = 0; i < 4; i++)
+        {
+            // Clear the VALRDY EVENT
+            NRF_RNG->EVENTS_VALRDY = 0;
+
+            // Wait for a number ot be generated.
+            while(NRF_RNG->EVENTS_VALRDY == 0);
+
+            random_value = (random_value << 8) | ((int) NRF_RNG->VALUE);
+        }
+
+        // Disable the generator to save power.
+        NRF_RNG->TASKS_STOP = 1;
+    }
+}
+
+/**
+  * Seed the pseudo random number generator (RNG) using the given 32-bit value.
+  * This function does not use the NRF52833's in built cryptographic random number generator.
+  *
+  * @param seed The value to use as a seed.
+  */
+void microbit_seed_random(uint32_t seed)
+{
+    random_value = seed;
 }
 
 }

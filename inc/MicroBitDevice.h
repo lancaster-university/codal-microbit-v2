@@ -42,6 +42,26 @@ namespace codal
          * Constructor.
          */
         MicroBitDevice();
+
+        /**
+         * Seed the pseudo random number generator using the hardware random number generator.
+         *
+         * @code
+         * uBit.seedRandom();
+         * @endcode
+         */
+       void seedRandom();
+
+       /**
+         * Seed the pseudo random number generator using the given value.
+         *
+         * @param seed The 32-bit value to seed the generator with.
+         *
+         * @code
+         * uBit.seedRandom(0xBB5EED);
+         * @endcode
+         */
+       virtual int seedRandom(uint32_t seed) override;
     };
 
     /**
