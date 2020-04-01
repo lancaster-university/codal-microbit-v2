@@ -56,6 +56,11 @@ MicroBitAccelerometer::MicroBitAccelerometer(MicroBitI2C &i2c, uint16_t id) : Ac
  */
 Accelerometer& MicroBitAccelerometer::autoDetect(MicroBitI2C &i2c)
 {
+    /*
+     * In essence, the LSM needs at least 6.4ms from power-up before we can use it.
+     * https://github.com/microbit-foundation/codal-microbit-next/issues/33
+     */
+    target_wait(10);
     // Add pullup resisitor to IRQ line (it's floating ACTIVE LO)
     irq1.getDigitalValue();
     irq1.setPull(PullMode::Up);
