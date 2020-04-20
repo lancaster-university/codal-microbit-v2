@@ -46,6 +46,40 @@
 #ifdef USE_APP_CONFIG
 #include "app_config.h"
 #endif
+
+#include "CodalConfig.h"
+
+//==========================================================
+
+#if CODAL_DEBUG
+#ifndef NRF_LOG_ENABLED
+#define NRF_LOG_ENABLED 1
+#endif
+#ifndef NRF_LOG_DEFERRED
+#define NRF_LOG_DEFERRED 0
+#endif
+#ifndef NRF_LOG_BACKEND_DMESG_ENABLED
+#define NRF_LOG_BACKEND_DMESG_ENABLED 1
+#endif
+#endif
+
+// <e> NRF_LOG_BACKEND_DMESG_ENABLED - nrf_log_backend_dmesg - Log DMESG backend
+//==========================================================
+#ifndef NRF_LOG_BACKEND_DMESG_ENABLED
+#define NRF_LOG_BACKEND_DMESG_ENABLED 0
+#endif
+
+// <o> NRF_LOG_BACKEND_DMESG_TEMP_BUFFER_SIZE - Size of buffer for partially processed strings.
+// <i> Size of the buffer is a trade-off between RAM usage and processing.
+// <i> if buffer is smaller then strings will often be fragmented.
+// <i> It is recommended to use size which will fit typical log and only the
+// <i> longer one will be fragmented.
+
+#ifndef NRF_LOG_BACKEND_DMESG_TEMP_BUFFER_SIZE
+#define NRF_LOG_BACKEND_DMESG_TEMP_BUFFER_SIZE 64
+#endif
+
+
 // <h> Board Support 
 
 //==========================================================
@@ -1507,7 +1541,7 @@
 // <e> NRF_LOG_BACKEND_UART_ENABLED - nrf_log_backend_uart - Log UART backend
 //==========================================================
 #ifndef NRF_LOG_BACKEND_UART_ENABLED
-#define NRF_LOG_BACKEND_UART_ENABLED 1
+#define NRF_LOG_BACKEND_UART_ENABLED 0
 #endif
 // <o> NRF_LOG_BACKEND_UART_TX_PIN - UART TX pin 
 #ifndef NRF_LOG_BACKEND_UART_TX_PIN
@@ -1552,7 +1586,7 @@
 // <e> NRF_LOG_ENABLED - nrf_log - Logger
 //==========================================================
 #ifndef NRF_LOG_ENABLED
-#define NRF_LOG_ENABLED 1
+#define NRF_LOG_ENABLED 0
 #endif
 // <h> Log message pool - Configuration of log message pool
 
