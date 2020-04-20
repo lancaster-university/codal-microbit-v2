@@ -12,6 +12,98 @@ RECURSIVE_FIND_FILE(SOURCE_FILES2 "${CMAKE_CURRENT_SOURCE_DIR}/model" "*.c??")
 list(APPEND INCLUDE_DIRS "${INCLUDE_DIRS2}")
 list(APPEND SOURCE_FILES "${SOURCE_FILES2}")
 
+
+# codal-nrf52 includes
+
+string(FIND "${device.processor}" "NRF52840" pos40)
+string(FIND "${device.processor}" "NRF52833" pos33)
+if (NOT "${pos40}" STREQUAL "-1")
+    set(TEMPLATE "nRF52840")
+    set(DEV "nrf52840")
+else()
+if (NOT "${pos33}" STREQUAL "-1")
+    set(TEMPLATE "nRF52833")
+    set(DEV "nrf52833")
+else()
+    set(TEMPLATE "nRF52832")
+    set(DEV "nrf52")
+endif()
+endif()
+
+list(APPEND INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/../codal-nrf52/inc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../codal-nrf52/inc/cmsis"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../codal-nrf52/nrfx/mdk"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../codal-nrf52/nrfx/hal"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../codal-nrf52/nrfx"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../codal-nrf52/nrfx/templates/"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../codal-nrf52/nrfx/templates/${TEMPLATE}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../codal-nrf52/nrfx/drivers/include"
+)
+
+
+# nRF5SDK includes
+
+list(APPEND INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/sdk_config"
+)
+
+list(APPEND INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/scheduler"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/pwr_mgmt"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/sortlist"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/strerror"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/softdevice/common"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/crc16"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/bootloader/dfu"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/toolchain/cmsis/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/util"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/ble/common"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/balloc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/ble/peer_manager"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/ringbuf"
+)
+
+list(APPEND INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/timer"
+)
+
+list(APPEND INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/log"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/ble/nrf_ble_gatt"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/ble/nrf_ble_qwr"
+)
+
+list(APPEND INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/bootloader"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/fstorage"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/experimental_section_vars"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/softdevice/s140/headers"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/mutex"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/delay"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/bootloader/ble_dfu"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/atomic_fifo"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/atomic"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/boards"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/integration/nrfx/legacy"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/memobj"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/integration/nrfx"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/fds"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/ble/ble_advertising"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/atomic_flags"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/softdevice/s140/headers/nrf52"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/ble/ble_services/ble_dfu"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/external/fprintf"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/svc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/log/src"
+)
+
+list(APPEND INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/ble/ble_services/ble_dis"
+)
+
+
 # find prebuilt libraries and objects
 RECURSIVE_FIND_FILE(LIB_OBJECT_FILES "${CMAKE_CURRENT_LIST_DIR}/lib" "*.o")
 RECURSIVE_FIND_FILE(LIB_ARCHIVE_FILES "${CMAKE_CURRENT_LIST_DIR}/lib" "*.a")
