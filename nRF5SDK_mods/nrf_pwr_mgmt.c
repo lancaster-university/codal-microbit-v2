@@ -429,7 +429,10 @@ static void shutdown_process(void)
 #endif
         }
 #endif // SOFTDEVICE_PRESENT
-        nrf_power_system_off();
+
+        // nRF5SDK_mods
+        // For codal-nrf52 nrfx compatibility
+        nrf_power_system_off( NRF_POWER);
     }
 }
 

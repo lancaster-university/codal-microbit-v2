@@ -181,6 +181,16 @@ static void evt_disable(drv_rtc_t const * const p_instance, uint32_t mask)
     nrf_rtc_int_disable(p_instance->p_reg, mask);
 }
 
+
+// nRF5SDK_mods
+// For codal-nrf52 nrfx compatibility
+// nrfx 2.0.0 doesn't have this function
+__STATIC_INLINE uint32_t nrf_rtc_event_pending(NRF_RTC_Type * p_reg, nrf_rtc_event_t event)
+{
+    return *(volatile uint32_t *)((uint8_t *)p_reg + (uint32_t)event);
+}
+
+
 static bool evt_pending(drv_rtc_t const * const p_instance, nrf_rtc_event_t event)
 {
     ASSERT(p_instance);
