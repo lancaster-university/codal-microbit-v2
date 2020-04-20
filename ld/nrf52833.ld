@@ -62,6 +62,52 @@ SECTIONS
         *(.rodata*)
         KEEP(*(.eh_frame*))
     } > FLASH
+    
+    /* for NRF_LOG_XXX */
+    .log_const_data :
+    {
+      PROVIDE(__start_log_const_data = .);
+      KEEP(*(SORT(.log_const_data*)))
+      PROVIDE(__stop_log_const_data = .);
+    } > FLASH
+    
+    .sdh_ble_observers :
+    {
+      PROVIDE(__start_sdh_ble_observers = .);
+      KEEP(*(SORT(.sdh_ble_observers*)))
+      PROVIDE(__stop_sdh_ble_observers = .);
+    } > FLASH
+    .sdh_soc_observers :
+    {
+      PROVIDE(__start_sdh_soc_observers = .);
+      KEEP(*(SORT(.sdh_soc_observers*)))
+      PROVIDE(__stop_sdh_soc_observers = .);
+    } > FLASH
+    .pwr_mgmt_data :
+    {
+      PROVIDE(__start_pwr_mgmt_data = .);
+      KEEP(*(SORT(.pwr_mgmt_data*)))
+      PROVIDE(__stop_pwr_mgmt_data = .);
+    } > FLASH
+    .sdh_state_observers :
+    {
+      PROVIDE(__start_sdh_state_observers = .);
+      KEEP(*(SORT(.sdh_state_observers*)))
+      PROVIDE(__stop_sdh_state_observers = .);
+    } > FLASH
+    .sdh_stack_observers :
+    {
+      PROVIDE(__start_sdh_stack_observers = .);
+      KEEP(*(SORT(.sdh_stack_observers*)))
+      PROVIDE(__stop_sdh_stack_observers = .);
+    } > FLASH
+    .sdh_req_observers :
+    {
+      PROVIDE(__start_sdh_req_observers = .);
+      KEEP(*(SORT(.sdh_req_observers*)))
+      PROVIDE(__stop_sdh_req_observers = .);
+    } > FLASH
+
     .ARM.extab :
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
@@ -94,6 +140,19 @@ SECTIONS
         KEEP(*(SORT(.fini_array.*)))
         KEEP(*(.fini_array))
         PROVIDE_HIDDEN (__fini_array_end = .);
+        
+        /* for NRF_LOG_XXX */
+        . = ALIGN(4);
+        PROVIDE(__start_log_dynamic_data = .);
+        KEEP(*(SORT(.log_dynamic_data*)))
+        PROVIDE(__stop_log_dynamic_data = .);
+
+        /* for NRF_LOG_XXX */
+        . = ALIGN(4);
+        PROVIDE(__start_log_filter_data = .);
+        KEEP(*(SORT(.log_filter_data*)))
+        PROVIDE(__stop_log_filter_data = .);
+        
         . = ALIGN(4);
         PROVIDE(__start_fs_data = .);
         KEEP(*(.fs_data))
