@@ -134,6 +134,12 @@ typedef struct
 } const nrf_sdh_soc_evt_observer_t;
 
 
+// nRF5SDK_mods
+// Fix for Soc events not being received
+// This whole file optimised away when linked from a library
+// https://devzone.nordicsemi.com/f/nordic-q-a/29137/fds-not-able-to-write-in-sdk-14
+int nrf_sdh_soc_init();
+
 #ifdef __cplusplus
 }
 #endif

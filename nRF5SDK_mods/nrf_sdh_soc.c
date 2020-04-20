@@ -115,4 +115,14 @@ NRF_SDH_STACK_OBSERVER(m_nrf_sdh_soc_evts_poll, NRF_SDH_SOC_STACK_OBSERVER_PRIO)
     .p_context = NULL,
 };
 
+
+// nRF5SDK_mods
+// Fix for Soc events not being received
+// This whole file optimised away when linked from a library
+// https://devzone.nordicsemi.com/f/nordic-q-a/29137/fds-not-able-to-write-in-sdk-14
+int nrf_sdh_soc_init()
+{
+  return 0;
+}
+
 #endif // NRF_MODULE_ENABLED(NRF_SDH_SOC)
