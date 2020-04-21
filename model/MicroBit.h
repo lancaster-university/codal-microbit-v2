@@ -64,7 +64,10 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MESEvents.h"
 
-//#include "MicroBitBLEManager.h"
+#if !CONFIG_ENABLED(NO_BLE)
+#include "MicroBitBLEManager.h"
+#endif
+
 //#include "MicroBitStorage.h"
 //#include "MicroBitLightSensor.h"
 
@@ -97,6 +100,11 @@ namespace codal
             // Pin ranges used for LED matrix display.
 
         public:
+#if !CONFIG_ENABLED(NO_BLE)
+            // Bluetooth related member variables.
+            // Initialize buttonless SVCI bootloader interface before interrupts are enabled
+            MicroBitBLEManager          bleManager;
+#endif
             NRFLowLevelTimer            tim1;
             Timer                       timer;
             MessageBus                  messageBus;
@@ -120,12 +128,6 @@ namespace codal
 
             // Persistent key value store
             //MicroBitStorage           storage;
-
-            #if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
-            // Bluetooth related member variables.
-            MicroBitBLEManager		  bleManager;
-            BLEDevice                   *ble;
-            #endif
 
             /**
              * Constructor.
@@ -174,7 +176,6 @@ namespace codal
              */
             //TODO: handle overflow case.
             unsigned long systemTime();
-
     };
 
 
@@ -211,7 +212,6 @@ namespace codal
     {
         return system_timer_current_time();
     }
-
 }
 
 void microbit_dmesg_flush();

@@ -47,21 +47,6 @@
 #include "app_config.h"
 #endif
 
-#include "CodalConfig.h"
-
-//==========================================================
-
-#if CODAL_DEBUG
-#ifndef NRF_LOG_ENABLED
-#define NRF_LOG_ENABLED 1
-#endif
-#ifndef NRF_LOG_DEFERRED
-#define NRF_LOG_DEFERRED 0
-#endif
-#ifndef NRF_LOG_BACKEND_DMESG_ENABLED
-#define NRF_LOG_BACKEND_DMESG_ENABLED 1
-#endif
-#endif
 
 // <e> NRF_LOG_BACKEND_DMESG_ENABLED - nrf_log_backend_dmesg - Log DMESG backend
 //==========================================================
@@ -78,6 +63,16 @@
 #ifndef NRF_LOG_BACKEND_DMESG_TEMP_BUFFER_SIZE
 #define NRF_LOG_BACKEND_DMESG_TEMP_BUFFER_SIZE 64
 #endif
+
+//==========================================================
+
+// <q> BLE_DIS_ENABLED  - ble_dis - Device Information Service
+ 
+
+#ifndef BLE_DIS_ENABLED
+#define BLE_DIS_ENABLED 1
+#endif
+
 
 
 // <h> Board Support 
@@ -100,7 +95,7 @@
  
 
 #ifndef BLE_ADVERTISING_ENABLED
-#define BLE_ADVERTISING_ENABLED 1
+#define BLE_ADVERTISING_ENABLED 0
 #endif
 
 // <e> NRF_BLE_CONN_PARAMS_ENABLED - ble_conn_params - Initiating and executing a connection parameters negotiation procedure
@@ -134,7 +129,7 @@
 // <e> NRF_BLE_QWR_ENABLED - nrf_ble_qwr - Queued writes support module (prepare/execute write)
 //==========================================================
 #ifndef NRF_BLE_QWR_ENABLED
-#define NRF_BLE_QWR_ENABLED 1
+#define NRF_BLE_QWR_ENABLED 0
 #endif
 // <o> NRF_BLE_QWR_MAX_ATTR - Maximum number of attribute handles that can be registered. This number must be adjusted according to the number of attributes for which Queued Writes will be enabled. If it is zero, the module will reject all Queued Write requests. 
 #ifndef NRF_BLE_QWR_MAX_ATTR
@@ -255,7 +250,8 @@
  
 
 #ifndef NRF_DFU_BLE_BUTTONLESS_SUPPORTS_BONDS
-#define NRF_DFU_BLE_BUTTONLESS_SUPPORTS_BONDS 0
+#define NRF_DFU_BLE_BUTTONLESS_SUPPORTS_BONDS 0
+
 #endif
 
 // </h> 
@@ -1658,7 +1654,7 @@
 // <4=> Debug 
 
 #ifndef NRF_LOG_DEFAULT_LEVEL
-#define NRF_LOG_DEFAULT_LEVEL 3
+#define NRF_LOG_DEFAULT_LEVEL 4
 #endif
 
 // <q> NRF_LOG_DEFERRED  - Enable deffered logger.
@@ -4227,7 +4223,7 @@
 // <4=> Debug 
 
 #ifndef NRF_SDH_LOG_LEVEL
-#define NRF_SDH_LOG_LEVEL 3
+#define NRF_SDH_LOG_LEVEL 4
 #endif
 
 // <o> NRF_SDH_INFO_COLOR  - ANSI escape code prefix.
@@ -4278,7 +4274,7 @@
 // <4=> Debug 
 
 #ifndef NRF_SDH_SOC_LOG_LEVEL
-#define NRF_SDH_SOC_LOG_LEVEL 3
+#define NRF_SDH_SOC_LOG_LEVEL 4
 #endif
 
 // <o> NRF_SDH_SOC_INFO_COLOR  - ANSI escape code prefix.

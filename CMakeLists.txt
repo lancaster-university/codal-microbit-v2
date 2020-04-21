@@ -180,7 +180,7 @@ list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/ble/
 
 list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/softdevice/common/nrf_sdh.c")
 list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/softdevice/common/nrf_sdh_ble.c")
-list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/softdevice/common/nrf_sdh_soc.c")
+list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/nRF5SDK_mods/nrf_sdh_soc.c")
 
 list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/ble/ble_services/ble_dfu/ble_dfu.c")
 list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/ble/ble_services/ble_dfu/ble_dfu_bonded.c")
