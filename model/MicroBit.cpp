@@ -169,7 +169,7 @@ int MicroBit::init()
     }
 
     // Seed our random number generator
-    //seedRandom();
+    seedRandom();
 
     // Create an event handler to trap any handlers being created for I2C services.
     // We do this to enable initialisation of those services only when they're used,
