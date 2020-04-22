@@ -44,6 +44,7 @@ DEALINGS IN THE SOFTWARE.
 #include "NRF52Pin.h"
 #include "NRF52Serial.h"
 #include "NRF52I2C.h"
+#include "NRF52PDM.h"
 
 #include "MicroBitIO.h"
 #include "MicroBitDisplay.h"
