@@ -68,10 +68,8 @@ static volatile bool flash_op_complete = false;
  */
 #ifdef SOFTDEVICE_PRESENT
 
-static void nvmc_event_handler(uint32_t sys_evt, void * p_context)
+static void nvmc_event_handler(uint32_t sys_evt, void *)
 {
-    UNUSED_PARAMETER(p_context);
-
     if (sys_evt == NRF_EVT_FLASH_OPERATION_SUCCESS)
         flash_op_complete = true;
 }
