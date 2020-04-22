@@ -49,7 +49,7 @@ static const MatrixPoint ledMatrixPositions[5*5] =
   */
 MicroBit::MicroBit() :
 
-#if !CONFIG_ENABLED(NO_BLE)
+#if CONFIG_ENABLED(DEVICE_BLE)
     // Initialize buttonless SVCI bootloader interface before interrupts are enabled
     bleManager(),
 #endif
@@ -168,7 +168,7 @@ int MicroBit::init()
 #endif
     status |= DEVICE_COMPONENT_STATUS_IDLE_TICK;
       
-#if CONFIG_ENABLED(MICROBIT_BLE_ENABLED) && CONFIG_ENABLED(MICROBIT_BLE_PAIRING_MODE)
+#if CONFIG_ENABLED(DEVICE_BLE) && CONFIG_ENABLED(MICROBIT_BLE_PAIRING_MODE)
     int i=0;
     // Test if we need to enter BLE pairing mode
     // If a RebootMode Key has been set boot straight into BLE mode
@@ -206,7 +206,7 @@ int MicroBit::init()
     }
 #endif
 
-#if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
+#if CONFIG_ENABLED(DEVICE_BLE) && CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
     // Start the BLE stack, if it isn't already running.
     bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, false);
 #endif

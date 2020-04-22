@@ -64,7 +64,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MESEvents.h"
 
-#if !CONFIG_ENABLED(NO_BLE)
+#if CONFIG_ENABLED(DEVICE_BLE)
 #include "MicroBitBLEManager.h"
 #endif
 
@@ -100,7 +100,7 @@ namespace codal
             // Pin ranges used for LED matrix display.
 
         public:
-#if !CONFIG_ENABLED(NO_BLE)
+#if CONFIG_ENABLED(DEVICE_BLE)
             // Bluetooth related member variables.
             // Initialize buttonless SVCI bootloader interface before interrupts are enabled
             MicroBitBLEManager          bleManager;
