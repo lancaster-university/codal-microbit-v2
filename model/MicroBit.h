@@ -143,6 +143,17 @@ namespace codal
             int init();
 
             /**
+              * Return the serial number of this device.
+              *
+              * @return A ManagedString representing the serial number of this device.
+              *
+              * @code
+              * ManagedString serialNumber = uBit.getSerial();
+              * @endcode
+              */
+            static ManagedString getSerial();
+
+            /**
              * Delay execution for the given amount of time.
              *
              * If the scheduler is running, this will deschedule the current fiber and perform
@@ -178,6 +189,30 @@ namespace codal
             unsigned long systemTime();
     };
 
+
+    /**
+      * Return the serial number of this device.
+      *
+      * @return A ManagedString representing the serial number of this device.
+      *
+      * @code
+      * ManagedString serialNumber = uBit.getSerial();
+      * @endcode
+      */
+    inline ManagedString MicroBit::getSerial()
+    {
+        uint64_t n = target_get_serial();
+        int d = 1000000000;
+        int n1 = n % d; n /= d;
+        int n2 = n % d; n /= d;
+        int n3 = n % d; n /= d;
+        ManagedString s1(n1);
+        ManagedString s2(n2);
+        ManagedString s3(n3);
+        ManagedString s = s3 + s2 + s1;
+        return s;
+        
+    }
 
     /**
      * Delay execution for the given amount of time.

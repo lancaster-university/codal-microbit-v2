@@ -120,21 +120,6 @@ MicroBit::MicroBit() :
 }
 
 
-#if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
-static ManagedString getSerialNumberString( MicroBitDevice *device)
-{
-    uint64_t n = device->getSerialNumber();
-    int d = 1000000000;
-    int n1 = n % d; n /= d;
-    int n2 = n % d; n /= d;
-    int n3 = n % d; n /= d;
-    ManagedString s1(n1);
-    ManagedString s2(n2);
-    ManagedString s3(n3);
-    ManagedString s = s3 + s2 + s1;
-    return s;
-}
-#endif
 
 
 /**
@@ -213,7 +198,7 @@ int MicroBit::init()
             delete flashIncomplete;
 
             // Start the BLE stack, if it isn't already running.
-            bleManager.init( ManagedString( microbit_friendly_name()), getSerialNumberString( this), messageBus, true);
+            bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, true);
             
             // Enter pairing mode, using the LED matrix for any necessary pairing operations
             bleManager.pairingMode(display, buttonA);
@@ -223,7 +208,7 @@ int MicroBit::init()
 
 #if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
     // Start the BLE stack, if it isn't already running.
-    bleManager.init( ManagedString( microbit_friendly_name()), getSerialNumberString( this), messageBus, false);
+    bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, false);
 #endif
 
     return DEVICE_OK;
