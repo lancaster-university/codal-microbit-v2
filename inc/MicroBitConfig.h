@@ -134,4 +134,8 @@ extern uint32_t __data_end__;
 #define MICROBIT_DAL_VERSION                    "unknown"
 #endif
 
+#define MICROBIT_SOUND_MIRROR uBit.io.speaker
+#define PAGE_SIZE 4096
+#define MICROBIT_MICROPHONE_DEVICE NRF52PDM
+
 #endif

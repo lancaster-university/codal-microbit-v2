@@ -24,8 +24,6 @@ DEALINGS IN THE SOFTWARE.
 
 #include "nrf.h"
 
-#define PAGE_SIZE 1024
-
 class MicroBitFlash
 {
     private:
