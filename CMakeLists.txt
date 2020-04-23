@@ -183,7 +183,7 @@ list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/soft
 list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/nRF5SDK_mods/nrf_sdh_soc.c")
 
 list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/ble/ble_services/ble_dfu/ble_dfu.c")
-list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/ble/ble_services/ble_dfu/ble_dfu_bonded.c")
+list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/nRF5SDK_mods/ble_dfu_bonded.c")
 list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/ble/ble_services/ble_dfu/ble_dfu_unbonded.c")
 
 list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/ble/ble_services/ble_dis/ble_dis.c")
