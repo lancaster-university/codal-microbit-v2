@@ -30,7 +30,8 @@ DEALINGS IN THE SOFTWARE.
 #ifndef MICROBIT_AUDIO_PROCESSOR_H
 #define MICROBIT_AUDIO_PROCESSOR_H
 
-#define AUDIO_SAMPLES_NUMBER    256
+#define MIC_SAMPLE_RATE         (11 * 1024)
+#define AUDIO_SAMPLES_NUMBER    1024 
 
 class MicroBitAudioProcessor : public DataSink
 {
@@ -40,13 +41,18 @@ class MicroBitAudioProcessor : public DataSink
     arm_rfft_fast_instance_f32 fft_instance;
     float *buf; 
     float *output; 
+    float *mag; 
     uint16_t position;
+    bool recording;
+    float rec[AUDIO_SAMPLES_NUMBER * 2];
 
     public:
     MicroBitAudioProcessor(DataSource& source); 
     ~MicroBitAudioProcessor(); 
     virtual int pullRequest();
     int setDivisor(int d);
+    void startRecording();
+    void stopRecording(MicroBit& uBit);
 };
 
 #endif
