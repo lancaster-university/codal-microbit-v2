@@ -365,6 +365,7 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
     uint32_t list_size = MICROBIT_BLE_MAXIMUM_BONDS;
     ECHK( pm_peer_id_list( peer_list, &list_size, PM_PEER_ID_INVALID, PM_PEER_ID_LIST_ALL_ID ));
     ECHK( pm_whitelist_set( list_size ? peer_list : NULL, list_size));
+    ECHK( pm_device_identities_list_set( list_size ? peer_list : NULL, list_size));
     connectable = discoverable = whitelist = list_size > 0;
     DMESG( "whitelist size = %d", list_size);
 #endif
@@ -507,6 +508,12 @@ void MicroBitBLEManager::pairingRequested(ManagedString passKey)
  */
 void MicroBitBLEManager::pairingComplete(bool success)
 {
+    if ( currentMode != MICROBIT_MODE_PAIRING)
+        return;
+    
+    if ( this->pairingStatus & MICROBIT_BLE_PAIR_COMPLETE)
+        return;
+    
     DMESG( "pairingComplete %d", (int) success);
     
     pairing_completed_at_time = system_timer_current_time();
@@ -696,6 +703,7 @@ void MicroBitBLEManager::pairingMode(MicroBitDisplay &display, MicroBitButton &a
 #if CONFIG_ENABLED(MICROBIT_BLE_WHITELIST)
     // Clear the whitelist (if we have one), so that we're discoverable by all BLE devices.
     ECHK( pm_whitelist_set( NULL, 0));
+    ECHK( pm_device_identities_list_set( NULL, 0));
 #endif
     
     microbit_ble_configureAdvertising( true /*connectable*/, true /*discoverable*/, false /*whitelist*/, 200, 0);
@@ -943,18 +951,16 @@ static void microbit_ble_configureAdvertising( bool connectable, bool discoverab
     ble_advdata_t advdata;
     memset( &advdata, 0, sizeof( advdata));
     advdata.name_type = BLE_ADVDATA_FULL_NAME;
-    advdata.flags     = discoverable
-                      ? BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED
-                      : BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED | BLE_GAP_ADV_FLAG_LE_GENERAL_DISC_MODE;
+    advdata.flags     = !whitelist && discoverable
+                      ? BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED | BLE_GAP_ADV_FLAG_LE_GENERAL_DISC_MODE
+                      : BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED;
             
     ble_gap_adv_data_t  gap_adv_data;
     memset( &gap_adv_data, 0, sizeof( gap_adv_data));
     gap_adv_data.adv_data.p_data    = m_enc_advdata;
     gap_adv_data.adv_data.len       = BLE_GAP_ADV_SET_DATA_SIZE_MAX;
     ECHK( ble_advdata_encode( &advdata, gap_adv_data.adv_data.p_data, &gap_adv_data.adv_data.len));
-#if CONFIG_DEBUG
     NRF_LOG_HEXDUMP_INFO( gap_adv_data.adv_data.p_data, gap_adv_data.adv_data.len);
-#endif
     ECHK( sd_ble_gap_adv_set_configure( &m_adv_handle, &gap_adv_data, &gap_adv_params));
 }
 
