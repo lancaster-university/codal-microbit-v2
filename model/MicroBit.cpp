@@ -52,7 +52,8 @@ MicroBit::MicroBit() :
     messageBus(),
     io(),
     serial(io.usbTx, io.usbRx, NRF_UARTE0),
-    i2c(io.sda, io.scl),
+    _i2c(io.sda, io.scl),
+    i2c(io.P20, io.P19),
 
     // RED
     ledRowPins{&io.row1, &io.row2, &io.row3, &io.row4, &io.row5},
@@ -65,8 +66,8 @@ MicroBit::MicroBit() :
     buttonAB(DEVICE_ID_BUTTON_A, DEVICE_ID_BUTTON_B, DEVICE_ID_BUTTON_AB),
     radio(),
     thermometer(),
-    accelerometer(i2c),
-    compass(i2c)
+    accelerometer(_i2c),
+    compass(_i2c)
     //compassCalibrator(compass, accelerometer, display)
 {
     // Clear our status
@@ -99,7 +100,7 @@ MicroBit::MicroBit() :
     // serial.set_flow_control(mbed::Serial::Disabled);
     //serial.baud(115200);
 
-    //i2c.setFrequency(400000);
+    _i2c.setFrequency(400000);
 
     // Bring up our display pins as high drive.
     for (NRF52Pin *p : ledRowPins)
