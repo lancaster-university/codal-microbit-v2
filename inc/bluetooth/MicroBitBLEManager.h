@@ -57,7 +57,7 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_BLE_EDDYSTONE_DEFAULT_POWER    0xF0
 
 // MicroBitComponent status flags
-#define MICROBIT_BLE_STATUS_STORE_SYSATTR       0x02
+#define MICROBIT_BLE_STATUS_DELETE_BOND         0x02
 #define MICROBIT_BLE_STATUS_DISCONNECT          0x04
 
 // micro:bit Modes
@@ -287,9 +287,6 @@ class MicroBitBLEManager : CodalComponent
     * @param display The display instance used for displaying the histogram.
     */
     void showManagementModeAnimation(MicroBitDisplay &display);
-
-    #define MICROBIT_BLE_DISCONNECT_AFTER_PAIRING_DELAY  500
-    unsigned long pairing_completed_at_time;   
 
     int pairingStatus;
     ManagedString passKey;
