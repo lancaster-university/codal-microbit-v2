@@ -1072,6 +1072,27 @@ static void microbit_ble_pm_evt_handler(pm_evt_t const * p_evt)
 
     switch ( p_evt->evt_id)
     {
+        case PM_EVT_BONDED_PEER_CONNECTED:
+            DMESG( "PM_EVT_BONDED_PEER_CONNECTED");
+            break;
+
+        case PM_EVT_CONN_SEC_START:
+            DMESG( "PM_EVT_CONN_SEC_START");
+            break;
+
+        case PM_EVT_CONN_SEC_CONFIG_REQ:
+        {
+            DMESG( "PM_EVT_CONN_SEC_CONFIG_REQ");
+            pm_conn_sec_config_t conn_sec_config = { .allow_repairing = true };
+            pm_conn_sec_config_reply( p_evt->conn_handle, &conn_sec_config);
+            break;
+        }
+        case PM_EVT_CONN_SEC_PARAMS_REQ:
+            DMESG( "PM_EVT_CONN_SEC_PARAMS_REQ");
+            // Optionally call pm_conn_sec_params_reply
+            // By default, params passed to pm_sec_params_set are used
+            break;
+
         case PM_EVT_CONN_SEC_SUCCEEDED:
             DMESG( "PM_EVT_CONN_SEC_SUCCEEDED");
             //TODO Should this be delayed until PM_EVT_PEER_DATA_UPDATE_SUCCEEDED?
