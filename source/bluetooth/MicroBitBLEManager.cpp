@@ -914,7 +914,7 @@ static void microbit_ble_on_error( ret_code_t err, const char *msg)
     if ( err != NRF_SUCCESS)
     {
         DMESGN( "ERROR %x from ", (int)err);
-        DMESGF( msg);
+        DMESG( msg);
     }
 }
 #endif
@@ -1141,7 +1141,7 @@ static void microbit_dfu_disconnect( uint16_t conn_handle, void * p_context)
 */
 static void microbit_dfu_evt_handler(ble_dfu_buttonless_evt_type_t event)
 {
-    DMESGF( "microbit_dfu_evt_handler %d", (int) event);
+    DMESG( "microbit_dfu_evt_handler %d", (int) event);
 
     switch (event)
     {
@@ -1204,6 +1204,7 @@ static void microbit_dfu_sdh_state_observer(nrf_sdh_state_evt_t state, void * p_
     
     if (state == NRF_SDH_EVT_STATE_DISABLED)
     {
+        DMESG( "NRF_SDH_EVT_STATE_DISABLED");
         nrf_power_gpregret2_set( NRF_POWER, BOOTLOADER_DFU_SKIP_CRC);
         nrf_pwr_mgmt_shutdown(NRF_PWR_MGMT_SHUTDOWN_GOTO_SYSOFF);
     }
