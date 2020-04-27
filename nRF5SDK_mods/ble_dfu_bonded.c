@@ -290,8 +290,10 @@ uint32_t ble_dfu_buttonless_char_add(ble_dfu_buttonless_t * p_dfu)
     add_char_params.is_var_len          = true;
     add_char_params.max_len             = BLE_GATT_ATT_MTU_DEFAULT;
 
-    add_char_params.cccd_write_access = SEC_JUST_WORKS;
-    add_char_params.write_access      = SEC_JUST_WORKS;
+    NRF_LOG_INFO("MICROBIT_SECURITY_MODE %d", (int)MICROBIT_SECURITY_MODE);
+  
+    add_char_params.cccd_write_access = MICROBIT_SECURITY_MODE;
+    add_char_params.write_access      = MICROBIT_SECURITY_MODE;
     add_char_params.read_access       = SEC_OPEN;
 
     return characteristic_add(p_dfu->service_handle, &add_char_params, &p_dfu->control_point_char);
