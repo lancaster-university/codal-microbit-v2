@@ -80,9 +80,32 @@ int microbit_random(int max)
     return microbit_device_instance ? microbit_device_instance->random(max) : 0;
 }
 
+static void wait_cycles(uint32_t cycles)
+{
+    __asm__ __volatile__(".syntax unified\n"
+                         "1: subs %0, #1\n"
+                         "bne 1b\n"
+                         : "+r"(cycles)
+                         :
+                         :);
+}
+
+// TODO make this actually display the error code on the screen
+// for now it just blinks
 void microbit_panic(int statusCode)
 {
-    target_panic(statusCode);
+    DMESG("*** CODAL PANIC : [%d]", statusCode);
+    NRF_P0->OUT = 0;
+    NRF_P1->OUT = 0;
+    NRF_P0->DIR = 1 << 21;
+    NRF_P1->DIR = 1 << 5;
+    while (1)
+    {
+        NRF_P0->OUT = -1;
+        wait_cycles(1 << 21);
+        NRF_P0->OUT = 0;
+        wait_cycles(1 << 21);
+    }
 }
 
 void microbit_panic_timeout(int iterations)
