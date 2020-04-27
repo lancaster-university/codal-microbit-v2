@@ -43,6 +43,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitIO.h"
 #include "NRF52Pin.h"
 #include "NRF52I2C.h"
+#include "NRF52SPI.h"
 
 //
 // Historic mbed types
@@ -361,9 +362,10 @@ typedef codal::EventLaunchMode MicroBitEventLaunchMode;
 #define MICROBIT_SRAM_END                                       DEVICE_SRAM_END
 #define MICROBIT_STACK_SIZE                                     DEVICE_STACK_SIZE
 
-#define SCK DEVICE_PIN_P13
-#define MISO DEVICE_PIN_P14
-#define MOSI DEVICE_PIN_P15
+#define SCK uBit.io.P13
+#define MISO uBit.io.P14
+#define MOSI uBit.io.P15
+#define SPI NRF52SPI
 
 #define MICROBIT_ACCEL_ADDED_TO_IDLE                            COMPASS_STATUS_ADDED_TO_IDLE
 #define MICROBIT_COMPASS_STATUS_ADDED_TO_IDLE                   COMPASS_STATUS_ADDED_TO_IDLE
