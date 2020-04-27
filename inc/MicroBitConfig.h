@@ -43,7 +43,7 @@ extern uint32_t __data_end__;
 // Enable/Disable BLE during normal operation.
 // Set '1' to enable.
 #ifndef MICROBIT_BLE_ENABLED
-#define MICROBIT_BLE_ENABLED                    1
+#define MICROBIT_BLE_ENABLED                    0
 #endif
 
 // Enable/Disable BLE pairing mode mode at power up.
