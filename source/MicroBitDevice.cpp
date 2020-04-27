@@ -94,14 +94,17 @@ static void wait_cycles(uint32_t cycles)
 // for now it just blinks
 void microbit_panic(int statusCode)
 {
+    target_disable_irq();
     DMESG("*** CODAL PANIC : [%d]", statusCode);
     NRF_P0->OUT = 0;
     NRF_P1->OUT = 0;
-    NRF_P0->DIR = 1 << 21;
-    NRF_P1->DIR = 1 << 5;
+    NRF_P0->DIR = 0;
+    NRF_P1->DIR = 0;
+    NRF_P0->PIN_CNF[21] = 0x303;
+    NRF_P1->PIN_CNF[5] = 0x303;
     while (1)
     {
-        NRF_P0->OUT = -1;
+        NRF_P0->OUT = 0xffffffff;
         wait_cycles(1 << 21);
         NRF_P0->OUT = 0;
         wait_cycles(1 << 21);
