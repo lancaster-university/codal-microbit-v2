@@ -1,4 +1,4 @@
-project(codal-microbit-next)
+project(codal-microbit)
 
 include("${CODAL_UTILS_LOCATION}")
 
@@ -24,14 +24,14 @@ set(CMAKE_SYSTEM_PROCESSOR "armv7-m" PARENT_SCOPE)
 include_directories(${INCLUDE_DIRS})
 
 # create our target
-add_library(codal-microbit-next ${SOURCE_FILES})
+add_library(codal-microbit ${SOURCE_FILES})
 
 target_link_libraries(
-    codal-microbit-next
+    codal-microbit
     codal-nrf52
     ${LIB_OBJECT_FILES}
     ${LIB_ARCHIVE_FILES}
 )
 
 # expose it to parent cmake.
-target_include_directories(codal-microbit-next PUBLIC ${INCLUDE_DIRS})
+target_include_directories(codal-microbit PUBLIC ${INCLUDE_DIRS})
