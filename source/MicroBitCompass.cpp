@@ -57,7 +57,7 @@ Compass& MicroBitCompass::autoDetect(MicroBitI2C &i2c)
 {
     /*
      * In essence, the LSM needs at least 6.4ms from power-up before we can use it.
-     * https://github.com/microbit-foundation/codal-microbit-next/issues/33
+     * https://github.com/microbit-foundation/codal-microbit/issues/33
      */
     target_wait(10);
     // We only have combined sensors, so rely on the acceleromter detection code to also detect the correct magnetomter.

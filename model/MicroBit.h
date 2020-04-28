@@ -112,6 +112,11 @@ namespace codal
             //codal::_mbed::Timer         timer;
             MicroBitIO                  io;
             NRF52Serial                 serial;
+        private:
+            //Internal I2C for motion sensors
+            NRF52I2C                    _i2c;
+        public:
+            //External I2C for edge connector
             NRF52I2C                    i2c;
             NRF52Pin*                   ledRowPins[5];
             NRF52Pin*                   ledColPins[5];
