@@ -43,7 +43,7 @@ extern uint32_t __data_end__;
 // Enable/Disable BLE during normal operation.
 // Set '1' to enable.
 #ifndef MICROBIT_BLE_ENABLED
-#define MICROBIT_BLE_ENABLED                    1
+#define MICROBIT_BLE_ENABLED                    0
 #endif
 
 // Enable/Disable BLE pairing mode mode at power up.
@@ -134,8 +134,7 @@ extern uint32_t __data_end__;
 #define MICROBIT_DAL_VERSION                    "unknown"
 #endif
 
-#define MICROBIT_SOUND_MIRROR uBit.io.speaker
+#define SOUND_MIRROR_EXTENSION uBit.io.speaker
 #define PAGE_SIZE 4096
-#define MICROBIT_MICROPHONE_DEVICE NRF52PDM
 
 #endif

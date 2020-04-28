@@ -56,6 +56,17 @@ namespace codal
          * Destructor.
          */
         ~MicroBitDisplay();
+
+
+        /**
+         * Gives a representative figure of the light level in the current environment
+         * where the display is situated.
+         *
+         * @return an indicative light level in the range 0 - 255.
+         *
+         * @note this is not currently implemented
+         */
+        virtual int readLightLevel() { return 128; }
     };
 }
 
