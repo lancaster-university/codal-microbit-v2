@@ -539,7 +539,7 @@ void MicroBitBLEManager::pairingComplete(bool success)
     else
     {
         this->pairingStatus = MICROBIT_BLE_PAIR_COMPLETE;
-        this->status & MICROBIT_BLE_STATUS_DELETE_BOND;
+        this->status |= MICROBIT_BLE_STATUS_DELETE_BOND;
         fiber_add_idle_component(this);
     }
 }
