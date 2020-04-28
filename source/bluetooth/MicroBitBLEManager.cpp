@@ -227,7 +227,6 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
   
     // Start the BLE stack.
     uint32_t ram_start = 0;
-    ECHK( app_timer_init());
     ECHK( nrf_pwr_mgmt_init());
     ECHK( nrf_sdh_enable_request());
     ECHK( nrf_sdh_ble_default_cfg_set( microbit_ble_CONN_CFG_TAG, &ram_start));
@@ -569,12 +568,11 @@ void MicroBitBLEManager::idleCallback()
         this->status &= ~MICROBIT_BLE_STATUS_DELETE_BOND;
     }
     
-    if ( this->status & MICROBIT_BLE_STATUS_DISCONNECT)
+    if ( this->status & MICROBIT_BLE_STATUS_SHUTDOWN)
     {
         DMESG( "MicroBitBLEManager::idleCallback");
-        DMESG( "MICROBIT_BLE_STATUS_DISCONNECT");
-        ble_conn_state_for_each_connected( microbit_for_each_connected_disconnect, NULL);
-        this->status &= ~MICROBIT_BLE_STATUS_DISCONNECT;
+        DMESG( "MICROBIT_BLE_STATUS_SHUTDOWN");
+        nrf_pwr_mgmt_shutdown(NRF_PWR_MGMT_SHUTDOWN_CONTINUE);
     }
 }
 
@@ -1236,8 +1234,15 @@ static bool microbit_dfu_shutdown_handler(nrf_pwr_mgmt_evt_t event)
     switch (event)
     {
         case NRF_PWR_MGMT_EVT_PREPARE_DFU:
+            if ( MicroBitBLEManager::manager)
+            {
+                MicroBitBLEManager::manager->status |= MICROBIT_BLE_STATUS_SHUTDOWN;
+                fiber_add_idle_component( MicroBitBLEManager::manager);
+            }
+            
             //TODO: sd_softdevice_disable hangs - sometimes!
             //sd_softdevice_disable();
+            //TODO: Use nrf_sdh_disable_request, which will call microbit_dfu_sdh_state_observer?
             break;
 
         default:

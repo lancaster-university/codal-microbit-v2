@@ -58,7 +58,7 @@ DEALINGS IN THE SOFTWARE.
 
 // MicroBitComponent status flags
 #define MICROBIT_BLE_STATUS_DELETE_BOND         0x02
-#define MICROBIT_BLE_STATUS_DISCONNECT          0x04
+#define MICROBIT_BLE_STATUS_SHUTDOWN            0x04
 
 // micro:bit Modes
 // The micro:bit may be in different states: running a user's application or into BLE pairing mode
@@ -74,7 +74,7 @@ typedef ble_gatts_char_handles_t microbit_charhandles_t;
   * Class definition for the MicroBitBLEManager.
   *
   */
-class MicroBitBLEManager : CodalComponent
+class MicroBitBLEManager : public CodalComponent
 {
     public:
     static MicroBitBLEManager *manager;
