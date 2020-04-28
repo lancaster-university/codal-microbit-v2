@@ -1,5 +1,5 @@
 {
-    "device":"MICROBIT_NEXT",
+    "device":"MICROBIT",
     "processor":"NRF52833",
     "architecture":"CORTEX_M4F",
     "toolchain":"ARM_GCC",

@@ -37,7 +37,7 @@
     "cpp_flags": "-std=c++11 -fwrapv -fno-rtti -fno-threadsafe-statics -fno-exceptions -fno-unwind-tables -Wl,--gc-sections -Wl,--sort-common -Wl,--sort-section=alignment -Wno-array-bounds", 
     "cpu_opts": "-mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=softfp", 
     "definitions": "-DNRF52833_XXAA -DNRF52833 -DTARGET_MCU_NRF52833 -DNRF5 -DNRF52833 -D__CORTEX_M4 -DS140 -DTOOLCHAIN_GCC -D__START=target_start", 
-    "device": "MICROBIT_NEXT", 
+    "device": "MICROBIT", 
     "generate_bin": true, 
     "generate_hex": true, 
     "libraries": [
