@@ -68,22 +68,38 @@ extern uint32_t __data_end__;
 
 // Configure for open BLE operation if so configured
 #if (MICROBIT_BLE_OPEN == 1)
-#define MICROBIT_BLE_SECURITY_LEVEL             SECURITY_MODE_ENCRYPTION_OPEN_LINK
+#define MICROBIT_BLE_SECURITY_MODE              1
 #define MICROBIT_BLE_WHITELIST                  0
 #define MICROBIT_BLE_ADVERTISING_TIMEOUT        0
 #define MICROBIT_BLE_DEFAULT_TX_POWER           6
 #endif
 
-
 // Define the default, global BLE security requirements for MicroBit BLE services
-// May be one of the following options (see mbed's SecurityManager class implementaiton detail)
-// SECURITY_MODE_ENCRYPTION_OPEN_LINK:      No bonding, encryption, or whitelisting required.
-// SECURITY_MODE_ENCRYPTION_NO_MITM:        Bonding, encyption and whitelisting but no passkey.
-// SECURITY_MODE_ENCRYPTION_WITH_MITM:      Bonding, encrytion and whitelisting with passkey authentication.
+// MICROBIT_BLE_SECURITY_MODE is used instead of MICROBIT_BLE_SECURITY_LEVEL
+// If MICROBIT_BLE_SECURITY_LEVEL and MICROBIT_BLE_SECURITY_MODE is defined, they must match as follows
+// SEC_OPEN         / OPEN_LINK:    1
+// SEC_JUST_WORKS   / NO_MITM:      2
+// SEC_MITM         / WITH_MITM:    3
 //
-#ifndef MICROBIT_BLE_SECURITY_LEVEL
-#define MICROBIT_BLE_SECURITY_LEVEL             SECURITY_MODE_ENCRYPTION_WITH_MITM
+#ifndef MICROBIT_BLE_SECURITY_MODE
+// Calculate MICROBIT_BLE_SECURITY_MODE from MICROBIT_BLE_SECURITY_LEVEL
+#define __MICROBIT_CONFIG_SECURITY_MODE_ENCRYPTION_OPEN_LINK 1
+#define __MICROBIT_CONFIG_SECURITY_MODE_ENCRYPTION_NO_MITM   2
+#define __MICROBIT_CONFIG_SECURITY_MODE_ENCRYPTION_WITH_MITM 3
+#define __MICROBIT_CONFIG_CAT(a, ...) a##__VA_ARGS__
+#define __MICROBIT_CONFIG_SECURITY_MODE(x) __MICROBIT_CONFIG_CAT(__MICROBIT_CONFIG_, x)
+#define __MICROBIT_CONFIG_SECURITY_MODE_IS(x) (__MICROBIT_CONFIG_SECURITY_MODE(MICROBIT_BLE_SECURITY_LEVEL) == __MICROBIT_CONFIG_SECURITY_MODE(x))
+
+#if (__MICROBIT_CONFIG_SECURITY_MODE_IS(SECURITY_MODE_ENCRYPTION_NO_MITM))
+#define MICROBIT_BLE_SECURITY_MODE 2
+#elif (__MICROBIT_CONFIG_SECURITY_MODE_IS(SECURITY_MODE_ENCRYPTION_OPEN_LINK))
+#define MICROBIT_BLE_SECURITY_MODE 1
+#elif (__MICROBIT_CONFIG_SECURITY_MODE_IS(SECURITY_MODE_ENCRYPTION_WITH_MITM))
+#define MICROBIT_BLE_SECURITY_MODE 3
+#else
+#define MICROBIT_BLE_SECURITY_MODE 3
 #endif
+#endif //#ifndef MICROBIT_BLE_SECURITY_MODE
 
 // Enable/Disable the use of BLE whitelisting.
 // If enabled, the micro:bit will only respond to connection requests from

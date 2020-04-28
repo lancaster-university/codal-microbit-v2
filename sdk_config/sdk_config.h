@@ -73,6 +73,49 @@
 #define BLE_DIS_ENABLED 1
 #endif
 
+//==========================================================
+#ifndef MICROBIT_BLE_SECURITY_MODE
+
+#ifndef MICROBIT_BLE_OPEN
+#define MICROBIT_BLE_OPEN                       0
+#endif
+
+// Configure for open BLE operation if so configured
+#if (MICROBIT_BLE_OPEN == 1)
+#define MICROBIT_BLE_SECURITY_MODE              1
+#define MICROBIT_BLE_WHITELIST                  0
+#define MICROBIT_BLE_ADVERTISING_TIMEOUT        0
+#define MICROBIT_BLE_DEFAULT_TX_POWER           6
+#endif
+
+// Define the default, global BLE security requirements for MicroBit BLE services
+// MICROBIT_BLE_SECURITY_MODE is used instead of MICROBIT_BLE_SECURITY_LEVEL
+// If MICROBIT_BLE_SECURITY_LEVEL and MICROBIT_BLE_SECURITY_MODE are defined, they must match as follows
+// SEC_OPEN         / OPEN_LINK:    1
+// SEC_JUST_WORKS   / NO_MITM:      2
+// SEC_MITM         / WITH_MITM:    3
+//
+
+// Calculate MICROBIT_BLE_SECURITY_MODE from MICROBIT_BLE_SECURITY_LEVEL
+#define __SDK_CONFIG_SECURITY_MODE_ENCRYPTION_OPEN_LINK 1
+#define __SDK_CONFIG_SECURITY_MODE_ENCRYPTION_NO_MITM   2
+#define __SDK_CONFIG_SECURITY_MODE_ENCRYPTION_WITH_MITM 3
+#define __SDK_CONFIG_CAT(a, ...) a##__VA_ARGS__
+#define __SDK_CONFIG_SECURITY_MODE(x) __SDK_CONFIG_CAT(__SDK_CONFIG_, x)
+#define __SDK_CONFIG_SECURITY_MODE_IS(x) (__SDK_CONFIG_SECURITY_MODE(MICROBIT_BLE_SECURITY_LEVEL) == __SDK_CONFIG_SECURITY_MODE(x))
+
+#if (__SDK_CONFIG_SECURITY_MODE_IS(SECURITY_MODE_ENCRYPTION_NO_MITM))
+#define MICROBIT_BLE_SECURITY_MODE 2
+#elif (__SDK_CONFIG_SECURITY_MODE_IS(SECURITY_MODE_ENCRYPTION_OPEN_LINK))
+#define MICROBIT_BLE_SECURITY_MODE 1
+#elif (__SDK_CONFIG_SECURITY_MODE_IS(SECURITY_MODE_ENCRYPTION_WITH_MITM))
+#define MICROBIT_BLE_SECURITY_MODE 3
+#else
+#define MICROBIT_BLE_SECURITY_MODE 3
+#endif
+
+#endif //#ifndef MICROBIT_BLE_SECURITY_MODE
+//==========================================================
 
 
 // <h> Board Support 
@@ -250,7 +293,7 @@
  
 
 #ifndef NRF_DFU_BLE_BUTTONLESS_SUPPORTS_BONDS
-#define NRF_DFU_BLE_BUTTONLESS_SUPPORTS_BONDS 0
+#define NRF_DFU_BLE_BUTTONLESS_SUPPORTS_BONDS (MICROBIT_BLE_SECURITY_MODE != 1)
 
 #endif
 
@@ -260,37 +303,7 @@
 // </h> 
 //==========================================================
 
-// <h> nRF_Drivers 
-
-//==========================================================
-// <e> GPIOTE_ENABLED - nrf_drv_gpiote - GPIOTE peripheral driver - legacy layer
-//==========================================================
-#ifndef GPIOTE_ENABLED
-#define GPIOTE_ENABLED 1
-#endif
-// <o> GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS - Number of lower power input pins 
-#ifndef GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS
-#define GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS 4
-#endif
-
-// <o> GPIOTE_CONFIG_IRQ_PRIORITY  - Interrupt priority
- 
-
-// <i> Priorities 0,2 (nRF51) and 0,1,4,5 (nRF52) are reserved for SoftDevice
-// <0=> 0 (highest) 
-// <1=> 1 
-// <2=> 2 
-// <3=> 3 
-// <4=> 4 
-// <5=> 5 
-// <6=> 6 
-// <7=> 7 
-
-#ifndef GPIOTE_CONFIG_IRQ_PRIORITY
-#define GPIOTE_CONFIG_IRQ_PRIORITY 6
-#endif
-
-// </e>
+// <h> nRF_Drivers
 
 // <e> NRFX_CLOCK_ENABLED - nrfx_clock - CLOCK peripheral driver
 //==========================================================
@@ -795,148 +808,6 @@
 
 // </e>
 
-// <e> NRF_CLOCK_ENABLED - nrf_drv_clock - CLOCK peripheral driver - legacy layer
-//==========================================================
-#ifndef NRF_CLOCK_ENABLED
-#define NRF_CLOCK_ENABLED 1
-#endif
-// <o> CLOCK_CONFIG_LF_SRC  - LF Clock Source
- 
-// <0=> RC 
-// <1=> XTAL 
-// <2=> Synth 
-// <131073=> External Low Swing 
-// <196609=> External Full Swing 
-
-#ifndef CLOCK_CONFIG_LF_SRC
-#define CLOCK_CONFIG_LF_SRC 0
-#endif
-
-// <q> CLOCK_CONFIG_LF_CAL_ENABLED  - Calibration enable for LF Clock Source
- 
-
-#ifndef CLOCK_CONFIG_LF_CAL_ENABLED
-#define CLOCK_CONFIG_LF_CAL_ENABLED 0
-#endif
-
-// <o> CLOCK_CONFIG_IRQ_PRIORITY  - Interrupt priority
- 
-
-// <i> Priorities 0,2 (nRF51) and 0,1,4,5 (nRF52) are reserved for SoftDevice
-// <0=> 0 (highest) 
-// <1=> 1 
-// <2=> 2 
-// <3=> 3 
-// <4=> 4 
-// <5=> 5 
-// <6=> 6 
-// <7=> 7 
-
-#ifndef CLOCK_CONFIG_IRQ_PRIORITY
-#define CLOCK_CONFIG_IRQ_PRIORITY 6
-#endif
-
-// </e>
-
-// <e> UART_ENABLED - nrf_drv_uart - UART/UARTE peripheral driver - legacy layer
-//==========================================================
-#ifndef UART_ENABLED
-#define UART_ENABLED 1
-#endif
-// <o> UART_DEFAULT_CONFIG_HWFC  - Hardware Flow Control
- 
-// <0=> Disabled 
-// <1=> Enabled 
-
-#ifndef UART_DEFAULT_CONFIG_HWFC
-#define UART_DEFAULT_CONFIG_HWFC 0
-#endif
-
-// <o> UART_DEFAULT_CONFIG_PARITY  - Parity
- 
-// <0=> Excluded 
-// <14=> Included 
-
-#ifndef UART_DEFAULT_CONFIG_PARITY
-#define UART_DEFAULT_CONFIG_PARITY 0
-#endif
-
-// <o> UART_DEFAULT_CONFIG_BAUDRATE  - Default Baudrate
- 
-// <323584=> 1200 baud 
-// <643072=> 2400 baud 
-// <1290240=> 4800 baud 
-// <2576384=> 9600 baud 
-// <3862528=> 14400 baud 
-// <5152768=> 19200 baud 
-// <7716864=> 28800 baud 
-// <10289152=> 38400 baud 
-// <15400960=> 57600 baud 
-// <20615168=> 76800 baud 
-// <30801920=> 115200 baud 
-// <61865984=> 230400 baud 
-// <67108864=> 250000 baud 
-// <121634816=> 460800 baud 
-// <251658240=> 921600 baud 
-// <268435456=> 1000000 baud 
-
-#ifndef UART_DEFAULT_CONFIG_BAUDRATE
-#define UART_DEFAULT_CONFIG_BAUDRATE 30801920
-#endif
-
-// <o> UART_DEFAULT_CONFIG_IRQ_PRIORITY  - Interrupt priority
- 
-
-// <i> Priorities 0,2 (nRF51) and 0,1,4,5 (nRF52) are reserved for SoftDevice
-// <0=> 0 (highest) 
-// <1=> 1 
-// <2=> 2 
-// <3=> 3 
-// <4=> 4 
-// <5=> 5 
-// <6=> 6 
-// <7=> 7 
-
-#ifndef UART_DEFAULT_CONFIG_IRQ_PRIORITY
-#define UART_DEFAULT_CONFIG_IRQ_PRIORITY 6
-#endif
-
-// <q> UART_EASY_DMA_SUPPORT  - Driver supporting EasyDMA
- 
-
-#ifndef UART_EASY_DMA_SUPPORT
-#define UART_EASY_DMA_SUPPORT 1
-#endif
-
-// <q> UART_LEGACY_SUPPORT  - Driver supporting Legacy mode
- 
-
-#ifndef UART_LEGACY_SUPPORT
-#define UART_LEGACY_SUPPORT 1
-#endif
-
-// <e> UART0_ENABLED - Enable UART0 instance
-//==========================================================
-#ifndef UART0_ENABLED
-#define UART0_ENABLED 1
-#endif
-// <q> UART0_CONFIG_USE_EASY_DMA  - Default setting for using EasyDMA
- 
-
-#ifndef UART0_CONFIG_USE_EASY_DMA
-#define UART0_CONFIG_USE_EASY_DMA 1
-#endif
-
-// </e>
-
-// <e> UART1_ENABLED - Enable UART1 instance
-//==========================================================
-#ifndef UART1_ENABLED
-#define UART1_ENABLED 0
-#endif
-// </e>
-
-// </e>
 
 // </h> 
 //==========================================================
@@ -4161,7 +4032,7 @@
 // <e> NRF_SDH_BLE_LOG_ENABLED - Enable logging in SoftDevice handler (BLE) module.
 //==========================================================
 #ifndef NRF_SDH_BLE_LOG_ENABLED
-#define NRF_SDH_BLE_LOG_ENABLED 1
+#define NRF_SDH_BLE_LOG_ENABLED 0
 #endif
 // <o> NRF_SDH_BLE_LOG_LEVEL  - Default Severity level
  
@@ -4212,7 +4083,7 @@
 // <e> NRF_SDH_LOG_ENABLED - Enable logging in SoftDevice handler module.
 //==========================================================
 #ifndef NRF_SDH_LOG_ENABLED
-#define NRF_SDH_LOG_ENABLED 1
+#define NRF_SDH_LOG_ENABLED 0
 #endif
 // <o> NRF_SDH_LOG_LEVEL  - Default Severity level
  
@@ -4263,7 +4134,7 @@
 // <e> NRF_SDH_SOC_LOG_ENABLED - Enable logging in SoftDevice handler (SoC) module.
 //==========================================================
 #ifndef NRF_SDH_SOC_LOG_ENABLED
-#define NRF_SDH_SOC_LOG_ENABLED 1
+#define NRF_SDH_SOC_LOG_ENABLED 0
 #endif
 // <o> NRF_SDH_SOC_LOG_LEVEL  - Default Severity level
  
@@ -4416,7 +4287,7 @@
 // <e> PM_LOG_ENABLED - Enable logging in Peer Manager and its submodules.
 //==========================================================
 #ifndef PM_LOG_ENABLED
-#define PM_LOG_ENABLED 1
+#define PM_LOG_ENABLED 0
 #endif
 // <o> PM_LOG_LEVEL  - Default Severity level
  
