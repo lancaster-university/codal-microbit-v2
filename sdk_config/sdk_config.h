@@ -74,52 +74,47 @@
 #endif
 
 //==========================================================
-#ifndef MICROBIT_SECURITY_MODE
+#ifndef MICROBIT_BLE_SECURITY_MODE
 
-// Calculate MICROBIT_SECURITY_MODE from MICROBIT_BLE_SECURITY_LEVEL
-
-// Convenience option to enable / disable BLE security entirely
-// Open BLE links are not secure, but commonly used during the development of BLE services
-// Set '1' to disable all secuity
 #ifndef MICROBIT_BLE_OPEN
 #define MICROBIT_BLE_OPEN                       0
 #endif
 
 // Configure for open BLE operation if so configured
 #if (MICROBIT_BLE_OPEN == 1)
-#define MICROBIT_BLE_SECURITY_LEVEL             SECURITY_MODE_ENCRYPTION_OPEN_LINK
+#define MICROBIT_BLE_SECURITY_MODE              1
 #define MICROBIT_BLE_WHITELIST                  0
 #define MICROBIT_BLE_ADVERTISING_TIMEOUT        0
 #define MICROBIT_BLE_DEFAULT_TX_POWER           6
 #endif
 
 // Define the default, global BLE security requirements for MicroBit BLE services
-// May be one of the following options (see mbed's SecurityManager class implementaiton detail)
-// SECURITY_MODE_ENCRYPTION_OPEN_LINK:      No bonding, encryption, or whitelisting required.
-// SECURITY_MODE_ENCRYPTION_NO_MITM:        Bonding, encyption and whitelisting but no passkey.
-// SECURITY_MODE_ENCRYPTION_WITH_MITM:      Bonding, encrytion and whitelisting with passkey authentication.
+// MICROBIT_BLE_SECURITY_MODE is used instead of MICROBIT_BLE_SECURITY_LEVEL
+// If MICROBIT_BLE_SECURITY_LEVEL and MICROBIT_BLE_SECURITY_MODE are defined, they must match as follows
+// SEC_OPEN         / OPEN_LINK:    1
+// SEC_JUST_WORKS   / NO_MITM:      2
+// SEC_MITM         / WITH_MITM:    3
 //
-#ifndef MICROBIT_BLE_SECURITY_LEVEL
-#define MICROBIT_BLE_SECURITY_LEVEL             SECURITY_MODE_ENCRYPTION_WITH_MITM
-#endif
 
-#define SDK_CONFIG_CAT(a, ...) a##__VA_ARGS__
-#define SDK_CONFIG_SECURITY_MODE(x) SDK_CONFIG_CAT(__, x)
-#define SDK_CONFIG_SECURITY_MODE_IS(x) (SDK_CONFIG_SECURITY_MODE(MICROBIT_BLE_SECURITY_LEVEL) == SDK_CONFIG_SECURITY_MODE(x))
+// Calculate MICROBIT_BLE_SECURITY_MODE from MICROBIT_BLE_SECURITY_LEVEL
+#define __SDK_CONFIG_SECURITY_MODE_ENCRYPTION_OPEN_LINK 1
+#define __SDK_CONFIG_SECURITY_MODE_ENCRYPTION_NO_MITM   2
+#define __SDK_CONFIG_SECURITY_MODE_ENCRYPTION_WITH_MITM 3
+#define __SDK_CONFIG_CAT(a, ...) a##__VA_ARGS__
+#define __SDK_CONFIG_SECURITY_MODE(x) __SDK_CONFIG_CAT(__SDK_CONFIG_, x)
+#define __SDK_CONFIG_SECURITY_MODE_IS(x) (__SDK_CONFIG_SECURITY_MODE(MICROBIT_BLE_SECURITY_LEVEL) == __SDK_CONFIG_SECURITY_MODE(x))
 
-//SEC_OPEN         = 1
-//SEC_JUST_WORKS   = 2
-//SEC_MITM         = 3
-
-#if (SDK_CONFIG_SECURITY_MODE_IS(SECURITY_MODE_ENCRYPTION_NO_MITM))
-#define MICROBIT_SECURITY_MODE 2
-#elif (SDK_CONFIG_SECURITY_MODE_IS(SECURITY_MODE_ENCRYPTION_OPEN_LINK))
-#define MICROBIT_SECURITY_MODE 1
+#if (__SDK_CONFIG_SECURITY_MODE_IS(SECURITY_MODE_ENCRYPTION_NO_MITM))
+#define MICROBIT_BLE_SECURITY_MODE 2
+#elif (__SDK_CONFIG_SECURITY_MODE_IS(SECURITY_MODE_ENCRYPTION_OPEN_LINK))
+#define MICROBIT_BLE_SECURITY_MODE 1
+#elif (__SDK_CONFIG_SECURITY_MODE_IS(SECURITY_MODE_ENCRYPTION_WITH_MITM))
+#define MICROBIT_BLE_SECURITY_MODE 3
 #else
-#define MICROBIT_SECURITY_MODE 3
+#define MICROBIT_BLE_SECURITY_MODE 3
 #endif
 
-#endif //#ifndef MICROBIT_SECURITY_MODE
+#endif //#ifndef MICROBIT_BLE_SECURITY_MODE
 //==========================================================
 
 
@@ -298,7 +293,7 @@
  
 
 #ifndef NRF_DFU_BLE_BUTTONLESS_SUPPORTS_BONDS
-#define NRF_DFU_BLE_BUTTONLESS_SUPPORTS_BONDS 1
+#define NRF_DFU_BLE_BUTTONLESS_SUPPORTS_BONDS (MICROBIT_BLE_SECURITY_MODE != 1)
 
 #endif
 

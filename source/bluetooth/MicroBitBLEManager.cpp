@@ -93,7 +93,7 @@ const char *MICROBIT_BLE_MODEL = "BBC micro:bit";
 const char *MICROBIT_BLE_HARDWARE_VERSION = NULL;
 const char *MICROBIT_BLE_FIRMWARE_VERSION = MICROBIT_DAL_VERSION;
 const char *MICROBIT_BLE_SOFTWARE_VERSION = NULL;
-const int8_t MICROBIT_BLE_POWER_LEVEL[] = {-40, -20, -16, -12, -8, -4, 0, 4};
+const int8_t MICROBIT_BLE_POWER_LEVEL[] = { -20, -16, -12, -8, -4, 0, 4, 8};
 
 /*
  * Many of the interfaces we need to use only support callbacks to plain C functions, rather than C++ methods.
@@ -276,7 +276,24 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
     
     ble_gap_sec_params_t sec_param;
     memset(&sec_param, 0, sizeof(ble_gap_sec_params_t));
-#if (SECURITY_MODE_IS(SECURITY_MODE_ENCRYPTION_NO_MITM))
+
+#if MICROBIT_BLE_SECURITY_MODE == 3
+#if defined(MICROBIT_BLE_SECURITY_LEVEL) && !(SECURITY_MODE_IS(SECURITY_MODE_ENCRYPTION_WITH_MITM))
+#error "MICROBIT_BLE_SECURITY_MODE == 2 but MICROBIT_BLE_SECURITY_LEVEL != SECURITY_MODE_ENCRYPTION_WITH_MITM"
+#endif
+#elif MICROBIT_BLE_SECURITY_MODE == 2
+#if defined(MICROBIT_BLE_SECURITY_LEVEL) && !(SECURITY_MODE_IS(SECURITY_MODE_ENCRYPTION_NO_MITM))
+#error "MICROBIT_BLE_SECURITY_MODE == 2 but MICROBIT_BLE_SECURITY_LEVEL != SECURITY_MODE_ENCRYPTION_NO_MITM"
+#endif
+#elif MICROBIT_BLE_SECURITY_MODE == 1
+#if defined(MICROBIT_BLE_SECURITY_LEVEL) && !(SECURITY_MODE_IS(SECURITY_MODE_ENCRYPTION_OPEN_LINK))
+#error "MICROBIT_BLE_SECURITY_MODE == 2 but MICROBIT_BLE_SECURITY_LEVEL != SECURITY_MODE_ENCRYPTION_OPEN_LINK"
+#endif
+#else
+#error "Unknown MICROBIT_BLE_SECURITY_MODE"
+#endif
+
+#if (MICROBIT_BLE_SECURITY_MODE == 2)
     DMESG( "Just Works security");
     sec_param.bond = true;
     sec_param.mitm = false;
@@ -290,7 +307,7 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
     sec_param.kdist_own.id = 1;
     sec_param.kdist_peer.enc = 1;
     sec_param.kdist_peer.id = 1;
-#elif (SECURITY_MODE_IS(SECURITY_MODE_ENCRYPTION_OPEN_LINK))
+#elif (MICROBIT_BLE_SECURITY_MODE == 1)
     DMESG( "No security");
     sec_param.bond = false;
     sec_param.mitm = false;
@@ -304,13 +321,13 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
     sec_param.kdist_own.id = 0;
     sec_param.kdist_peer.enc = 0;
     sec_param.kdist_peer.id = 0;
-#else
+#elif (MICROBIT_BLE_SECURITY_MODE == 3)
     DMESG( "Passkey security");
     sec_param.bond = true;
     sec_param.mitm = true;
     sec_param.lesc = 0;
     sec_param.keypress = 0;
-    sec_param.io_caps = BLE_GAP_IO_CAPS_KEYBOARD_ONLY;
+    sec_param.io_caps = BLE_GAP_IO_CAPS_DISPLAY_ONLY;
     sec_param.oob = false;
     sec_param.min_key_size = 7;
     sec_param.max_key_size = 16;
@@ -318,6 +335,8 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
     sec_param.kdist_own.id = 1;
     sec_param.kdist_peer.enc = 1;
     sec_param.kdist_peer.id = 1;
+#else
+#error "Unknown MICROBIT_BLE_SECURITY_MODE"
 #endif
 
     ECHK( pm_init());
@@ -1217,7 +1236,8 @@ static bool microbit_dfu_shutdown_handler(nrf_pwr_mgmt_evt_t event)
     switch (event)
     {
         case NRF_PWR_MGMT_EVT_PREPARE_DFU:
-            sd_softdevice_disable();
+            //TODO: sd_softdevice_disable hangs - sometimes!
+            //sd_softdevice_disable();
             break;
 
         default:
