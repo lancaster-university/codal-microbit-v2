@@ -88,6 +88,17 @@ DEALINGS IN THE SOFTWARE.
 #define SECURITY_MODE(x) __CAT(__, x)
 #define SECURITY_MODE_IS(x) (SECURITY_MODE(MICROBIT_BLE_SECURITY_LEVEL) == SECURITY_MODE(x))
 
+//
+// Times for pairing (ms): delay between pairing events and delay before disconnecting
+//
+#ifndef MICROBIT_BLE_DISCONNECT_AFTER_PAIRING_DELAY
+#define MICROBIT_BLE_DISCONNECT_AFTER_PAIRING_DELAY  2000
+#endif
+
+#ifndef MICROBIT_BLE_PAIRING_EVENT_DELAY
+#define MICROBIT_BLE_PAIRING_EVENT_DELAY 2000
+#endif
+
 const char *MICROBIT_BLE_MANUFACTURER = NULL;
 const char *MICROBIT_BLE_MODEL = "BBC micro:bit";
 const char *MICROBIT_BLE_HARDWARE_VERSION = NULL;
@@ -124,8 +135,8 @@ static ret_code_t microbit_ble_on_error( ret_code_t err, const char *msg);
 
 static void const_ascii_to_utf8(ble_srv_utf8_str_t * p_utf8, const char * p_ascii);
 
-static void microbit_for_each_connected_disconnect( uint16_t conn_handle, void *p_context);
-static void microbit_for_each_connected_tx_power_set( uint16_t conn_handle, void *p_context);
+static void microbit_ble_for_each_connected_disconnect( uint16_t conn_handle, void *p_context);
+static void microbit_ble_for_each_connected_tx_power_set( uint16_t conn_handle, void *p_context);
 
 static void bleConnectionCallback( microbit_gaphandle_t handle);
 static void passkeyDisplayCallback( microbit_gaphandle_t handle, ManagedString passKey);
@@ -478,7 +489,7 @@ int MicroBitBLEManager::setTransmitPower(int power)
     
     m_power = power;
     
-    ble_conn_state_for_each_connected( microbit_for_each_connected_tx_power_set, &m_power);
+    ble_conn_state_for_each_connected( microbit_ble_for_each_connected_tx_power_set, &m_power);
     
     if ( m_adv_handle != BLE_GAP_ADV_SET_HANDLE_NOT_SET)
     {
@@ -516,32 +527,70 @@ void MicroBitBLEManager::pairingRequested(ManagedString passKey)
     this->pairingStatus = MICROBIT_BLE_PAIR_REQUEST;
 }
 
+#define MICROBIT_BLE_PAIR_FAILURE   0
+#define MICROBIT_BLE_PAIR_SUCCESS   1
+#define MICROBIT_BLE_PAIR_SEC       2
+#define MICROBIT_BLE_PAIR_UPDATE    3
+#define MICROBIT_BLE_PAIR_CHECK     4
+
 /**
- * A pairing request has been sucessfully completed.
- * If we're in pairing mode, display a success or failure message.
+ * Record pairing progress
  *
  * @note for internal use only.
  */
-void MicroBitBLEManager::pairingComplete(bool success)
+bool MicroBitBLEManager::pairingComplete( int event)
 {
     if ( currentMode != MICROBIT_MODE_PAIRING)
-        return;
+        return true;
     
     if ( this->pairingStatus & MICROBIT_BLE_PAIR_COMPLETE)
-        return;
+        return true;
     
-    DMESG( "pairingComplete %d", (int) success);
+    switch ( event)
+    {
+        case MICROBIT_BLE_PAIR_FAILURE:
+            DMESG( "pairingComplete FAILURE");
+            this->pairingStatus = MICROBIT_BLE_PAIR_COMPLETE;
+            this->status |= MICROBIT_BLE_STATUS_DELETE_BOND;
+            fiber_add_idle_component(this);
+            break;
+            
+        case MICROBIT_BLE_PAIR_SUCCESS:
+            DMESG( "pairingComplete SUCCESS");
+            this->pairingStatus = MICROBIT_BLE_PAIR_COMPLETE | MICROBIT_BLE_PAIR_SUCCESSFUL;
+            if ( MICROBIT_BLE_DISCONNECT_AFTER_PAIRING_DELAY > 0)
+            {
+                this->status |= MICROBIT_BLE_STATUS_DISCONNECT;
+                fiber_add_idle_component(this);
+            }
+            break;
+                
+        case MICROBIT_BLE_PAIR_SEC:
+            DMESG( "pairingComplete SEC");
+            pairingTime = system_timer_current_time();
+            break;
+            
+        case MICROBIT_BLE_PAIR_UPDATE:
+            DMESG( "pairingComplete UPDATE");
+            if ( pairingTime)
+                pairingTime = system_timer_current_time();
+            break;
 
-    if (success)
-    {
-        this->pairingStatus = MICROBIT_BLE_PAIR_COMPLETE | MICROBIT_BLE_PAIR_SUCCESSFUL;
+        case MICROBIT_BLE_PAIR_CHECK:
+            //DMESG( "pairingComplete CHECK");
+            if ( !(pairingStatus & MICROBIT_BLE_PAIR_COMPLETE)
+                && pairingTime > 0
+                && (system_timer_current_time() - pairingTime) >= MICROBIT_BLE_PAIRING_EVENT_DELAY)
+            {
+                pairingComplete( MICROBIT_BLE_PAIR_SUCCESS);
+            }
+            break;
+            
+        default:
+            break;
     }
-    else
-    {
-        this->pairingStatus = MICROBIT_BLE_PAIR_COMPLETE;
-        this->status |= MICROBIT_BLE_STATUS_DELETE_BOND;
-        fiber_add_idle_component(this);
-    }
+    
+    return this->pairingStatus & MICROBIT_BLE_PAIR_COMPLETE;
 }
 
 /**
@@ -550,11 +599,22 @@ void MicroBitBLEManager::pairingComplete(bool success)
  */
 void MicroBitBLEManager::idleCallback()
 {
+    if ( this->status & MICROBIT_BLE_STATUS_DISCONNECT)
+    {
+        if ( (system_timer_current_time() - pairingTime) >= MICROBIT_BLE_DISCONNECT_AFTER_PAIRING_DELAY)
+        {
+            DMESG( "%d:MicroBitBLEManager::idleCallback", (int)system_timer_current_time());
+            DMESG( "MICROBIT_BLE_STATUS_DISCONNECT");
+            ble_conn_state_for_each_connected( microbit_ble_for_each_connected_disconnect, NULL);
+            this->status &= ~MICROBIT_BLE_STATUS_DISCONNECT;
+        }
+    }
+
     if ( this->status & MICROBIT_BLE_STATUS_DELETE_BOND)
     {
         DMESG( "MicroBitBLEManager::idleCallback");
-        DMESG( "MICROBIT_BLE_STATUS_DELETE_BOND 0x%x", m_failed_peer_id);
-        ble_conn_state_for_each_connected( microbit_for_each_connected_disconnect, NULL);
+        DMESG( "MICROBIT_BLE_STATUS_DELETE_BOND %x", m_failed_peer_id);
+        ble_conn_state_for_each_connected( microbit_ble_for_each_connected_disconnect, NULL);
 
         if ( m_failed_peer_id != PM_PEER_ID_INVALID)
         {
@@ -570,8 +630,8 @@ void MicroBitBLEManager::idleCallback()
     
     if ( this->status & MICROBIT_BLE_STATUS_SHUTDOWN)
     {
-        DMESG( "MicroBitBLEManager::idleCallback");
-        DMESG( "MICROBIT_BLE_STATUS_SHUTDOWN");
+        //DMESG( "MicroBitBLEManager::idleCallback");
+        //DMESG( "MICROBIT_BLE_STATUS_SHUTDOWN");
         nrf_pwr_mgmt_shutdown(NRF_PWR_MGMT_SHUTDOWN_CONTINUE);
     }
 }
@@ -720,6 +780,8 @@ void MicroBitBLEManager::pairingMode(MicroBitDisplay &display, MicroBitButton &a
     int fadeDirection = 0;
 
     currentMode = MICROBIT_MODE_PAIRING;
+    
+    pairingTime = 0;
 
     stopAdvertising();
 
@@ -736,15 +798,15 @@ void MicroBitBLEManager::pairingMode(MicroBitDisplay &display, MicroBitButton &a
     // Stop any running animations on the display
     display.stopAnimation();
 
-    fiber_add_idle_component(this);
-
     showManagementModeAnimation(display);
 
     // Display our name, visualised as a histogram in the display to aid identification.
     showNameHistogram(display);
-
+    
     while (1)
     {
+        pairingComplete( MICROBIT_BLE_PAIR_CHECK);
+
         if (pairingStatus & MICROBIT_BLE_PAIR_REQUEST)
         {
             timeInPairingMode = 0;
@@ -779,15 +841,21 @@ void MicroBitBLEManager::pairingMode(MicroBitDisplay &display, MicroBitButton &a
             for (int i = 0; i < passKey.length(); i++)
             {
                 display.image.print(passKey.charAt(i), 0, 0);
+                
+                if ( pairingComplete( MICROBIT_BLE_PAIR_CHECK))
+                    break;
+                
                 fiber_sleep(800);
                 display.clear();
-                fiber_sleep(200);
 
-                if (pairingStatus & MICROBIT_BLE_PAIR_COMPLETE)
+                if ( pairingComplete( MICROBIT_BLE_PAIR_CHECK))
                     break;
+                
+                fiber_sleep(200);
             }
 
-            fiber_sleep(1000);
+            if ( !pairingComplete( MICROBIT_BLE_PAIR_CHECK))
+                fiber_sleep(1000);
         }
 
         if (pairingStatus & MICROBIT_BLE_PAIR_COMPLETE)
@@ -1023,7 +1091,7 @@ static void passkeyDisplayCallback( microbit_gaphandle_t handle, ManagedString p
  */
 static void microbit_ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 {
-    DMESG( "microbit_ble_evt_handler %d", (int) p_ble_evt->header.evt_id);
+    DMESG( "%d:microbit_ble_evt_handler %x %d", (int)system_timer_current_time(), (unsigned int) p_ble_evt->header.evt_id);
     
     switch (p_ble_evt->header.evt_id)
     {
@@ -1035,6 +1103,7 @@ static void microbit_ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_conte
         }
         case BLE_GAP_EVT_CONNECTED:
         {
+            DMESG( "BLE_GAP_EVT_CONNECTED %d", ble_conn_state_conn_count());
             bleConnectionCallback( p_ble_evt->evt.gap_evt.conn_handle);
             break;
         }
@@ -1075,10 +1144,10 @@ static void microbit_ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_conte
  */
 static void microbit_ble_pm_evt_handler(pm_evt_t const * p_evt)
 {
-    DMESG( "microbit_ble_pm_evt_handler %d", (int) p_evt->evt_id);
+    DMESG( "%d:microbit_ble_pm_evt_handler %d", (int)system_timer_current_time(), (int) p_evt->evt_id);
 
     bool bondingFailed = false;
-
+    
     pm_handler_on_pm_evt( p_evt);
     pm_handler_flash_clean( p_evt);
 
@@ -1107,6 +1176,8 @@ static void microbit_ble_pm_evt_handler(pm_evt_t const * p_evt)
 
         case PM_EVT_CONN_SEC_SUCCEEDED:
             DMESG( "PM_EVT_CONN_SEC_SUCCEEDED");
+            if ( MicroBitBLEManager::manager)
+                MicroBitBLEManager::manager->pairingComplete( MICROBIT_BLE_PAIR_SEC);
             break;
         
         case PM_EVT_CONN_SEC_FAILED:
@@ -1116,9 +1187,8 @@ static void microbit_ble_pm_evt_handler(pm_evt_t const * p_evt)
 
         case PM_EVT_PEER_DATA_UPDATE_SUCCEEDED:
             DMESG( "PM_EVT_PEER_DATA_UPDATE_SUCCEEDED");
-            // When pairing, this event is delivered multiple times. Can we wait until the last?
             if ( MicroBitBLEManager::manager)
-                MicroBitBLEManager::manager->pairingComplete( true);
+                MicroBitBLEManager::manager->pairingComplete( MICROBIT_BLE_PAIR_UPDATE);
             break;
         
         case PM_EVT_PEER_DATA_UPDATE_FAILED:
@@ -1137,7 +1207,7 @@ static void microbit_ble_pm_evt_handler(pm_evt_t const * p_evt)
         if ( ECHK( pm_peer_id_get( p_evt->conn_handle, &peer_id)) == NRF_SUCCESS)
             m_failed_peer_id = peer_id;
         if ( MicroBitBLEManager::manager)
-            MicroBitBLEManager::manager->pairingComplete( false);
+            MicroBitBLEManager::manager->pairingComplete( MICROBIT_BLE_PAIR_FAILURE);
     }
 }
 
@@ -1151,19 +1221,107 @@ static void const_ascii_to_utf8(ble_srv_utf8_str_t * p_utf8, const char * p_asci
 }
 
 
-static void microbit_for_each_connected_disconnect( uint16_t conn_handle, void * /*p_context*/)
+static void microbit_ble_for_each_connected_disconnect( uint16_t conn_handle, void * /*p_context*/)
 {
-    DMESG( "microbit_for_each_connected_disconnect %d", (int) conn_handle);
+    DMESGF( "microbit_ble_for_each_connected_disconnect %d", (int) conn_handle);
     sd_ble_gap_disconnect(conn_handle, BLE_HCI_REMOTE_DEV_TERMINATION_DUE_TO_POWER_OFF);
 }
 
 
-static void microbit_for_each_connected_tx_power_set( uint16_t conn_handle, void *p_context)
+static void microbit_ble_for_each_connected_tx_power_set( uint16_t conn_handle, void *p_context)
 {
     int power = *( int *) p_context;
-    DMESG( "microbit_for_each_connected_tx_power_set conn_handle %d power %d", (int) conn_handle, (int) power);
+    DMESGF( "microbit_ble_for_each_connected_tx_power_set conn_handle %d power %d", (int) conn_handle, (int) power);
     ECHK( sd_ble_gap_tx_power_set( BLE_GAP_TX_POWER_ROLE_CONN, conn_handle, MICROBIT_BLE_POWER_LEVEL[ power]));
 }
+
+
+/**
+ * Callback for handling shutdown preparation.
+ *
+ * @param event Power manager event.
+ *
+ * @return True if shutdown is allowed by this power manager handler, otherwise false.
+ */
+static bool microbit_ble_shutdown_handler(nrf_pwr_mgmt_evt_t event)
+{
+    DMESG( "microbit_ble_shutdown_handler %d", (int) event);
+    
+    switch (event)
+    {
+        case NRF_PWR_MGMT_EVT_PREPARE_RESET:
+        case NRF_PWR_MGMT_EVT_PREPARE_DFU:
+            if ( MicroBitBLEManager::manager)
+            {
+                // Use idleCallback rather than a timer to restart the shutdown
+                MicroBitBLEManager::manager->status |= MICROBIT_BLE_STATUS_SHUTDOWN;
+                fiber_add_idle_component( MicroBitBLEManager::manager);
+                MicroBitBLEManager::manager->stopAdvertising();
+                MicroBitBLEManager::manager->setAdvertiseOnDisconnect( false);
+            }
+            ble_conn_state_for_each_connected( microbit_ble_for_each_connected_disconnect, NULL);
+
+            // Allow the NRF_SDH_REQUEST_OBSERVERs (e.g. fstorage) to delay the shutdown
+            ECHK( nrf_sdh_disable_request());
+            if ( nrf_sdh_is_enabled())
+                return false;
+            break;
+
+        case NRF_PWR_MGMT_EVT_PREPARE_WAKEUP:
+        case NRF_PWR_MGMT_EVT_PREPARE_SYSOFF:
+            break;
+            
+        default:
+            break;
+    }
+
+    return true;
+}
+
+//lint -esym(528, m_ble_dfu_shutdown_handler)
+NRF_PWR_MGMT_HANDLER_REGISTER( microbit_ble_shutdown_handler, 0);
+
+
+/**
+* Callback for handling softdevice state change.
+*
+* @param req Softdevice manager event.
+*
+* @return True to allow the change, otherwise false.
+*/
+static bool microbit_ble_sdh_req_handler(nrf_sdh_req_evt_t req, void * /*p_context*/)
+{
+    switch ( req)
+    {
+        case NRF_SDH_EVT_ENABLE_REQUEST:
+            break;
+            
+        case NRF_SDH_EVT_DISABLE_REQUEST:
+            if ( MicroBitBLEManager::manager)
+            {
+                MicroBitBLEManager::manager->stopAdvertising();
+                MicroBitBLEManager::manager->setAdvertiseOnDisconnect( false);
+            }
+            if ( ble_conn_state_conn_count()) // TODO: anything else we need to wait for?
+            {
+                ble_conn_state_for_each_connected( microbit_ble_for_each_connected_disconnect, NULL);
+                // Pause the SoftDevice state change
+                DMESGF( "microbit_ble_sdh_req_handler DELAY %d", (int) ble_conn_state_conn_count());
+                return false;
+            }
+            break;
+    }
+    
+    // Allow the SoftDevice state change, unless other handlers object
+    DMESGF( "microbit_ble_sdh_req_handler ALLOW %d", (int) ble_conn_state_conn_count());
+    return true;
+}
+
+NRF_SDH_REQUEST_OBSERVER(microbit_dfu_sdh_req_obs, 0) =
+{
+    .handler = microbit_ble_sdh_req_handler,
+    .p_context = NULL
+};
 
 
 /**
@@ -1197,9 +1355,13 @@ static void microbit_dfu_evt_handler(ble_dfu_buttonless_evt_type_t event)
     {
         case BLE_DFU_EVT_BOOTLOADER_ENTER_PREPARE:
         {
+            DMESG( "BLE_DFU_EVT_BOOTLOADER_ENTER_PREPARE: ble_conn_state_conn_count %d", ble_conn_state_conn_count());
             if (MicroBitBLEManager::manager)
-              MicroBitBLEManager::manager->setAdvertiseOnDisconnect( false);
-            ble_conn_state_for_each_connected( microbit_for_each_connected_disconnect, NULL);
+            {
+                MicroBitBLEManager::manager->stopAdvertising();
+                MicroBitBLEManager::manager->setAdvertiseOnDisconnect( false);
+            }
+            ble_conn_state_for_each_connected( microbit_ble_for_each_connected_disconnect, NULL);
             break;
         }
 
@@ -1219,63 +1381,6 @@ static void microbit_dfu_evt_handler(ble_dfu_buttonless_evt_type_t event)
     }
 }
 
-
-/**
- * Callback for handling shutdown preparation.
- *
- * @param event Power manager event.
- *
- * @return True if shutdown is allowed by this power manager handler, otherwise false.
- */
-static bool microbit_dfu_shutdown_handler(nrf_pwr_mgmt_evt_t event)
-{
-    DMESG( "microbit_dfu_shutdown_handler %d", (int) event);
-    
-    switch (event)
-    {
-        case NRF_PWR_MGMT_EVT_PREPARE_DFU:
-            if ( MicroBitBLEManager::manager)
-            {
-                MicroBitBLEManager::manager->status |= MICROBIT_BLE_STATUS_SHUTDOWN;
-                fiber_add_idle_component( MicroBitBLEManager::manager);
-            }
-            
-            //TODO: sd_softdevice_disable hangs - sometimes!
-            //sd_softdevice_disable();
-            //TODO: Use nrf_sdh_disable_request, which will call microbit_dfu_sdh_state_observer?
-            break;
-
-        default:
-            break;
-    }
-
-    return true;
-}
-
-//lint -esym(528, m_ble_dfu_shutdown_handler)
-NRF_PWR_MGMT_HANDLER_REGISTER( microbit_dfu_shutdown_handler, 0);
-
-
-static void microbit_dfu_sdh_state_observer(nrf_sdh_state_evt_t state, void * p_context)
-{
-    DMESG( "microbit_dfu_sdh_state_observer %d", (int) state);
-    
-    if (state == NRF_SDH_EVT_STATE_DISABLED)
-    {
-        DMESG( "NRF_SDH_EVT_STATE_DISABLED");
-        nrf_power_gpregret2_set( NRF_POWER, BOOTLOADER_DFU_SKIP_CRC);
-        nrf_pwr_mgmt_shutdown(NRF_PWR_MGMT_SHUTDOWN_GOTO_SYSOFF);
-    }
-}
-
-NRF_SDH_STATE_OBSERVER(m_microbit_dfu_state_obs, 0) =
-{
-    .handler = microbit_dfu_sdh_state_observer,
-    .p_context = NULL
-};
-
 #endif // CONFIG_ENABLED(MICROBIT_BLE_DFU_SERVICE)
-
-
 
 #endif // CONFIG_ENABLED(DEVICE_BLE)

@@ -56,9 +56,10 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_BLE_EDDYSTONE_ADV_INTERVAL     400
 #define MICROBIT_BLE_EDDYSTONE_DEFAULT_POWER    0xF0
 
-// MicroBitComponent status flags
+// CodalComponent status flags
 #define MICROBIT_BLE_STATUS_DELETE_BOND         0x02
-#define MICROBIT_BLE_STATUS_SHUTDOWN            0x04
+#define MICROBIT_BLE_STATUS_DISCONNECT          0x04
+#define MICROBIT_BLE_STATUS_SHUTDOWN            0x08
 
 // micro:bit Modes
 // The micro:bit may be in different states: running a user's application or into BLE pairing mode
@@ -178,12 +179,11 @@ class MicroBitBLEManager : public CodalComponent
     void pairingRequested(ManagedString passKey);
 
     /**
-	 * A pairing request has been sucessfully completed.
-	 * If we're in pairing mode, display a success or failure message.
+	 * Record pairing progress
      *
      * @note for internal use only.
 	 */
-    void pairingComplete(bool success);
+    bool pairingComplete( int event);
 
     /**
      * Periodic callback in thread context.
@@ -291,6 +291,8 @@ class MicroBitBLEManager : public CodalComponent
     int pairingStatus;
     ManagedString passKey;
     ManagedString gapName;
+    
+    unsigned long pairingTime;
 
     /*
      * Default to Application Mode
