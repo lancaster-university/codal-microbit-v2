@@ -456,6 +456,8 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
     cp_init.disconnect_on_fail             = true;
     ECHK( ble_conn_params_init(&cp_init));
 
+    setAdvertiseOnDisconnect( true);
+  
 // If we have whitelisting enabled, then prevent only enable advertising of we have any binded devices...
 // This is to further protect kids' privacy. If no-one initiates BLE, then the device is unreachable.
 // If whiltelisting is disabled, then we always advertise.
@@ -1233,7 +1235,7 @@ static void const_ascii_to_utf8(ble_srv_utf8_str_t * p_utf8, const char * p_asci
 static void microbit_ble_for_each_connected_disconnect( uint16_t conn_handle, void * /*p_context*/)
 {
     DMESGF( "microbit_ble_for_each_connected_disconnect %d", (int) conn_handle);
-    sd_ble_gap_disconnect(conn_handle, BLE_HCI_REMOTE_DEV_TERMINATION_DUE_TO_POWER_OFF);
+    ECHK( sd_ble_gap_disconnect( conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION));
 }
 
 
@@ -1254,7 +1256,7 @@ static void microbit_ble_for_each_connected_tx_power_set( uint16_t conn_handle, 
  */
 static bool microbit_ble_shutdown_handler(nrf_pwr_mgmt_evt_t event)
 {
-    DMESG( "microbit_ble_shutdown_handler %d", (int) event);
+    DMESG( "%d:microbit_ble_shutdown_handler %d", (int)system_timer_current_time(), (int) event);
     
     switch (event)
     {
@@ -1315,14 +1317,14 @@ static bool microbit_ble_sdh_req_handler(nrf_sdh_req_evt_t req, void * /*p_conte
             {
                 ble_conn_state_for_each_connected( microbit_ble_for_each_connected_disconnect, NULL);
                 // Pause the SoftDevice state change
-                DMESGF( "microbit_ble_sdh_req_handler DELAY %d", (int) ble_conn_state_conn_count());
+                DMESGF( "%d:microbit_ble_sdh_req_handler DELAY %d", (int)system_timer_current_time(), (int) ble_conn_state_conn_count());
                 return false;
             }
             break;
     }
     
     // Allow the SoftDevice state change, unless other handlers object
-    DMESGF( "microbit_ble_sdh_req_handler ALLOW %d", (int) ble_conn_state_conn_count());
+    DMESGF( "%d:microbit_ble_sdh_req_handler ALLOW %d", (int)system_timer_current_time(), (int) ble_conn_state_conn_count());
     return true;
 }
 
