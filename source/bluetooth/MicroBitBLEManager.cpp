@@ -529,7 +529,7 @@ void MicroBitBLEManager::pairingRequested(ManagedString passKey)
 
 #define MICROBIT_BLE_PAIR_FAILURE   0
 #define MICROBIT_BLE_PAIR_SUCCESS   1
-#define MICROBIT_BLE_PAIR_SEC       2
+#define MICROBIT_BLE_PAIR_AUTH      2
 #define MICROBIT_BLE_PAIR_UPDATE    3
 #define MICROBIT_BLE_PAIR_CHECK     4
 
@@ -565,8 +565,8 @@ bool MicroBitBLEManager::pairingComplete( int event)
             }
             break;
                 
-        case MICROBIT_BLE_PAIR_SEC:
-            DMESG( "pairingComplete SEC");
+        case MICROBIT_BLE_PAIR_AUTH:
+            DMESG( "pairingComplete AUTH");
             pairingTime = system_timer_current_time();
             break;
             
@@ -1130,7 +1130,16 @@ static void microbit_ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_conte
         case BLE_GATTS_EVT_TIMEOUT:
             ECHK( sd_ble_gap_disconnect( p_ble_evt->evt.gatts_evt.conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION));
             break;
-            
+
+        case BLE_GAP_EVT_AUTH_STATUS:
+            DMESG( "BLE_GAP_EVT_AUTH_STATUS %d", (int) (p_ble_evt->evt.gap_evt.params.auth_status.auth_status == BLE_GAP_SEC_STATUS_SUCCESS));
+            if ( p_ble_evt->evt.gap_evt.params.auth_status.auth_status == BLE_GAP_SEC_STATUS_SUCCESS)
+            {
+              if ( MicroBitBLEManager::manager)
+                  MicroBitBLEManager::manager->pairingComplete( MICROBIT_BLE_PAIR_AUTH);
+            }
+            break;
+        
         default:
             break;
     }
@@ -1177,7 +1186,7 @@ static void microbit_ble_pm_evt_handler(pm_evt_t const * p_evt)
         case PM_EVT_CONN_SEC_SUCCEEDED:
             DMESG( "PM_EVT_CONN_SEC_SUCCEEDED");
             if ( MicroBitBLEManager::manager)
-                MicroBitBLEManager::manager->pairingComplete( MICROBIT_BLE_PAIR_SEC);
+                MicroBitBLEManager::manager->pairingComplete( MICROBIT_BLE_PAIR_UPDATE);
             break;
         
         case PM_EVT_CONN_SEC_FAILED:
@@ -1202,7 +1211,7 @@ static void microbit_ble_pm_evt_handler(pm_evt_t const * p_evt)
     
     if ( bondingFailed)
     {
-        DMESG( "Bonding failed");
+        DMESG( "Security failed");
         pm_peer_id_t peer_id;
         if ( ECHK( pm_peer_id_get( p_evt->conn_handle, &peer_id)) == NRF_SUCCESS)
             m_failed_peer_id = peer_id;
