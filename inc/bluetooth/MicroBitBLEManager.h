@@ -272,6 +272,13 @@ class MicroBitBLEManager : public CodalComponent
      * Control whether advertising will be restarted on disconnection
      */
     void setAdvertiseOnDisconnect( bool f) { advertiseOnDisconnect = f; }
+    
+    /**
+     * Prepare for shutdown or disabling softdevice by stopping advertising and disconnecting
+     *
+     * Return true if ready for shutdown
+     */
+    bool prepareForShutdown();
 
   private:
     /**
@@ -293,6 +300,7 @@ class MicroBitBLEManager : public CodalComponent
     ManagedString gapName;
     
     unsigned long pairingTime;
+    unsigned long shutdownTime;
 
     /*
      * Default to Application Mode

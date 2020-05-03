@@ -99,6 +99,13 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_BLE_PAIRING_EVENT_DELAY 2000
 #endif
 
+//
+// Time (ms) to delay shutdown or disabling softdevice
+//
+#ifndef MICROBIT_BLE_SHUTDOWN_DELAY
+#define MICROBIT_BLE_SHUTDOWN_DELAY 500
+#endif
+
 const char *MICROBIT_BLE_MANUFACTURER = NULL;
 const char *MICROBIT_BLE_MODEL = "BBC micro:bit";
 const char *MICROBIT_BLE_HARDWARE_VERSION = NULL;
@@ -224,6 +231,9 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
 
     DMESG( "MicroBitBLEManager::init");
     
+    pairingTime = 0;
+    shutdownTime = 0;
+
 #if NRF_LOG_ENABLED
     ECHK( NRF_LOG_INIT(NULL));
 #if ( defined(NRF_LOG_BACKEND_RTT_ENABLED) && NRF_LOG_BACKEND_RTT_ENABLED) || ( defined(NRF_LOG_BACKEND_UART_ENABLED) && NRF_LOG_BACKEND_UART_ENABLED)
@@ -1003,6 +1013,40 @@ uint8_t MicroBitBLEManager::getCurrentMode()
 }
 
 
+
+/**
+ * Prepare for shutdown or disabling softdevice by stopping advertising and disconnecting
+ *
+ * Return true if ready for shutdown
+ */
+bool MicroBitBLEManager::prepareForShutdown()
+{
+    bool shutdownOK = true;
+        
+    MicroBitBLEManager::manager->stopAdvertising();
+    MicroBitBLEManager::manager->setAdvertiseOnDisconnect( false);
+
+    if ( ble_conn_state_conn_count()) // TODO: anything else we need to wait for?
+    {
+        shutdownOK = false;
+        ble_conn_state_for_each_connected( microbit_ble_for_each_connected_disconnect, NULL);
+        system_timer_wait_ms(1000);
+    }
+    
+    if ( shutdownOK)
+    {
+        if ( !shutdownTime)
+            shutdownTime = system_timer_current_time();
+
+        if ( (system_timer_current_time() - shutdownTime) < MICROBIT_BLE_SHUTDOWN_DELAY)
+            shutdownOK = false;
+    }
+    
+    return shutdownOK;
+}
+
+
+
 #if NRF_LOG_ENABLE || ( DEVICE_DMESG_BUFFER_SIZE > 0)
 static ret_code_t microbit_ble_on_error( ret_code_t err, const char *msg)
 {
@@ -1256,6 +1300,8 @@ static void microbit_ble_for_each_connected_tx_power_set( uint16_t conn_handle, 
  */
 static bool microbit_ble_shutdown_handler(nrf_pwr_mgmt_evt_t event)
 {
+    bool shutdownOK = true; // Allow the shutdown, unless other handlers object
+    
     DMESG( "%d:microbit_ble_shutdown_handler %d", (int)system_timer_current_time(), (int) event);
     
     switch (event)
@@ -1267,15 +1313,23 @@ static bool microbit_ble_shutdown_handler(nrf_pwr_mgmt_evt_t event)
                 // Use idleCallback rather than a timer to restart the shutdown
                 MicroBitBLEManager::manager->status |= MICROBIT_BLE_STATUS_SHUTDOWN;
                 fiber_add_idle_component( MicroBitBLEManager::manager);
-                MicroBitBLEManager::manager->stopAdvertising();
-                MicroBitBLEManager::manager->setAdvertiseOnDisconnect( false);
+                
+                shutdownOK = MicroBitBLEManager::manager->prepareForShutdown();
             }
-            ble_conn_state_for_each_connected( microbit_ble_for_each_connected_disconnect, NULL);
 
-            // Allow the NRF_SDH_REQUEST_OBSERVERs (e.g. fstorage) to delay the shutdown
-            ECHK( nrf_sdh_disable_request());
-            if ( nrf_sdh_is_enabled())
-                return false;
+            if ( shutdownOK)
+            {
+                // Allow the NRF_SDH_REQUEST_OBSERVERs (e.g. fstorage) to delay the shutdown
+                ECHK( nrf_sdh_disable_request());
+                shutdownOK = !nrf_sdh_is_enabled();
+            }
+            
+            if ( shutdownOK)
+            {
+                DMESGF( "%d:microbit_ble_shutdown_handler calling NVIC_SystemReset()", (int)system_timer_current_time());
+                system_timer_wait_ms(1000);
+                NVIC_SystemReset();
+            }
             break;
 
         case NRF_PWR_MGMT_EVT_PREPARE_WAKEUP:
@@ -1286,7 +1340,8 @@ static bool microbit_ble_shutdown_handler(nrf_pwr_mgmt_evt_t event)
             break;
     }
 
-    return true;
+    DMESG( "%d:microbit_ble_shutdown_handler shutdownOK = %d", (int)system_timer_current_time(), (int) shutdownOK);
+    return shutdownOK;
 }
 
 //lint -esym(528, m_ble_dfu_shutdown_handler)
@@ -1302,6 +1357,8 @@ NRF_PWR_MGMT_HANDLER_REGISTER( microbit_ble_shutdown_handler, 0);
 */
 static bool microbit_ble_sdh_req_handler(nrf_sdh_req_evt_t req, void * /*p_context*/)
 {
+    bool shutdownOK = true; // Allow the SoftDevice state change, unless other handlers object
+    
     switch ( req)
     {
         case NRF_SDH_EVT_ENABLE_REQUEST:
@@ -1310,22 +1367,22 @@ static bool microbit_ble_sdh_req_handler(nrf_sdh_req_evt_t req, void * /*p_conte
         case NRF_SDH_EVT_DISABLE_REQUEST:
             if ( MicroBitBLEManager::manager)
             {
-                MicroBitBLEManager::manager->stopAdvertising();
-                MicroBitBLEManager::manager->setAdvertiseOnDisconnect( false);
+                shutdownOK = MicroBitBLEManager::manager->prepareForShutdown();
             }
-            if ( ble_conn_state_conn_count()) // TODO: anything else we need to wait for?
+            else
             {
-                ble_conn_state_for_each_connected( microbit_ble_for_each_connected_disconnect, NULL);
-                // Pause the SoftDevice state change
-                DMESGF( "%d:microbit_ble_sdh_req_handler DELAY %d", (int)system_timer_current_time(), (int) ble_conn_state_conn_count());
-                return false;
+                ECHK( sd_ble_gap_adv_stop( m_adv_handle));
+                if ( ble_conn_state_conn_count()) // TODO: anything else we need to wait for?
+                {
+                    shutdownOK = false;
+                    ble_conn_state_for_each_connected( microbit_ble_for_each_connected_disconnect, NULL);
+                }
             }
             break;
     }
     
-    // Allow the SoftDevice state change, unless other handlers object
-    DMESGF( "%d:microbit_ble_sdh_req_handler ALLOW %d", (int)system_timer_current_time(), (int) ble_conn_state_conn_count());
-    return true;
+    DMESGF( "%d:microbit_ble_sdh_req_handler shutdownOK = %d", (int)system_timer_current_time(), (int) shutdownOK);
+    return shutdownOK;
 }
 
 NRF_SDH_REQUEST_OBSERVER(microbit_dfu_sdh_req_obs, 0) =
@@ -1366,13 +1423,9 @@ static void microbit_dfu_evt_handler(ble_dfu_buttonless_evt_type_t event)
     {
         case BLE_DFU_EVT_BOOTLOADER_ENTER_PREPARE:
         {
-            DMESG( "BLE_DFU_EVT_BOOTLOADER_ENTER_PREPARE: ble_conn_state_conn_count %d", ble_conn_state_conn_count());
-            if (MicroBitBLEManager::manager)
-            {
-                MicroBitBLEManager::manager->stopAdvertising();
-                MicroBitBLEManager::manager->setAdvertiseOnDisconnect( false);
-            }
-            ble_conn_state_for_each_connected( microbit_ble_for_each_connected_disconnect, NULL);
+            DMESG( "%d:BLE_DFU_EVT_BOOTLOADER_ENTER_PREPARE", (int)system_timer_current_time());
+            if ( MicroBitBLEManager::manager)
+                MicroBitBLEManager::manager->prepareForShutdown();
             break;
         }
 

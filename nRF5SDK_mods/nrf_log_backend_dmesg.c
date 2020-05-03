@@ -86,9 +86,11 @@ static void serial_tx(void const * p_context, char const * p_buffer, size_t len)
     memcpy( b, p_buffer, len);
     b[ len] = '\0';
     DMESGN( b);
-//#if DEVICE_DMESG_BUFFER_SIZE > 0
-//    codal_dmesg_flush();
-//#endif
+#if DEVICE_DMESG_BUFFER_SIZE > 0
+#if NRF_LOG_BACKEND_DMESG_FLUSH
+    codal_dmesg_flush();
+#endif
+#endif
 }
 
 static void nrf_log_backend_dmesg_put(nrf_log_backend_t const * p_backend,

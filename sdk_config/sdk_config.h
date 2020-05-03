@@ -64,6 +64,12 @@
 #define NRF_LOG_BACKEND_DMESG_TEMP_BUFFER_SIZE 64
 #endif
 
+// <o> NRF_LOG_BACKEND_DMESG_FLUSH - Flush DMESG with each write
+
+#ifndef NRF_LOG_BACKEND_DMESG_FLUSH
+#define NRF_LOG_BACKEND_DMESG_FLUSH 0
+#endif
+
 //==========================================================
 
 // <q> BLE_DIS_ENABLED  - ble_dis - Device Information Service
