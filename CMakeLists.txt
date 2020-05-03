@@ -178,7 +178,7 @@ list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/ble/
 list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/ble/peer_manager/security_dispatcher.c")
 list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/ble/peer_manager/security_manager.c")
 
-list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/nRF5SDK_mods/nrf_sdh.c")
+list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/softdevice/common/nrf_sdh.c")
 list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/softdevice/common/nrf_sdh_ble.c")
 list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/nRF5SDK_mods/nrf_sdh_soc.c")
 
