@@ -1030,7 +1030,6 @@ bool MicroBitBLEManager::prepareForShutdown()
     {
         shutdownOK = false;
         ble_conn_state_for_each_connected( microbit_ble_for_each_connected_disconnect, NULL);
-        system_timer_wait_ms(1000);
     }
     
     if ( shutdownOK)
@@ -1317,19 +1316,13 @@ static bool microbit_ble_shutdown_handler(nrf_pwr_mgmt_evt_t event)
                 shutdownOK = MicroBitBLEManager::manager->prepareForShutdown();
             }
 
-            if ( shutdownOK)
-            {
-                // Allow the NRF_SDH_REQUEST_OBSERVERs (e.g. fstorage) to delay the shutdown
-                ECHK( nrf_sdh_disable_request());
-                shutdownOK = !nrf_sdh_is_enabled();
-            }
-            
-            if ( shutdownOK)
-            {
-                DMESGF( "%d:microbit_ble_shutdown_handler calling NVIC_SystemReset()", (int)system_timer_current_time());
-                system_timer_wait_ms(1000);
-                NVIC_SystemReset();
-            }
+// TODO: sd_softdevice_disable hangs
+//            if ( shutdownOK)
+//            {
+//                // Allow the NRF_SDH_REQUEST_OBSERVERs (e.g. fstorage) to delay the shutdown
+//                ECHK( nrf_sdh_disable_request());
+//                shutdownOK = !nrf_sdh_is_enabled();
+//            }
             break;
 
         case NRF_PWR_MGMT_EVT_PREPARE_WAKEUP:
