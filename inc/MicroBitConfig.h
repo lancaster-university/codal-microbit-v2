@@ -134,7 +134,6 @@ extern uint32_t __data_end__;
 #define MICROBIT_DAL_VERSION                    "unknown"
 #endif
 
-#define SOUND_MIRROR_EXTENSION uBit.io.speaker
 #define PAGE_SIZE 4096
 
 #endif
