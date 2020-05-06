@@ -24,7 +24,7 @@
         "DEVICE_STACK_SIZE": 2048, 
         "DEVICE_TAG": 0, 
         "DEVICE_USB": 0, 
-        "DMESG_SERIAL_DEBUG": 1, 
+        "DMESG_SERIAL_DEBUG": 0, 
         "EVENT_LISTENER_DEFAULT_FLAGS": "MESSAGE_BUS_LISTENER_QUEUE_IF_BUSY", 
         "LED_MATRIX_MAXIMUM_BRIGHTNESS": 245, 
         "LED_MATRIX_MINIMUM_BRIGHTNESS": 1, 
@@ -48,7 +48,7 @@
             "url": "https://github.com/microbit-foundation/codal-core"
         }, 
         {
-            "branch": "06f9b855717db46c0ab2af2ad820d60858d2a2e6", 
+            "branch": "b6d25e6a40d826db16ae229db11c0780cefbb0ca", 
             "name": "codal-nrf52", 
             "type": "git", 
             "url": "https://github.com/lancaster-university/codal-nrf52"
@@ -57,6 +57,6 @@
     "linker_flags": "-Wl,--no-wchar-size-warning -Wl,--gc-sections -Wl,--wrap,atexit -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -Wl,--start-group -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys -Wl,--end-group", 
     "post_process": "", 
     "processor": "NRF52833", 
-    "snapshot_version": "v0.1.0", 
+    "snapshot_version": "v0.1.1", 
     "toolchain": "ARM_GCC"
 }
