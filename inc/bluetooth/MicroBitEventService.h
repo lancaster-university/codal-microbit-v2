@@ -27,7 +27,9 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_EVENT_SERVICE_H
 
 #include "MicroBitConfig.h"
-#include "ble/BLE.h"
+
+#if CONFIG_ENABLED(DEVICE_BLE)
+
 #include "MicroBitEvent.h"
 #include "EventModel.h"
 
@@ -65,7 +67,7 @@ class MicroBitEventService : public MicroBitComponent
      * Periodic callback from MicroBit scheduler.
      * If we're no longer connected, remove any registered Message Bus listeners.
      */
-    virtual void idleCallback();
+    virtual void idleTick();
 
     /**
       * Callback. Invoked when any of our attributes are written via BLE.
@@ -97,10 +99,10 @@ class MicroBitEventService : public MicroBitComponent
     EventServiceEvent   clientRequirementsBuffer;
 
     // handles on this service's characterisitics.
-    GattCharacteristic microBitEventCharacteristic;
-    GattCharacteristic clientRequirementsCharacteristic;
-    GattCharacteristic clientEventCharacteristic;
-    GattCharacteristic microBitRequirementsCharacteristic;
+    GattAttribute::Handle_t microBitEventCharacteristicHandle;
+    GattAttribute::Handle_t clientRequirementsCharacteristicHandle;
+    GattAttribute::Handle_t clientEventCharacteristicHandle;
+    GattCharacteristic *microBitRequirementsCharacteristic;
 
     // Message bus offset last sent to the client...
     uint16_t messageBusListenerOffset;

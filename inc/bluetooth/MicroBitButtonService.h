@@ -27,20 +27,19 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_BUTTON_SERVICE_H
 
 #include "MicroBitConfig.h"
-#include "ble/BLE.h"
-#include "EventModel.h"
 
-// UUIDs for our service and characteristics
-extern const uint8_t  MicroBitButtonServiceUUID[];
-extern const uint8_t  MicroBitButtonAServiceDataUUID[];
-extern const uint8_t  MicroBitButtonBServiceDataUUID[];
+#if CONFIG_ENABLED(DEVICE_BLE)
+
+#include "MicroBitBLEManager.h"
+#include "MicroBitBLEService.h"
+#include "EventModel.h"
 
 
 /**
   * Class definition for a MicroBit BLE Button Service.
   * Provides access to live button data via BLE, and provides basic configuration options.
   */
-class MicroBitButtonService
+class MicroBitButtonService : public MicroBitBLEService
 {
     public:
 
@@ -49,10 +48,24 @@ class MicroBitButtonService
       * Create a representation of the ButtonService
       * @param _ble The instance of a BLE device that we're running on.
       */
-    MicroBitButtonService(BLEDevice &_ble);
-
+    MicroBitButtonService( BLEDevice &_ble);
 
     private:
+    
+    /**
+      * Set up or tear down event listers
+      */
+    void listen( bool yes);
+
+    /**
+      * Invoked when BLE connects.
+      */
+    void onConnect( const microbit_ble_evt_t *p_ble_evt);
+
+    /**
+      * Invoked when BLE disconnects.
+      */
+    void onDisconnect( const microbit_ble_evt_t *p_ble_evt);
 
     /**
      * Button A update callback
@@ -64,17 +77,31 @@ class MicroBitButtonService
      */
     void buttonBUpdate(MicroBitEvent e);
 
-    // Bluetooth stack we're running on.
-    BLEDevice           &ble;
-
     // memory for our 8 bit control characteristics.
     uint8_t            buttonADataCharacteristicBuffer;
     uint8_t            buttonBDataCharacteristicBuffer;
+    
+    // Index for each charactersitic in arrays of handles and UUIDs
+    typedef enum mbbs_cIdx
+    {
+        mbbs_cIdxA,
+        mbbs_cIdxB,
+        mbbs_cIdxCOUNT
+    } mbbs_cIdx;
 
-    // Handles to access each characteristic when they are held by Soft Device.
-    GattCharacteristic buttonADataCharacteristic;
-    GattCharacteristic buttonBDataCharacteristic;
+    // UUIDs for our service and characteristics
+    static const uint16_t serviceUUID;
+    static const uint16_t charUUID[ mbbs_cIdxCOUNT];
+    
+    // Data for each characteristic when they are held by Soft Device.
+    MicroBitBLEChar      chars[ mbbs_cIdxCOUNT];
+
+    public:
+    
+    int              characteristicCount()        { return mbbs_cIdxCOUNT; };
+    MicroBitBLEChar *characteristicPtr( int idx)  { return &chars[ idx]; };
 };
 
 
+#endif
 #endif

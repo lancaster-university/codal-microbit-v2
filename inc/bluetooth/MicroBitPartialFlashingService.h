@@ -1,8 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016 British Broadcasting Corporation.
-This software is provided by Lancaster University by arrangement with the BBC.
+This class has been written by Sam Kent for the Microbit Educational Foundation.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -23,8 +22,8 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef MICROBIT_LED_SERVICE_H
-#define MICROBIT_LED_SERVICE_H
+#ifndef MICROBIT_PARTIAL_FLASH_SERVICE_H
+#define MICROBIT_PARTIAL_FLASH_SERVICE_H
 
 #include "MicroBitConfig.h"
 
@@ -32,56 +31,76 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitBLEManager.h"
 #include "MicroBitBLEService.h"
-#include "MicroBitDisplay.h"
+#include "MicroBitMemoryMap.h"
 
-// Defines the buffer size for scrolling text over BLE, hence also defines
-// the maximum string length that can be scrolled via the BLE service.
-#define MICROBIT_BLE_MAXIMUM_SCROLLTEXT         20
+#include "MicroBitFlash.h"
+#include "MicroBitStorage.h"
+
+#include "MicroBitComponent.h"
+#include "MicroBitEvent.h"
+#include "EventModel.h"
+
+#define PARTIAL_FLASHING_VERSION 0x01
+
+// BLE PF Control Codes
+#define REGION_INFO 0x00
+#define FLASH_DATA  0x01
+#define END_OF_TRANSMISSION 0x02
+
+// BLE Utilities
+#define MICROBIT_STATUS 0xEE
+#define MICROBIT_RESET  0xFF
 
 
 /**
-  * Class definition for the custom MicroBit LED Service.
-  * Provides a BLE service to remotely read and write the state of the LED display.
+  * Class definition for the custom MicroBit Partial Flash Service.
+  * Provides a BLE service to remotely read the memory map and flash the PXT program.
   */
-class MicroBitLEDService : public MicroBitBLEService
+class MicroBitPartialFlashingService : public MicroBitBLEService
 {
     public:
-    
     /**
       * Constructor.
-      * Create a representation of the LEDService
+      * Create a representation of the Partial Flash Service
       * @param _ble The instance of a BLE device that we're running on.
-      * @param _display An instance of MicroBitDisplay to interface with.
+      * @param _memoryMap An instance of MicroBiteMemoryMap to interface with.
       */
-    MicroBitLEDService( BLEDevice &_ble, MicroBitDisplay &_display);
+    MicroBitPartialFlashingService( BLEDevice &_ble, EventModel &_messageBus);
 
     /**
       * Callback. Invoked when any of our attributes are written via BLE.
       */
-    void onDataWritten( const microbit_ble_evt_write_t *params);
-
-    /**
-      * Callback. Invoked when any of our attributes are read via BLE.
-      * Set  params->data and params->length to update the value
-      */
-    void onDataRead( microbit_onDataRead_t *params);
-    
+    void onDataWritten(const microbit_ble_evt_write_t *params);
 
     private:
+    // M:B Bluetooth stack and MessageBus
+    EventModel          &messageBus;
 
-    MicroBitDisplay     &display;
+    /**
+      * Writing to flash inside MicroBitEvent rather than in the ISR
+      */
+    void partialFlashingEvent(MicroBitEvent e);
 
-    // memory for our characteristics.
-    uint8_t             matrixValue[5];
-    uint16_t            speedValue;
-    uint8_t             textValue[MICROBIT_BLE_MAXIMUM_SCROLLTEXT];
+    /**
+      * Process a Partial Flashing data packet
+      */
+    void flashData(uint8_t *data);
+
+    // Ensure packets are in order
+    uint8_t packetCount = 0;
+    uint8_t blockPacketCount = 0;
+
+    // Keep track of blocks of data
+    uint32_t block[16];
+    uint8_t  blockNum = 0;
+    uint32_t offset   = 0;
+    
+    uint8_t characteristicValue[ 20];
 
     // Index for each charactersitic in arrays of handles and UUIDs
     typedef enum mbbs_cIdx
     {
-        mbbs_cIdxMATRIX,
-        mbbs_cIdxTEXT,
-        mbbs_cIdxSPEED,
+        mbbs_cIdxCTRL,
         mbbs_cIdxCOUNT
     } mbbs_cIdx;
     
@@ -99,5 +118,4 @@ class MicroBitLEDService : public MicroBitBLEService
 };
 
 
-#endif
 #endif

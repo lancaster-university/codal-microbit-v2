@@ -52,6 +52,7 @@ MicroBit::MicroBit() :
 #if CONFIG_ENABLED(DEVICE_BLE)
     // Initialize buttonless SVCI bootloader interface before interrupts are enabled
     bleManager(),
+    ble( &bleManager),
 #endif
 
     tim1(NRF_TIMER1, TIMER1_IRQn),

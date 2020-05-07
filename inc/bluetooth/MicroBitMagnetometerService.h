@@ -26,8 +26,10 @@ DEALINGS IN THE SOFTWARE.
 #ifndef MICROBIT_MAGNETOMETER_SERVICE_H
 #define MICROBIT_MAGNETOMETER_SERVICE_H
 
-#include "ble/BLE.h"
 #include "MicroBitConfig.h"
+
+#if CONFIG_ENABLED(DEVICE_BLE)
+
 #include "MicroBitCompass.h"
 #include "EventModel.h"
 
@@ -99,10 +101,10 @@ class MicroBitMagnetometerService
     uint8_t             magnetometerCalibrationCharacteristicBuffer;
 
     // Handles to access each characteristic when they are held by Soft Device.
-    GattCharacteristic magnetometerDataCharacteristic;
-    GattCharacteristic magnetometerBearingCharacteristic;
-    GattCharacteristic magnetometerPeriodCharacteristic;
-    GattCharacteristic magnetometerCalibrationCharacteristic;
+    GattAttribute::Handle_t magnetometerDataCharacteristicHandle;
+    GattAttribute::Handle_t magnetometerBearingCharacteristicHandle;
+    GattAttribute::Handle_t magnetometerPeriodCharacteristicHandle;
+    GattAttribute::Handle_t magnetometerCalibrationCharacteristicHandle;
 };
 
 #endif

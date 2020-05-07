@@ -27,21 +27,14 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_BLE_MANAGER_H
 
 #include "MicroBitConfig.h"
+
+#if CONFIG_ENABLED(DEVICE_BLE)
+
+#include "MicroBitBLETypes.h"
 #include "MicroBitStorage.h"
 #include "MicroBitDisplay.h"
 #include "ExternalEvents.h"
-
-#include "ble_gatts.h"
-
-//#include "MicroBitDFUService.h"
-//#include "MicroBitEventService.h"
-//#include "MicroBitLEDService.h"
-//#include "MicroBitAccelerometerService.h"
-//#include "MicroBitMagnetometerService.h"
-//#include "MicroBitButtonService.h"
-//#include "MicroBitIOPinService.h"
-//#include "MicroBitTemperatureService.h"
-//#include "MicroBitButton.h"
+#include "MicroBitButton.h"
 
 #define MICROBIT_BLE_PAIR_REQUEST 0x01
 #define MICROBIT_BLE_PAIR_COMPLETE 0x02
@@ -67,9 +60,8 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_MODE_PAIRING                   0
 #define MICROBIT_MODE_APPLICATION               1
 
-typedef uint16_t microbit_gaphandle_t;
-typedef uint16_t microbit_servicehandle_t;
-typedef ble_gatts_char_handles_t microbit_charhandles_t;
+class MicroBitBLEManager;
+typedef MicroBitBLEManager BLEDevice;
 
 /**
   * Class definition for the MicroBitBLEManager.
@@ -310,5 +302,7 @@ class MicroBitBLEManager : public CodalComponent
 
     bool advertiseOnDisconnect = true;
 };
+
+#endif
 
 #endif

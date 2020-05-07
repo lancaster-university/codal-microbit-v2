@@ -26,9 +26,10 @@ DEALINGS IN THE SOFTWARE.
 #ifndef MICROBIT_UART_SERVICE_H
 #define MICROBIT_UART_SERVICE_H
 
-#include "ble/UUID.h"
-#include "ble/BLE.h"
 #include "MicroBitConfig.h"
+
+#if CONFIG_ENABLED(DEVICE_BLE)
+
 #include "MicroBitSerial.h"
 
 #define MICROBIT_UART_S_DEFAULT_BUF_SIZE    20

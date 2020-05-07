@@ -28,6 +28,9 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitConfig.h"
 
+#if CONFIG_ENABLED(DEVICE_BLE)
+
+
 /*
  * Return to our predefined compiler settings.
  */
@@ -101,4 +104,5 @@ class MicroBitEddystone
     static MicroBitEddystone *_instance;
 };
 
+#endif
 #endif

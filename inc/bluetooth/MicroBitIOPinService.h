@@ -27,7 +27,9 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_IO_PIN_SERVICE_H
 
 #include "MicroBitConfig.h"
-#include "ble/BLE.h"
+
+#if CONFIG_ENABLED(DEVICE_BLE)
+
 #include "MicroBitIO.h"
 
 #define MICROBIT_IO_PIN_SERVICE_PINCOUNT       19
@@ -84,7 +86,7 @@ class MicroBitIOPinService : public MicroBitComponent
      * Check if any of the pins we're watching need updating. Notify any connected
      * device with any changes.
      */
-    virtual void idleCallback();
+    virtual void idleTick();
 
     private:
 
@@ -147,10 +149,10 @@ class MicroBitIOPinService : public MicroBitComponent
     uint8_t             ioPinServiceIOData[MICROBIT_IO_PIN_SERVICE_PINCOUNT];
 
     // Handles to access each characteristic when they are held by Soft Device.
-    GattCharacteristic ioPinServiceADCharacteristic;
-    GattCharacteristic ioPinServiceIOCharacteristic;
-    GattCharacteristic ioPinServicePWMCharacteristic;
-    GattCharacteristic ioPinServiceDataCharacteristic;
+    GattAttribute::Handle_t ioPinServiceADCharacteristicHandle;
+    GattAttribute::Handle_t ioPinServiceIOCharacteristicHandle;
+    GattAttribute::Handle_t ioPinServicePWMCharacteristicHandle;
+    GattCharacteristic *ioPinServiceDataCharacteristic;
 };
 
 #endif
