@@ -44,7 +44,7 @@ DEALINGS IN THE SOFTWARE.
 #include "NRF52Pin.h"
 #include "NRF52Serial.h"
 #include "NRF52I2C.h"
-#include "NRF52PDM.h"
+#include "NRF52Microphone.h"
 
 #include "MicroBitIO.h"
 #include "MicroBitDisplay.h"
@@ -266,5 +266,16 @@ namespace codal
 void microbit_dmesg_flush();
 
 using namespace codal;
+
+#define DEVICE_ID_MICROPHONE 3001
+
+#define SOUND_MIRROR_EXTENSION uBit.io.speaker
+
+#define MIC_DEVICE NRF52Microphone
+#define MIC_INIT \
+     : microphone(uBit.io.microphone, 8000) \
+    , level(microphone.output, 95.0, 75.0, 9, 52, DEVICE_ID_MICROPHONE)
+
+#define MIC_ENABLE uBit.io.runmic.setDigitalValue(1); microphone.enable()
 
 #endif
