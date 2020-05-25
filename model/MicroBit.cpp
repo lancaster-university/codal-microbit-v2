@@ -47,14 +47,15 @@ static const MatrixPoint ledMatrixPositions[5*5] =
   * that represent various device drivers used to control aspects of the micro:bit.
   */
 MicroBit::MicroBit() :
-    tim1(NRF_TIMER1, TIMER1_IRQn),
-    timer(tim1),
+    systemTimer(NRF_TIMER1, TIMER1_IRQn),
+    adcTimer(NRF_TIMER2, TIMER2_IRQn),
+    timer(systemTimer),
     messageBus(),
-    io(),
+    adc(adcTimer, 100000),
+    io(adc),
     serial(io.usbTx, io.usbRx, NRF_UARTE0),
     _i2c(io.sda, io.scl),
     i2c(io.P20, io.P19),
-
     // RED
     ledRowPins{&io.row1, &io.row2, &io.row3, &io.row4, &io.row5},
     ledColPins{&io.col1, &io.col2, &io.col3, &io.col4, &io.col5},
@@ -68,6 +69,8 @@ MicroBit::MicroBit() :
     thermometer(),
     accelerometer(_i2c),
     compass(_i2c)
+
+
     //compassCalibrator(compass, accelerometer, display)
 {
     // Clear our status

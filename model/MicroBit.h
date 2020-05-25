@@ -44,7 +44,7 @@ DEALINGS IN THE SOFTWARE.
 #include "NRF52Pin.h"
 #include "NRF52Serial.h"
 #include "NRF52I2C.h"
-#include "NRF52Microphone.h"
+#include "NRF52ADC.h"
 
 #include "MicroBitIO.h"
 #include "MicroBitDisplay.h"
@@ -98,10 +98,11 @@ namespace codal
             // Pin ranges used for LED matrix display.
 
         public:
-            NRFLowLevelTimer            tim1;
+            NRFLowLevelTimer            systemTimer;
+            NRFLowLevelTimer            adcTimer;
             Timer                       timer;
             MessageBus                  messageBus;
-            //codal::_mbed::Timer         timer;
+            NRF52ADC                    adc;
             MicroBitIO                  io;
             NRF52Serial                 serial;
         private:
@@ -121,6 +122,7 @@ namespace codal
             MicroBitThermometer         thermometer;
             MicroBitAccelerometer       accelerometer;
             MicroBitCompass             compass;
+
             //MicroBitCompassCalibrator   compassCalibrator;
 
 

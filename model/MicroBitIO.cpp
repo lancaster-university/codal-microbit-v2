@@ -40,7 +40,7 @@ using namespace codal;
   * Accepts a sequence of unique ID's used to distinguish events raised
   * by MicroBitPin instances on the default EventModel.
   */
-MicroBitIO::MicroBitIO() :
+MicroBitIO::MicroBitIO(NRF52ADC &a) :
     speaker(ID_PIN_P0, P0_00, PIN_CAPABILITY_AD),      // P0_00
     P14(ID_PIN_P1, P0_01, PIN_CAPABILITY_AD),          // P0_01
     P0(ID_PIN_P2, P0_02, PIN_CAPABILITY_AD),           // P0_02
@@ -90,4 +90,5 @@ MicroBitIO::MicroBitIO() :
     usbTx(ID_PIN_P38, MICROBIT_PIN_UART_TX, PIN_CAPABILITY_DIGITAL),
     usbRx(ID_PIN_P39, MICROBIT_PIN_UART_RX, PIN_CAPABILITY_DIGITAL)
 {
+  NRF52Pin::adc = &a;
 }
