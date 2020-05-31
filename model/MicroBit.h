@@ -72,7 +72,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitAccelerometerService.h"
 //#include "MicroBitMagnetometerService.h"
 #include "MicroBitButtonService.h"
-//#include "MicroBitIOPinService.h"
+#include "MicroBitIOPinService.h"
 #include "MicroBitTemperatureService.h"
 #endif
 

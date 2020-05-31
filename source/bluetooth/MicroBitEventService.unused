@@ -138,7 +138,7 @@ void MicroBitEventService::onMicroBitEvent(MicroBitEvent evt)
   * Periodic callback from MicroBit scheduler.
   * If we're no longer connected, remove any registered Message Bus listeners.
   */
-void MicroBitEventService::idleTick()
+void MicroBitEventService::idleCallback()
 {
     if (!ble.getGapState().connected && messageBusListenerOffset >0) {
         messageBusListenerOffset = 0;
