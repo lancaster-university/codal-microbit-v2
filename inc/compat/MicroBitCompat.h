@@ -347,6 +347,8 @@ typedef codal::EventLaunchMode MicroBitEventLaunchMode;
 #define MICROBIT_ID_SERIAL                                      DEVICE_ID_SERIAL
 #define MICROBIT_ID_THERMOMETER                                 DEVICE_ID_THERMOMETER
 
+#define MICROBIT_ID_PARTIAL_FLASHING                            36
+
 #define MICROBIT_MAXIMUM_HEAPS                                  DEVICE_MAXIMUM_HEAPS
 #define MICROBIT_NESTED_HEAP_SIZE                               0
 #define MICROBIT_PANIC_HEAP_FULL                                DEVICE_PANIC_HEAP_FULL

@@ -67,6 +67,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitSystemTimer.h"
 #include "MicroBitDevice.h"
 #include "MicroBitEventService.h"
+#include "MicroBitPartialFlashingService.h"
 
 #include "CodalDmesg.h"
 #include "nrf_log_backend_dmesg.h"
@@ -414,7 +415,7 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
 
 #if CONFIG_ENABLED(MICROBIT_BLE_PARTIAL_FLASHING)
     DMESG( "PARTIAL_FLASHING");
-//    new MicroBitPartialFlashingService(*ble, messageBus);
+    new MicroBitPartialFlashingService( *this, messageBus);
 #endif
 
 #if CONFIG_ENABLED(MICROBIT_BLE_DEVICE_INFORMATION_SERVICE)

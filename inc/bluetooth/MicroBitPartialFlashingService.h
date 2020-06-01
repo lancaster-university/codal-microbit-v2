@@ -73,7 +73,7 @@ class MicroBitPartialFlashingService : public MicroBitBLEService
     void onDataWritten(const microbit_ble_evt_write_t *params);
 
     private:
-    // M:B Bluetooth stack and MessageBus
+    // MessageBus we're using
     EventModel          &messageBus;
 
     /**
@@ -105,6 +105,7 @@ class MicroBitPartialFlashingService : public MicroBitBLEService
     } mbbs_cIdx;
     
     // UUIDs for our service and characteristics
+    static const uint8_t  base_uuid[ 16];
     static const uint16_t serviceUUID;
     static const uint16_t charUUID[ mbbs_cIdxCOUNT];
     
@@ -118,4 +119,5 @@ class MicroBitPartialFlashingService : public MicroBitBLEService
 };
 
 
+#endif
 #endif
