@@ -86,6 +86,12 @@ class MicroBitBLEService
       */
     virtual void onDataRead( microbit_onDataRead_t *params);
     
+    /**
+      * Callback. Invoked when an indication is confirmed.
+      * Set  params->data and params->length to update the value
+      */
+    virtual void onConfirmation( const microbit_ble_evt_hvc_t *params);
+    
     public:
     
     microbit_gaphandle_t getConnectionHandle();
@@ -103,6 +109,12 @@ class MicroBitBLEService
                                              
     bool writeChrValue( int idx, const uint8_t *data, uint16_t len)
     { return characteristicPtr( idx)->writeChrValue( getConnectionHandle(), data, len); }
+    
+    bool notifyChrValueEnabled( int idx)
+    { return characteristicPtr( idx)->cccdNotify(); }
+    
+    bool indicateChrValueEnabled( int idx)
+    { return characteristicPtr( idx)->cccdIndicate(); }
 
     int charHandleToIdx( uint16_t handle, microbit_charattr_t *type);
     

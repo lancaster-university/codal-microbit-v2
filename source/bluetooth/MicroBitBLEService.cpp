@@ -352,6 +352,11 @@ void MicroBitBLEService::onAuthorizeWrite( const microbit_ble_evt_t *p_ble_evt)
 void MicroBitBLEService::onHVC( const microbit_ble_evt_t *p_ble_evt)
 {
     DMESG( "MicroBitBLEService::onHVC");
+    onConfirmation( &p_ble_evt->evt.gatts_evt.params.hvc);
+}
+
+void MicroBitBLEService::onConfirmation( const microbit_ble_evt_hvc_t *params)
+{
 }
 
 #endif

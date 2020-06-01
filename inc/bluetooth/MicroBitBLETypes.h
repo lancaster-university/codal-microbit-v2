@@ -39,6 +39,7 @@ typedef uint16_t                     microbit_servicehandle_t;
 typedef uint16_t                     microbit_charhandle_t;
 typedef ble_evt_t                    microbit_ble_evt_t;
 typedef ble_gatts_evt_write_t        microbit_ble_evt_write_t;
+typedef ble_gatts_evt_hvc_t          microbit_ble_evt_hvc_t;
 
 typedef enum microbit_prop_t
 {

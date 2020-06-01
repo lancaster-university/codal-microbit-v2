@@ -73,6 +73,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitButtonService.h"
 #include "MicroBitIOPinService.h"
 #include "MicroBitTemperatureService.h"
+#include "MicroBitUARTService.h"
 #endif
 
 //#include "MicroBitStorage.h"
