@@ -32,9 +32,12 @@ DEALINGS IN THE SOFTWARE.
 
 #if CONFIG_ENABLED(DEVICE_BLE)
 
-#include "ble/UUID.h"
-
 #include "MicroBitMagnetometerService.h"
+
+
+const uint16_t MicroBitMagnetometerService::serviceUUID               = 0xf2d8;
+const uint16_t MicroBitMagnetometerService::charUUID[ mbbs_cIdxCOUNT] = { 0xfb11, 0x9715, 0x386c, 0xB358 };
+
 
 /**
   * Constructor.
@@ -43,23 +46,8 @@ DEALINGS IN THE SOFTWARE.
   * @param _compass An instance of MicroBitCompass to use as our Magnetometer source.
   */
 MicroBitMagnetometerService::MicroBitMagnetometerService(BLEDevice &_ble, MicroBitCompass &_compass) :
-        ble(_ble), compass(_compass)
+        compass(_compass)
 {
-    // Create the data structures that represent each of our characteristics in Soft Device.
-    GattCharacteristic  magnetometerDataCharacteristic(MicroBitMagnetometerServiceDataUUID, (uint8_t *)magnetometerDataCharacteristicBuffer, 0,
-    sizeof(magnetometerDataCharacteristicBuffer), GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_READ | GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_NOTIFY);
-
-    GattCharacteristic  magnetometerBearingCharacteristic(MicroBitMagnetometerServiceBearingUUID, (uint8_t *)&magnetometerBearingCharacteristicBuffer, 0,
-    sizeof(magnetometerBearingCharacteristicBuffer), GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_READ | GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_NOTIFY);
-
-    GattCharacteristic  magnetometerPeriodCharacteristic(MicroBitMagnetometerServicePeriodUUID, (uint8_t *)&magnetometerPeriodCharacteristicBuffer, 0,
-    sizeof(magnetometerPeriodCharacteristicBuffer),
-    GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_READ | GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE);
-
-    GattCharacteristic  magnetometerCalibrationCharacteristic(MicroBitMagnetometerServiceCalibrationUUID, (uint8_t *)&magnetometerCalibrationCharacteristicBuffer, 0,
-    sizeof(magnetometerCalibrationCharacteristicBuffer),
-    GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE | GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_NOTIFY);
-
     // Initialise our characteristic values.
     magnetometerDataCharacteristicBuffer[0] = 0;
     magnetometerDataCharacteristicBuffer[1] = 0;
@@ -67,48 +55,109 @@ MicroBitMagnetometerService::MicroBitMagnetometerService(BLEDevice &_ble, MicroB
     magnetometerBearingCharacteristicBuffer = 0;
     magnetometerPeriodCharacteristicBuffer = compass.getPeriod();
     magnetometerCalibrationCharacteristicBuffer = 0;
+    
+    // Register the base UUID and create the service.
+    RegisterBaseUUID( bs_base_uuid);
+    CreateService( serviceUUID);
+    
+    // Create the data structures that represent each of our characteristics in Soft Device.
+    CreateCharacteristic( mbbs_cIdxDATA, charUUID[ mbbs_cIdxDATA],
+                         (uint8_t *)magnetometerDataCharacteristicBuffer,
+                         sizeof(magnetometerDataCharacteristicBuffer), sizeof(magnetometerDataCharacteristicBuffer),
+                         microbit_propREAD | microbit_propNOTIFY);
 
-    // Set default security requirements
-    magnetometerDataCharacteristic.requireSecurity(SecurityManager::MICROBIT_BLE_SECURITY_LEVEL);
-    magnetometerBearingCharacteristic.requireSecurity(SecurityManager::MICROBIT_BLE_SECURITY_LEVEL);
-    magnetometerPeriodCharacteristic.requireSecurity(SecurityManager::MICROBIT_BLE_SECURITY_LEVEL);
-    magnetometerCalibrationCharacteristic.requireSecurity(SecurityManager::MICROBIT_BLE_SECURITY_LEVEL);
+    CreateCharacteristic( mbbs_cIdxBEARING, charUUID[ mbbs_cIdxBEARING],
+                         (uint8_t *)&magnetometerBearingCharacteristicBuffer,
+                         sizeof(magnetometerBearingCharacteristicBuffer), sizeof(magnetometerBearingCharacteristicBuffer),
+                         microbit_propREAD | microbit_propNOTIFY);
 
-    GattCharacteristic *characteristics[] = {&magnetometerDataCharacteristic, &magnetometerBearingCharacteristic, &magnetometerPeriodCharacteristic, &magnetometerCalibrationCharacteristic};
-    GattService         service(MicroBitMagnetometerServiceUUID, characteristics, sizeof(characteristics) / sizeof(GattCharacteristic *));
+    CreateCharacteristic( mbbs_cIdxPERIOD, charUUID[ mbbs_cIdxPERIOD],
+                         (uint8_t *)&magnetometerPeriodCharacteristicBuffer,
+                         sizeof(magnetometerPeriodCharacteristicBuffer), sizeof(magnetometerPeriodCharacteristicBuffer),
+                         microbit_propREAD | microbit_propWRITE);
 
-    ble.addService(service);
+    CreateCharacteristic( mbbs_cIdxCALIB, charUUID[ mbbs_cIdxCALIB],
+                         (uint8_t *)&magnetometerCalibrationCharacteristicBuffer,
+                         sizeof(magnetometerCalibrationCharacteristicBuffer), sizeof(magnetometerCalibrationCharacteristicBuffer),
+                         microbit_propWRITE | microbit_propNOTIFY);
 
-    magnetometerDataCharacteristicHandle = magnetometerDataCharacteristic.getValueHandle();
-    magnetometerBearingCharacteristicHandle = magnetometerBearingCharacteristic.getValueHandle();
-    magnetometerPeriodCharacteristicHandle = magnetometerPeriodCharacteristic.getValueHandle();
-    magnetometerCalibrationCharacteristicHandle = magnetometerCalibrationCharacteristic.getValueHandle();
+    if ( getConnected())
+        listen( true);
+}
 
-    ble.gattServer().notify(magnetometerDataCharacteristicHandle,(uint8_t *)magnetometerDataCharacteristicBuffer, sizeof(magnetometerDataCharacteristicBuffer));
-    ble.gattServer().notify(magnetometerBearingCharacteristicHandle,(uint8_t *)&magnetometerBearingCharacteristicBuffer, sizeof(magnetometerBearingCharacteristicBuffer));
-    ble.gattServer().write(magnetometerPeriodCharacteristicHandle, (const uint8_t *)&magnetometerPeriodCharacteristicBuffer, sizeof(magnetometerPeriodCharacteristicBuffer));
-    ble.gattServer().write(magnetometerCalibrationCharacteristicHandle, (const uint8_t *)&magnetometerCalibrationCharacteristicBuffer, sizeof(magnetometerCalibrationCharacteristicBuffer));
 
-    ble.onDataWritten(this, &MicroBitMagnetometerService::onDataWritten);
-    if (EventModel::defaultEventBus)
+/**
+ * Fetch magnetometer values to characteristic buffers
+ */
+void MicroBitMagnetometerService::read()
+{
+    magnetometerDataCharacteristicBuffer[0] = compass.getX();
+    magnetometerDataCharacteristicBuffer[1] = compass.getY();
+    magnetometerDataCharacteristicBuffer[2] = compass.getZ();
+    magnetometerPeriodCharacteristicBuffer  = compass.getPeriod();
+
+    if ( compass.isCalibrated())
     {
-        EventModel::defaultEventBus->listen(MICROBIT_ID_COMPASS, MICROBIT_COMPASS_EVT_DATA_UPDATE, this, &MicroBitMagnetometerService::compassEvents, MESSAGE_BUS_LISTENER_IMMEDIATE);
-        EventModel::defaultEventBus->listen(MICROBIT_ID_COMPASS, MICROBIT_COMPASS_EVT_CONFIG_NEEDED, this, &MicroBitMagnetometerService::compassEvents);
-        EventModel::defaultEventBus->listen(MICROBIT_ID_COMPASS, MICROBIT_COMPASS_EVT_CALIBRATION_NEEDED, this, &MicroBitMagnetometerService::compassEvents);
+        magnetometerBearingCharacteristicBuffer = (uint16_t) compass.heading();
     }
 }
 
-void MicroBitMagnetometerService::calibrateCompass() {
+
+/**
+  * Set up or tear down event listers
+  */
+void MicroBitMagnetometerService::listen( bool yes)
+{
+    if (EventModel::defaultEventBus)
+    {
+        if ( yes)
+        {
+            // Ensure compass is being updated
+            read();
+            EventModel::defaultEventBus->listen(MICROBIT_ID_COMPASS, MICROBIT_COMPASS_EVT_DATA_UPDATE,        this, &MicroBitMagnetometerService::compassEvents, MESSAGE_BUS_LISTENER_IMMEDIATE);
+            EventModel::defaultEventBus->listen(MICROBIT_ID_COMPASS, MICROBIT_COMPASS_EVT_CONFIG_NEEDED,      this, &MicroBitMagnetometerService::compassEvents);
+            EventModel::defaultEventBus->listen(MICROBIT_ID_COMPASS, MICROBIT_COMPASS_EVT_CALIBRATION_NEEDED, this, &MicroBitMagnetometerService::compassEvents);
+        }
+        else
+        {
+            EventModel::defaultEventBus->ignore(MICROBIT_ID_COMPASS, MICROBIT_EVT_ANY, this, &MicroBitMagnetometerService::compassEvents);
+        }
+    }
+}
+
+
+/**
+  * Invoked when BLE connects.
+  */
+void MicroBitMagnetometerService::onConnect( const microbit_ble_evt_t *p_ble_evt)
+{
+    listen( true);
+}
+
+
+/**
+  * Invoked when BLE disconnects.
+  */
+void MicroBitMagnetometerService::onDisconnect( const microbit_ble_evt_t *p_ble_evt)
+{
+    listen( false);
+}
+
+
+void MicroBitMagnetometerService::calibrateCompass()
+{
     int rc = compass.calibrate();
     if (rc == MICROBIT_OK) {
         magnetometerCalibrationCharacteristicBuffer = COMPASS_CALIBRATION_COMPLETED_OK;
     } else {
         magnetometerCalibrationCharacteristicBuffer = COMPASS_CALIBRATION_COMPLETED_ERR;
     }
-    ble.gattServer().notify(magnetometerCalibrationCharacteristicHandle,(uint8_t *)&magnetometerCalibrationCharacteristicBuffer, sizeof(magnetometerCalibrationCharacteristicBuffer));
+    notifyChrValue( mbbs_cIdxCALIB, (uint8_t *)&magnetometerCalibrationCharacteristicBuffer, sizeof(magnetometerCalibrationCharacteristicBuffer));
 }
 
-void MicroBitMagnetometerService::compassEvents(MicroBitEvent e) {
+
+void MicroBitMagnetometerService::compassEvents(MicroBitEvent e)
+{
     if (e.value == MICROBIT_COMPASS_EVT_DATA_UPDATE) {
         magnetometerUpdate();
         return;
@@ -123,19 +172,20 @@ void MicroBitMagnetometerService::compassEvents(MicroBitEvent e) {
     }
 }    
 
+
 /**
   * Callback. Invoked when any of our attributes are written via BLE.
   */
-void MicroBitMagnetometerService::onDataWritten(const GattWriteCallbackParams *params)
+void MicroBitMagnetometerService::onDataWritten(const microbit_ble_evt_write_t *params)
 {
-    if (params->handle == magnetometerPeriodCharacteristicHandle && params->len >= sizeof(magnetometerPeriodCharacteristicBuffer))
+    if (params->handle == valueHandle( mbbs_cIdxPERIOD) && params->len >= sizeof(magnetometerPeriodCharacteristicBuffer))
     {
         magnetometerPeriodCharacteristicBuffer = *((uint16_t *)params->data);
         MicroBitEvent evt(MICROBIT_ID_COMPASS, MICROBIT_COMPASS_EVT_CONFIG_NEEDED);
         return;
     }
 
-    if (params->handle == magnetometerCalibrationCharacteristicHandle && params->len >= sizeof(magnetometerCalibrationCharacteristicBuffer))
+    if (params->handle == valueHandle( mbbs_cIdxCALIB) && params->len >= sizeof(magnetometerCalibrationCharacteristicBuffer))
     {
         magnetometerCalibrationCharacteristicBuffer = *((uint8_t *)params->data);
         if (magnetometerCalibrationCharacteristicBuffer == COMPASS_CALIBRATION_REQUESTED) {
@@ -145,28 +195,26 @@ void MicroBitMagnetometerService::onDataWritten(const GattWriteCallbackParams *p
     }
 }
 
+
 /**
   * Magnetometer update callback
   */
 void MicroBitMagnetometerService::magnetometerUpdate()
 {
-    if (ble.getGapState().connected)
+    if ( getConnected())
     {
-        magnetometerDataCharacteristicBuffer[0] = compass.getX();
-        magnetometerDataCharacteristicBuffer[1] = compass.getY();
-        magnetometerDataCharacteristicBuffer[2] = compass.getZ();
-        magnetometerPeriodCharacteristicBuffer = compass.getPeriod();
+        read();
 
-        ble.gattServer().write(magnetometerPeriodCharacteristicHandle, (const uint8_t *)&magnetometerPeriodCharacteristicBuffer, sizeof(magnetometerPeriodCharacteristicBuffer));
-        ble.gattServer().notify(magnetometerDataCharacteristicHandle,(uint8_t *)magnetometerDataCharacteristicBuffer, sizeof(magnetometerDataCharacteristicBuffer));
+        setChrValue( mbbs_cIdxPERIOD, (const uint8_t *)&magnetometerPeriodCharacteristicBuffer, sizeof(magnetometerPeriodCharacteristicBuffer));
+        notifyChrValue( mbbs_cIdxDATA,(uint8_t *)magnetometerDataCharacteristicBuffer, sizeof(magnetometerDataCharacteristicBuffer));
 
-        if (compass.isCalibrated())
+        if ( compass.isCalibrated())
         {
-            magnetometerBearingCharacteristicBuffer = (uint16_t) compass.heading();
-            ble.gattServer().notify(magnetometerBearingCharacteristicHandle,(uint8_t *)&magnetometerBearingCharacteristicBuffer, sizeof(magnetometerBearingCharacteristicBuffer));
+            notifyChrValue( mbbs_cIdxBEARING,(uint8_t *)&magnetometerBearingCharacteristicBuffer, sizeof(magnetometerBearingCharacteristicBuffer));
         }
     }
 }
+
 
 /**
  * Sample Period Change Needed callback.
@@ -183,28 +231,8 @@ void MicroBitMagnetometerService::samplePeriodUpdateNeeded()
     magnetometerPeriodCharacteristicBuffer = compass.getPeriod();
 
     // Ensure this is reflected in our BLE connection.
-    ble.gattServer().write(magnetometerPeriodCharacteristicHandle, (const uint8_t *)&magnetometerPeriodCharacteristicBuffer, sizeof(magnetometerPeriodCharacteristicBuffer));
-
+    setChrValue( mbbs_cIdxPERIOD, (const uint8_t *)&magnetometerPeriodCharacteristicBuffer, sizeof(magnetometerPeriodCharacteristicBuffer));
 }
 
-const uint8_t  MicroBitMagnetometerServiceUUID[] = {
-    0xe9,0x5d,0xf2,0xd8,0x25,0x1d,0x47,0x0a,0xa0,0x62,0xfa,0x19,0x22,0xdf,0xa9,0xa8
-};
-
-const uint8_t  MicroBitMagnetometerServiceDataUUID[] = {
-    0xe9,0x5d,0xfb,0x11,0x25,0x1d,0x47,0x0a,0xa0,0x62,0xfa,0x19,0x22,0xdf,0xa9,0xa8
-};
-
-const uint8_t  MicroBitMagnetometerServicePeriodUUID[] = {
-    0xe9,0x5d,0x38,0x6c,0x25,0x1d,0x47,0x0a,0xa0,0x62,0xfa,0x19,0x22,0xdf,0xa9,0xa8
-};
-
-const uint8_t  MicroBitMagnetometerServiceBearingUUID[] = {
-    0xe9,0x5d,0x97,0x15,0x25,0x1d,0x47,0x0a,0xa0,0x62,0xfa,0x19,0x22,0xdf,0xa9,0xa8
-};
-
-const uint8_t  MicroBitMagnetometerServiceCalibrationUUID[] = {
-    0xE9,0x5D,0xB3,0x58,0x25,0x1D,0x47,0x0A,0xA0,0x62,0xFA,0x19,0x22,0xDF,0xA9,0xA8
-};
 
 #endif
