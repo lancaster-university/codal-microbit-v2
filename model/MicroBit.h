@@ -67,7 +67,6 @@ DEALINGS IN THE SOFTWARE.
 
 #if CONFIG_ENABLED(DEVICE_BLE)
 #include "MicroBitBLEManager.h"
-//#include "MicroBitEventService.h"
 #include "MicroBitLEDService.h"
 #include "MicroBitAccelerometerService.h"
 //#include "MicroBitMagnetometerService.h"

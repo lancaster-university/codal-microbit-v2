@@ -66,6 +66,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitFiber.h"
 #include "MicroBitSystemTimer.h"
 #include "MicroBitDevice.h"
+#include "MicroBitEventService.h"
 
 #include "CodalDmesg.h"
 #include "nrf_log_backend_dmesg.h"
@@ -437,7 +438,7 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
 
 #if CONFIG_ENABLED(MICROBIT_BLE_EVENT_SERVICE)
     DMESG( "EVENT_SERVICE");
-    new MicroBitEventService(*ble, messageBus);
+    new MicroBitEventService( *this, messageBus);
 #else
     (void)messageBus;
 #endif
