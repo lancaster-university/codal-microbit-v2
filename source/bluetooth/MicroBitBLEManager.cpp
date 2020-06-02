@@ -147,8 +147,14 @@ static void microbit_ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_conte
 static void microbit_ble_pm_evt_handler(pm_evt_t const * p_evt);
 static void microbit_ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context);
 
-static void microbit_ble_configureAdvertising( bool connectable, bool discoverable, bool whitelist, uint16_t interval_ms, int timeout_seconds);
 static void microbit_dfu_init(void);
+
+static void microbit_ble_configureAdvertising( bool connectable, bool discoverable, bool whitelist, uint16_t interval_ms, int timeout_seconds);
+
+#if CONFIG_ENABLED(MICROBIT_BLE_EDDYSTONE_URL) || CONFIG_ENABLED(MICROBIT_BLE_EDDYSTONE_UID)
+static void microbit_ble_configureAdvertising( bool connectable, bool discoverable, bool whitelist, uint16_t interval_ms, int timeout_seconds,
+                                               uint8_t *frameData, uint16_t frameSize);
+#endif
 
 
 /**
@@ -699,13 +705,19 @@ int MicroBitBLEManager::advertiseEddystoneUrl(const char* url, int8_t calibrated
 {
     DMESG( "advertiseEddystoneUrl");
     
-    stopAdvertising();
+    uint8_t frameData[ MicroBitEddystone::frameSizeURL];
+    uint16_t frameSize;
     
-    microbit_ble_configureAdvertising( connectable, true /*discoverable*/, false /*whitelist*/, interval, MICROBIT_BLE_ADVERTISING_TIMEOUT);
+    int ret = MicroBitEddystone::getInstance()->getURL( frameData, &frameSize, url, calibratedPower);
 
-    int ret = MicroBitEddystone::getInstance()->setURL(ble, url, calibratedPower);
+    if ( ret == MICROBIT_OK)
+    {
+      stopAdvertising();
+      
+      microbit_ble_configureAdvertising( connectable, true /*discoverable*/, false /*whitelist*/, interval, MICROBIT_BLE_ADVERTISING_TIMEOUT, frameData, frameSize);
 
-    advertise();
+      advertise();
+    }
 
     return ret;
 }
@@ -751,13 +763,19 @@ int MicroBitBLEManager::advertiseEddystoneUid(const char* uid_namespace, const c
 {
     DMESG( "advertiseEddystoneUid");
     
-    stopAdvertising();
+    uint8_t frameData[ MicroBitEddystone::frameSizeUID];
+    uint16_t frameSize;
     
-    microbit_ble_configureAdvertising( connectable, true /*discoverable*/, false /*whitelist*/, interval, MICROBIT_BLE_ADVERTISING_TIMEOUT);
+    int ret = MicroBitEddystone::getInstance()->getUID( frameData, &frameSize, uid_namespace, uid_instance, calibratedPower);
 
-    int ret = MicroBitEddystone::getInstance()->setUID(ble, uid_namespace, uid_instance, calibratedPower);
+    if ( ret == MICROBIT_OK)
+    {
+      stopAdvertising();
+      
+      microbit_ble_configureAdvertising( connectable, true /*discoverable*/, false /*whitelist*/, interval, MICROBIT_BLE_ADVERTISING_TIMEOUT, frameData, frameSize);
 
-    advertise();
+      advertise();
+    }
 
     return ret;
 }
@@ -1049,7 +1067,9 @@ bool MicroBitBLEManager::prepareForShutdown()
  * @param interval_ms Advertising interval in milliseconds.
  * @param timeout_seconds Advertising timeout in seconds
  */
-static void microbit_ble_configureAdvertising( bool connectable, bool discoverable, bool whitelist, uint16_t interval_ms, int timeout_seconds)
+static void microbit_ble_configureAdvertising( bool connectable, bool discoverable, bool whitelist,
+                                               uint16_t interval_ms, int timeout_seconds,
+                                               ble_advdata_t *p_advdata)
 {
     DMESG( "configureAdvertising connectable %d, discoverable %d", (int) connectable, (int) discoverable);
     DMESG( "whitelist %d, interval_ms %d, timeout_seconds %d", (int) whitelist, (int) interval_ms, (int) timeout_seconds);
@@ -1067,7 +1087,20 @@ static void microbit_ble_configureAdvertising( bool connectable, bool discoverab
                                     ? BLE_GAP_ADV_FP_FILTER_BOTH
                                     : BLE_GAP_ADV_FP_ANY;
     gap_adv_params.primary_phy      = BLE_GAP_PHY_1MBPS;
-    
+                
+    ble_gap_adv_data_t  gap_adv_data;
+    memset( &gap_adv_data, 0, sizeof( gap_adv_data));
+    gap_adv_data.adv_data.p_data    = m_enc_advdata;
+    gap_adv_data.adv_data.len       = BLE_GAP_ADV_SET_DATA_SIZE_MAX;
+    MICROBIT_BLE_ECHK( ble_advdata_encode( p_advdata, gap_adv_data.adv_data.p_data, &gap_adv_data.adv_data.len));
+    NRF_LOG_HEXDUMP_INFO( gap_adv_data.adv_data.p_data, gap_adv_data.adv_data.len);
+    MICROBIT_BLE_ECHK( sd_ble_gap_adv_set_configure( &m_adv_handle, &gap_adv_data, &gap_adv_params));
+}
+
+
+static void microbit_ble_configureAdvertising( bool connectable, bool discoverable, bool whitelist,
+                                               uint16_t interval_ms, int timeout_seconds)
+{
     ble_advdata_t advdata;
     memset( &advdata, 0, sizeof( advdata));
     advdata.name_type = BLE_ADVDATA_FULL_NAME;
@@ -1075,14 +1108,41 @@ static void microbit_ble_configureAdvertising( bool connectable, bool discoverab
                       ? BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED | BLE_GAP_ADV_FLAG_LE_GENERAL_DISC_MODE
                       : BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED;
             
-    ble_gap_adv_data_t  gap_adv_data;
-    memset( &gap_adv_data, 0, sizeof( gap_adv_data));
-    gap_adv_data.adv_data.p_data    = m_enc_advdata;
-    gap_adv_data.adv_data.len       = BLE_GAP_ADV_SET_DATA_SIZE_MAX;
-    MICROBIT_BLE_ECHK( ble_advdata_encode( &advdata, gap_adv_data.adv_data.p_data, &gap_adv_data.adv_data.len));
-    NRF_LOG_HEXDUMP_INFO( gap_adv_data.adv_data.p_data, gap_adv_data.adv_data.len);
-    MICROBIT_BLE_ECHK( sd_ble_gap_adv_set_configure( &m_adv_handle, &gap_adv_data, &gap_adv_params));
+    microbit_ble_configureAdvertising( connectable, discoverable, whitelist, interval_ms, timeout_seconds, &advdata);
 }
+
+
+#if CONFIG_ENABLED(MICROBIT_BLE_EDDYSTONE_URL) || CONFIG_ENABLED(MICROBIT_BLE_EDDYSTONE_UID)
+
+static void microbit_ble_configureAdvertising( bool connectable, bool discoverable, bool whitelist,
+                                               uint16_t interval_ms, int timeout_seconds,
+                                               uint8_t *frameData, uint16_t frameSize)
+{
+    ble_uuid_t  esUuid = { 0xFFAA, BLE_UUID_TYPE_BLE};
+    
+    ble_advdata_service_data_t service_data;
+    memset( &service_data, 0, sizeof( service_data));
+    service_data.service_uuid = esUuid.uuid;
+    service_data.data.size    = frameSize;
+    service_data.data.p_data  = frameSize ? frameData : NULL;
+
+    ble_advdata_t advdata;
+    memset( &advdata, 0, sizeof( advdata));
+    advdata.name_type               = BLE_ADVDATA_NO_NAME;
+    advdata.flags                   = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
+    advdata.uuids_complete.uuid_cnt = 1;
+    advdata.uuids_complete.p_uuids  = &esUuid;
+
+    if ( service_data.data.size)
+    {
+        advdata.service_data_count   = 1;
+        advdata.p_service_data_array = &service_data;
+    }
+
+    microbit_ble_configureAdvertising( connectable, discoverable, whitelist, interval_ms, timeout_seconds, &advdata);
+}
+
+#endif
 
 
 /**
