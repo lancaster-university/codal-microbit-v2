@@ -1059,10 +1059,10 @@ static void microbit_ble_configureAdvertising( bool connectable, bool discoverab
     gap_adv_params.properties.type  = connectable
                                     ? BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED
                                     : BLE_GAP_ADV_TYPE_NONCONNECTABLE_SCANNABLE_UNDIRECTED;
-    gap_adv_params.interval         = ( 1000 * MICROBIT_BLE_ADVERTISING_INTERVAL) / 625;  // 625 us units
+    gap_adv_params.interval         = ( 1000 * interval_ms) / 625;  // 625 us units
     if ( gap_adv_params.interval < BLE_GAP_ADV_INTERVAL_MIN) gap_adv_params.interval = BLE_GAP_ADV_INTERVAL_MIN;
     if ( gap_adv_params.interval > BLE_GAP_ADV_INTERVAL_MAX) gap_adv_params.interval = BLE_GAP_ADV_INTERVAL_MAX;
-    gap_adv_params.duration         = MICROBIT_BLE_ADVERTISING_TIMEOUT * 100;              //10 ms units
+    gap_adv_params.duration         = timeout_seconds * 100;              //10 ms units
     gap_adv_params.filter_policy    = whitelist
                                     ? BLE_GAP_ADV_FP_FILTER_BOTH
                                     : BLE_GAP_ADV_FP_ANY;
