@@ -131,6 +131,7 @@ void MicroBitMagnetometerService::listen( bool yes)
   */
 void MicroBitMagnetometerService::onConnect( const microbit_ble_evt_t *p_ble_evt)
 {
+    //MICROBIT_DEBUG_DMESG( "MicroBitMagnetometerService::onConnect");
     listen( true);
 }
 
@@ -140,6 +141,7 @@ void MicroBitMagnetometerService::onConnect( const microbit_ble_evt_t *p_ble_evt
   */
 void MicroBitMagnetometerService::onDisconnect( const microbit_ble_evt_t *p_ble_evt)
 {
+    //MICROBIT_DEBUG_DMESG( "MicroBitMagnetometerService::onDisconnect");
     listen( false);
 }
 
@@ -203,6 +205,7 @@ void MicroBitMagnetometerService::magnetometerUpdate()
 {
     if ( getConnected())
     {
+        //MICROBIT_DEBUG_DMESG( "MicroBitMagnetometerService::magnetometerUpdate");
         read();
 
         setChrValue( mbbs_cIdxPERIOD, (const uint8_t *)&magnetometerPeriodCharacteristicBuffer, sizeof(magnetometerPeriodCharacteristicBuffer));

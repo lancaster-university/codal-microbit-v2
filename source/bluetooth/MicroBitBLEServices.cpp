@@ -103,7 +103,7 @@ void MicroBitBLEServices::RemoveService( MicroBitBLEService *service)
 
 void MicroBitBLEServices::onBleEvent( ble_evt_t const * p_ble_evt)
 {
-    //DMESG("MicroBitBLEServices::onBleEvent 0x%x", (unsigned int) p_ble_evt->header.evt_id);
+    //MICROBIT_DEBUG_DMESG("MicroBitBLEServices::onBleEvent 0x%x", (unsigned int) p_ble_evt->header.evt_id);
     
     for ( int i = 0; i < bs_services_count; i++)
     {

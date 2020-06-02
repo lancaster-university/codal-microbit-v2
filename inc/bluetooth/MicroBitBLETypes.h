@@ -28,6 +28,62 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitConfig.h"
 
+#include "CodalDmesg.h"
+
+// MICROBIT_DMESG_LEVEL : 0 off; 1 error; 2 warning; 3 info; 4 debug
+
+#if (DEVICE_DMESG_BUFFER_SIZE > 0)
+#ifndef MICROBIT_DMESG_LEVEL
+#define MICROBIT_DMESG_LEVEL 1
+#endif
+#else
+#ifdef MICROBIT_DMESG_LEVEL
+#undef MICROBIT_DMESG_LEVEL
+#endif
+#define MICROBIT_DMESG_LEVEL 0
+#endif
+
+#if ( MICROBIT_DMESG_LEVEL > 3)
+#define MICROBIT_DEBUG_DMESG  codal_dmesg
+#define MICROBIT_DEBUG_DMESGN codal_dmesg_nocrlf
+#define MICROBIT_DEBUG_DMESGF codal_dmesg_with_flush
+#else
+#define MICROBIT_DEBUG_DMESG(...)  ((void)0)
+#define MICROBIT_DEBUG_DMESGN(...) ((void)0)
+#define MICROBIT_DEBUG_DMESGF(...) ((void)0)
+#endif
+
+#if ( MICROBIT_DMESG_LEVEL > 2)
+#define MICROBIT_INFO_DMESG  codal_dmesg
+#define MICROBIT_INFO_DMESGN codal_dmesg_nocrlf
+#define MICROBIT_INFO_DMESGF codal_dmesg_with_flush
+#else
+#define MICROBIT_INFO_DMESG(...)  ((void)0)
+#define MICROBIT_INFO_DMESGN(...) ((void)0)
+#define MICROBIT_INFO_DMESGF(...) ((void)0)
+#endif
+
+#if ( MICROBIT_DMESG_LEVEL > 1)
+#define MICROBIT_WARNING_DMESG  codal_dmesg
+#define MICROBIT_WARNING_DMESGN codal_dmesg_nocrlf
+#define MICROBIT_WARNING_DMESGF codal_dmesg_with_flush
+#else
+#define MICROBIT_WARNING_DMESG(...)  ((void)0)
+#define MICROBIT_WARNING_DMESGN(...) ((void)0)
+#define MICROBIT_WARNING_DMESGF(...) ((void)0)
+#endif
+
+#if ( MICROBIT_DMESG_LEVEL > 0)
+#define MICROBIT_ERROR_DMESG  codal_dmesg
+#define MICROBIT_ERROR_DMESGN codal_dmesg_nocrlf
+#define MICROBIT_ERROR_DMESGF codal_dmesg_with_flush
+#else
+#define MICROBIT_ERROR_DMESG(...)  ((void)0)
+#define MICROBIT_ERROR_DMESGN(...) ((void)0)
+#define MICROBIT_ERROR_DMESGF(...) ((void)0)
+#endif
+
+
 #if CONFIG_ENABLED(DEVICE_BLE)
 
 #include "ble.h"
@@ -72,7 +128,8 @@ typedef enum microbit_charattr_t
     microbit_charattrSCCD
 } microbit_charattr_t;
 
-#if NRF_LOG_ENABLE || ( DEVICE_DMESG_BUFFER_SIZE > 0)
+
+#if ( MICROBIT_DMESG_LEVEL > 0)
 extern microbit_ble_ret_code_t microbit_ble_on_error( microbit_ble_ret_code_t err, const char *msg);
 #define MICROBIT_BLE_ECHK( err) microbit_ble_on_error( err, #err)
 #else
