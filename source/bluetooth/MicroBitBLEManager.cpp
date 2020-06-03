@@ -714,7 +714,7 @@ int MicroBitBLEManager::advertiseEddystoneUrl(const char* url, int8_t calibrated
     {
       stopAdvertising();
       
-      microbit_ble_configureAdvertising( connectable, true /*discoverable*/, false /*whitelist*/, interval, MICROBIT_BLE_ADVERTISING_TIMEOUT, frameData, frameSize);
+      microbit_ble_configureAdvertising( connectable, true /*discoverable*/, false /*whitelist*/, interval, MICROBIT_BLE_ADVERTISING_TIMEOUT, frameData + 2, frameSize - 2);
 
       advertise();
     }
@@ -772,7 +772,7 @@ int MicroBitBLEManager::advertiseEddystoneUid(const char* uid_namespace, const c
     {
       stopAdvertising();
       
-      microbit_ble_configureAdvertising( connectable, true /*discoverable*/, false /*whitelist*/, interval, MICROBIT_BLE_ADVERTISING_TIMEOUT, frameData, frameSize);
+      microbit_ble_configureAdvertising( connectable, true /*discoverable*/, false /*whitelist*/, interval, MICROBIT_BLE_ADVERTISING_TIMEOUT, frameData + 2, frameSize - 2);
 
       advertise();
     }
@@ -1118,7 +1118,7 @@ static void microbit_ble_configureAdvertising( bool connectable, bool discoverab
                                                uint16_t interval_ms, int timeout_seconds,
                                                uint8_t *frameData, uint16_t frameSize)
 {
-    ble_uuid_t  esUuid = { 0xFFAA, BLE_UUID_TYPE_BLE};
+    ble_uuid_t  esUuid = { 0xFEAA, BLE_UUID_TYPE_BLE};
     
     ble_advdata_service_data_t service_data;
     memset( &service_data, 0, sizeof( service_data));
