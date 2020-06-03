@@ -6,7 +6,7 @@ MEMORY
   BOOTLOADER (rx) : ORIGIN = 0x72000, LENGTH = 0x7E000 - 0x72000
   SETTINGS (rx) : ORIGIN = 0x7E000, LENGTH = 0x2000
   UICR (rx) : ORIGIN = 0x10001014, LENGTH = 0x8
-  RAM (rwx) : ORIGIN = 0x20002280, LENGTH = 0x20000 - 0x2280
+  RAM (rwx) : ORIGIN = 0x20002440, LENGTH = 0x20000 - 0x2440
 }
 OUTPUT_FORMAT ("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 ENTRY(Reset_Handler)

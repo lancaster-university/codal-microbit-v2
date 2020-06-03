@@ -74,7 +74,7 @@ void MicroBitBLEService::RegisterBaseUUID( const uint8_t *bytes16UUID)
     
     MICROBIT_BLE_ECHK( sd_ble_uuid_vs_add( &uuid128, &bs_uuid_type));
     
-    DMESG( "MicroBitBLEService::RegisterBaseUUID bs_uuid_type = %d", (int) bs_uuid_type);
+    MICROBIT_DEBUG_DMESG( "MicroBitBLEService::RegisterBaseUUID bs_uuid_type = %d", (int) bs_uuid_type);
 }
 
 
@@ -87,7 +87,7 @@ void MicroBitBLEService::CreateService( uint16_t uuid)
 
     MICROBIT_BLE_ECHK( sd_ble_gatts_service_add( BLE_GATTS_SRVC_TYPE_PRIMARY, &serviceUUID, &bs_service_handle));
     
-    DMESG( "MicroBitBLEService::CreateService( %x) = %d", (unsigned int) uuid, (int) bs_service_handle);
+    MICROBIT_DEBUG_DMESG( "MicroBitBLEService::CreateService( %x) = %d", (unsigned int) uuid, (int) bs_service_handle);
 }
 
                       
@@ -122,7 +122,7 @@ void MicroBitBLEService::CreateCharacteristic(
     if ( props & microbit_propREADAUTH)        params.is_defered_read  = true;
     if ( props & microbit_propWRITEAUTH)       params.is_defered_write = true;
 
-    DMESG( "MICROBIT_BLE_SECURITY_MODE %d", (int) MICROBIT_BLE_SECURITY_MODE);
+    MICROBIT_DEBUG_DMESG( "MICROBIT_BLE_SECURITY_MODE %d", (int) MICROBIT_BLE_SECURITY_MODE);
           
     params.read_access          = ( security_req_t) MICROBIT_BLE_SECURITY_MODE;
     params.write_access         = ( security_req_t) MICROBIT_BLE_SECURITY_MODE;
@@ -137,7 +137,7 @@ void MicroBitBLEService::CreateCharacteristic(
     
     pm_local_database_has_changed();
     
-    DMESG( "MicroBitBLEService::CreateCharacteristic( %x) = %d %d %d %d",
+    MICROBIT_DEBUG_DMESG( "MicroBitBLEService::CreateCharacteristic( %x) = %d %d %d %d",
           (unsigned int) uuid,
           (int) charHandles( idx)->value,
           (int) charHandles( idx)->desc,
@@ -180,7 +180,7 @@ int MicroBitBLEService::charHandleToIdx( uint16_t handle, microbit_charattr_t *t
                       
 bool MicroBitBLEService::onBleEvent( microbit_ble_evt_t const * p_ble_evt)
 {
-  DMESG( "MicroBitBLEService::onBleEvent %x", (int) p_ble_evt->header.evt_id);
+  //MICROBIT_DEBUG_DMESG( "MicroBitBLEService::onBleEvent %x", (int) p_ble_evt->header.evt_id);
     
   switch ( p_ble_evt->header.evt_id)
   {
@@ -220,13 +220,13 @@ bool MicroBitBLEService::onBleEvent( microbit_ble_evt_t const * p_ble_evt)
 
 void MicroBitBLEService::onConnect( const microbit_ble_evt_t *p_ble_evt)
 {
-    DMESG( "MicroBitBLEService::onConnect");
+    MICROBIT_DEBUG_DMESG( "MicroBitBLEService::onConnect");
 }
 
 
 void MicroBitBLEService::onDisconnect( const microbit_ble_evt_t *p_ble_evt)
 {
-    DMESG( "MicroBitBLEService::onDisconnect");
+    MICROBIT_DEBUG_DMESG( "MicroBitBLEService::onDisconnect");
 }
 
                       
@@ -234,14 +234,14 @@ void MicroBitBLEService::onWrite( const microbit_ble_evt_t *p_ble_evt)
 {
     ble_gatts_evt_write_t const * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
     
-    DMESG( "MicroBitBLEService::onWrite %d", (int) p_evt_write->handle);
+    MICROBIT_DEBUG_DMESG( "MicroBitBLEService::onWrite %d", (int) p_evt_write->handle);
     
     microbit_charattr_t type;
     int idx = charHandleToIdx( p_evt_write->handle, &type);
     if ( idx < 0)
         return;
 
-    DMESG( "onWrite type = %d", (int) type);
+    MICROBIT_DEBUG_DMESG( "onWrite type = %d", (int) type);
     
     if ( type == microbit_charattrCCCD && p_evt_write->len == 2)
         characteristicPtr( idx)->setCCCD( uint16_decode( p_evt_write->data));
@@ -295,7 +295,7 @@ void MicroBitBLEService::onAuthorizeRead( const microbit_ble_evt_t *p_ble_evt)
 
     if ( type != microbit_charattrVALUE)
     {
-        DMESG( "MicroBitBLEService::onAuthorizeRead type = %d", (int) type);
+        MICROBIT_DEBUG_DMESG( "MicroBitBLEService::onAuthorizeRead type = %d", (int) type);
         auth->gatt_status = BLE_GATT_STATUS_SUCCESS;
         auth->update      = 0;
         auth->offset      = req->offset;
@@ -321,7 +321,7 @@ void MicroBitBLEService::onAuthorizeRead( const microbit_ble_evt_t *p_ble_evt)
     auth->len         = params.length;
     auth->p_data      = params.data;
 
-    //DMESG( "MicroBitBLEService::onAuthorizeRead status = %d data = %x len = %d", (int) auth->gatt_status, (unsigned int) auth->p_data, (int) auth->len);
+    //MICROBIT_DEBUG_DMESG( "MicroBitBLEService::onAuthorizeRead status = %d data = %x len = %d", (int) auth->gatt_status, (unsigned int) auth->p_data, (int) auth->len);
     
     MICROBIT_BLE_ECHK( sd_ble_gatts_rw_authorize_reply( p_ble_evt->evt.gatts_evt.conn_handle, &reply));
 }
@@ -345,13 +345,18 @@ void MicroBitBLEService::onAuthorizeWrite( const microbit_ble_evt_t *p_ble_evt)
     if ( idx < 0)
         return;
 
-    DMESG( "MicroBitBLEService::onAuthorizeWrite handle %d type %d", (int) req->handle, (int) type);
+    //MICROBIT_DEBUG_DMESG( "MicroBitBLEService::onAuthorizeWrite handle %d type %d", (int) req->handle, (int) type);
 }
 
     
 void MicroBitBLEService::onHVC( const microbit_ble_evt_t *p_ble_evt)
 {
-    DMESG( "MicroBitBLEService::onHVC");
+    //MICROBIT_DEBUG_DMESG( "MicroBitBLEService::onHVC");
+    onConfirmation( &p_ble_evt->evt.gatts_evt.params.hvc);
+}
+
+void MicroBitBLEService::onConfirmation( const microbit_ble_evt_hvc_t *params)
+{
 }
 
 #endif

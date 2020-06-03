@@ -65,7 +65,7 @@ bool MicroBitBLEChar::notifyChrValue( microbit_gaphandle_t connection, const uin
     if ( connection == BLE_CONN_HANDLE_INVALID)
         return false;
     
-    DMESGF( "MicroBitBLEChar::notifyChrValue %d", (int) handles.value);
+    MICROBIT_DEBUG_DMESGF( "MicroBitBLEChar::notifyChrValue %d", (int) handles.value);
     
     bool set = false;
     
@@ -78,7 +78,7 @@ bool MicroBitBLEChar::notifyChrValue( microbit_gaphandle_t connection, const uin
         hvx_params.p_len  = &length;
         hvx_params.p_data = data;
         
-        DMESGF( "calling sd_ble_gatts_hvx( %d, %x, %d, %d)",
+        MICROBIT_DEBUG_DMESGF( "calling sd_ble_gatts_hvx( %d, %x, %d, %d)",
                (int) handles.value, (unsigned int) data, (int) *data, (int) length);
         
         if ( MICROBIT_BLE_ECHK( sd_ble_gatts_hvx( connection, &hvx_params)) == NRF_SUCCESS)
@@ -100,7 +100,7 @@ bool MicroBitBLEChar::indicateChrValue( microbit_gaphandle_t connection, const u
     if ( connection == BLE_CONN_HANDLE_INVALID)
         return false;
     
-    DMESGF( "MicroBitBLEChar::indicateChrValue %d", (int) handles.value);
+    MICROBIT_DEBUG_DMESGF( "MicroBitBLEChar::indicateChrValue %d", (int) handles.value);
     
     bool set = false;
     
@@ -113,7 +113,7 @@ bool MicroBitBLEChar::indicateChrValue( microbit_gaphandle_t connection, const u
         hvx_params.p_len  = &length;
         hvx_params.p_data = data;
         
-        DMESGF( "calling sd_ble_gatts_hvx( %d, %x, %d, %d)",
+        MICROBIT_DEBUG_DMESGF( "calling sd_ble_gatts_hvx( %d, %x, %d, %d)",
                (int) handles.value, (unsigned int) data, (int) *data, (int) length);
 
         if ( MICROBIT_BLE_ECHK( sd_ble_gatts_hvx( connection, &hvx_params)) == NRF_SUCCESS)
@@ -135,7 +135,7 @@ bool MicroBitBLEChar::writeChrValue( microbit_gaphandle_t connection, const uint
     if ( connection == BLE_CONN_HANDLE_INVALID)
         return false;
  
-    DMESGF( "MicroBitBLEChar::writeChrValue %d", (int) handles.value);
+    MICROBIT_DEBUG_DMESGF( "MicroBitBLEChar::writeChrValue %d", (int) handles.value);
     
     bool done = true;
     

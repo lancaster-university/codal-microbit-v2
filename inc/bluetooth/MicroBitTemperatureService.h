@@ -78,10 +78,10 @@ class MicroBitTemperatureService : public MicroBitBLEService
      */
     void temperatureUpdate(MicroBitEvent e);
 
-    // Bluetooth stack we're running on.
+    // Thermometer we're using.
     MicroBitThermometer     &thermometer;
 
-    // memory for our 8 bit temperature characteristic.
+    // memory for our temperature characteristic.
     int8_t             temperatureDataCharacteristicBuffer;
     uint16_t           temperaturePeriodCharacteristicBuffer;
     

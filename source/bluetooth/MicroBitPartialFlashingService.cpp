@@ -1,4 +1,3 @@
-
 /*
 The MIT License (MIT)
 
@@ -33,13 +32,16 @@ DEALINGS IN THE SOFTWARE.
 #if CONFIG_ENABLED(DEVICE_BLE)
 
 #include "MicroBitPartialFlashingService.h"
+#include "MicroBitDevice.h"
 
+using namespace codal;
+
+const uint8_t  MicroBitPartialFlashingService::base_uuid[ 16] =
+{ 0xe9,0x7d,0x00,0x00,0x25,0x1d,0x47,0x0a,0xa0,0x62,0xfa,0x19,0x22,0xdf,0xa9,0xa8 };
 
 const uint16_t MicroBitPartialFlashingService::serviceUUID               = 0xd91d;
 const uint16_t MicroBitPartialFlashingService::charUUID[ mbbs_cIdxCOUNT] = { 0x3b10 };
 
-const uint8_t  MicroBitPartialFlashingService::base_uuid[ 16] =
-{ 0xe9,0x7d,0x00,0x00,0x25,0x1d,0x47,0x0a,0xa0,0x62,0xfa,0x19,0x22,0xdf,0xa9,0xa8 };
 
 /**
   * Constructor.
@@ -63,7 +65,7 @@ MicroBitPartialFlashingService::MicroBitPartialFlashingService( BLEDevice &_ble,
                          microbit_propWRITE_WITHOUT | microbit_propNOTIFY);
 
     // Set up listener for SD writing
-    messageBus.listen(MICROBIT_ID_PARTIAL_FLASHING, MICROBIT_EVT_ANY, this, &MicroBitPartialFlashingService::partialFlashingEvent);
+    messageBus.listen( MICROBIT_ID_PARTIAL_FLASHING, MICROBIT_EVT_ANY, this, &MicroBitPartialFlashingService::partialFlashingEvent);
 }
 
 
@@ -75,7 +77,7 @@ void MicroBitPartialFlashingService::onDataWritten(const microbit_ble_evt_write_
     // Get data from BLE callback params
     uint8_t *data = (uint8_t *)params->data;
 
-    if(params->handle == handles[ mbbs_cIdxCTRL].value && params->len > 0)
+    if(params->handle == valueHandle( mbbs_cIdxCTRL) && params->len > 0)
     {
       // Switch CONTROL byte
       switch(data[0]){
@@ -104,9 +106,11 @@ void MicroBitPartialFlashingService::onDataWritten(const microbit_ble_evt_write_
 
           // Region Hash
           memcpy(&buffer[10], &memoryMap.memoryMapStore.memoryMap[data[1]].hash, 8);
+          
+          memset( &buffer[2], 0, 16); // !!! TODO: REMOVE THIS LINE WHEN FLASH AND STORAGE ARE IMPLEMENTED !!!
 
           // Send BLE Notification
-          notify( handles[ mbbs_cIdxCTRL].value, (const uint8_t *)buffer, 18);
+          notifyChrValue( mbbs_cIdxCTRL, (const uint8_t *)buffer, 18);
 
           // Reset packet count
           packetCount = 0;
@@ -138,7 +142,7 @@ void MicroBitPartialFlashingService::onDataWritten(const microbit_ble_evt_write_
            * Return the version of the Partial Flashing Service and the current BLE mode (application / pairing)
            */
           uint8_t flashNotificationBuffer[] = {MICROBIT_STATUS, PARTIAL_FLASHING_VERSION, MicroBitBLEManager::manager->getCurrentMode()};
-          notify( handles[ mbbs_cIdxCTRL].value, (const uint8_t *)flashNotificationBuffer, sizeof(flashNotificationBuffer));
+          notifyChrValue( mbbs_cIdxCTRL, (const uint8_t *)flashNotificationBuffer, sizeof(flashNotificationBuffer));
           break;
         }
         case MICROBIT_RESET:
@@ -194,7 +198,7 @@ void MicroBitPartialFlashingService::flashData(uint8_t *data)
             return; // packet is from a previous batch
 
           uint8_t flashNotificationBuffer[] = {FLASH_DATA, 0xAA};
-          notify( handles[ mbbs_cIdxCTRL].value, (const uint8_t *)flashNotificationBuffer, sizeof(flashNotificationBuffer));
+          notifyChrValue( mbbs_cIdxCTRL, (const uint8_t *)flashNotificationBuffer, sizeof(flashNotificationBuffer));
           blockPacketCount += 4;
           packetCount = blockPacketCount;
           blockNum = 0;
@@ -280,7 +284,7 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
 
       // Update flash control buffer to send next packet
       uint8_t flashNotificationBuffer[] = {FLASH_DATA, 0xFF};
-      notify( handles[ mbbs_cIdxCTRL].value, (const uint8_t *)flashNotificationBuffer, sizeof(flashNotificationBuffer));
+      notifyChrValue( valueHandle( mbbs_cIdxCTRL), (const uint8_t *)flashNotificationBuffer, sizeof(flashNotificationBuffer));
       break;
     }
     case END_OF_TRANSMISSION:
@@ -314,9 +318,9 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
 
       // Once the final packet has been written remove the BLE mode flag and reset
       // the micro:bit
-        MicroBitStorage storage;
-        storage.remove("flashIncomplete");
-        microbit_reset();
+      MicroBitStorage storage;
+      storage.remove("flashIncomplete");
+      microbit_reset();
       break;
     }
     case MICROBIT_RESET:

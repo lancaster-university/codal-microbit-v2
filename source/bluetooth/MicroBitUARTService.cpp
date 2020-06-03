@@ -33,30 +33,19 @@ DEALINGS IN THE SOFTWARE.
 
 #if CONFIG_ENABLED(DEVICE_BLE)
 
-#include "ble/UUID.h"
-
 #include "ExternalEvents.h"
 #include "MicroBitUARTService.h"
 #include "MicroBitFiber.h"
 #include "ErrorNo.h"
 #include "NotifyEvents.h"
 
-static uint8_t txBufferHead = 0;
-static uint8_t txBufferTail = 0;
 
-static GattCharacteristic* txCharacteristic = NULL;
+const uint8_t  MicroBitUARTService::base_uuid[ 16] =
+{ 0x6e, 0x40, 0x00, 0x00, 0xb5, 0xa3, 0xf3, 0x93, 0xe0, 0xa9, 0xe5, 0x0e, 0x24, 0xdc, 0xca, 0x9e };
 
-/**
-  * A callback function for whenever a Bluetooth device consumes our TX Buffer
-  */
-void on_confirmation(uint16_t handle)
-{
-    if(handle == txCharacteristic->getValueAttribute().getHandle())
-    {
-        txBufferTail = txBufferHead;
-        MicroBitEvent(MICROBIT_ID_NOTIFY, MICROBIT_UART_S_EVT_TX_EMPTY);
-    }
-}
+const uint16_t MicroBitUARTService::serviceUUID               = 0x0001;
+const uint16_t MicroBitUARTService::charUUID[ mbbs_cIdxCOUNT] = { 0x0002, 0x0003 };
+
 
 /**
  * Constructor for the UARTService.
@@ -66,8 +55,12 @@ void on_confirmation(uint16_t handle)
  *
  * @note defaults to 20
  */
-MicroBitUARTService::MicroBitUARTService(BLEDevice &_ble, uint8_t rxBufferSize, uint8_t txBufferSize) : ble(_ble)
+MicroBitUARTService::MicroBitUARTService(BLEDevice &_ble, uint8_t rxBufferSize, uint8_t txBufferSize)
 {
+    // Initialise our characteristic values.
+    txBufferHead = 0;
+    txBufferTail = 0;
+    
     rxBufferSize += 1;
     txBufferSize += 1;
 
@@ -82,27 +75,42 @@ MicroBitUARTService::MicroBitUARTService(BLEDevice &_ble, uint8_t rxBufferSize, 
     txBufferTail = 0;
     this->txBufferSize = txBufferSize;
 
-    GattCharacteristic rxCharacteristic(UARTServiceRXCharacteristicUUID, rxBuffer, 1, rxBufferSize, GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE | GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE_WITHOUT_RESPONSE);
+    // Register the base UUID and create the service.
+    RegisterBaseUUID( base_uuid);
+    CreateService( serviceUUID);
 
-    txCharacteristic = new GattCharacteristic(UARTServiceTXCharacteristicUUID, txBuffer, 1, txBufferSize, GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_INDICATE);
+    // Create the data structures that represent each of our characteristics in Soft Device.
+    CreateCharacteristic( mbbs_cIdxRX, charUUID[ mbbs_cIdxRX],
+                          rxBuffer,
+                          1, rxBufferSize,
+                          microbit_propWRITE | microbit_propWRITE_WITHOUT);
 
-    GattCharacteristic *charTable[] = {txCharacteristic, &rxCharacteristic};
-
-    GattService uartService(UARTServiceUUID, charTable, sizeof(charTable) / sizeof(GattCharacteristic *));
-
-    _ble.addService(uartService);
-
-    this->rxCharacteristicHandle = rxCharacteristic.getValueAttribute().getHandle();
-
-    _ble.gattServer().onDataWritten(this, &MicroBitUARTService::onDataWritten);
-    _ble.gattServer().onConfirmationReceived(on_confirmation);
+    CreateCharacteristic( mbbs_cIdxTX, charUUID[ mbbs_cIdxTX],
+                          txBuffer,
+                          1, txBufferSize,
+                          microbit_propINDICATE);
 }
+
+
+/**
+  * A callback function for whenever a Bluetooth device consumes our TX Buffer
+  */
+void MicroBitUARTService::onConfirmation( const microbit_ble_evt_hvc_t *params)
+{
+    if ( params->handle == valueHandle( mbbs_cIdxTX))
+    {
+        txBufferTail = txBufferHead;
+        MicroBitEvent(MICROBIT_ID_NOTIFY, MICROBIT_UART_S_EVT_TX_EMPTY);
+    }
+}
+
 
 /**
   * A callback function for whenever a Bluetooth device writes to our RX characteristic.
   */
-void MicroBitUARTService::onDataWritten(const GattWriteCallbackParams *params) {
-    if (params->handle == this->rxCharacteristicHandle)
+void MicroBitUARTService::onDataWritten(const microbit_ble_evt_write_t *params)
+{
+    if (params->handle == valueHandle( mbbs_cIdxRX))
     {
         uint16_t bytesWritten = params->len;
 
@@ -228,7 +236,7 @@ int MicroBitUARTService::getc(MicroBitSerialMode mode)
   */
 int MicroBitUARTService::putc(char c, MicroBitSerialMode mode)
 {
-    return (send((uint8_t *)&c, 1, mode) == 1) ? 1 : EOF;
+    return send( (uint8_t *)&c, 1, mode);
 }
 
 /**
@@ -256,16 +264,14 @@ int MicroBitUARTService::send(const uint8_t *buf, int length, MicroBitSerialMode
     if(length < 1 || mode == SYNC_SPINWAIT)
         return MICROBIT_INVALID_PARAMETER;
 
-    bool updatesEnabled = false;
+    bool updatesEnabled = indicateChrValueEnabled( mbbs_cIdxTX);
 
-    ble.gattServer().areUpdatesEnabled(*txCharacteristic, &updatesEnabled);
-
-    if(!ble.getGapState().connected && !updatesEnabled)
+    if( !getConnected() && !updatesEnabled)
         return MICROBIT_NOT_SUPPORTED;
 
     int bytesWritten = 0;
 
-    while(bytesWritten < length && ble.getGapState().connected && updatesEnabled)
+    while ( bytesWritten < length && getConnected() && updatesEnabled)
     {
         for(int bufferIterator = bytesWritten; bufferIterator < length; bufferIterator++)
         {
@@ -289,18 +295,17 @@ int MicroBitUARTService::send(const uint8_t *buf, int length, MicroBitSerialMode
 
         circularCopy(txBuffer, txBufferSize, temp, txBufferTail, txBufferHead);
 
-
         if(mode == SYNC_SLEEP)
             fiber_wake_on_event(MICROBIT_ID_NOTIFY, MICROBIT_UART_S_EVT_TX_EMPTY);
 
-        ble.gattServer().write(txCharacteristic->getValueAttribute().getHandle(), temp, size);
+        indicateChrValue( mbbs_cIdxTX, temp, size);
 
         if(mode == SYNC_SLEEP)
             schedule();
         else
             break;
 
-        ble.gattServer().areUpdatesEnabled(*txCharacteristic, &updatesEnabled);
+        updatesEnabled = indicateChrValueEnabled( mbbs_cIdxTX);
     }
 
     return bytesWritten;

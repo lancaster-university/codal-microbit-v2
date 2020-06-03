@@ -36,6 +36,10 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitFlash.h"
 #include "MicroBitSerial.h"
 
+#include "sdk_config.h"
+#include "app_util.h"
+
+
 /**
   * Default constructor.
   *
@@ -45,15 +49,19 @@ MicroBitMemoryMap::MicroBitMemoryMap()
 {
       // Assumes PXT Built program
       // SD
-      pushRegion(Region(0x00, 0x00, 0x18000, 0x00));  // Soft Device
+      pushRegion(Region(0x00, 0x00, 0x27000, 0x00));  // Soft Device
 
       // DAL
-      pushRegion(Region(0x01, 0x18000, FLASH_PROGRAM_END, 0x00)); // micro:bit Device Abstractation Layer
+      pushRegion(Region(0x01, 0x27000, FLASH_PROGRAM_END, 0x00)); // micro:bit Device Abstractation Layer
 
       // PXT
       // PXT will be on the start of the next page
-      // padding to next page = 0x400 - (FLASH_PROGRAM_END % 0x400);
-      pushRegion(Region(0x02, FLASH_PROGRAM_END + (0x400 - (FLASH_PROGRAM_END % 0x400)), 0x3BBFF, 0x00)); // micro:bit PXT
+      // padding to next page = PAGE_SIZE - (FLASH_PROGRAM_END % PAGE_SIZE);
+      // Assume 
+      pushRegion(Region(0x02,
+                        FLASH_PROGRAM_END + (PAGE_SIZE - ( FLASH_PROGRAM_END % PAGE_SIZE)),
+                        BOOTLOADER_ADDRESS - 4 * FDS_VIRTUAL_PAGE_SIZE * ( FDS_VIRTUAL_PAGES + FDS_VIRTUAL_PAGES_RESERVED),
+                        0x00)); // micro:bit PXT
 
       // Find Hashes if PXT Built Program
       findHashes();

@@ -52,8 +52,10 @@ class MicroBitEddystone
 
 #if CONFIG_ENABLED(MICROBIT_BLE_EDDYSTONE_URL)
 
+    static const uint8_t frameSizeURL = 22;
+    
     /**
-      * Set the content of Eddystone URL frames
+      * Get the content of Eddystone URL frames
       *
       * @param url The url to broadcast
       *
@@ -62,10 +64,10 @@ class MicroBitEddystone
       * @note The calibratedPower value ranges from -100 to +20 to a resolution of 1. The calibrated power should be binary encoded.
       * More information can be found at https://github.com/google/eddystone/tree/master/eddystone-uid#tx-power
       */
-    int setURL(BLEDevice* ble, const char *url, int8_t calibratedPower = 0xF0);
+    int getURL( uint8_t *rawFrame /*[frameSizeURL]*/, uint16_t *pLength, const char *url, int8_t calibratedPower = 0xF0);
 
     /**
-      * Set the content of Eddystone URL frames, but accepts a ManagedString as a url.
+      * Get the content of Eddystone URL frames, but accepts a ManagedString as a url.
       *
       * @param url The url to broadcast
       *
@@ -74,11 +76,14 @@ class MicroBitEddystone
       * @note The calibratedPower value ranges from -100 to +20 to a resolution of 1. The calibrated power should be binary encoded.
       * More information can be found at https://github.com/google/eddystone/tree/master/eddystone-uid#tx-power
       */
-    int setURL(BLEDevice* ble, ManagedString url, int8_t calibratedPower = 0xF0);
+    int getURL( uint8_t *rawFrame /*[frameSizeURL]*/, uint16_t *pLength, ManagedString url, int8_t calibratedPower = 0xF0);
 
 #endif
 
 #if CONFIG_ENABLED(MICROBIT_BLE_EDDYSTONE_UID)
+    
+    static const uint8_t frameSizeUID = 20;
+
     /**
       * Set the content of Eddystone UID frames
       *
@@ -91,7 +96,7 @@ class MicroBitEddystone
       * @note The calibratedPower value ranges from -100 to +20 to a resolution of 1. The calibrated power should be binary encoded.
       * More information can be found at https://github.com/google/eddystone/tree/master/eddystone-uid#tx-power
       */
-    int setUID(BLEDevice* ble, const char* uid_namespace, const char* uid_instance, int8_t calibratedPower = 0xF0);
+    int getUID( uint8_t *rawFrame /*[frameSizeUID]*/, uint16_t *pLength, const char* uid_namespace, const char* uid_instance, int8_t calibratedPower = 0xF0);
 #endif
 
   private:
