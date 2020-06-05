@@ -43,7 +43,7 @@ static const MatrixPoint ledMatrixPositions[5*5] =
 /**
   * Constructor.
   *
-  * Create a representation of a GenuinoZero device, which includes member variables
+  * Create a representation of a micro:bit device, which includes member variables
   * that represent various device drivers used to control aspects of the micro:bit.
   */
 MicroBit::MicroBit() :
@@ -51,7 +51,7 @@ MicroBit::MicroBit() :
     adcTimer(NRF_TIMER2, TIMER2_IRQn),
     timer(systemTimer),
     messageBus(),
-    adc(adcTimer, 100000),
+    adc(adcTimer, 91),
     io(adc),
     serial(io.usbTx, io.usbRx, NRF_UARTE0),
     _i2c(io.sda, io.scl),
