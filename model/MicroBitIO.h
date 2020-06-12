@@ -28,6 +28,7 @@ DEALINGS IN THE SOFTWARE.
 #include "CodalConfig.h"
 #include "NRF52Pin.h"
 #include "NRF52ADC.h"
+#include "TouchSensor.h"
 
 //
 // Unique Pin number for each pin (synonymous with mbedos PinName)
@@ -406,7 +407,7 @@ namespace codal
              * Accepts a sequence of unique ID's used to distinguish events raised
              * by MicroBitPin instances on the default EventModel.
              */
-            MicroBitIO(NRF52ADC &a);
+            MicroBitIO(NRF52ADC &a, TouchSensor &s);
     };
 }
 
