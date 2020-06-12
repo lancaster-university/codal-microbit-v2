@@ -49,9 +49,11 @@ static const MatrixPoint ledMatrixPositions[5*5] =
 MicroBit::MicroBit() :
     systemTimer(NRF_TIMER1, TIMER1_IRQn),
     adcTimer(NRF_TIMER2, TIMER2_IRQn),
+    capTouchTimer(NRF_TIMER3, TIMER3_IRQn),
     timer(systemTimer),
     messageBus(),
     adc(adcTimer, 91),
+    touchSensor(capTouchTimer),
     io(adc),
     serial(io.usbTx, io.usbRx, NRF_UARTE0),
     _i2c(io.sda, io.scl),

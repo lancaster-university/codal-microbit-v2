@@ -45,6 +45,7 @@ DEALINGS IN THE SOFTWARE.
 #include "NRF52Serial.h"
 #include "NRF52I2C.h"
 #include "NRF52ADC.h"
+#include "NRF52TouchSensor.h"
 
 #include "MicroBitIO.h"
 #include "MicroBitDisplay.h"
@@ -100,9 +101,11 @@ namespace codal
         public:
             NRFLowLevelTimer            systemTimer;
             NRFLowLevelTimer            adcTimer;
+            NRFLowLevelTimer            capTouchTimer;
             Timer                       timer;
             MessageBus                  messageBus;
             NRF52ADC                    adc;
+            NRF52TouchSensor            touchSensor;
             MicroBitIO                  io;
             NRF52Serial                 serial;
         private:
