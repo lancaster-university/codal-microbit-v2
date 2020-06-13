@@ -76,7 +76,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitUARTService.h"
 #endif
 
-//#include "MicroBitStorage.h"
+#include "MicroBitStorage.h"
 //#include "MicroBitLightSensor.h"
 
 
@@ -108,6 +108,10 @@ namespace codal
             // Pin ranges used for LED matrix display.
 
         public:
+
+            // Persistent key value store
+            MicroBitStorage           storage;
+        
 #if CONFIG_ENABLED(DEVICE_BLE)
             // Bluetooth related member variables.
             // Initialize buttonless SVCI bootloader interface before interrupts are enabled
@@ -138,10 +142,6 @@ namespace codal
             MicroBitAccelerometer       accelerometer;
             MicroBitCompass             compass;
             //MicroBitCompassCalibrator   compassCalibrator;
-
-
-            // Persistent key value store
-            //MicroBitStorage           storage;
 
             /**
              * Constructor.

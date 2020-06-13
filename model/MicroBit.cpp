@@ -49,9 +49,11 @@ static const MatrixPoint ledMatrixPositions[5*5] =
   */
 MicroBit::MicroBit() :
 
+    storage(),
+
 #if CONFIG_ENABLED(DEVICE_BLE)
     // Initialize buttonless SVCI bootloader interface before interrupts are enabled
-    bleManager(),
+    bleManager( storage),
     ble( &bleManager),
 #endif
 
@@ -76,7 +78,7 @@ MicroBit::MicroBit() :
     thermometer(),
     accelerometer(_i2c),
     compass(_i2c)
-    //compassCalibrator(compass, accelerometer, display)
+    //compassCalibrator(compass, accelerometer, display),
 {
     // Clear our status
     status = 0;
@@ -174,8 +176,8 @@ int MicroBit::init()
     int i=0;
     // Test if we need to enter BLE pairing mode
     // If a RebootMode Key has been set boot straight into BLE mode
-    KeyValuePair* RebootMode = NULL; //TODO_BLE_STORAGE storage.get("RebootMode");
-    KeyValuePair* flashIncomplete = NULL; //TODO_BLE_STORAGE storage.get("flashIncomplete");
+    KeyValuePair* RebootMode = storage.get("RebootMode");
+    KeyValuePair* flashIncomplete = storage.get("flashIncomplete");
     sleep(100);
     // Animation
     uint8_t x = 0; uint8_t y = 0;
@@ -194,7 +196,7 @@ int MicroBit::init()
         {
             // Remove KV if it exists
             if(RebootMode != NULL){
-                //TODO_BLE_STORAGE storage.remove("RebootMode");
+                storage.remove("RebootMode");
             }
             delete RebootMode;
             delete flashIncomplete;

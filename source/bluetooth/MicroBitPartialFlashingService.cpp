@@ -106,8 +106,6 @@ void MicroBitPartialFlashingService::onDataWritten(const microbit_ble_evt_write_
 
           // Region Hash
           memcpy(&buffer[10], &memoryMap.memoryMapStore.memoryMap[data[1]].hash, 8);
-          
-          memset( &buffer[2], 0, 16); // !!! TODO: REMOVE THIS LINE WHEN FLASH AND STORAGE ARE IMPLEMENTED !!!
 
           // Send BLE Notification
           notifyChrValue( mbbs_cIdxCTRL, (const uint8_t *)buffer, 18);
