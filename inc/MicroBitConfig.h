@@ -9,17 +9,92 @@
  * MicroBit specific build configuration options.
  */
 
+#ifndef MICROBIT_CODEPAGESIZE
+#define MICROBIT_CODEPAGESIZE           ((uint32_t) NRF_FICR->CODEPAGESIZE)
+#endif
+
+#ifndef MICROBIT_CODESIZE
+#define MICROBIT_CODESIZE               ((uint32_t) NRF_FICR->CODESIZE)
+#endif
+
+#ifdef BOOTLOADER_ADDRESS
+
+#ifndef MICROBIT_BOOTLOADER_ADDRESS
+#define MICROBIT_BOOTLOADER_ADDRESS     ( BOOTLOADER_ADDRESS)
+#endif
+
+#ifndef MICROBIT_BOOTLOADER_SIZE
+#define MICROBIT_BOOTLOADER_SIZE        ( MICROBIT_CODESIZE * MICROBIT_CODEPAGESIZE - MICROBIT_BOOTLOADER_ADDRESS)
+#endif
+
+#else //BOOTLOADER_ADDRESS
+
+#ifndef MICROBIT_BOOTLOADER_SIZE
+#define MICROBIT_BOOTLOADER_SIZE        (0x80000 - 0x72000)
+#endif
+
+#ifndef MICROBIT_BOOTLOADER_ADDRESS
+#define MICROBIT_BOOTLOADER_ADDRESS     (( MICROBIT_CODESIZE * MICROBIT_CODEPAGESIZE - MICROBIT_BOOTLOADER_SIZE) & ~(MICROBIT_CODEPAGESIZE - 1))
+#endif
+
+#endif //BOOTLOADER_ADDRESS
+
 // Defines where in memory persistent data is stored.
+#ifndef MICROBIT_STORAGE_PAGE
+#define MICROBIT_STORAGE_PAGE           ( MICROBIT_BOOTLOADER_ADDRESS - MICROBIT_CODEPAGESIZE)
+#endif
+
+#ifndef MICROBIT_FDS_PAGE
+#define MICROBIT_FDS_PAGE               ( MICROBIT_BOOTLOADER_ADDRESS - MICROBIT_CODEPAGESIZE * 3)
+#endif
+
+#ifndef MICROBIT_DEFAULT_SCRATCH_PAGE
+#define MICROBIT_DEFAULT_SCRATCH_PAGE   ( MICROBIT_BOOTLOADER_ADDRESS - MICROBIT_CODEPAGESIZE * 4)
+#endif
+
+#ifndef MICROBIT_STORAGE_SCRATCH_PAGE
+#define MICROBIT_STORAGE_SCRATCH_PAGE   ( MICROBIT_DEFAULT_SCRATCH_PAGE)
+#endif
+
+#ifndef MICROBIT_APP_REGION_END
+#define MICROBIT_APP_REGION_END         ( MICROBIT_DEFAULT_SCRATCH_PAGE)
+#endif
+
+#ifndef PAGE_SIZE
+#define PAGE_SIZE                       ( MICROBIT_CODEPAGESIZE)
+#endif
+
 #ifndef KEY_VALUE_STORE_PAGE
-#define KEY_VALUE_STORE_PAGE	                (PAGE_SIZE * (NRF_FICR->CODESIZE - 17))
+#define KEY_VALUE_STORE_PAGE            ( MICROBIT_STORAGE_PAGE)
 #endif
 
 #ifndef BLE_BOND_DATA_PAGE
-#define BLE_BOND_DATA_PAGE                      (PAGE_SIZE * (NRF_FICR->CODESIZE - 18))
+#define BLE_BOND_DATA_PAGE              ( MICROBIT_FDS_PAGE)
 #endif
 
 #ifndef DEFAULT_SCRATCH_PAGE
-#define DEFAULT_SCRATCH_PAGE	                (PAGE_SIZE * (NRF_FICR->CODESIZE - 19))
+#define DEFAULT_SCRATCH_PAGE            ( MICROBIT_DEFAULT_SCRATCH_PAGE)
+#endif
+
+//
+// File System configuration defaults
+//
+
+//
+// Defines the logical block size for the file system.
+// Must be a factor of the physical PAGE_SIZE (ideally a power of two less).
+//
+#ifndef MBFS_BLOCK_SIZE
+#define MBFS_BLOCK_SIZE        256
+#endif
+
+//
+// FileSystem writeback cache size, in bytes. Defines how many bytes will be stored
+// in RAM before being written back to FLASH. Set to zero to disable this feature.
+// Should be <= MBFS_BLOCK_SIZE.
+//
+#ifndef MBFS_CACHE_SIZE
+#define MBFS_CACHE_SIZE        0
 #endif
 
 // Address of the end of the current program in FLASH memory.
@@ -149,7 +224,5 @@ extern uint32_t __data_end__;
 #ifndef MICROBIT_DAL_VERSION
 #define MICROBIT_DAL_VERSION                    "unknown"
 #endif
-
-#define PAGE_SIZE 4096
 
 #endif

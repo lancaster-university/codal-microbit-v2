@@ -93,8 +93,7 @@ void MicroBitStorage::scratchKeyValueStore(KeyValueStore store)
 {
     //calculate our various offsets
     uint32_t *s = (uint32_t *) &store;
-    uint32_t pg_size = NRF_FICR->CODEPAGESIZE;
-    uint32_t *scratchPointer = (uint32_t *)(pg_size * (NRF_FICR->CODESIZE - MICROBIT_STORAGE_SCRATCH_PAGE_OFFSET));
+    uint32_t *scratchPointer = (uint32_t *) MICROBIT_STORAGE_SCRATCH_PAGE;
     int wordsToWrite = sizeof(KeyValueStore) / 4;
 
     flashCopy(s, scratchPointer, wordsToWrite);
@@ -115,11 +114,8 @@ void MicroBitStorage::scratchKeyValuePair(KeyValuePair pair, uint32_t* flashPoin
     uint32_t *p = (uint32_t *) &pair;
 
     //calculate our various offsets
-    uint32_t pg_size = NRF_FICR->CODEPAGESIZE;
-    uint32_t pg_num  = NRF_FICR->CODESIZE - MICROBIT_STORAGE_STORE_PAGE_OFFSET;
-
-    uint32_t *scratchPointer = (uint32_t *)(pg_size * (NRF_FICR->CODESIZE - MICROBIT_STORAGE_SCRATCH_PAGE_OFFSET));
-    uint32_t *flashBlockPointer = (uint32_t *)(pg_size * pg_num);
+    uint32_t *scratchPointer = (uint32_t *) MICROBIT_STORAGE_SCRATCH_PAGE;
+    uint32_t *flashBlockPointer = (uint32_t *) MICROBIT_STORAGE_PAGE;
 
     uint32_t flashPointerOffset = flashPointer - flashBlockPointer;
 
@@ -168,10 +164,10 @@ int MicroBitStorage::put(const char *key, uint8_t *data, int dataSize)
     memcpy(pair.value, data, dataSize);
 
     //calculate our various offsets.
-    uint32_t pg_size = NRF_FICR->CODEPAGESIZE;
-    uint32_t *flashPointer = (uint32_t *)(pg_size * (NRF_FICR->CODESIZE - MICROBIT_STORAGE_STORE_PAGE_OFFSET));
+    uint32_t pg_size = MICROBIT_CODEPAGESIZE;
+    uint32_t *flashPointer = (uint32_t *) MICROBIT_STORAGE_PAGE;
     uint32_t *flashBlockPointer = flashPointer;
-    uint32_t *scratchPointer = (uint32_t *)(pg_size * (NRF_FICR->CODESIZE - MICROBIT_STORAGE_SCRATCH_PAGE_OFFSET));
+    uint32_t *scratchPointer = (uint32_t *) MICROBIT_STORAGE_SCRATCH_PAGE;
 
     uint32_t kvStoreSize = sizeof(KeyValueStore) / 4;
     uint32_t kvPairSize = sizeof(KeyValuePair) / 4;
@@ -191,7 +187,7 @@ int MicroBitStorage::put(const char *key, uint8_t *data, int dataSize)
     //iterate through key value pairs in flash, writing them to the scratch page.
     for(int i = 0; i < storeSize; i++)
     {
-        memcpy(&storedPair, flashPointer, sizeof(KeyValuePair));
+        memcpy( (void *)&storedPair, flashPointer, sizeof(KeyValuePair));
 
         //check if the keys match...
         if(strcmp((char *)storedPair.key, (char *)pair.key) == 0)
@@ -226,7 +222,7 @@ int MicroBitStorage::put(const char *key, uint8_t *data, int dataSize)
     flashPageErase((uint32_t *)flashBlockPointer);
 
     //copy from scratch to storage.
-    flashCopy((uint32_t *)(pg_size * (NRF_FICR->CODESIZE - MICROBIT_STORAGE_SCRATCH_PAGE_OFFSET)), flashBlockPointer, kvStoreSize + (storeSize * kvPairSize));
+    flashCopy((uint32_t *) MICROBIT_STORAGE_SCRATCH_PAGE, flashBlockPointer, kvStoreSize + (storeSize * kvPairSize));
 
     return MICROBIT_OK;
 }
@@ -262,10 +258,7 @@ int MicroBitStorage::put(ManagedString key, uint8_t* data, int dataSize)
 KeyValuePair* MicroBitStorage::get(const char* key)
 {
     //calculate our offsets for our storage page
-    uint32_t pg_size = NRF_FICR->CODEPAGESIZE;
-    uint32_t pg_num  = NRF_FICR->CODESIZE - MICROBIT_STORAGE_STORE_PAGE_OFFSET;
-
-    uint32_t *flashBlockPointer = (uint32_t *)(pg_size * pg_num);
+    uint32_t *flashBlockPointer = (uint32_t *) MICROBIT_STORAGE_PAGE;
 
     int storeSize = size();
 
@@ -283,7 +276,7 @@ KeyValuePair* MicroBitStorage::get(const char* key)
     //iterate through flash until we have a match, or drop out.
     for(i = 0; i < storeSize; i++)
     {
-        memcpy(pair, flashBlockPointer, sizeof(KeyValuePair));
+        memcpy( (void *)pair, flashBlockPointer, sizeof(KeyValuePair));
 
         if(strcmp(key,(char *)pair->key) == 0)
             break;
@@ -327,10 +320,9 @@ KeyValuePair* MicroBitStorage::get(ManagedString key)
 int MicroBitStorage::remove(const char* key)
 {
     //calculate our various offsets
-    uint32_t pg_size = NRF_FICR->CODEPAGESIZE;
-    uint32_t *flashPointer = (uint32_t *)(pg_size * (NRF_FICR->CODESIZE - MICROBIT_STORAGE_STORE_PAGE_OFFSET));
+    uint32_t *flashPointer = (uint32_t *) MICROBIT_STORAGE_PAGE;
     uint32_t *flashBlockPointer = flashPointer;
-    uint32_t *scratchPointer = (uint32_t *)(pg_size * (NRF_FICR->CODESIZE - MICROBIT_STORAGE_SCRATCH_PAGE_OFFSET));
+    uint32_t *scratchPointer = (uint32_t *) MICROBIT_STORAGE_SCRATCH_PAGE;
 
     uint32_t kvStoreSize = sizeof(KeyValueStore) / 4;
     uint32_t kvPairSize = sizeof(KeyValuePair) / 4;
@@ -355,7 +347,7 @@ int MicroBitStorage::remove(const char* key)
     //iterate through our flash copy pairs to scratch, unless there is a key patch
     for(int i = 0; i < storeSize; i++)
     {
-        memcpy(&storedPair, flashPointer, sizeof(KeyValuePair));
+        memcpy( (void *)&storedPair, flashPointer, sizeof(KeyValuePair));
 
         //if we have a match, don't increment our scratchPointer
         if(strcmp((char *)storedPair.key, (char *)key) == 0)
@@ -383,7 +375,7 @@ int MicroBitStorage::remove(const char* key)
 
     //copy scratch to our storage page
     flashPageErase((uint32_t *)flashBlockPointer);
-    flashCopy((uint32_t *)(pg_size * (NRF_FICR->CODESIZE - MICROBIT_STORAGE_SCRATCH_PAGE_OFFSET)), flashBlockPointer, kvStoreSize + (storeSize * kvPairSize));
+    flashCopy((uint32_t *) MICROBIT_STORAGE_SCRATCH_PAGE, flashBlockPointer, kvStoreSize + (storeSize * kvPairSize));
 
     return MICROBIT_OK;
 }
@@ -408,15 +400,14 @@ int MicroBitStorage::remove(ManagedString key)
   */
 int MicroBitStorage::size()
 {
-    uint32_t pg_size = NRF_FICR->CODEPAGESIZE;
-    uint32_t pg_num  = NRF_FICR->CODESIZE - MICROBIT_STORAGE_STORE_PAGE_OFFSET;
+    uint32_t pg_size = MICROBIT_CODEPAGESIZE;
 
-    uint32_t *flashBlockPointer = (uint32_t *)(pg_size * pg_num);
+    uint32_t *flashBlockPointer = (uint32_t *) MICROBIT_STORAGE_PAGE;
 
     KeyValueStore store = KeyValueStore();
 
     //read our data!
-    memcpy(&store, flashBlockPointer, sizeof(KeyValueStore));
+    memcpy( (void *)&store, flashBlockPointer, sizeof(KeyValueStore));
 
     //if we haven't used flash before, we need to configure it
     if(store.magic != MICROBIT_STORAGE_MAGIC)
@@ -425,12 +416,12 @@ int MicroBitStorage::size()
         store.size = 0;
 
         //erase the scratch page and write our new KeyValueStore
-        flashPageErase((uint32_t *)(pg_size * (NRF_FICR->CODESIZE - MICROBIT_STORAGE_SCRATCH_PAGE_OFFSET)));
+        flashPageErase((uint32_t *) MICROBIT_STORAGE_SCRATCH_PAGE);
         scratchKeyValueStore(store);
 
         //erase flash, and copy the scratch page over
         flashPageErase((uint32_t *)flashBlockPointer);
-        flashCopy((uint32_t *)(pg_size * (NRF_FICR->CODESIZE - MICROBIT_STORAGE_SCRATCH_PAGE_OFFSET)), flashBlockPointer, pg_size/4);
+        flashCopy((uint32_t *) MICROBIT_STORAGE_SCRATCH_PAGE, flashBlockPointer, pg_size/4);
     }
 
     return store.size;

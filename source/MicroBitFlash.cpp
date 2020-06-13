@@ -121,7 +121,7 @@ void MicroBitFlash::erase_page(uint32_t* pg_addr)
         flash_op_complete = false;
         while(1)
         {
-            if (sd_flash_page_erase(((uint32_t)pg_addr)/PAGE_SIZE) == NRF_SUCCESS)
+            if (sd_flash_page_erase(((uint32_t)pg_addr)/MICROBIT_CODEPAGESIZE) == NRF_SUCCESS)
                 break;
 
             system_timer_wait_ms(10);
@@ -214,16 +214,21 @@ void MicroBitFlash::flash_burn(uint32_t* addr, uint32_t* buffer, int size)
 int MicroBitFlash::flash_write(void* address, void* from_buffer,
                                int length, void* scratch_addr)
 {
+    // If no scratch_addr has been supplied use the default
+    if(scratch_addr == NULL)
+        scratch_addr = (uint32_t *)MICROBIT_DEFAULT_SCRATCH_PAGE;
+
+
     // Ensure that scratch_addr is aligned on a page boundary.
-    if((uint32_t)scratch_addr & 0x3FF)
+    if((uint32_t)scratch_addr & (MICROBIT_CODEPAGESIZE - 1))
         return MICROBIT_INVALID_PARAMETER;
 
     // Locate the hardware FLASH page used by this operation.
-    int page = (uint32_t)address / PAGE_SIZE;
-    uint32_t* pgAddr = (uint32_t*)(page * PAGE_SIZE);
+    int page = (uint32_t)address / MICROBIT_CODEPAGESIZE;
+    uint32_t* pgAddr = (uint32_t*)(page * MICROBIT_CODEPAGESIZE);
 
     // offset to write from within page.
-    int offset = (uint32_t)address % PAGE_SIZE;
+    int offset = (uint32_t)address % MICROBIT_CODEPAGESIZE;
 
     uint8_t* writeFrom = (uint8_t*)pgAddr;
     int start = WORD_ADDR(offset);
@@ -236,11 +241,13 @@ int MicroBitFlash::flash_write(void* address, void* from_buffer,
         if (!scratch_addr)
             return MICROBIT_INVALID_PARAMETER;
 
-        this->flash_burn((uint32_t*)scratch_addr, pgAddr, PAGE_SIZE/4);
+        this->erase_page((uint32_t *)scratch_addr);
+
+        this->flash_burn((uint32_t*)scratch_addr, pgAddr, MICROBIT_CODEPAGESIZE/4);
         this->erase_page(pgAddr);
         writeFrom = (uint8_t*)scratch_addr;
         start = 0;
-        end = PAGE_SIZE;
+        end = MICROBIT_CODEPAGESIZE;
     }
 
     uint32_t writeWord = 0;
