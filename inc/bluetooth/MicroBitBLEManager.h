@@ -30,6 +30,10 @@ DEALINGS IN THE SOFTWARE.
 
 #if CONFIG_ENABLED(DEVICE_BLE)
 
+#ifndef SOFTDEVICE_PRESENT
+#error "Please define SOFTDEVICE_PRESENT as 1"
+#endif
+
 #include "MicroBitBLETypes.h"
 #include "MicroBitStorage.h"
 #include "MicroBitDisplay.h"
