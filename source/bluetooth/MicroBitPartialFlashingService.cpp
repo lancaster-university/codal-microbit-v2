@@ -34,6 +34,10 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitPartialFlashingService.h"
 #include "MicroBitDevice.h"
 
+#include "nrf_sdm.h"
+#include "nrf_dfu_types.h"
+#include "crc32.h"
+
 using namespace codal;
 
 const uint8_t  MicroBitPartialFlashingService::base_uuid[ 16] =
@@ -313,7 +317,46 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
         flashPointer = flashPointer + 0x2;
       }
 
+      // make bootloader settings page
+      nrf_dfu_settings_t settings;
+      memset( &settings, 0, sizeof( nrf_dfu_settings_t));
+        
+      // make NO_VALIDATION settings
+      settings.settings_version = 2;
+      settings.bank_0.bank_code = NRF_DFU_BANK_VALID_APP;
+      settings.boot_validation_app.type = NO_VALIDATION;
 
+      // make VALIDATE_CRC settings - calculate app size and CRC
+      settings.boot_validation_app.type = VALIDATE_CRC;
+      settings.bank_0.image_size = offset + 16 * sizeof( uint32_t) - MICROBIT_APP_REGION_START;
+      settings.bank_0.image_crc  = crc32_compute( (uint8_t*) MICROBIT_APP_REGION_START, settings.bank_0.image_size, NULL);
+      *(uint32_t *)&settings.boot_validation_app.bytes[0] = settings.bank_0.image_crc;
+
+      // calculate settings page CRCs
+      settings.crc = crc32_compute( (const uint8_t *)&settings.settings_version,
+                                    offsetof(nrf_dfu_settings_t, init_command) - offsetof(nrf_dfu_settings_t, settings_version),
+                                    NULL);
+
+      settings.boot_validation_crc = crc32_compute( (const uint8_t *)&settings.boot_validation_softdevice, 3 * sizeof(boot_validation_t), NULL);
+
+      uint32_t settingsSizeInWords = ( sizeof( nrf_dfu_settings_t) + sizeof(uint32_t) - 1) / sizeof(uint32_t);
+        
+      // save settings to flash settings page if different
+      uint32_t *pSettings = (uint32_t *) MICROBIT_BOOTLOADER_SETTINGS;
+      if ( memcmp( pSettings, &settings, sizeof( nrf_dfu_settings_t)))
+      {
+        flash.erase_page( pSettings);
+        flash.flash_burn( pSettings, (uint32_t *)&settings, settingsSizeInWords);
+      }
+        
+      // save settings to flash settings backup page if different
+      uint32_t *pBackup   = (uint32_t *) MICROBIT_MBR_PARAMS;
+      if ( memcmp( pBackup, &settings, sizeof( nrf_dfu_settings_t)))
+      {
+        flash.erase_page( pBackup);
+        flash.flash_burn( pBackup, (uint32_t *)&settings, settingsSizeInWords);
+      }
+        
       // Once the final packet has been written remove the BLE mode flag and reset
       // the micro:bit
       MicroBitStorage storage;

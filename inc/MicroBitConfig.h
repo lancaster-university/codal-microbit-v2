@@ -5,6 +5,11 @@
 #include "yotta_cfg_mappings.h"
 #include "MicroBitCompat.h"
 
+#ifdef SOFTDEVICE_PRESENT
+#include "nrf_mbr.h"
+#include "nrf_sdm.h"
+#endif
+
 /*
  * MicroBit specific build configuration options.
  */
@@ -17,27 +22,37 @@
 #define MICROBIT_CODESIZE               ((uint32_t) NRF_FICR->CODESIZE)
 #endif
 
-#ifdef BOOTLOADER_ADDRESS
-
 #ifndef MICROBIT_BOOTLOADER_ADDRESS
+#ifdef BOOTLOADER_ADDRESS
 #define MICROBIT_BOOTLOADER_ADDRESS     ( BOOTLOADER_ADDRESS)
+#else
+#ifdef SOFTDEVICE_PRESENT
+#define MICROBIT_BOOTLOADER_ADDRESS     ((*(uint32_t *) MBR_BOOTLOADER_ADDR) != 0xFFFFFFFF ? *(uint32_t *) MBR_BOOTLOADER_ADDR : NRF_UICR->NRFFW[0])
+#else
+#define MICROBIT_BOOTLOADER_ADDRESS     ( NRF_UICR->NRFFW[0])
+#endif
+#endif
 #endif
 
 #ifndef MICROBIT_BOOTLOADER_SIZE
 #define MICROBIT_BOOTLOADER_SIZE        ( MICROBIT_CODESIZE * MICROBIT_CODEPAGESIZE - MICROBIT_BOOTLOADER_ADDRESS)
 #endif
 
-#else //BOOTLOADER_ADDRESS
-
-#ifndef MICROBIT_BOOTLOADER_SIZE
-#define MICROBIT_BOOTLOADER_SIZE        (0x80000 - 0x72000)
+#ifndef MICROBIT_MBR_PARAMS
+#ifdef MBR_PARAMS_PAGE_ADDRESS
+#define MICROBIT_MBR_PARAMS             ( MBR_PARAMS_PAGE_ADDRESS)
+#else
+#ifdef SOFTDEVICE_PRESENT
+#define MICROBIT_MBR_PARAMS             ((*(uint32_t *) MBR_PARAM_PAGE_ADDR) != 0xFFFFFFFF ? *(uint32_t *) MBR_PARAM_PAGE_ADDR : NRF_UICR->NRFFW[1])
+#else
+#define MICROBIT_MBR_PARAMS             ( NRF_UICR->NRFFW[1])
+#endif
+#endif
 #endif
 
-#ifndef MICROBIT_BOOTLOADER_ADDRESS
-#define MICROBIT_BOOTLOADER_ADDRESS     (( MICROBIT_CODESIZE * MICROBIT_CODEPAGESIZE - MICROBIT_BOOTLOADER_SIZE) & ~(MICROBIT_CODEPAGESIZE - 1))
+#ifndef MICROBIT_BOOTLOADER_SETTINGS
+#define MICROBIT_BOOTLOADER_SETTINGS    ( MICROBIT_MBR_PARAMS + MICROBIT_CODEPAGESIZE)
 #endif
-
-#endif //BOOTLOADER_ADDRESS
 
 // Defines where in memory persistent data is stored.
 #ifndef MICROBIT_STORAGE_PAGE
@@ -56,9 +71,24 @@
 #define MICROBIT_STORAGE_SCRATCH_PAGE   ( MICROBIT_DEFAULT_SCRATCH_PAGE)
 #endif
 
+#ifndef MICROBIT_SOFTDEVICE_EXISTS
+
+#define MICROBIT_SOFTDEVICE_EXISTS      ( (*(uint32_t *) 0x3004) == ((uint32_t) 0x51B1E5DB) )
+#endif
+
+#ifndef MICROBIT_APP_REGION_START
+#ifdef SOFTDEVICE_PRESENT
+#define MICROBIT_APP_REGION_START       ( MBR_SIZE + SD_FLASH_SIZE)
+#else
+#define MICROBIT_APP_REGION_START       ( MICROBIT_SOFTDEVICE_EXISTS ? (*(uint32_t *) 0x3008) : (uint32_t)0)
+#endif
+#endif
+
+
 #ifndef MICROBIT_APP_REGION_END
 #define MICROBIT_APP_REGION_END         ( MICROBIT_DEFAULT_SCRATCH_PAGE)
 #endif
+
 
 #ifndef PAGE_SIZE
 #define PAGE_SIZE                       ( MICROBIT_CODEPAGESIZE)

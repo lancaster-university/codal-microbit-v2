@@ -49,10 +49,10 @@ MicroBitMemoryMap::MicroBitMemoryMap()
 {
       // Assumes PXT Built program
       // SD
-      pushRegion(Region(0x00, 0x00, 0x27000, 0x00));  // Soft Device
+      pushRegion(Region(0x00, 0x00, MICROBIT_APP_REGION_START, 0x00));  // Soft Device
 
       // DAL
-      pushRegion(Region(0x01, 0x27000, FLASH_PROGRAM_END, 0x00)); // micro:bit Device Abstractation Layer
+      pushRegion(Region(0x01, MICROBIT_APP_REGION_START, FLASH_PROGRAM_END, 0x00)); // micro:bit Device Abstractation Layer
 
       // PXT
       // PXT will be on the start of the next page
@@ -60,7 +60,7 @@ MicroBitMemoryMap::MicroBitMemoryMap()
       // Assume 
       pushRegion(Region(0x02,
                         FLASH_PROGRAM_END + (PAGE_SIZE - ( FLASH_PROGRAM_END % PAGE_SIZE)),
-                        BOOTLOADER_ADDRESS - 4 * FDS_VIRTUAL_PAGE_SIZE * ( FDS_VIRTUAL_PAGES + FDS_VIRTUAL_PAGES_RESERVED),
+                        MICROBIT_APP_REGION_END,
                         0x00)); // micro:bit PXT
 
       // Find Hashes if PXT Built Program

@@ -54,7 +54,7 @@ list(APPEND INCLUDE_DIRS
     "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/sortlist"
     "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/strerror"
     "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/softdevice/common"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/crc16"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/crc32"
     "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/bootloader/dfu"
     "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/toolchain/cmsis/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/util"
@@ -119,7 +119,7 @@ list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libr
 list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/timer/app_timer2.c")
 list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/nRF5SDK_mods/drv_rtc.c")
 
-#list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/crc16/crc16.c")
+list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/crc32/crc32.c")
 
 list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../nRF5SDK/components/libraries/fds/fds.c")
 
