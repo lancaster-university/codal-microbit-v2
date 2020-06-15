@@ -469,7 +469,7 @@ int MicroBitFileSystem::recycleBlock(uint16_t block, int type)
     uint8_t *write = (uint8_t *)scratch;
     uint16_t b = getBlockNumber(page);
 
-    for (int i = 0; i < MICROBIT_CODEPAGESIZE / MBFS_BLOCK_SIZE; i++)
+    for (int i = 0; i < (int)( MICROBIT_CODEPAGESIZE / MBFS_BLOCK_SIZE); i++)
     {
         // If we have an unused or deleted block, there's nothing to do - allow the block to be recycled.
         if (fileSystemTable[b] == MBFS_DELETED || fileSystemTable[b] == MBFS_UNUSED) 
