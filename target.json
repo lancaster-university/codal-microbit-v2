@@ -58,6 +58,12 @@
             "url":"https://github.com/lancaster-university/codal-nrf52",
             "branch":"master",
             "type":"git"
+        },
+        {
+            "name":"codal-microbit-nrf5sdk",
+            "url":"https://github.com/microbit-foundation/codal-microbit-nrf5sdk",
+            "branch":"master",
+            "type":"git"
         }
     ]
 }
