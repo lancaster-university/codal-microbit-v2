@@ -52,8 +52,6 @@ DEALINGS IN THE SOFTWARE.
 #include "CodalFiber.h"
 #include "MessageBus.h"
 #include "FXOS8700.h"
-#include "FXOS8700Accelerometer.h"
-#include "FXOS8700Magnetometer.h"
 #include "LSM303Accelerometer.h"
 #include "LSM303Magnetometer.h"
 #include "MicroBitRadio.h"

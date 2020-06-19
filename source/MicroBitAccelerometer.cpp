@@ -32,8 +32,6 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitI2C.h"
 #include "MicroBitCompass.h"
 #include "FXOS8700.h"
-#include "FXOS8700Accelerometer.h"
-#include "FXOS8700Magnetometer.h"
 #include "LSM303Accelerometer.h"
 #include "LSM303Magnetometer.h"
 
@@ -71,9 +69,9 @@ Accelerometer& MicroBitAccelerometer::autoDetect(MicroBitI2C &i2c)
         // All known accelerometer/magnetometer peripherals have the same alignment
         if (FXOS8700::isDetected(i2c, 0x3E))
         {
-            FXOS8700 *fxos = new FXOS8700(i2c, irq1, 0x3E);
-            MicroBitAccelerometer::detectedAccelerometer = new FXOS8700Accelerometer(*fxos, coordinateSpace);
-            MicroBitCompass::detectedCompass = new FXOS8700Magnetometer(*fxos, coordinateSpace);
+            FXOS8700 *fxos = new FXOS8700(i2c, irq1, coordinateSpace, 0x3E);
+            MicroBitAccelerometer::detectedAccelerometer = fxos;
+            MicroBitCompass::detectedCompass = fxos;
         }
 
         // Now, probe for connected peripherals, if none have already been found.
