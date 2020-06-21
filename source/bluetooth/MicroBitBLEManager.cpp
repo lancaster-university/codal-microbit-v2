@@ -245,6 +245,8 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
 #endif
 #endif // NRF_LOG_ENABLED
 
+    MICROBIT_BLE_ECHK( app_timer_init());
+    
     nrf_sdh_soc_init();
   
     // Start the BLE stack.
