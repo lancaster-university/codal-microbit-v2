@@ -1282,18 +1282,18 @@ static void microbit_ble_pm_evt_handler(pm_evt_t const * p_evt)
             break;
         
         case PM_EVT_CONN_SEC_FAILED:
-            //MICROBIT_DEBUG_DMESG( "PM_EVT_CONN_SEC_FAILED");
+            MICROBIT_DEBUG_DMESG( "PM_EVT_CONN_SEC_FAILED");
             bondingFailed = true;
             break;
 
         case PM_EVT_PEER_DATA_UPDATE_SUCCEEDED:
-            //MICROBIT_DEBUG_DMESG( "PM_EVT_PEER_DATA_UPDATE_SUCCEEDED");
+            MICROBIT_DEBUG_DMESG( "PM_EVT_PEER_DATA_UPDATE_SUCCEEDED");
             if ( MicroBitBLEManager::manager)
                 MicroBitBLEManager::manager->pairingComplete( MICROBIT_BLE_PAIR_UPDATE);
             break;
         
         case PM_EVT_PEER_DATA_UPDATE_FAILED:
-            //MICROBIT_DEBUG_DMESG( "PM_EVT_PEER_DATA_UPDATE_FAILED");
+            MICROBIT_DEBUG_DMESG( "PM_EVT_PEER_DATA_UPDATE_FAILED");
             bondingFailed = true;
             break;
 
@@ -1303,7 +1303,6 @@ static void microbit_ble_pm_evt_handler(pm_evt_t const * p_evt)
     
     if ( bondingFailed)
     {
-        MICROBIT_WARNING_DMESG( "Security failed");
         pm_peer_id_t peer_id;
         if ( MICROBIT_BLE_ECHK( pm_peer_id_get( p_evt->conn_handle, &peer_id)) == NRF_SUCCESS)
             m_failed_peer_id = peer_id;
