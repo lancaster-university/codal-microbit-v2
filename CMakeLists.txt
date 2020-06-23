@@ -10,35 +10,6 @@ RECURSIVE_FIND_FILE(SOURCE_FILES2 "${CMAKE_CURRENT_SOURCE_DIR}/model" "*.c??")
 list(APPEND INCLUDE_DIRS "${INCLUDE_DIRS2}")
 list(APPEND SOURCE_FILES "${SOURCE_FILES2}")
 
-
-# codal-nrf52 includes
-
-string(FIND "${device.processor}" "NRF52840" pos40)
-string(FIND "${device.processor}" "NRF52833" pos33)
-if (NOT "${pos40}" STREQUAL "-1")
-    set(TEMPLATE "nRF52840")
-    set(DEV "nrf52840")
-else()
-if (NOT "${pos33}" STREQUAL "-1")
-    set(TEMPLATE "nRF52833")
-    set(DEV "nrf52833")
-else()
-    set(TEMPLATE "nRF52832")
-    set(DEV "nrf52")
-endif()
-endif()
-
-list(APPEND INCLUDE_DIRS
-    "${CMAKE_CURRENT_SOURCE_DIR}/../codal-nrf52/inc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../codal-nrf52/inc/cmsis"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../codal-nrf52/nrfx/mdk"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../codal-nrf52/nrfx/hal"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../codal-nrf52/nrfx"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../codal-nrf52/nrfx/templates/"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../codal-nrf52/nrfx/templates/${TEMPLATE}"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../codal-nrf52/nrfx/drivers/include"
-)
-
 # find prebuilt libraries and objects
 RECURSIVE_FIND_FILE(LIB_OBJECT_FILES "${CMAKE_CURRENT_LIST_DIR}/lib" "*.o")
 RECURSIVE_FIND_FILE(LIB_ARCHIVE_FILES "${CMAKE_CURRENT_LIST_DIR}/lib" "*.a")
