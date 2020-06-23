@@ -121,11 +121,9 @@ namespace codal
             MultiButton                 buttonAB;
             MicroBitRadio               radio;
             MicroBitThermometer         thermometer;
-            MicroBitAccelerometer       accelerometer;
-            MicroBitCompass             compass;
-
-            //MicroBitCompassCalibrator   compassCalibrator;
-
+            Accelerometer&              accelerometer;
+            Compass&                    compass;
+            MicroBitCompassCalibrator   compassCalibrator;
 
             // Persistent key value store
             //MicroBitStorage           storage;

@@ -69,11 +69,9 @@ MicroBit::MicroBit() :
     buttonAB(DEVICE_ID_BUTTON_A, DEVICE_ID_BUTTON_B, DEVICE_ID_BUTTON_AB),
     radio(),
     thermometer(),
-    accelerometer(_i2c),
-    compass(_i2c)
-
-
-    //compassCalibrator(compass, accelerometer, display)
+    accelerometer(MicroBitAccelerometer::autoDetect(_i2c)),
+    compass(MicroBitCompass::autoDetect(_i2c)),
+    compassCalibrator(compass, accelerometer, display)
 {
     // Clear our status
     status = 0;
