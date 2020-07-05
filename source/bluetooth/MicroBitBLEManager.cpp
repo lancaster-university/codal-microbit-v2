@@ -426,13 +426,17 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
 //    new MicroBitPartialFlashingService(*ble, messageBus);
 #endif
 
+    ManagedString modelVersion("V2.0");  // TODO use a calculated version
+    ManagedString disName( MICROBIT_BLE_MODEL);
+    disName = disName + " " + modelVersion;
+
 #if CONFIG_ENABLED(MICROBIT_BLE_DEVICE_INFORMATION_SERVICE)
     MICROBIT_INFO_DMESG( "DEVICE_INFORMATION_SERVICE");
     ble_dis_init_t disi;
     memset( &disi, 0, sizeof(disi));
     disi.dis_char_rd_sec = SEC_OPEN;
     const_ascii_to_utf8( &disi.manufact_name_str,  MICROBIT_BLE_MANUFACTURER);
-    const_ascii_to_utf8( &disi.model_num_str,      MICROBIT_BLE_MODEL);
+    const_ascii_to_utf8( &disi.model_num_str,      disName.toCharArray());
     const_ascii_to_utf8( &disi.serial_num_str,     serialNumber.toCharArray());
     const_ascii_to_utf8( &disi.hw_rev_str,         MICROBIT_BLE_HARDWARE_VERSION);
     const_ascii_to_utf8( &disi.fw_rev_str,         MICROBIT_BLE_FIRMWARE_VERSION);
