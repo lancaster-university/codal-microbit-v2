@@ -423,15 +423,16 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
 
 #if CONFIG_ENABLED(MICROBIT_BLE_PARTIAL_FLASHING)
     MICROBIT_INFO_DMESG( "PARTIAL_FLASHING");
-//    new MicroBitPartialFlashingService(*ble, messageBus);
+    new MicroBitPartialFlashingService( *this, messageBus);
 #endif
 
+#if CONFIG_ENABLED(MICROBIT_BLE_DEVICE_INFORMATION_SERVICE)
+    MICROBIT_INFO_DMESG( "DEVICE_INFORMATION_SERVICE");
+    
     ManagedString modelVersion("V2.0");  // TODO use a calculated version
     ManagedString disName( MICROBIT_BLE_MODEL);
     disName = disName + " " + modelVersion;
 
-#if CONFIG_ENABLED(MICROBIT_BLE_DEVICE_INFORMATION_SERVICE)
-    MICROBIT_INFO_DMESG( "DEVICE_INFORMATION_SERVICE");
     ble_dis_init_t disi;
     memset( &disi, 0, sizeof(disi));
     disi.dis_char_rd_sec = SEC_OPEN;
@@ -1046,8 +1047,8 @@ bool MicroBitBLEManager::prepareForShutdown()
 {
     bool shutdownOK = true;
         
-    MicroBitBLEManager::manager->stopAdvertising();
-    MicroBitBLEManager::manager->setAdvertiseOnDisconnect( false);
+    sd_ble_gap_adv_stop( m_adv_handle);
+    setAdvertiseOnDisconnect( false);
 
     if ( ble_conn_state_conn_count()) // TODO: anything else we need to wait for?
     {
@@ -1414,7 +1415,7 @@ static bool microbit_ble_sdh_req_handler(nrf_sdh_req_evt_t req, void * /*p_conte
             }
             else
             {
-                MICROBIT_BLE_ECHK( sd_ble_gap_adv_stop( m_adv_handle));
+                sd_ble_gap_adv_stop( m_adv_handle);
                 if ( ble_conn_state_conn_count()) // TODO: anything else we need to wait for?
                 {
                     shutdownOK = false;
