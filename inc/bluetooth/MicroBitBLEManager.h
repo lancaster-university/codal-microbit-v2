@@ -276,6 +276,11 @@ class MicroBitBLEManager : public CodalComponent
      */
     bool prepareForShutdown();
 
+    /**
+    * Ensure service changed indication pending for all peers
+    */
+    void servicesChanged();
+      
   private:
     /**
     * Displays the device's ID code as a histogram on the provided MicroBitDisplay instance.

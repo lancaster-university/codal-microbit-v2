@@ -43,6 +43,7 @@ DEALINGS IN THE SOFTWARE.
 #include "app_timer.h"
 #include "peer_manager.h"
 #include "peer_manager_handler.h"
+#include "peer_data_storage.h"
 #include "ble_hci.h"
 #include "ble_advdata.h"
 #include "ble_conn_state.h"
@@ -131,6 +132,7 @@ static uint8_t              m_adv_handle    = BLE_GAP_ADV_SET_HANDLE_NOT_SET;
 static uint8_t              m_enc_advdata[ BLE_GAP_ADV_SET_DATA_SIZE_MAX];
 
 static pm_peer_id_t         m_failed_peer_id = PM_PEER_ID_INVALID;
+static volatile int         m_pending;
 
 NRF_BLE_GATT_DEF( m_gatt);
 
@@ -457,6 +459,8 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
     (void)messageBus;
 #endif
 
+    servicesChanged();
+    
     // Setup advertising.
     microbit_ble_configureAdvertising( connectable, discoverable, whitelist,
                                        MICROBIT_BLE_ADVERTISING_INTERVAL, MICROBIT_BLE_ADVERTISING_TIMEOUT);
@@ -1070,6 +1074,62 @@ bool MicroBitBLEManager::prepareForShutdown()
 
 
 /**
+* Ensure service changed indication pending for all peers
+*/
+void MicroBitBLEManager::servicesChanged()
+{
+    MICROBIT_DEBUG_DMESG("servicesChanged");
+    
+    // BLE DFU records service change needed before jumping to the bootloader
+    // and the partial flashing service can call servicesChanged()
+    // but MakeCode WebUSB flashing leaves the bond info intact
+    // so it seems necessary to check this at every boot
+    // TODO? Simply send services changed indication at every connection?
+    
+    // Call pm_local_database_has_changed if required
+    
+    m_pending = getBondCount();
+    if ( m_pending <= 0)
+        return;
+    
+    // Check if any peer doesn't have service_changed_pending set
+    bool                    needed = false;
+    pm_peer_id_t            peer_id;
+    ret_code_t              err_code;
+    bool                    service_changed_state;
+    pm_peer_data_flash_t    peer_data;
+    peer_data.p_service_changed_pending = &service_changed_state;
+    for ( peer_id = pds_next_peer_id_get(PM_PEER_ID_INVALID);
+          peer_id != PM_PEER_ID_INVALID;
+          peer_id = pds_next_peer_id_get(peer_id))
+    {
+        err_code = pdb_peer_data_ptr_get(peer_id, PM_PEER_DATA_ID_SERVICE_CHANGED_PENDING, &peer_data);
+        MICROBIT_DEBUG_DMESG("service_changed_pending for peer %d = %d (err %x)", (int) peer_id, (int) *peer_data.p_service_changed_pending, (int) err_code);
+        if ( err_code != NRF_SUCCESS || !*peer_data.p_service_changed_pending)
+        {
+            needed = true;
+            break;
+        }
+    }
+
+    if ( needed)
+    {
+        // pm_local_database_has_changed is an asynchronous process
+        // A second call fails if the first hasn't completed
+        // and that seems to cause problems
+        // Workaround: wait for it to complete (~100ms per peer)
+        uint64_t now = system_timer_current_time();
+        pm_local_database_has_changed();
+        while ( m_pending && system_timer_current_time() - now < 1000)
+        {
+            // m_pending is set on event PM_EVT_PEER_DATA_UPDATE_SUCCEEDED
+        }
+        MICROBIT_DEBUG_DMESG("pm_local_database_has_changed complete after %dms", (int) (system_timer_current_time() - now));
+    }
+}
+
+
+/**
  * Function to configure advertising
  *
  * @param connectable Choose connectable advertising events.
@@ -1293,13 +1353,18 @@ static void microbit_ble_pm_evt_handler(pm_evt_t const * p_evt)
 
         case PM_EVT_PEER_DATA_UPDATE_SUCCEEDED:
             MICROBIT_DEBUG_DMESG( "PM_EVT_PEER_DATA_UPDATE_SUCCEEDED");
+            if ( p_evt->params.peer_data_update_succeeded.data_id == PM_PEER_DATA_ID_SERVICE_CHANGED_PENDING)
+                m_pending--;
             if ( MicroBitBLEManager::manager)
                 MicroBitBLEManager::manager->pairingComplete( MICROBIT_BLE_PAIR_UPDATE);
             break;
         
         case PM_EVT_PEER_DATA_UPDATE_FAILED:
-            MICROBIT_DEBUG_DMESG( "PM_EVT_PEER_DATA_UPDATE_FAILED");
-            bondingFailed = true;
+            MICROBIT_DEBUG_DMESG( "PM_EVT_PEER_DATA_UPDATE_FAILED %x", (unsigned int) p_evt->params.peer_data_update_failed.error);
+            // This can happen if the SoftDevice is too busy with BLE operations.
+            // This happens, with error FDS_ERR_NOT_FOUND, if pm_local_database_has_changed
+            // is called while a previous call is pending
+            //bondingFailed = true;
             break;
 
         default:

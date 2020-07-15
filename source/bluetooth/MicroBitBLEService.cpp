@@ -135,8 +135,6 @@ void MicroBitBLEService::CreateCharacteristic(
     
     MICROBIT_BLE_ECHK( characteristic_add( bs_service_handle, &params, ( ble_gatts_char_handles_t *) charHandles( idx)));
     
-    pm_local_database_has_changed();
-    
     MICROBIT_DEBUG_DMESG( "MicroBitBLEService::CreateCharacteristic( %x) = %d %d %d %d",
           (unsigned int) uuid,
           (int) charHandles( idx)->value,
