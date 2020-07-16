@@ -1434,7 +1434,7 @@ NRF_PWR_MGMT_HANDLER_REGISTER( microbit_ble_shutdown_handler, 0);
 */
 static bool microbit_ble_sdh_req_handler(nrf_sdh_req_evt_t req, void * /*p_context*/)
 {
-    bool shutdownOK = true; // Allow the SoftDevice state change, unless other handlers object
+    bool changeOK = true; // Allow the SoftDevice state change, unless other handlers object
     
     switch ( req)
     {
@@ -1444,22 +1444,22 @@ static bool microbit_ble_sdh_req_handler(nrf_sdh_req_evt_t req, void * /*p_conte
         case NRF_SDH_EVT_DISABLE_REQUEST:
             if ( MicroBitBLEManager::manager)
             {
-                shutdownOK = MicroBitBLEManager::manager->prepareForShutdown();
+                changeOK = MicroBitBLEManager::manager->prepareForShutdown();
             }
             else
             {
                 sd_ble_gap_adv_stop( m_adv_handle);
                 if ( ble_conn_state_conn_count()) // TODO: anything else we need to wait for?
                 {
-                    shutdownOK = false;
+                    changeOK = false;
                     ble_conn_state_for_each_connected( microbit_ble_for_each_connected_disconnect, NULL);
                 }
             }
             break;
     }
     
-    MICROBIT_DEBUG_DMESGF( "%d:microbit_ble_sdh_req_handler shutdownOK = %d", (int)system_timer_current_time(), (int) shutdownOK);
-    return shutdownOK;
+    MICROBIT_DEBUG_DMESGF( "%d:microbit_ble_sdh_req_handler changeOK = %d", (int)system_timer_current_time(), (int) changeOK);
+    return changeOK;
 }
 
 NRF_SDH_REQUEST_OBSERVER(microbit_dfu_sdh_req_obs, 0) =
