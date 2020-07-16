@@ -131,7 +131,6 @@ static int                  m_power         = MICROBIT_BLE_DEFAULT_TX_POWER;
 static uint8_t              m_adv_handle    = BLE_GAP_ADV_SET_HANDLE_NOT_SET;
 static uint8_t              m_enc_advdata[ BLE_GAP_ADV_SET_DATA_SIZE_MAX];
 
-static pm_peer_id_t         m_failed_peer_id = PM_PEER_ID_INVALID;
 static volatile int         m_pending;
 
 NRF_BLE_GATT_DEF( m_gatt);
@@ -575,8 +574,6 @@ bool MicroBitBLEManager::pairingComplete( int event)
         case MICROBIT_BLE_PAIR_FAILURE:
             MICROBIT_DEBUG_DMESG( "pairingComplete FAILURE");
             this->pairingStatus = MICROBIT_BLE_PAIR_COMPLETE;
-            this->status |= MICROBIT_BLE_STATUS_DELETE_BOND;
-            fiber_add_idle_component(this);
             break;
             
         case MICROBIT_BLE_PAIR_SUCCESS:
@@ -634,24 +631,6 @@ void MicroBitBLEManager::idleCallback()
         }
     }
 
-    if ( this->status & MICROBIT_BLE_STATUS_DELETE_BOND)
-    {
-        MICROBIT_DEBUG_DMESG( "MicroBitBLEManager::idleCallback");
-        MICROBIT_DEBUG_DMESG( "MICROBIT_BLE_STATUS_DELETE_BOND %x", m_failed_peer_id);
-        ble_conn_state_for_each_connected( microbit_ble_for_each_connected_disconnect, NULL);
-
-        if ( m_failed_peer_id != PM_PEER_ID_INVALID)
-        {
-            MICROBIT_BLE_ECHK( pm_peer_delete( m_failed_peer_id));
-            m_failed_peer_id = PM_PEER_ID_INVALID;
-        }
-        else
-        {
-            MICROBIT_BLE_ECHK( pm_peers_delete());
-        }
-        this->status &= ~MICROBIT_BLE_STATUS_DELETE_BOND;
-    }
-    
     if ( this->status & MICROBIT_BLE_STATUS_SHUTDOWN)
     {
         //MICROBIT_DEBUG_DMESG( "MicroBitBLEManager::idleCallback");
@@ -1312,8 +1291,6 @@ static void microbit_ble_pm_evt_handler(pm_evt_t const * p_evt)
 {
     //MICROBIT_DEBUG_DMESG( "%d:microbit_ble_pm_evt_handler %d", (int)system_timer_current_time(), (int) p_evt->evt_id);
 
-    bool bondingFailed = false;
-    
     pm_handler_on_pm_evt( p_evt);
     pm_handler_flash_clean( p_evt);
 
@@ -1348,7 +1325,8 @@ static void microbit_ble_pm_evt_handler(pm_evt_t const * p_evt)
         
         case PM_EVT_CONN_SEC_FAILED:
             MICROBIT_DEBUG_DMESG( "PM_EVT_CONN_SEC_FAILED");
-            bondingFailed = true;
+            if ( MicroBitBLEManager::manager)
+                MicroBitBLEManager::manager->pairingComplete( MICROBIT_BLE_PAIR_FAILURE);
             break;
 
         case PM_EVT_PEER_DATA_UPDATE_SUCCEEDED:
@@ -1364,20 +1342,10 @@ static void microbit_ble_pm_evt_handler(pm_evt_t const * p_evt)
             // This can happen if the SoftDevice is too busy with BLE operations.
             // This happens, with error FDS_ERR_NOT_FOUND, if pm_local_database_has_changed
             // is called while a previous call is pending
-            //bondingFailed = true;
             break;
 
         default:
             break;
-    }
-    
-    if ( bondingFailed)
-    {
-        pm_peer_id_t peer_id;
-        if ( MICROBIT_BLE_ECHK( pm_peer_id_get( p_evt->conn_handle, &peer_id)) == NRF_SUCCESS)
-            m_failed_peer_id = peer_id;
-        if ( MicroBitBLEManager::manager)
-            MicroBitBLEManager::manager->pairingComplete( MICROBIT_BLE_PAIR_FAILURE);
     }
 }
 
