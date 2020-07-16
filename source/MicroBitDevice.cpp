@@ -391,6 +391,9 @@ void microbit_panic( int statusCode)
     
     target_disable_irq();
     
+    for (int i=0; i<8; i++)
+        NRF_GPIOTE->CONFIG[i] = 0;
+    
     microbit_LEDMap_configure();
     
     for ( int repeat = 0; panic_timeout == 0 || repeat < panic_timeout; repeat++)
