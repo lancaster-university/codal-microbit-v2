@@ -111,6 +111,10 @@ void MicroBitPartialFlashingService::onDataWritten(const microbit_ble_evt_write_
           // Region Hash
           memcpy(&buffer[10], &memoryMap.memoryMapStore.memoryMap[data[1]].hash, 8);
 
+          MICROBIT_DEBUG_DMESGF( "REGION_INFO %x - %x",
+            (unsigned int) memoryMap.memoryMapStore.memoryMap[data[1]].startAddress,
+            (unsigned int) memoryMap.memoryMapStore.memoryMap[data[1]].endAddress);
+
           // Send BLE Notification
           notifyChrValue( mbbs_cIdxCTRL, (const uint8_t *)buffer, 18);
 
@@ -144,6 +148,7 @@ void MicroBitPartialFlashingService::onDataWritten(const microbit_ble_evt_write_
            * Return the version of the Partial Flashing Service and the current BLE mode (application / pairing)
            */
           uint8_t flashNotificationBuffer[] = {MICROBIT_STATUS, PARTIAL_FLASHING_VERSION, MicroBitBLEManager::manager->getCurrentMode()};
+          MICROBIT_DEBUG_DMESGF( "MICROBIT_STATUS version %d mode %d", (int)flashNotificationBuffer[1], (int)flashNotificationBuffer[2]);
           notifyChrValue( mbbs_cIdxCTRL, (const uint8_t *)flashNotificationBuffer, sizeof(flashNotificationBuffer));
           break;
         }
@@ -155,11 +160,13 @@ void MicroBitPartialFlashingService::onDataWritten(const microbit_ble_evt_write_
            switch(data[1]) {
              case MICROBIT_MODE_PAIRING:
              {
+               MICROBIT_DEBUG_DMESGF( "MICROBIT_RESET pairing");
                MicroBitEvent evt(MICROBIT_ID_PARTIAL_FLASHING, MICROBIT_RESET );
                break;
              }
              case MICROBIT_MODE_APPLICATION:
              {
+               MICROBIT_DEBUG_DMESGF( "MICROBIT_RESET application");
                microbit_reset();
                break;
              }
@@ -178,6 +185,13 @@ void MicroBitPartialFlashingService::onDataWritten(const microbit_ble_evt_write_
   */
 void MicroBitPartialFlashingService::flashData(uint8_t *data)
 {
+        MICROBIT_DEBUG_DMESGF( "flashData");
+        MICROBIT_DEBUG_DMESGF( "  %x %x %x %x", (int) data[0], (int) data[1], (int) data[2], (int) data[3]);
+        MICROBIT_DEBUG_DMESGF( "  %x %x %x %x", (int) data[4], (int) data[5], (int) data[6], (int) data[7]);
+        MICROBIT_DEBUG_DMESGF( "  %x %x %x %x", (int) data[8], (int) data[9], (int) data[10], (int) data[11]);
+        MICROBIT_DEBUG_DMESGF( "  %x %x %x %x", (int) data[12], (int) data[13], (int) data[14], (int) data[15]);
+        MICROBIT_DEBUG_DMESGF( "  %x %x %x %x", (int) data[16], (int) data[17], (int) data[18], (int) data[19]);
+
         // Receive 16 bytes per packet
         // Buffer 4 packets
         // When buffer is full trigger partialFlashingEvent
@@ -189,6 +203,8 @@ void MicroBitPartialFlashingService::flashData(uint8_t *data)
         // +-----------+---------+---------+----------+
         uint8_t packetNum = data[3];
 
+        MICROBIT_DEBUG_DMESGF( "flashData packetNum %d packetCount %d", (int) packetNum, (int) packetCount);
+    
         /**
           * Check packet count
           * If the packet count doesn't match send a notification to the client
@@ -199,6 +215,8 @@ void MicroBitPartialFlashingService::flashData(uint8_t *data)
           if ( packetNum < packetCount ? packetCount - packetNum < 8 : packetNum - packetCount > 248 )
             return; // packet is from a previous batch
 
+          MICROBIT_DEBUG_DMESGF( "packet error");
+            
           uint8_t flashNotificationBuffer[] = {FLASH_DATA, 0xAA};
           notifyChrValue( mbbs_cIdxCTRL, (const uint8_t *)flashNotificationBuffer, sizeof(flashNotificationBuffer));
           blockPacketCount += 4;
@@ -212,6 +230,8 @@ void MicroBitPartialFlashingService::flashData(uint8_t *data)
         // Add to block
         memcpy(block + (4*blockNum), data + 4, 16);
 
+        MICROBIT_DEBUG_DMESG( "blockNum %d", (int) blockNum);
+    
         // Actions
         switch(blockNum) {
             // blockNum is 0: set up offset
@@ -231,6 +251,7 @@ void MicroBitPartialFlashingService::flashData(uint8_t *data)
             // blockNum is 3, block is full
             case 3:
                 {
+                    MICROBIT_DEBUG_DMESG( "Fire write event");
                     // Fire write event
                     MicroBitEvent evt(MICROBIT_ID_PARTIAL_FLASHING, FLASH_DATA );
                     // Reset blockNum
@@ -254,11 +275,13 @@ void MicroBitPartialFlashingService::flashData(uint8_t *data)
   */
 void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
 {
+  MICROBIT_DEBUG_DMESG( "partialFlashingEvent");
   MicroBitFlash flash;
 
   switch(e.value){
     case FLASH_DATA:
     {
+      MICROBIT_DEBUG_DMESG( "FLASH_DATA offset %x", (unsigned int) offset);
       /*
        * Set flashIncomplete flag if not already set to boot into BLE mode
        * upon a failed flash.
@@ -286,11 +309,12 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
 
       // Update flash control buffer to send next packet
       uint8_t flashNotificationBuffer[] = {FLASH_DATA, 0xFF};
-      notifyChrValue( valueHandle( mbbs_cIdxCTRL), (const uint8_t *)flashNotificationBuffer, sizeof(flashNotificationBuffer));
+      notifyChrValue( mbbs_cIdxCTRL, (const uint8_t *)flashNotificationBuffer, sizeof(flashNotificationBuffer));
       break;
     }
     case END_OF_TRANSMISSION:
     {
+      MICROBIT_DEBUG_DMESG( "END_OF_TRANSMISSION offset %x", (unsigned int) offset);
       // Write final packet
       uint32_t *blockPointer;
       uint32_t *flashPointer   = (uint32_t *) offset;
@@ -308,6 +332,7 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
         // Check for embedded source magic
         if(*flashPointer == 0x41140EF && *(uint32_t *)(flashPointer + 0x1) == 0xB82FA2BB)
         {
+          MICROBIT_DEBUG_DMESG( "Embedded Source Found @ %x", (unsigned int) flashPointer);
           // Embedded Source Found!
           uint8_t blank = 0x00;
           flash.flash_write(flashPointer, &blank, sizeof(blank));
@@ -357,6 +382,7 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
         flash.flash_burn( pBackup, (uint32_t *)&settings, settingsSizeInWords);
       }
         
+      MICROBIT_DEBUG_DMESG( "rebooting");
       // Once the final packet has been written remove the BLE mode flag and reset
       // the micro:bit
       MicroBitStorage storage;
@@ -366,6 +392,7 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
     }
     case MICROBIT_RESET:
     {
+      MICROBIT_DEBUG_DMESG( "Calling restartInBLEMode");
       MicroBitBLEManager::manager->restartInBLEMode();
       break;
     }
