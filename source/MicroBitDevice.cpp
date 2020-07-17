@@ -451,7 +451,7 @@ void microbit_panic( int statusCode)
 
 // Override for CODAL target HAL
 
-void target_panic( int statusCode)
+__attribute__((weak)) void target_panic( int statusCode)
 {
     codal::microbit_panic( statusCode);
 }
