@@ -297,7 +297,7 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
       uint32_t *flashPointer   = (uint32_t *)(offset);
 
       // If the pointer is on a page boundary erase the page
-      if(!((uint32_t)flashPointer % 0x400))
+      if(!((uint32_t)flashPointer % MICROBIT_CODEPAGESIZE))
           flash.erase_page(flashPointer);
 
       // Create a pointer to the data block
@@ -324,7 +324,7 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
 
       // Search for and remove embedded source magic (if it exists!)
       // Move to next page
-      flashPointer = flashPointer + 0x400;
+      flashPointer = flashPointer + MICROBIT_CODEPAGESIZE;
 
       // Iterate through until reaching the scratch page
       while(flashPointer < (uint32_t *)DEFAULT_SCRATCH_PAGE)
