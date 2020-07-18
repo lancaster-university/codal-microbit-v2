@@ -32,14 +32,14 @@ DEALINGS IN THE SOFTWARE.
 #include "nrf_log_ctrl.h"
 
 
-#if ( MICROBIT_DMESG_LEVEL > 0)
+#if ( MICROBIT_DMESG_LEVEL >= MICROBIT_DMESG_LEVEL_DEBUG)
 microbit_ble_ret_code_t microbit_ble_on_error( microbit_ble_ret_code_t err, const char *msg)
 {
     NRF_LOG_FLUSH();
     if ( err != NRF_SUCCESS)
     {
-        MICROBIT_ERROR_DMESGN( "ERROR %x from ", (int)err);
-        MICROBIT_ERROR_DMESG( msg);
+        MICROBIT_DEBUG_DMESGN( "ERROR %x from ", (int)err);
+        MICROBIT_DEBUG_DMESG( msg);
     }
     return err;
 }

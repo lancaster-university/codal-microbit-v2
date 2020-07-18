@@ -318,7 +318,7 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
 #endif
 
 #if (MICROBIT_BLE_SECURITY_MODE == 2)
-    MICROBIT_INFO_DMESG( "Just Works security");
+    MICROBIT_DEBUG_DMESG( "Just Works security");
     sec_param.bond = true;
     sec_param.mitm = false;
     sec_param.lesc = 0;
@@ -332,7 +332,7 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
     sec_param.kdist_peer.enc = 1;
     sec_param.kdist_peer.id = 1;
 #elif (MICROBIT_BLE_SECURITY_MODE == 1)
-    MICROBIT_INFO_DMESG( "No security");
+    MICROBIT_DEBUG_DMESG( "No security");
     sec_param.bond = false;
     sec_param.mitm = false;
     sec_param.lesc = 0;
@@ -346,7 +346,7 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
     sec_param.kdist_peer.enc = 0;
     sec_param.kdist_peer.id = 0;
 #elif (MICROBIT_BLE_SECURITY_MODE == 3)
-    MICROBIT_INFO_DMESG( "Passkey security");
+    MICROBIT_DEBUG_DMESG( "Passkey security");
     sec_param.bond = true;
     sec_param.mitm = true;
     sec_param.lesc = 0;
@@ -413,22 +413,22 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
     MICROBIT_BLE_ECHK( pm_whitelist_set( list_size ? peer_list : NULL, list_size));
     MICROBIT_BLE_ECHK( pm_device_identities_list_set( list_size ? peer_list : NULL, list_size));
     connectable = discoverable = whitelist = list_size > 0;
-    MICROBIT_INFO_DMESG( "whitelist size = %d", list_size);
+    MICROBIT_DEBUG_DMESG( "whitelist size = %d", list_size);
 #endif
     
     // Bring up core BLE services.
 #if CONFIG_ENABLED(MICROBIT_BLE_DFU_SERVICE)
-    MICROBIT_INFO_DMESG( "DFU_SERVICE");
+    MICROBIT_DEBUG_DMESG( "DFU_SERVICE");
     microbit_dfu_init();
 #endif
 
 #if CONFIG_ENABLED(MICROBIT_BLE_PARTIAL_FLASHING)
-    MICROBIT_INFO_DMESG( "PARTIAL_FLASHING");
+    MICROBIT_DEBUG_DMESG( "PARTIAL_FLASHING");
     new MicroBitPartialFlashingService( *this, messageBus);
 #endif
 
 #if CONFIG_ENABLED(MICROBIT_BLE_DEVICE_INFORMATION_SERVICE)
-    MICROBIT_INFO_DMESG( "DEVICE_INFORMATION_SERVICE");
+    MICROBIT_DEBUG_DMESG( "DEVICE_INFORMATION_SERVICE");
     
     ManagedString modelVersion("V2.0");  // TODO use a calculated version
     ManagedString disName( MICROBIT_BLE_MODEL);
@@ -452,7 +452,7 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
 #endif
 
 #if CONFIG_ENABLED(MICROBIT_BLE_EVENT_SERVICE)
-    MICROBIT_INFO_DMESG( "EVENT_SERVICE");
+    MICROBIT_DEBUG_DMESG( "EVENT_SERVICE");
     new MicroBitEventService( *this, messageBus);
 #else
     (void)messageBus;
@@ -1121,8 +1121,8 @@ static void microbit_ble_configureAdvertising( bool connectable, bool discoverab
                                                uint16_t interval_ms, int timeout_seconds,
                                                ble_advdata_t *p_advdata)
 {
-    MICROBIT_INFO_DMESG( "configureAdvertising connectable %d, discoverable %d", (int) connectable, (int) discoverable);
-    MICROBIT_INFO_DMESG( "whitelist %d, interval_ms %d, timeout_seconds %d", (int) whitelist, (int) interval_ms, (int) timeout_seconds);
+    MICROBIT_DEBUG_DMESG( "configureAdvertising connectable %d, discoverable %d", (int) connectable, (int) discoverable);
+    MICROBIT_DEBUG_DMESG( "whitelist %d, interval_ms %d, timeout_seconds %d", (int) whitelist, (int) interval_ms, (int) timeout_seconds);
 
     ble_gap_adv_params_t    gap_adv_params;
     memset( &gap_adv_params, 0, sizeof( gap_adv_params));
