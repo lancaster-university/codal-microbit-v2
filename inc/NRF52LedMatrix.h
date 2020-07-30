@@ -148,7 +148,7 @@ namespace codal
          *
          * @return The light level sensed, as an unsigned 8-bit value in the range 0..255
          */
-        int getLightLevel();
+        int readLightLevel();
 
 
         /**

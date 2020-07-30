@@ -292,7 +292,7 @@ int NRF52LEDMatrix::setBrightness(int b)
  * @return The light level sensed, as an unsigned 8-bit value in the range 0..255
  */
 int 
-NRF52LEDMatrix::getLightLevel()
+NRF52LEDMatrix::readLightLevel()
 {
     // Auto-enable light sensing if it is currently disabled
     if (mode == DisplayMode::DISPLAY_MODE_BLACK_AND_WHITE)
