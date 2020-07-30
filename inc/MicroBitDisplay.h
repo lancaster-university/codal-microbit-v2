@@ -28,7 +28,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "CodalConfig.h"
 #include "codal-core/inc/types/Event.h"
-#include "NRF52LEDMatrix.h"
+#include "NRF52LedMatrix.h"
 #include "AnimatedDisplay.h"
 
 namespace codal

@@ -27,7 +27,7 @@ DEALINGS IN THE SOFTWARE.
   *
   * A LEDMatrix represents the LED matrix array on the micro:bit.
   */
-#include "NRF52LEDMatrix.h"
+#include "NRF52LedMatrix.h"
 #include "NRF52Pin.h"
 #include "CodalDmesg.h"
 #include "ErrorNo.h"
