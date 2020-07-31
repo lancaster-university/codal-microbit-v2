@@ -348,46 +348,47 @@ namespace codal
         public:
 
             NRF52Pin          pin[0];
-            NRF52Pin          speaker;      // P0_00
-            NRF52Pin          P14;          // P0_01
+
+            // Edge Connector Pins
             NRF52Pin          P0;           // P0_02
             NRF52Pin          P1;           // P0_03
             NRF52Pin          P2;           // P0_04
-            NRF52Pin          microphone;   // P0_05
-            NRF52Pin          uart_rx;      // P0_06
-            NRF52Pin          unused1;      // P0_07
-            NRF52Pin          scl;          // P0_08
-            NRF52Pin          P9;           // P0_09
-            NRF52Pin          P8;           // P0_10
-            NRF52Pin          P7;           // P0_11
-            NRF52Pin          P12;          // P0_12
-            NRF52Pin          P15;          // P0_13
+            NRF52Pin          P3;           // P0_31
+            NRF52Pin          P4;           // P0_28
             NRF52Pin          P5;           // P0_14
-            NRF52Pin          row3;         // P0_15
-            NRF52Pin          sda;          // P0_16
+            NRF52Pin          P6;           // P1_05
+            NRF52Pin          P7;           // P0_11
+            NRF52Pin          P8;           // P0_10
+            NRF52Pin          P9;           // P0_09
+            NRF52Pin          P10;          // P0_30
+            NRF52Pin          P11;          // P0_23
+            NRF52Pin          P12;          // P0_12
             NRF52Pin          P13;          // P0_17
-            NRF52Pin          unused2;      // P0_18
-            NRF52Pin          row5;         // P0_19
+            NRF52Pin          P14;          // P0_01
+            NRF52Pin          P15;          // P0_13
+            NRF52Pin          P16;          // P1_02
+            NRF52Pin          P19;          // P0_26
+            NRF52Pin          P20;          // P1_00
+
+            // Other exposed pins
+            NRF52Pin          face;         // P1_04
+
+            // Internal Pins
+            NRF52Pin          speaker;      // P0_00
             NRF52Pin          runmic;       // P0_20
+            NRF52Pin          microphone;   // P0_05
+            NRF52Pin          sda;          // P0_16
+            NRF52Pin          scl;          // P0_08
             NRF52Pin          row1;         // P0_21
             NRF52Pin          row2;         // P0_22
-            NRF52Pin          P11;          // P0_23
+            NRF52Pin          row3;         // P0_15
             NRF52Pin          row4;         // P0_24
+            NRF52Pin          row5;         // P0_19
+            NRF52Pin          usbTx;
+            NRF52Pin          usbRx;
             NRF52Pin          irq1;         // P0_25
-            NRF52Pin          P19;          // P0_26
-            NRF52Pin          unused3;      // P0_27
-            NRF52Pin          P4;           // P0_28
-            NRF52Pin          unused4;      // P0_29
-            NRF52Pin          P10;          // P0_30
-            NRF52Pin          P3;           // P0_31
 
-            NRF52Pin          P20;          // P1_00
-            NRF52Pin          unused5;      // P1_01
-            NRF52Pin          P16;          // P1_02
-            NRF52Pin          unused6;      // P1_03
-            NRF52Pin          face;         // P1_04
-            NRF52Pin          P6;           // P1_05
-
+            // Aliases
             NRF52Pin&         col1;
             NRF52Pin&         col2;
             NRF52Pin&         col3;
@@ -396,8 +397,6 @@ namespace codal
             NRF52Pin&         buttonA;
             NRF52Pin&         buttonB;
 
-            NRF52Pin          usbTx;
-            NRF52Pin          usbRx;
 
             /**
              * Constructor.
