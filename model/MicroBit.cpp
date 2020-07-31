@@ -162,6 +162,22 @@ int MicroBit::init()
 #endif
     status |= DEVICE_COMPONENT_STATUS_IDLE_TICK;
 
+    // Set IRQ priorities for peripherals we use.
+    // Note that low values have highest priority, and only 2, 3, 5, 6 and 7 are available with SoftDevice enabled.
+
+    NVIC_SetPriority(TIMER1_IRQn, 7);         // System timer (general purpose)
+    NVIC_SetPriority(TIMER2_IRQn, 5);         // ADC timer.
+    NVIC_SetPriority(TIMER3_IRQn, 2);         // Cap touch.
+    NVIC_SetPriority(TIMER4_IRQn, 2);         // Display and Light Sensing.
+
+    NVIC_SetPriority(SAADC_IRQn, 3);          // Analogue to Digital Converter (microphone etc)
+    NVIC_SetPriority(PWM0_IRQn, 3);           // General Purpose PWM on edge connector (servo, square wave sounds)
+    NVIC_SetPriority(PWM1_IRQn, 2);           // PCM audio on speaker (high definition sound)
+    NVIC_SetPriority(PWM2_IRQn, 2);           // Waveform Generation (neopixel)
+
+    NVIC_SetPriority(RADIO_IRQn, 3);          // Packet radio
+    NVIC_SetPriority(UARTE0_UART0_IRQn, 2);   // Serial port
+
     return DEVICE_OK;
 }
 
