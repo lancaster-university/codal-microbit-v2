@@ -44,7 +44,7 @@ static const MatrixPoint ledMatrixPositions[5*5] =
 /**
   * Constructor.
   *
-  * Create a representation of a GenuinoZero device, which includes member variables
+  * Create a representation of a micro:bit device, which includes member variables
   * that represent various device drivers used to control aspects of the micro:bit.
   */
 MicroBit::MicroBit() :
@@ -57,14 +57,15 @@ MicroBit::MicroBit() :
     ble( &bleManager),
 #endif
 
-    tim1(NRF_TIMER1, TIMER1_IRQn),
-    timer(tim1),
+    capTouchTimer(NRF_TIMER3, TIMER3_IRQn),
+    timer(systemTimer),
     messageBus(),
-    io(),
+    adc(adcTimer, 91),
+    touchSensor(capTouchTimer),
+    io(adc, touchSensor),
     serial(io.usbTx, io.usbRx, NRF_UARTE0),
     _i2c(io.sda, io.scl),
     i2c(io.P20, io.P19),
-
     // RED
     ledRowPins{&io.row1, &io.row2, &io.row3, &io.row4, &io.row5},
     ledColPins{&io.col1, &io.col2, &io.col3, &io.col4, &io.col5},
@@ -76,9 +77,9 @@ MicroBit::MicroBit() :
     buttonAB(DEVICE_ID_BUTTON_A, DEVICE_ID_BUTTON_B, DEVICE_ID_BUTTON_AB),
     radio(),
     thermometer(),
-    accelerometer(_i2c),
-    compass(_i2c)
-    //compassCalibrator(compass, accelerometer, display),
+    accelerometer(MicroBitAccelerometer::autoDetect(_i2c)),
+    compass(MicroBitCompass::autoDetect(_i2c)),
+    compassCalibrator(compass, accelerometer, display)
 {
     // Clear our status
     status = 0;
@@ -122,9 +123,6 @@ MicroBit::MicroBit() :
     // Bring up internal speaker as high drive.
     io.speaker.setHighDrive(true);
 }
-
-
-
 
 /**
   * Post constructor initialisation method.
@@ -171,7 +169,23 @@ int MicroBit::init()
 #endif
 #endif
     status |= DEVICE_COMPONENT_STATUS_IDLE_TICK;
-      
+
+    // Set IRQ priorities for peripherals we use.
+    // Note that low values have highest priority, and only 2, 3, 5, 6 and 7 are available with SoftDevice enabled.
+
+    NVIC_SetPriority(TIMER1_IRQn, 7);         // System timer (general purpose)
+    NVIC_SetPriority(TIMER2_IRQn, 5);         // ADC timer.
+    NVIC_SetPriority(TIMER3_IRQn, 2);         // Cap touch.
+    NVIC_SetPriority(TIMER4_IRQn, 2);         // Display and Light Sensing.
+
+    NVIC_SetPriority(SAADC_IRQn, 3);          // Analogue to Digital Converter (microphone etc)
+    NVIC_SetPriority(PWM0_IRQn, 3);           // General Purpose PWM on edge connector (servo, square wave sounds)
+    NVIC_SetPriority(PWM1_IRQn, 2);           // PCM audio on speaker (high definition sound)
+    NVIC_SetPriority(PWM2_IRQn, 2);           // Waveform Generation (neopixel)
+
+    NVIC_SetPriority(RADIO_IRQn, 3);          // Packet radio
+    NVIC_SetPriority(UARTE0_UART0_IRQn, 2);   // Serial port
+
 #if CONFIG_ENABLED(DEVICE_BLE) && CONFIG_ENABLED(MICROBIT_BLE_PAIRING_MODE)
     int i=0;
     // Test if we need to enter BLE pairing mode

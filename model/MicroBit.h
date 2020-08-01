@@ -44,15 +44,14 @@ DEALINGS IN THE SOFTWARE.
 #include "NRF52Pin.h"
 #include "NRF52Serial.h"
 #include "NRF52I2C.h"
-#include "NRF52Microphone.h"
+#include "NRF52ADC.h"
+#include "NRF52TouchSensor.h"
 
 #include "MicroBitIO.h"
 #include "MicroBitDisplay.h"
 #include "CodalFiber.h"
 #include "MessageBus.h"
 #include "FXOS8700.h"
-#include "FXOS8700Accelerometer.h"
-#include "FXOS8700Magnetometer.h"
 #include "LSM303Accelerometer.h"
 #include "LSM303Magnetometer.h"
 #include "MicroBitRadio.h"
@@ -118,10 +117,13 @@ namespace codal
             MicroBitBLEManager          bleManager;
             BLEDevice                  *ble;
 #endif
-            NRFLowLevelTimer            tim1;
+            NRFLowLevelTimer            systemTimer;
+            NRFLowLevelTimer            adcTimer;
+            NRFLowLevelTimer            capTouchTimer;
             Timer                       timer;
             MessageBus                  messageBus;
-            //codal::_mbed::Timer         timer;
+            NRF52ADC                    adc;
+            NRF52TouchSensor            touchSensor;
             MicroBitIO                  io;
             NRF52Serial                 serial;
         private:
@@ -139,9 +141,9 @@ namespace codal
             MultiButton                 buttonAB;
             MicroBitRadio               radio;
             MicroBitThermometer         thermometer;
-            MicroBitAccelerometer       accelerometer;
-            MicroBitCompass             compass;
-            //MicroBitCompassCalibrator   compassCalibrator;
+            Accelerometer&              accelerometer;
+            Compass&                    compass;
+            MicroBitCompassCalibrator   compassCalibrator;
 
             /**
              * Constructor.
@@ -201,6 +203,7 @@ namespace codal
              */
             //TODO: handle overflow case.
             unsigned long systemTime();
+
     };
 
 
@@ -261,6 +264,7 @@ namespace codal
     {
         return system_timer_current_time();
     }
+
 }
 
 void microbit_dmesg_flush();
