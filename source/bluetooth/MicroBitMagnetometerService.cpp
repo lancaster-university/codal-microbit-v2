@@ -45,7 +45,7 @@ const uint16_t MicroBitMagnetometerService::charUUID[ mbbs_cIdxCOUNT] = { 0xfb11
   * @param _ble The instance of a BLE device that we're running on.
   * @param _compass An instance of MicroBitCompass to use as our Magnetometer source.
   */
-MicroBitMagnetometerService::MicroBitMagnetometerService(BLEDevice &_ble, MicroBitCompass &_compass) :
+MicroBitMagnetometerService::MicroBitMagnetometerService(BLEDevice &_ble, codal::Compass &_compass) :
         compass(_compass)
 {
     // Initialise our characteristic values.

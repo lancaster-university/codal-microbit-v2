@@ -49,7 +49,7 @@ class MicroBitAccelerometerService : public MicroBitBLEService
       * Create a representation of the AccelerometerService
       * @param _accelerometer An instance of MicroBitAccelerometer.
       */
-    MicroBitAccelerometerService( BLEDevice &_ble, MicroBitAccelerometer &_acclerometer);
+    MicroBitAccelerometerService( BLEDevice &_ble, codal::Accelerometer &_accelerometer);
 
     private:
 
@@ -83,7 +83,7 @@ class MicroBitAccelerometerService : public MicroBitBLEService
      */
     void accelerometerUpdate(MicroBitEvent e);
 
-	MicroBitAccelerometer	&accelerometer;
+	codal::Accelerometer	&accelerometer;
 
     // memory for our 8 bit control characteristics.
     uint16_t            accelerometerDataCharacteristicBuffer[3];

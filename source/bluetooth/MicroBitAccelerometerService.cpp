@@ -44,7 +44,7 @@ const uint16_t MicroBitAccelerometerService::charUUID[ mbbs_cIdxCOUNT] = { 0xca4
   * @param _ble The instance of a BLE device that we're running on.
   * @param _accelerometer An instance of MicroBitAccelerometer.
   */
-MicroBitAccelerometerService::MicroBitAccelerometerService( BLEDevice &_ble, MicroBitAccelerometer &_accelerometer) :
+MicroBitAccelerometerService::MicroBitAccelerometerService( BLEDevice &_ble, codal::Accelerometer &_accelerometer) :
         accelerometer(_accelerometer)
 {
     // Initialise our characteristic values.
