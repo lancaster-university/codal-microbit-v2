@@ -28,7 +28,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "CodalConfig.h"
 #include "codal-core/inc/types/Event.h"
-#include "LEDMatrix.h"
+#include "NRF52LedMatrix.h"
 #include "AnimatedDisplay.h"
 
 namespace codal
@@ -36,7 +36,7 @@ namespace codal
     /**
      * Class definition for MicroBitDisplay
      */
-    class MicroBitDisplay : public LEDMatrix, public AnimatedDisplay
+    class MicroBitDisplay : public NRF52LEDMatrix, public AnimatedDisplay
     {
         public:
 
@@ -56,17 +56,6 @@ namespace codal
          * Destructor.
          */
         ~MicroBitDisplay();
-
-
-        /**
-         * Gives a representative figure of the light level in the current environment
-         * where the display is situated.
-         *
-         * @return an indicative light level in the range 0 - 255.
-         *
-         * @note this is not currently implemented
-         */
-        virtual int readLightLevel() { return 128; }
     };
 }
 

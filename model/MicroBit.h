@@ -76,6 +76,7 @@ DEALINGS IN THE SOFTWARE.
 #endif
 
 #include "MicroBitStorage.h"
+
 //#include "MicroBitLightSensor.h"
 
 
@@ -117,6 +118,7 @@ namespace codal
             MicroBitBLEManager          bleManager;
             BLEDevice                  *ble;
 #endif
+
             NRFLowLevelTimer            systemTimer;
             NRFLowLevelTimer            adcTimer;
             NRFLowLevelTimer            capTouchTimer;

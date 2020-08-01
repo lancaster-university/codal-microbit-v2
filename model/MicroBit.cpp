@@ -57,6 +57,9 @@ MicroBit::MicroBit() :
     ble( &bleManager),
 #endif
 
+    systemTimer(NRF_TIMER1, TIMER1_IRQn),
+    adcTimer(NRF_TIMER2, TIMER2_IRQn),
+
     capTouchTimer(NRF_TIMER3, TIMER3_IRQn),
     timer(systemTimer),
     messageBus(),
@@ -228,7 +231,6 @@ int MicroBit::init()
     // Start the BLE stack, if it isn't already running.
     bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, false);
 #endif
-
     return DEVICE_OK;
 }
 

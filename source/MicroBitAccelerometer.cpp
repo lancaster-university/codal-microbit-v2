@@ -32,8 +32,6 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitI2C.h"
 #include "MicroBitCompass.h"
 #include "FXOS8700.h"
-#include "FXOS8700Accelerometer.h"
-#include "FXOS8700Magnetometer.h"
 #include "LSM303Accelerometer.h"
 #include "LSM303Magnetometer.h"
 
@@ -41,6 +39,7 @@ DEALINGS IN THE SOFTWARE.
 Accelerometer* MicroBitAccelerometer::detectedAccelerometer = NULL;
 NRF52Pin MicroBitAccelerometer::irq1(ID_PIN_P25, P0_25, PIN_CAPABILITY_AD);
 CoordinateSpace MicroBitAccelerometer::coordinateSpace(SIMPLE_CARTESIAN, true, COORDINATE_SPACE_ROTATED_0);
+CoordinateSpace MicroBitAccelerometer::coordinateSpaceFXOS8700(SIMPLE_CARTESIAN, true, COORDINATE_SPACE_ROTATED_180);
 
 MicroBitAccelerometer::MicroBitAccelerometer(MicroBitI2C &i2c, uint16_t id) : Accelerometer(coordinateSpace)
 {
@@ -71,9 +70,9 @@ Accelerometer& MicroBitAccelerometer::autoDetect(MicroBitI2C &i2c)
         // All known accelerometer/magnetometer peripherals have the same alignment
         if (FXOS8700::isDetected(i2c, 0x3E))
         {
-            FXOS8700 *fxos = new FXOS8700(i2c, irq1, 0x3E);
-            MicroBitAccelerometer::detectedAccelerometer = new FXOS8700Accelerometer(*fxos, coordinateSpace);
-            MicroBitCompass::detectedCompass = new FXOS8700Magnetometer(*fxos, coordinateSpace);
+            FXOS8700 *fxos = new FXOS8700(i2c, irq1, coordinateSpaceFXOS8700, 0x3E);
+            MicroBitAccelerometer::detectedAccelerometer = fxos;
+            MicroBitCompass::detectedCompass = fxos;
         }
 
         // Now, probe for connected peripherals, if none have already been found.
@@ -82,7 +81,7 @@ Accelerometer& MicroBitAccelerometer::autoDetect(MicroBitI2C &i2c)
             MicroBitAccelerometer::detectedAccelerometer = new LSM303Accelerometer(i2c, irq1, coordinateSpace, 0x32);
             MicroBitCompass::detectedCompass = new LSM303Magnetometer(i2c, irq1, coordinateSpace, 0x3C);
         }
-    
+
         if (MicroBitAccelerometer::detectedAccelerometer == NULL)
             MicroBitAccelerometer::detectedAccelerometer = new Accelerometer(coordinateSpace);
 

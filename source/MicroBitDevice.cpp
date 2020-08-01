@@ -56,7 +56,29 @@ namespace codal {
   */
 void MicroBitDevice::seedRandom()
 {
-    microbit_seed_random();
+    uint32_t r = 0xBBC5EED;
+
+    if(!ble_running())
+    {
+        // Start the Random number generator. No need to leave it running... I hope. :-)
+        NRF_RNG->TASKS_START = 1;
+
+        for(int i = 0; i < 4; i++)
+        {
+            // Clear the VALRDY EVENT
+            NRF_RNG->EVENTS_VALRDY = 0;
+
+            // Wait for a number ot be generated.
+            while(NRF_RNG->EVENTS_VALRDY == 0);
+
+            r = (r << 8) | ((int) NRF_RNG->VALUE);
+        }
+
+        // Disable the generator to save power.
+        NRF_RNG->TASKS_STOP = 1;
+    }
+
+    seedRandom(r);
 }
 
 /**
@@ -70,7 +92,7 @@ void MicroBitDevice::seedRandom()
   */
 int MicroBitDevice::seedRandom(uint32_t seed)
 {
-    microbit_seed_random(seed);
+    CodalDevice::seedRandom(seed);
     return DEVICE_OK;
 }
 
@@ -192,8 +214,6 @@ microbit_reset()
     NVIC_SystemReset();
 }
 
-static uint32_t random_value = 0;
-
 /**
   * Seed the random number generator (RNG).
   *
@@ -204,34 +224,8 @@ static uint32_t random_value = 0;
   */
 void microbit_seed_random()
 {
-    random_value = 0;
-
-    if(ble_running())
-    {
-        /* Currently no support for the soft device. */
-        random_value = 0xBBC5EED;
-    }
-    else
-    {
-        // Othwerwise we can access the hardware RNG directly.
-
-        // Start the Random number generator. No need to leave it running... I hope. :-)
-        NRF_RNG->TASKS_START = 1;
-
-        for(int i = 0; i < 4; i++)
-        {
-            // Clear the VALRDY EVENT
-            NRF_RNG->EVENTS_VALRDY = 0;
-
-            // Wait for a number ot be generated.
-            while(NRF_RNG->EVENTS_VALRDY == 0);
-
-            random_value = (random_value << 8) | ((int) NRF_RNG->VALUE);
-        }
-
-        // Disable the generator to save power.
-        NRF_RNG->TASKS_STOP = 1;
-    }
+    if(microbit_device_instance)
+        microbit_device_instance->seedRandom();
 }
 
 /**
@@ -242,7 +236,8 @@ void microbit_seed_random()
   */
 void microbit_seed_random(uint32_t seed)
 {
-    random_value = seed;
+    if(microbit_device_instance)
+        microbit_device_instance->seedRandom(seed);
 }
 
 }
