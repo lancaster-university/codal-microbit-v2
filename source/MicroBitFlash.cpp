@@ -24,6 +24,12 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitDevice.h"
 #include "ErrorNo.h"                
 
+#ifdef SOFTDEVICE_PRESENT
+#include "nrf_sdh_soc.h"
+#endif
+
+using namespace codal;
+
 #ifndef MIN
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #endif
@@ -52,25 +58,24 @@ extern "C" void btle_set_user_evt_handler(void (*func)(uint32_t));
 //#pragma GCC diagnostic pop
 //#endif
 
-static bool evt_handler_registered = false;
 static volatile bool flash_op_complete = false;
 
 /*
- * TODO: Replace the IFDEF wrapping this function
- * when we get a SoftDevice enabled build...
- * 
- * It should really be registered when SD is used, 
- * regradless of whether or not it is active 
- * (not stritly the meaning of MICROBIT_BLE_ENABLED)
+ * When SoftDevice is present,
+ * define an observer to receive system events.
+ * Events are delivered here via nrf_sdh and nrf_sdh_soc
+ * See NRF_SDH_DISPATCH_MODEL
  */
-#if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
-static void nvmc_event_handler(uint32_t evt)
+#ifdef SOFTDEVICE_PRESENT
+
+static void nvmc_event_handler(uint32_t sys_evt, void *)
 {
-#if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
-    if(evt == NRF_EVT_FLASH_OPERATION_SUCCESS)
-#endif
+    if (sys_evt == NRF_EVT_FLASH_OPERATION_SUCCESS)
         flash_op_complete = true;
 }
+
+NRF_SDH_SOC_OBSERVER( microbitflash_soc_observer, 0, nvmc_event_handler, NULL);
+
 #endif
 
 /**
@@ -78,11 +83,6 @@ static void nvmc_event_handler(uint32_t evt)
   */
 MicroBitFlash::MicroBitFlash()
 {
-    if (!evt_handler_registered)
-    {
-        //btle_set_user_evt_handler(nvmc_event_handler);
-        evt_handler_registered = true;
-    }
 }
 
 /**
@@ -115,22 +115,22 @@ int MicroBitFlash::need_erase(uint8_t* source, uint8_t* flash_addr, int len)
   */
 void MicroBitFlash::erase_page(uint32_t* pg_addr)
 {
+#ifdef SOFTDEVICE_PRESENT
     if (ble_running())
     {
-#if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
         flash_op_complete = false;
         while(1)
         {
-            if (sd_flash_page_erase(((uint32_t)pg_addr)/PAGE_SIZE) == NRF_SUCCESS)
+            if (sd_flash_page_erase(((uint32_t)pg_addr)/MICROBIT_CODEPAGESIZE) == NRF_SUCCESS)
                 break;
 
-            wait_ms(10);
+            system_timer_wait_ms(10);
         }
         // Wait for SoftDevice to diable the write operation when it completes...
         while(!flash_op_complete);
-#endif
     }
     else
+#endif
     {
         // Turn on flash erase enable and wait until the NVMC is ready:
         NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Een);
@@ -157,9 +157,9 @@ void MicroBitFlash::erase_page(uint32_t* pg_addr)
   */
 void MicroBitFlash::flash_burn(uint32_t* addr, uint32_t* buffer, int size)
 {
+#ifdef SOFTDEVICE_PRESENT
     if (ble_running())
     {
-#if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
         // Schedule SoftDevice to write this memory for us, and wait for it to complete.
         // This happens ASYNCHRONOUSLY when SD is enabled (and synchronously if disabled!!)
         flash_op_complete = false;
@@ -169,14 +169,14 @@ void MicroBitFlash::flash_burn(uint32_t* addr, uint32_t* buffer, int size)
             if (sd_flash_write(addr, buffer, size) == NRF_SUCCESS)
                 break;
 
-            wait_ms(10);
+            system_timer_wait_ms(10);
         }
 
         // Wait for SoftDevice to diable the write operation when it completes...
         while(!flash_op_complete);
-#endif
     }
     else
+#endif
     {
         // Turn on flash write enable and wait until the NVMC is ready:
         NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos);
@@ -214,16 +214,21 @@ void MicroBitFlash::flash_burn(uint32_t* addr, uint32_t* buffer, int size)
 int MicroBitFlash::flash_write(void* address, void* from_buffer,
                                int length, void* scratch_addr)
 {
+    // If no scratch_addr has been supplied use the default
+    if(scratch_addr == NULL)
+        scratch_addr = (uint32_t *)MICROBIT_DEFAULT_SCRATCH_PAGE;
+
+
     // Ensure that scratch_addr is aligned on a page boundary.
-    if((uint32_t)scratch_addr & 0x3FF)
+    if((uint32_t)scratch_addr & (MICROBIT_CODEPAGESIZE - 1))
         return MICROBIT_INVALID_PARAMETER;
 
     // Locate the hardware FLASH page used by this operation.
-    int page = (uint32_t)address / PAGE_SIZE;
-    uint32_t* pgAddr = (uint32_t*)(page * PAGE_SIZE);
+    int page = (uint32_t)address / MICROBIT_CODEPAGESIZE;
+    uint32_t* pgAddr = (uint32_t*)(page * MICROBIT_CODEPAGESIZE);
 
     // offset to write from within page.
-    int offset = (uint32_t)address % PAGE_SIZE;
+    int offset = (uint32_t)address % MICROBIT_CODEPAGESIZE;
 
     uint8_t* writeFrom = (uint8_t*)pgAddr;
     int start = WORD_ADDR(offset);
@@ -236,11 +241,13 @@ int MicroBitFlash::flash_write(void* address, void* from_buffer,
         if (!scratch_addr)
             return MICROBIT_INVALID_PARAMETER;
 
-        this->flash_burn((uint32_t*)scratch_addr, pgAddr, PAGE_SIZE/4);
+        this->erase_page((uint32_t *)scratch_addr);
+
+        this->flash_burn((uint32_t*)scratch_addr, pgAddr, MICROBIT_CODEPAGESIZE/4);
         this->erase_page(pgAddr);
         writeFrom = (uint8_t*)scratch_addr;
         start = 0;
-        end = PAGE_SIZE;
+        end = MICROBIT_CODEPAGESIZE;
     }
 
     uint32_t writeWord = 0;

@@ -26,8 +26,12 @@ DEALINGS IN THE SOFTWARE.
 #ifndef MICROBIT_MAGNETOMETER_SERVICE_H
 #define MICROBIT_MAGNETOMETER_SERVICE_H
 
-#include "ble/BLE.h"
 #include "MicroBitConfig.h"
+
+#if CONFIG_ENABLED(DEVICE_BLE)
+
+#include "MicroBitBLEManager.h"
+#include "MicroBitBLEService.h"
 #include "MicroBitCompass.h"
 #include "EventModel.h"
 
@@ -36,18 +40,12 @@ DEALINGS IN THE SOFTWARE.
 #define COMPASS_CALIBRATION_COMPLETED_OK   2
 #define COMPASS_CALIBRATION_COMPLETED_ERR  3
 
-// UUIDs for our service and characteristics
-extern const uint8_t  MicroBitMagnetometerServiceUUID[];
-extern const uint8_t  MicroBitMagnetometerServiceDataUUID[];
-extern const uint8_t  MicroBitMagnetometerServiceBearingUUID[];
-extern const uint8_t  MicroBitMagnetometerServicePeriodUUID[];
-extern const uint8_t  MicroBitMagnetometerServiceCalibrationUUID[];
 
 /**
   * Class definition for the MicroBit BLE Magnetometer Service.
   * Provides access to live magnetometer data via BLE, and provides basic configuration options.
   */
-class MicroBitMagnetometerService
+class MicroBitMagnetometerService : public MicroBitBLEService
 {
     public:
 
@@ -57,14 +55,34 @@ class MicroBitMagnetometerService
       * @param _ble The instance of a BLE device that we're running on.
       * @param _compass An instance of MicroBitCompass to use as our Magnetometer source.
       */
-    MicroBitMagnetometerService(BLEDevice &_ble, MicroBitCompass &_compass);
+    MicroBitMagnetometerService(BLEDevice &_ble, codal::Compass &_compass);
 
     private:
 
     /**
+     * Fetch magnetometer values to characteristic buffers
+     */
+    void read();
+
+    /**
+      * Set up or tear down event listers
+      */
+    void listen( bool yes);
+
+    /**
+      * Invoked when BLE connects.
+      */
+    void onConnect( const microbit_ble_evt_t *p_ble_evt);
+
+    /**
+      * Invoked when BLE disconnects.
+      */
+    void onDisconnect( const microbit_ble_evt_t *p_ble_evt);
+    
+    /**
       * Callback. Invoked when any of our attributes are written via BLE.
       */
-    void onDataWritten(const GattWriteCallbackParams *params);
+    void onDataWritten(const microbit_ble_evt_write_t *params);
 
     /**
      * Magnetometer update callback
@@ -88,21 +106,37 @@ class MicroBitMagnetometerService
      */
     void compassEvents(MicroBitEvent e);
 
-    // Bluetooth stack we're running on.
-    BLEDevice           &ble;
-    MicroBitCompass     &compass;
+    // Compass we're using.
+    codal::Compass     &compass;
 
-    // memory for our 8 bit control characteristics.
+    // memory for our characteristics.
     int16_t             magnetometerDataCharacteristicBuffer[3];
     uint16_t            magnetometerBearingCharacteristicBuffer;
     uint16_t            magnetometerPeriodCharacteristicBuffer;
     uint8_t             magnetometerCalibrationCharacteristicBuffer;
 
-    // Handles to access each characteristic when they are held by Soft Device.
-    GattCharacteristic magnetometerDataCharacteristic;
-    GattCharacteristic magnetometerBearingCharacteristic;
-    GattCharacteristic magnetometerPeriodCharacteristic;
-    GattCharacteristic magnetometerCalibrationCharacteristic;
+    // Index for each charactersitic in arrays of handles and UUIDs
+    typedef enum mbbs_cIdx
+    {
+        mbbs_cIdxDATA,
+        mbbs_cIdxBEARING,
+        mbbs_cIdxPERIOD,
+        mbbs_cIdxCALIB,
+        mbbs_cIdxCOUNT
+    } mbbs_cIdx;
+    
+    // UUIDs for our service and characteristics
+    static const uint16_t serviceUUID;
+    static const uint16_t charUUID[ mbbs_cIdxCOUNT];
+    
+    // Data for each characteristic when they are held by Soft Device.
+    MicroBitBLEChar      chars[ mbbs_cIdxCOUNT];
+
+    public:
+    
+    int              characteristicCount()          { return mbbs_cIdxCOUNT; };
+    MicroBitBLEChar *characteristicPtr( int idx)    { return &chars[ idx]; };
 };
 
+#endif
 #endif

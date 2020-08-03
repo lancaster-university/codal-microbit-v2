@@ -28,10 +28,15 @@ DEALINGS IN THE SOFTWARE.
   * Provides a BLE service to remotely read the state of the I/O Pin, and configure its behaviour.
   */
 #include "MicroBitConfig.h"
-#include "ble/UUID.h"
+
+#if CONFIG_ENABLED(DEVICE_BLE)
 
 #include "MicroBitIOPinService.h"
 #include "MicroBitFiber.h"
+
+const uint16_t MicroBitIOPinService::serviceUUID               = 0x127b;
+const uint16_t MicroBitIOPinService::charUUID[ mbbs_cIdxCOUNT] = { 0x5899, 0xb9fe, 0xd822, 0x8d00 };
+
 
 /**
   * Constructor.
@@ -40,48 +45,75 @@ DEALINGS IN THE SOFTWARE.
   * @param _io An instance of MicroBitIO that this service will use to perform
   *            I/O operations.
   */
-MicroBitIOPinService::MicroBitIOPinService(BLEDevice &_ble, MicroBitIO &_io) : ble(_ble), io(_io),
-    // Create the AD characteristic, that defines whether each pin is treated as analogue or digital
-    ioPinServiceADCharacteristic(MicroBitIOPinServiceADConfigurationUUID, (uint8_t *)&ioPinServiceADCharacteristicBuffer, 0, sizeof(ioPinServiceADCharacteristicBuffer), 
-            GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_READ | GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE),
-
-    // Create the IO characteristic, that allows the user to define one or more pins as inputs. These will then be monitored by this service and reported via the ioPinSeriveData characterisitic. 
-    ioPinServiceIOCharacteristic(MicroBitIOPinServiceIOConfigurationUUID, (uint8_t *)&ioPinServiceIOCharacteristicBuffer, 0, sizeof(ioPinServiceIOCharacteristicBuffer), 
-            GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_READ | GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE),
-
-    // Create the PWM characteristic, that allows up to 3 compatible pins to be used for PWM
-    ioPinServicePWMCharacteristic(MicroBitIOPinServicePWMControlUUID, (uint8_t *)&ioPinServicePWMCharacteristicBuffer, 0, sizeof(ioPinServicePWMCharacteristicBuffer), 
-            GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE),
-
-    // Create the Data characteristic, that allows the actual read and write operations.
-    ioPinServiceDataCharacteristic (MicroBitIOPinServiceDataUUID, (uint8_t *)ioPinServiceDataCharacteristicBuffer, 0, sizeof(ioPinServiceDataCharacteristicBuffer), GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_READ | GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE | GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_NOTIFY)
-
+MicroBitIOPinService::MicroBitIOPinService(BLEDevice &_ble, MicroBitIO &_io) :
+        io(_io)
 {
-    ioPinServiceDataCharacteristic.setReadAuthorizationCallback(this, &MicroBitIOPinService::onDataRead);
-
+    // Initialise our characteristic values.
     ioPinServiceADCharacteristicBuffer = 0;
     ioPinServiceIOCharacteristicBuffer = 0;
     memset(ioPinServiceIOData, 0, sizeof(ioPinServiceIOData));
-    memset(ioPinServicePWMCharacteristicBuffer, 0, sizeof(ioPinServicePWMCharacteristicBuffer));
+    memset(ioPinServicePWMCharacteristicBuffer, 0, sizeof(ioPinServicePWMCharacteristicBuffer));    // Create the AD characteristic, that defines whether each pin is treated as analogue or digital
+    
+    // Register the base UUID and create the service.
+    RegisterBaseUUID( bs_base_uuid);
+    CreateService( serviceUUID);
+    
+    CreateCharacteristic( mbbs_cIdxADC, charUUID[ mbbs_cIdxADC],
+                         (uint8_t *)&ioPinServiceADCharacteristicBuffer,
+                         sizeof(ioPinServiceADCharacteristicBuffer), sizeof(ioPinServiceADCharacteristicBuffer),
+                         microbit_propREAD | microbit_propWRITE);
 
-    // Set default security requirements
-    ioPinServiceADCharacteristic.requireSecurity(SecurityManager::MICROBIT_BLE_SECURITY_LEVEL);
-    ioPinServiceIOCharacteristic.requireSecurity(SecurityManager::MICROBIT_BLE_SECURITY_LEVEL);
-    ioPinServicePWMCharacteristic.requireSecurity(SecurityManager::MICROBIT_BLE_SECURITY_LEVEL);
-    ioPinServiceDataCharacteristic.requireSecurity(SecurityManager::MICROBIT_BLE_SECURITY_LEVEL);
+    // Create the IO characteristic, that allows the user to define one or more pins as inputs. These will then be monitored by this service and reported via the ioPinSeriveData characterisitic. 
+    CreateCharacteristic( mbbs_cIdxIO, charUUID[ mbbs_cIdxIO],
+                         (uint8_t *)&ioPinServiceIOCharacteristicBuffer,
+                         sizeof(ioPinServiceIOCharacteristicBuffer), sizeof(ioPinServiceIOCharacteristicBuffer),
+                         microbit_propREAD | microbit_propWRITE);
 
-    GattCharacteristic *characteristics[] = {&ioPinServiceADCharacteristic, &ioPinServiceIOCharacteristic, &ioPinServicePWMCharacteristic, &ioPinServiceDataCharacteristic};
-    GattService         service(MicroBitIOPinServiceUUID, characteristics, sizeof(characteristics) / sizeof(GattCharacteristic *));
+    // Create the PWM characteristic, that allows up to 3 compatible pins to be used for PWM
+    CreateCharacteristic( mbbs_cIdxPWM, charUUID[ mbbs_cIdxPWM],
+                         (uint8_t *)&ioPinServicePWMCharacteristicBuffer,
+                         sizeof(ioPinServicePWMCharacteristicBuffer), sizeof(ioPinServicePWMCharacteristicBuffer),
+                         microbit_propWRITE);
 
-    ble.addService(service);
+    // Create the Data characteristic, that allows the actual read and write operations.
+    CreateCharacteristic( mbbs_cIdxDATA, charUUID[ mbbs_cIdxDATA],
+                         (uint8_t *)ioPinServiceDataCharacteristicBuffer,
+                         0, sizeof(ioPinServiceDataCharacteristicBuffer),
+                         microbit_propREAD | microbit_propWRITE | microbit_propNOTIFY | microbit_propREADAUTH);
 
-    ble.gattServer().write(ioPinServiceADCharacteristic.getValueHandle(), (const uint8_t *)&ioPinServiceADCharacteristicBuffer, sizeof(ioPinServiceADCharacteristicBuffer));
-    ble.gattServer().write(ioPinServiceIOCharacteristic.getValueHandle(), (const uint8_t *)&ioPinServiceIOCharacteristicBuffer, sizeof(ioPinServiceIOCharacteristicBuffer));
-    ble.gattServer().write(ioPinServicePWMCharacteristic.getValueHandle(), (const uint8_t *)&ioPinServicePWMCharacteristicBuffer, sizeof(ioPinServicePWMCharacteristicBuffer));
-
-    ble.onDataWritten(this, &MicroBitIOPinService::onDataWritten);
-    this->status |= DEVICE_COMPONENT_STATUS_IDLE_TICK;
+    fiber_add_idle_component(this);
 }
+
+
+MicroBitPin &MicroBitIOPinService::edgePin( int index)
+{
+    unsigned char edgePin[ MICROBIT_IO_PIN_SERVICE_PINCOUNT] =
+    {
+        MICROBIT_PIN_P0,
+        MICROBIT_PIN_P1,
+        MICROBIT_PIN_P2,
+        MICROBIT_PIN_P3,
+        MICROBIT_PIN_P4,
+        MICROBIT_PIN_P5,
+        MICROBIT_PIN_P6,
+        MICROBIT_PIN_P7,
+        MICROBIT_PIN_P8,
+        MICROBIT_PIN_P9,
+        MICROBIT_PIN_P10,
+        MICROBIT_PIN_P11,
+        MICROBIT_PIN_P12,
+        MICROBIT_PIN_P13,
+        MICROBIT_PIN_P14,
+        MICROBIT_PIN_P15,
+        MICROBIT_PIN_P16,
+        MICROBIT_PIN_P19,
+        MICROBIT_PIN_P20
+    };
+    if ( index < 0 || index >= MICROBIT_IO_PIN_SERVICE_PINCOUNT)
+        index = 0;
+    return io.pin[ edgePin[ index]];
+};
+
 
 /**
   * Determines if the given pin was configured as a digital pin by the BLE ADPinConfigurationCharacterisitic.
@@ -120,7 +152,7 @@ int MicroBitIOPinService::isActiveInput(int i)
  * Scans through all pins that our BLE client have registered an interest in. 
  * For each pin that has changed value, update the BLE characteristic, and NOTIFY our client.
  */
-void MicroBitIOPinService::updateBLEInputs(bool updateAll)
+int MicroBitIOPinService::updateBLEInputs(bool updateAll)
 {
     int pairs = 0;
 
@@ -131,9 +163,9 @@ void MicroBitIOPinService::updateBLEInputs(bool updateAll)
             uint8_t value;
 
             if (isDigital(i))
-               	value = io.pin[i].getDigitalValue();
+               	value = edgePin(i).getDigitalValue();
             else
-               	value = io.pin[i].getAnalogValue() >> 2;
+               	value = edgePin(i).getAnalogValue() >> 2;
 
             // If the data has changed, send an update.
             if (updateAll || value != ioPinServiceIOData[i])
@@ -150,85 +182,83 @@ void MicroBitIOPinService::updateBLEInputs(bool updateAll)
             }
         }
     }
-
-    // If there's any data, issue a BLE notification.
-    if (pairs > 0)
-        ble.gattServer().write(ioPinServiceDataCharacteristic.getValueHandle(), (uint8_t *)ioPinServiceDataCharacteristicBuffer, pairs * sizeof(IOData));
+    
+    return pairs;
 }
 
 /**
   * Callback. Invoked when any of our attributes are written via BLE.
   */
-void MicroBitIOPinService::onDataWritten(const GattWriteCallbackParams *params)
+void MicroBitIOPinService::onDataWritten( const microbit_ble_evt_write_t *params)
 {
     // Check for writes to the IO configuration characteristic
-    if (params->handle == ioPinServiceIOCharacteristic.getValueHandle() && params->len >= sizeof(ioPinServiceIOCharacteristicBuffer))
+    if (params->handle == valueHandle( mbbs_cIdxIO) && params->len >= sizeof(ioPinServiceIOCharacteristicBuffer))
     {
         uint32_t *value = (uint32_t *)params->data;
 
         // Our IO configuration may be changing... read the new value, and push it back into the BLE stack.
         ioPinServiceIOCharacteristicBuffer = *value;
-        ble.gattServer().write(ioPinServiceIOCharacteristic.getValueHandle(), (const uint8_t *)&ioPinServiceIOCharacteristicBuffer, sizeof(ioPinServiceIOCharacteristicBuffer));
+        setChrValue( mbbs_cIdxIO, (const uint8_t *)&ioPinServiceIOCharacteristicBuffer, sizeof(ioPinServiceIOCharacteristicBuffer));
 
         // Also, drop any selected pins into input mode, so we can pick up changes later
         for (int i=0; i < MICROBIT_IO_PIN_SERVICE_PINCOUNT; i++)
         {
             if(isDigital(i) && isActiveInput(i))
-                io.pin[i].getDigitalValue();
+                edgePin(i).getDigitalValue();
 
             if(isAnalog(i) && isActiveInput(i))
-                io.pin[i].getAnalogValue();
+                edgePin(i).getAnalogValue();
         }
     }
 
     // Check for writes to the IO configuration characteristic
-    if (params->handle == ioPinServiceADCharacteristic.getValueHandle() && params->len >= sizeof(ioPinServiceADCharacteristicBuffer))
+    if (params->handle == valueHandle( mbbs_cIdxADC) && params->len >= sizeof(ioPinServiceADCharacteristicBuffer))
     {
         uint32_t *value = (uint32_t *)params->data;
 
         // Our IO configuration may be changing... read the new value, and push it back into the BLE stack.
         ioPinServiceADCharacteristicBuffer = *value;
-        ble.gattServer().write(ioPinServiceADCharacteristic.getValueHandle(), (const uint8_t *)&ioPinServiceADCharacteristicBuffer, sizeof(ioPinServiceADCharacteristicBuffer));
+        setChrValue( mbbs_cIdxADC, (const uint8_t *)&ioPinServiceADCharacteristicBuffer, sizeof(ioPinServiceADCharacteristicBuffer));
 
         // Also, drop any selected pins into input mode, so we can pick up changes later
         for (int i=0; i < MICROBIT_IO_PIN_SERVICE_PINCOUNT; i++)
         {
             if(isDigital(i) && isActiveInput(i))
-               io.pin[i].getDigitalValue();
+               edgePin(i).getDigitalValue();
 
             if(isAnalog(i) && isActiveInput(i))
-               io.pin[i].getAnalogValue();
+               edgePin(i).getAnalogValue();
         }
     }
 
     // Check for writes to the PWM Control characteristic
-    if (params->handle == ioPinServicePWMCharacteristic.getValueHandle())
+    if (params->handle == valueHandle( mbbs_cIdxPWM))
     {
         uint16_t len = params->len;
         IOPWMData *pwm_data = (IOPWMData *)params->data;
         
         //validate - len must be a multiple of 7 and greater than 0
-        if (len == 0) {
-            return;
-        }
-
-        bool is_valid_length = len % 7 == 0;
-	    if (is_valid_length) {
+        bool is_valid_length = len > 0 && len % 7 == 0;
+	    if (is_valid_length)
+        {
             uint8_t field_count = len / 7;
-            for (int i=0;i<field_count;i++) {
+            for (int i=0;i<field_count;i++)
+            {
                 uint8_t  pin    = pwm_data[i].pin;
                 uint16_t value = pwm_data[i].value;
                 uint32_t period = pwm_data[i].period;
-                io.pin[pin].setAnalogValue(value);
-                io.pin[pin].setAnalogPeriodUs(period);
+                edgePin(pin).setAnalogValue(value);
+                edgePin(pin).setAnalogPeriodUs(period);
             }
-        } else {
+        }
+        else
+        {
             // there's no way to return an error response via the current mbed BLE API :-( See https://github.com/ARMmbed/ble/issues/181
             return;
         }        
     }
 
-    if (params->handle == ioPinServiceDataCharacteristic.getValueHandle())
+    if (params->handle == valueHandle( mbbs_cIdxDATA))
     {
         // We have some pin data to change...
         uint16_t len = params->len;
@@ -240,9 +270,9 @@ void MicroBitIOPinService::onDataWritten(const GattWriteCallbackParams *params)
             if (!isActiveInput(data->pin))
             {
                 if (isDigital(data->pin))
-               		io.pin[data->pin].setDigitalValue(data->value);
+               		edgePin(data->pin).setDigitalValue(data->value);
                 else
-               		io.pin[data->pin].setAnalogValue(data->value == 255 ? 1023 : data->value << 2);
+               		edgePin(data->pin).setAnalogValue(data->value == 255 ? 1023 : data->value << 2);
             }
 
             data++;
@@ -253,13 +283,21 @@ void MicroBitIOPinService::onDataWritten(const GattWriteCallbackParams *params)
 
 /**
  * Callback. invoked when the BLE data characteristic is read.
+ * Set  params->data and params->length to update the value
  *
  * Reads all the pins marked as inputs, and updates the data stored in the characteristic.
  */
-void MicroBitIOPinService::onDataRead(GattReadAuthCallbackParams *params)
+void MicroBitIOPinService::onDataRead( microbit_onDataRead_t *params)
 {
-    if (params->handle == ioPinServiceDataCharacteristic.getValueHandle())
-        updateBLEInputs(true);
+    if ( params->handle == valueHandle( mbbs_cIdxDATA))
+    {
+        int pairs = updateBLEInputs( true);
+        if ( pairs)
+        {
+            params->data    = (uint8_t *)ioPinServiceDataCharacteristicBuffer;
+            params->length  = pairs * sizeof(IOData);
+        }
+    }
 }
 
 
@@ -271,27 +309,16 @@ void MicroBitIOPinService::onDataRead(GattReadAuthCallbackParams *params)
  */
 void MicroBitIOPinService::idleCallback()
 {
-    if (ble.getGapState().connected)
-        updateBLEInputs();
+    if ( getConnected())
+    {
+        int pairs = updateBLEInputs( false);
+        // If there's any data, issue a BLE notification.
+        if ( pairs)
+        {
+            notifyChrValue( mbbs_cIdxDATA, (uint8_t *)ioPinServiceDataCharacteristicBuffer, pairs * sizeof(IOData));
+        }
+    }
 }
 
-const uint8_t  MicroBitIOPinServiceUUID[] = {
-    0xe9,0x5d,0x12,0x7b,0x25,0x1d,0x47,0x0a,0xa0,0x62,0xfa,0x19,0x22,0xdf,0xa9,0xa8
-};
 
-const uint8_t  MicroBitIOPinServiceIOConfigurationUUID[] = {
-    0xe9,0x5d,0xb9,0xfe,0x25,0x1d,0x47,0x0a,0xa0,0x62,0xfa,0x19,0x22,0xdf,0xa9,0xa8
-};
-
-const uint8_t  MicroBitIOPinServiceADConfigurationUUID[] = {
-    0xe9,0x5d,0x58,0x99,0x25,0x1d,0x47,0x0a,0xa0,0x62,0xfa,0x19,0x22,0xdf,0xa9,0xa8
-};
-
-const uint8_t  MicroBitIOPinServicePWMControlUUID[] = {
-    0xe9,0x5d,0xd8,0x22,0x25,0x1d,0x47,0x0a,0xa0,0x62,0xfa,0x19,0x22,0xdf,0xa9,0xa8
-};
-
-const uint8_t MicroBitIOPinServiceDataUUID[] = {
-    0xe9,0x5d,0x8d,0x00,0x25,0x1d,0x47,0x0a,0xa0,0x62,0xfa,0x19,0x22,0xdf,0xa9,0xa8
-};
-
+#endif

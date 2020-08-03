@@ -24,29 +24,17 @@ DEALINGS IN THE SOFTWARE.
 */
 
 #include "MicroBitConfig.h"
+
+#if CONFIG_ENABLED(DEVICE_BLE)
+
 #include "MicroBitEddystone.h"
 
 MicroBitEddystone *MicroBitEddystone::_instance = NULL;
 
-/* The underlying Nordic libraries that support BLE do not compile cleanly with the stringent GCC settings we employ.
- * If we're compiling under GCC, then we suppress any warnings generated from this code (but not the rest of the DAL)
- * The ARM cc compiler is more tolerant. We don't test __GNUC__ here to detect GCC as ARMCC also typically sets this
- * as a compatability option, but does not support the options used...
- */
-#if !defined(__arm)
-#pragma GCC diagnostic ignored "-Wunused-function"
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif
 
-/*
- * Return to our predefined compiler settings.
- */
-#if !defined(__arm)
-#pragma GCC diagnostic pop
-#endif
-
+#if CONFIG_ENABLED(MICROBIT_BLE_EDDYSTONE_URL) || CONFIG_ENABLED(MICROBIT_BLE_EDDYSTONE_UID)
 const uint8_t EDDYSTONE_UUID[] = {0xAA, 0xFE};
+#endif
 
 #if CONFIG_ENABLED(MICROBIT_BLE_EDDYSTONE_URL)
 const char *EDDYSTONE_URL_PREFIXES[] = {"http://www.", "https://www.", "http://", "https://"};
@@ -88,7 +76,7 @@ MicroBitEddystone* MicroBitEddystone::getInstance()
 #if CONFIG_ENABLED(MICROBIT_BLE_EDDYSTONE_URL)
 
 /**
-  * Set the content of Eddystone URL frames
+  * Get the content of Eddystone URL frames
   *
   * @param url The url to broadcast
   *
@@ -97,8 +85,10 @@ MicroBitEddystone* MicroBitEddystone::getInstance()
   * @note The calibratedPower value ranges from -100 to +20 to a resolution of 1. The calibrated power should be binary encoded.
   * More information can be found at https://github.com/google/eddystone/tree/master/eddystone-uid#tx-power
   */
-int MicroBitEddystone::setURL(BLEDevice* ble, const char* url, int8_t calibratedPower)
+int MicroBitEddystone::getURL( uint8_t *rawFrame /*[frameSizeURL]*/, uint16_t *pLength, const char* url, int8_t calibratedPower)
 {
+    *pLength = 0;
+
     int urlDataLength = 0;
     char urlData[EDDYSTONE_URL_MAX_LENGTH];
     memset(urlData, 0, EDDYSTONE_URL_MAX_LENGTH);
@@ -141,7 +131,6 @@ int MicroBitEddystone::setURL(BLEDevice* ble, const char* url, int8_t calibrated
         }
     }
 
-    uint8_t rawFrame[EDDYSTONE_URL_MAX_LENGTH + 4];
     size_t index = 0;
     rawFrame[index++] = EDDYSTONE_UUID[0];
     rawFrame[index++] = EDDYSTONE_UUID[1];
@@ -149,14 +138,13 @@ int MicroBitEddystone::setURL(BLEDevice* ble, const char* url, int8_t calibrated
     rawFrame[index++] = calibratedPower;
     memcpy(rawFrame + index, urlData, urlDataLength);
 
-    ble->accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LIST_16BIT_SERVICE_IDS, EDDYSTONE_UUID, sizeof(EDDYSTONE_UUID));
-    ble->accumulateAdvertisingPayload(GapAdvertisingData::SERVICE_DATA, rawFrame, index + urlDataLength);
+    *pLength = index + urlDataLength;
 
     return MICROBIT_OK;
 }
 
 /**
-  * Set the content of Eddystone URL frames, but accepts a ManagedString as a url.
+  * Get the content of Eddystone URL frames, but accepts a ManagedString as a url.
   *
   * @param url The url to broadcast
   *
@@ -165,9 +153,9 @@ int MicroBitEddystone::setURL(BLEDevice* ble, const char* url, int8_t calibrated
   * @note The calibratedPower value ranges from -100 to +20 to a resolution of 1. The calibrated power should be binary encoded.
   * More information can be found at https://github.com/google/eddystone/tree/master/eddystone-uid#tx-power
   */
-int MicroBitEddystone::setURL(BLEDevice* ble, ManagedString url, int8_t calibratedPower)
+int MicroBitEddystone::getURL( uint8_t *rawFrame /*[frameSizeURL]*/, uint16_t *pLength, ManagedString url, int8_t calibratedPower)
 {
-    return setURL(ble, (char *)url.toCharArray(), calibratedPower);
+    return getURL( rawFrame, pLength, (char *)url.toCharArray(), calibratedPower);
 }
 #endif
 
@@ -185,8 +173,10 @@ int MicroBitEddystone::setURL(BLEDevice* ble, ManagedString url, int8_t calibrat
   * @note The calibratedPower value ranges from -100 to +20 to a resolution of 1. The calibrated power should be binary encoded.
   * More information can be found at https://github.com/google/eddystone/tree/master/eddystone-uid#tx-power
   */
-int MicroBitEddystone::setUID(BLEDevice* ble, const char* uid_namespace, const char* uid_instance, int8_t calibratedPower)
+int MicroBitEddystone::getUID( uint8_t *rawFrame /*[frameSizeUID]*/, uint16_t *pLength, const char* uid_namespace, const char* uid_instance, int8_t calibratedPower)
 {
+    *pLength = 0;
+
     if (uid_namespace == NULL || uid_instance == NULL)
         return MICROBIT_INVALID_PARAMETER;
 
@@ -198,7 +188,6 @@ int MicroBitEddystone::setUID(BLEDevice* ble, const char* uid_namespace, const c
     // UID instance
     memcpy(uidData + EDDYSTONE_UID_NAMESPACE_MAX_LENGTH, uid_instance, EDDYSTONE_UID_INSTANCE_MAX_LENGTH);
 
-    uint8_t rawFrame[EDDYSTONE_UID_NAMESPACE_MAX_LENGTH + EDDYSTONE_UID_INSTANCE_MAX_LENGTH + 4];
     size_t index = 0;
     rawFrame[index++] = EDDYSTONE_UUID[0];
     rawFrame[index++] = EDDYSTONE_UUID[1];
@@ -206,10 +195,11 @@ int MicroBitEddystone::setUID(BLEDevice* ble, const char* uid_namespace, const c
     rawFrame[index++] = calibratedPower;
     memcpy(rawFrame + index, uidData, EDDYSTONE_UID_NAMESPACE_MAX_LENGTH + EDDYSTONE_UID_INSTANCE_MAX_LENGTH);
 
-    ble->accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LIST_16BIT_SERVICE_IDS, EDDYSTONE_UUID, sizeof(EDDYSTONE_UUID));
-    ble->accumulateAdvertisingPayload(GapAdvertisingData::SERVICE_DATA, rawFrame, index + EDDYSTONE_UID_NAMESPACE_MAX_LENGTH + EDDYSTONE_UID_INSTANCE_MAX_LENGTH);
+    *pLength = index + EDDYSTONE_UID_NAMESPACE_MAX_LENGTH + EDDYSTONE_UID_INSTANCE_MAX_LENGTH;
 
     return MICROBIT_OK;
 }
+
+#endif
 
 #endif

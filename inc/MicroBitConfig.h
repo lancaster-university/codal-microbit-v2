@@ -5,21 +5,126 @@
 #include "yotta_cfg_mappings.h"
 #include "MicroBitCompat.h"
 
+#ifdef SOFTDEVICE_PRESENT
+#include "nrf_mbr.h"
+#include "nrf_sdm.h"
+#endif
+
 /*
  * MicroBit specific build configuration options.
  */
 
+#ifndef MICROBIT_CODEPAGESIZE
+#define MICROBIT_CODEPAGESIZE           ((uint32_t) NRF_FICR->CODEPAGESIZE)
+#endif
+
+#ifndef MICROBIT_CODESIZE
+#define MICROBIT_CODESIZE               ((uint32_t) NRF_FICR->CODESIZE)
+#endif
+
+#ifndef MICROBIT_BOOTLOADER_ADDRESS
+#ifdef BOOTLOADER_ADDRESS
+#define MICROBIT_BOOTLOADER_ADDRESS     ( BOOTLOADER_ADDRESS)
+#else
+#ifdef SOFTDEVICE_PRESENT
+#define MICROBIT_BOOTLOADER_ADDRESS     ((*(uint32_t *) MBR_BOOTLOADER_ADDR) != 0xFFFFFFFF ? *(uint32_t *) MBR_BOOTLOADER_ADDR : NRF_UICR->NRFFW[0])
+#else
+#define MICROBIT_BOOTLOADER_ADDRESS     ( NRF_UICR->NRFFW[0])
+#endif
+#endif
+#endif
+
+#ifndef MICROBIT_BOOTLOADER_SIZE
+#define MICROBIT_BOOTLOADER_SIZE        ( MICROBIT_CODESIZE * MICROBIT_CODEPAGESIZE - MICROBIT_BOOTLOADER_ADDRESS)
+#endif
+
+#ifndef MICROBIT_MBR_PARAMS
+#ifdef MBR_PARAMS_PAGE_ADDRESS
+#define MICROBIT_MBR_PARAMS             ( MBR_PARAMS_PAGE_ADDRESS)
+#else
+#ifdef SOFTDEVICE_PRESENT
+#define MICROBIT_MBR_PARAMS             ((*(uint32_t *) MBR_PARAM_PAGE_ADDR) != 0xFFFFFFFF ? *(uint32_t *) MBR_PARAM_PAGE_ADDR : NRF_UICR->NRFFW[1])
+#else
+#define MICROBIT_MBR_PARAMS             ( NRF_UICR->NRFFW[1])
+#endif
+#endif
+#endif
+
+#ifndef MICROBIT_BOOTLOADER_SETTINGS
+#define MICROBIT_BOOTLOADER_SETTINGS    ( MICROBIT_MBR_PARAMS + MICROBIT_CODEPAGESIZE)
+#endif
+
 // Defines where in memory persistent data is stored.
+#ifndef MICROBIT_STORAGE_PAGE
+#define MICROBIT_STORAGE_PAGE           ( MICROBIT_BOOTLOADER_ADDRESS - MICROBIT_CODEPAGESIZE)
+#endif
+
+#ifndef MICROBIT_FDS_PAGE
+#define MICROBIT_FDS_PAGE               ( MICROBIT_BOOTLOADER_ADDRESS - MICROBIT_CODEPAGESIZE * 3)
+#endif
+
+#ifndef MICROBIT_DEFAULT_SCRATCH_PAGE
+#define MICROBIT_DEFAULT_SCRATCH_PAGE   ( MICROBIT_BOOTLOADER_ADDRESS - MICROBIT_CODEPAGESIZE * 4)
+#endif
+
+#ifndef MICROBIT_STORAGE_SCRATCH_PAGE
+#define MICROBIT_STORAGE_SCRATCH_PAGE   ( MICROBIT_DEFAULT_SCRATCH_PAGE)
+#endif
+
+#ifndef MICROBIT_SOFTDEVICE_EXISTS
+
+#define MICROBIT_SOFTDEVICE_EXISTS      ( (*(uint32_t *) 0x3004) == ((uint32_t) 0x51B1E5DB) )
+#endif
+
+#ifndef MICROBIT_APP_REGION_START
+#ifdef SOFTDEVICE_PRESENT
+#define MICROBIT_APP_REGION_START       ( MBR_SIZE + SD_FLASH_SIZE)
+#else
+#define MICROBIT_APP_REGION_START       ( MICROBIT_SOFTDEVICE_EXISTS ? (*(uint32_t *) 0x3008) : (uint32_t)0)
+#endif
+#endif
+
+
+#ifndef MICROBIT_APP_REGION_END
+#define MICROBIT_APP_REGION_END         ( MICROBIT_DEFAULT_SCRATCH_PAGE)
+#endif
+
+
+#ifndef PAGE_SIZE
+#define PAGE_SIZE                       ( MICROBIT_CODEPAGESIZE)
+#endif
+
 #ifndef KEY_VALUE_STORE_PAGE
-#define KEY_VALUE_STORE_PAGE	                (PAGE_SIZE * (NRF_FICR->CODESIZE - 17))
+#define KEY_VALUE_STORE_PAGE            ( MICROBIT_STORAGE_PAGE)
 #endif
 
 #ifndef BLE_BOND_DATA_PAGE
-#define BLE_BOND_DATA_PAGE                      (PAGE_SIZE * (NRF_FICR->CODESIZE - 18))
+#define BLE_BOND_DATA_PAGE              ( MICROBIT_FDS_PAGE)
 #endif
 
 #ifndef DEFAULT_SCRATCH_PAGE
-#define DEFAULT_SCRATCH_PAGE	                (PAGE_SIZE * (NRF_FICR->CODESIZE - 19))
+#define DEFAULT_SCRATCH_PAGE            ( MICROBIT_DEFAULT_SCRATCH_PAGE)
+#endif
+
+//
+// File System configuration defaults
+//
+
+//
+// Defines the logical block size for the file system.
+// Must be a factor of the physical PAGE_SIZE (ideally a power of two less).
+//
+#ifndef MBFS_BLOCK_SIZE
+#define MBFS_BLOCK_SIZE        256
+#endif
+
+//
+// FileSystem writeback cache size, in bytes. Defines how many bytes will be stored
+// in RAM before being written back to FLASH. Set to zero to disable this feature.
+// Should be <= MBFS_BLOCK_SIZE.
+//
+#ifndef MBFS_CACHE_SIZE
+#define MBFS_CACHE_SIZE        0
 #endif
 
 // Address of the end of the current program in FLASH memory.
@@ -68,22 +173,38 @@ extern uint32_t __data_end__;
 
 // Configure for open BLE operation if so configured
 #if (MICROBIT_BLE_OPEN == 1)
-#define MICROBIT_BLE_SECURITY_LEVEL             SECURITY_MODE_ENCRYPTION_OPEN_LINK
+#define MICROBIT_BLE_SECURITY_MODE              1
 #define MICROBIT_BLE_WHITELIST                  0
 #define MICROBIT_BLE_ADVERTISING_TIMEOUT        0
 #define MICROBIT_BLE_DEFAULT_TX_POWER           6
 #endif
 
-
 // Define the default, global BLE security requirements for MicroBit BLE services
-// May be one of the following options (see mbed's SecurityManager class implementaiton detail)
-// SECURITY_MODE_ENCRYPTION_OPEN_LINK:      No bonding, encryption, or whitelisting required.
-// SECURITY_MODE_ENCRYPTION_NO_MITM:        Bonding, encyption and whitelisting but no passkey.
-// SECURITY_MODE_ENCRYPTION_WITH_MITM:      Bonding, encrytion and whitelisting with passkey authentication.
+// MICROBIT_BLE_SECURITY_MODE is used instead of MICROBIT_BLE_SECURITY_LEVEL
+// If MICROBIT_BLE_SECURITY_LEVEL and MICROBIT_BLE_SECURITY_MODE is defined, they must match as follows
+// SEC_OPEN         / OPEN_LINK:    1
+// SEC_JUST_WORKS   / NO_MITM:      2
+// SEC_MITM         / WITH_MITM:    3
 //
-#ifndef MICROBIT_BLE_SECURITY_LEVEL
-#define MICROBIT_BLE_SECURITY_LEVEL             SECURITY_MODE_ENCRYPTION_WITH_MITM
+#ifndef MICROBIT_BLE_SECURITY_MODE
+// Calculate MICROBIT_BLE_SECURITY_MODE from MICROBIT_BLE_SECURITY_LEVEL
+#define __MICROBIT_CONFIG_SECURITY_MODE_ENCRYPTION_OPEN_LINK 1
+#define __MICROBIT_CONFIG_SECURITY_MODE_ENCRYPTION_NO_MITM   2
+#define __MICROBIT_CONFIG_SECURITY_MODE_ENCRYPTION_WITH_MITM 3
+#define __MICROBIT_CONFIG_CAT(a, ...) a##__VA_ARGS__
+#define __MICROBIT_CONFIG_SECURITY_MODE(x) __MICROBIT_CONFIG_CAT(__MICROBIT_CONFIG_, x)
+#define __MICROBIT_CONFIG_SECURITY_MODE_IS(x) (__MICROBIT_CONFIG_SECURITY_MODE(MICROBIT_BLE_SECURITY_LEVEL) == __MICROBIT_CONFIG_SECURITY_MODE(x))
+
+#if (__MICROBIT_CONFIG_SECURITY_MODE_IS(SECURITY_MODE_ENCRYPTION_NO_MITM))
+#define MICROBIT_BLE_SECURITY_MODE 2
+#elif (__MICROBIT_CONFIG_SECURITY_MODE_IS(SECURITY_MODE_ENCRYPTION_OPEN_LINK))
+#define MICROBIT_BLE_SECURITY_MODE 1
+#elif (__MICROBIT_CONFIG_SECURITY_MODE_IS(SECURITY_MODE_ENCRYPTION_WITH_MITM))
+#define MICROBIT_BLE_SECURITY_MODE 3
+#else
+#define MICROBIT_BLE_SECURITY_MODE 3
 #endif
+#endif //#ifndef MICROBIT_BLE_SECURITY_MODE
 
 // Enable/Disable the use of BLE whitelisting.
 // If enabled, the micro:bit will only respond to connection requests from
@@ -133,7 +254,5 @@ extern uint32_t __data_end__;
 #ifndef MICROBIT_DAL_VERSION
 #define MICROBIT_DAL_VERSION                    "unknown"
 #endif
-
-#define PAGE_SIZE 4096
 
 #endif

@@ -28,37 +28,17 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitConfig.h"
 
-/*
- * The underlying Nordic libraries that support BLE do not compile cleanly with the stringent GCC settings we employ
- * If we're compiling under GCC, then we suppress any warnings generated from this code (but not the rest of the DAL)
- * The ARM cc compiler is more tolerant. We don't test __GNUC__ here to detect GCC as ARMCC also typically sets this
- * as a compatability option, but does not support the options used...
- */
-#if !defined(__arm)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif
-#include "ble/BLE.h"
+#if CONFIG_ENABLED(DEVICE_BLE)
 
-/*
- * Return to our predefined compiler settings.
- */
-#if !defined(__arm)
-#pragma GCC diagnostic pop
+#ifndef SOFTDEVICE_PRESENT
+#error "Please define SOFTDEVICE_PRESENT as 1"
 #endif
 
-#include "ble/services/DeviceInformationService.h"
-#include "MicroBitDFUService.h"
-#include "MicroBitEventService.h"
-#include "MicroBitLEDService.h"
-#include "MicroBitAccelerometerService.h"
-#include "MicroBitMagnetometerService.h"
-#include "MicroBitButtonService.h"
-#include "MicroBitIOPinService.h"
-#include "MicroBitTemperatureService.h"
+#include "MicroBitBLETypes.h"
+#include "MicroBitStorage.h"
+#include "MicroBitDisplay.h"
 #include "ExternalEvents.h"
 #include "MicroBitButton.h"
-#include "MicroBitStorage.h"
 
 #define MICROBIT_BLE_PAIR_REQUEST 0x01
 #define MICROBIT_BLE_PAIR_COMPLETE 0x02
@@ -73,33 +53,27 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_BLE_EDDYSTONE_ADV_INTERVAL     400
 #define MICROBIT_BLE_EDDYSTONE_DEFAULT_POWER    0xF0
 
-// MicroBitComponent status flags
-#define MICROBIT_BLE_STATUS_STORE_SYSATTR       0x02
+// CodalComponent status flags
 #define MICROBIT_BLE_STATUS_DISCONNECT          0x04
+#define MICROBIT_BLE_STATUS_SHUTDOWN            0x08
 
-extern const int8_t MICROBIT_BLE_POWER_LEVEL[];
+// micro:bit Modes
+// The micro:bit may be in different states: running a user's application or into BLE pairing mode
+// These modes can be representeded using these #defines
+#define MICROBIT_MODE_PAIRING                   0
+#define MICROBIT_MODE_APPLICATION               1
 
-struct BLESysAttribute
-{
-    uint8_t sys_attr[8];
-};
-
-struct BLESysAttributeStore
-{
-    BLESysAttribute sys_attrs[MICROBIT_BLE_MAXIMUM_BONDS];
-};
+class MicroBitBLEManager;
+typedef MicroBitBLEManager BLEDevice;
 
 /**
   * Class definition for the MicroBitBLEManager.
   *
   */
-class MicroBitBLEManager : MicroBitComponent
+class MicroBitBLEManager : public CodalComponent
 {
-  public:
+    public:
     static MicroBitBLEManager *manager;
-
-    // The mbed abstraction of the BlueTooth Low Energy (BLE) hardware
-    BLEDevice *ble;
 
     //an instance of MicroBitStorage used to store sysAttrs from softdevice
     MicroBitStorage *storage;
@@ -125,7 +99,7 @@ class MicroBitBLEManager : MicroBitComponent
      * Hence, the init() member function should be used to initialise the BLE stack.
      */
     MicroBitBLEManager();
-
+    
     /**
      * getInstance
      *
@@ -149,13 +123,13 @@ class MicroBitBLEManager : MicroBitComponent
       * @endcode
       */
     void init(ManagedString deviceName, ManagedString serialNumber, EventModel &messageBus, bool enableBonding);
-
+    
     /**
      * Change the output power level of the transmitter to the given value.
      *
      * @param power a value in the range 0..7, where 0 is the lowest power and 7 is the highest.
      *
-     * @return MICROBIT_OK on success, or MICROBIT_INVALID_PARAMETER if the value is out of range.
+     * @return DEVICE_OK on success, or DEVICE_INVALID_PARAMETER if the value is out of range.
      *
      * @code
      * // maximum transmission power.
@@ -200,12 +174,11 @@ class MicroBitBLEManager : MicroBitComponent
     void pairingRequested(ManagedString passKey);
 
     /**
-	 * A pairing request has been sucessfully completed.
-	 * If we're in pairing mode, display a success or failure message.
+	 * Record pairing progress
      *
      * @note for internal use only.
 	 */
-    void pairingComplete(bool success);
+    bool pairingComplete( int event);
 
     /**
      * Periodic callback in thread context.
@@ -217,16 +190,13 @@ class MicroBitBLEManager : MicroBitComponent
 	* Stops any currently running BLE advertisements
 	*/
     void stopAdvertising();
-
+    
     /**
-     * A member function used to defer writes to flash, in order to prevent a write collision with 
-     * softdevice.
-     * @param handle The handle offered by soft device during pairing.
+     * A member function called on disconnection
      * */
-    void deferredSysAttrWrite(Gap::Handle_t handle);
+    void onDisconnect();
 
 #if CONFIG_ENABLED(MICROBIT_BLE_EDDYSTONE_URL)
-
     /**
       * Set the content of Eddystone URL frames
       *
@@ -280,20 +250,67 @@ class MicroBitBLEManager : MicroBitComponent
     int advertiseEddystoneUid(const char* uid_namespace, const char* uid_instance, int8_t calibratedPower = MICROBIT_BLE_EDDYSTONE_DEFAULT_POWER, bool connectable = true, uint16_t interval = MICROBIT_BLE_EDDYSTONE_ADV_INTERVAL);
 #endif
 
+  /**
+   * Restarts in BLE Mode
+   *
+   */
+   void restartInBLEMode();
+
+   /**
+    * Get current BLE mode; application, pairing
+    * #define MICROBIT_MODE_PAIRING     0x00
+    * #define MICROBIT_MODE_APPLICATION 0x01
+    */
+    uint8_t getCurrentMode();
+
+    /**
+     * Control whether advertising will be restarted on disconnection
+     */
+    void setAdvertiseOnDisconnect( bool f) { advertiseOnDisconnect = f; }
+    
+    /**
+     * Prepare for shutdown or disabling softdevice by stopping advertising and disconnecting
+     *
+     * Return true if ready for shutdown
+     */
+    bool prepareForShutdown();
+
+    /**
+    * Ensure service changed indication pending for all peers
+    */
+    void servicesChanged();
+      
   private:
     /**
-	* Displays the device's ID code as a histogram on the provided MicroBitDisplay instance.
+    * Displays the device's ID code as a histogram on the provided MicroBitDisplay instance.
     *
     * @param display The display instance used for displaying the histogram.
-	*/
+    */
     void showNameHistogram(MicroBitDisplay &display);
 
-    #define MICROBIT_BLE_DISCONNECT_AFTER_PAIRING_DELAY  500
-    unsigned long pairing_completed_at_time;   
+    /**
+    * Displays pairing mode animation
+    *
+    * @param display The display instance used for displaying the histogram.
+    */
+    void showManagementModeAnimation(MicroBitDisplay &display);
 
     int pairingStatus;
     ManagedString passKey;
-    ManagedString deviceName;
+    ManagedString gapName;
+    
+    unsigned long pairingTime;
+    unsigned long shutdownTime;
+
+    /*
+     * Default to Application Mode
+     * This variable will be set to MICROBIT_MODE_PAIRING if pairingMode() is executed.
+     */
+    uint8_t currentMode = MICROBIT_MODE_APPLICATION;
+
+    bool advertiseOnDisconnect = true;
 };
+
+#endif
 
 #endif

@@ -26,7 +26,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitDevice.h"
 #include "nrf.h"
 
-#if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
+#ifdef SOFTDEVICE_PRESENT
 #include "nrf_sdm.h"
 #endif
 
@@ -198,7 +198,7 @@ bool ble_running()
 {
     uint8_t t = 0;
 
-#if CONFIG_ENABLED(MICROBIT_BLE_ENABLED) 
+#ifdef SOFTDEVICE_PRESENT
     sd_softdevice_is_enabled(&t);
 #endif
 

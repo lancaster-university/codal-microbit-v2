@@ -64,8 +64,19 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MESEvents.h"
 
-//#include "MicroBitBLEManager.h"
-//#include "MicroBitStorage.h"
+#if CONFIG_ENABLED(DEVICE_BLE)
+#include "MicroBitBLEManager.h"
+#include "MicroBitLEDService.h"
+#include "MicroBitAccelerometerService.h"
+#include "MicroBitMagnetometerService.h"
+#include "MicroBitButtonService.h"
+#include "MicroBitIOPinService.h"
+#include "MicroBitTemperatureService.h"
+#include "MicroBitUARTService.h"
+#endif
+
+#include "MicroBitStorage.h"
+
 //#include "MicroBitLightSensor.h"
 
 
@@ -97,6 +108,17 @@ namespace codal
             // Pin ranges used for LED matrix display.
 
         public:
+
+            // Persistent key value store
+            MicroBitStorage           storage;
+        
+#if CONFIG_ENABLED(DEVICE_BLE)
+            // Bluetooth related member variables.
+            // Initialize buttonless SVCI bootloader interface before interrupts are enabled
+            MicroBitBLEManager          bleManager;
+            BLEDevice                  *ble;
+#endif
+
             NRFLowLevelTimer            systemTimer;
             NRFLowLevelTimer            adcTimer;
             NRFLowLevelTimer            capTouchTimer;
@@ -125,15 +147,6 @@ namespace codal
             Compass&                    compass;
             MicroBitCompassCalibrator   compassCalibrator;
 
-            // Persistent key value store
-            //MicroBitStorage           storage;
-
-            #if CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
-            // Bluetooth related member variables.
-            MicroBitBLEManager		  bleManager;
-            BLEDevice                   *ble;
-            #endif
-
             /**
              * Constructor.
              *
@@ -146,6 +159,17 @@ namespace codal
              * Post constructor initialisation method.
              */
             int init();
+
+            /**
+              * Return the serial number of this device.
+              *
+              * @return A ManagedString representing the serial number of this device.
+              *
+              * @code
+              * ManagedString serialNumber = uBit.getSerial();
+              * @endcode
+              */
+            static ManagedString getSerial();
 
             /**
              * Delay execution for the given amount of time.
@@ -184,6 +208,30 @@ namespace codal
 
     };
 
+
+    /**
+      * Return the serial number of this device.
+      *
+      * @return A ManagedString representing the serial number of this device.
+      *
+      * @code
+      * ManagedString serialNumber = uBit.getSerial();
+      * @endcode
+      */
+    inline ManagedString MicroBit::getSerial()
+    {
+        uint64_t n = target_get_serial();
+        int d = 1000000000;
+        int n1 = n % d; n /= d;
+        int n2 = n % d; n /= d;
+        int n3 = n % d; n /= d;
+        ManagedString s1(n1);
+        ManagedString s2(n2);
+        ManagedString s3(n3);
+        ManagedString s = s3 + s2 + s1;
+        return s;
+        
+    }
 
     /**
      * Delay execution for the given amount of time.

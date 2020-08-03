@@ -27,20 +27,16 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_IO_PIN_SERVICE_H
 
 #include "MicroBitConfig.h"
-#include "ble/BLE.h"
+
+#if CONFIG_ENABLED(DEVICE_BLE)
+
+#include "MicroBitBLEManager.h"
+#include "MicroBitBLEService.h"
 #include "MicroBitIO.h"
 
 #define MICROBIT_IO_PIN_SERVICE_PINCOUNT       19
 #define MICROBIT_IO_PIN_SERVICE_DATA_SIZE      10
 #define MICROBIT_PWM_PIN_SERVICE_DATA_SIZE     2
-
-// UUIDs for our service and characteristics
-extern const uint8_t  MicroBitIOPinServiceUUID[];
-extern const uint8_t  MicroBitIOPinServiceADConfigurationUUID[];
-extern const uint8_t  MicroBitIOPinServiceIOConfigurationUUID[];
-extern const uint8_t  MicroBitIOPinServicePWMControlUUID[];
-extern const uint8_t  MicroBitIOPinServiceDataUUID[];
-extern MicroBitPin * const MicroBitIOPins[];
 
 /**
   * Name value pair definition, as used to read and write pin values over BLE.
@@ -65,7 +61,7 @@ struct IOPWMData
   * Class definition for the custom MicroBit IOPin Service.
   * Provides a BLE service to remotely read the state of the I/O Pin, and configure its behaviour.
   */
-class MicroBitIOPinService : public MicroBitComponent
+class MicroBitIOPinService : public MicroBitBLEService, MicroBitComponent
 {
     public:
 
@@ -91,14 +87,14 @@ class MicroBitIOPinService : public MicroBitComponent
     /**
       * Callback. Invoked when any of our attributes are written via BLE.
       */
-    void onDataWritten(const GattWriteCallbackParams *params);
+    void onDataWritten( const microbit_ble_evt_write_t *params);
 
     /**
      * Callback. invoked when the BLE data characteristic is read.
      *
      * Reads all the pins marked as inputs, and updates the data stored in the characteristic.
      */
-    void onDataRead(GattReadAuthCallbackParams *params);
+    void onDataRead( microbit_onDataRead_t *params);
 
     /**
       * Determines if the given pin was configured as a digital pin by the BLE ADPinConfigurationCharacterisitic.
@@ -129,15 +125,22 @@ class MicroBitIOPinService : public MicroBitComponent
      * For each pin that has changed value, update the BLE characteristic, and NOTIFY our client.
      * @param updateAll if true, a notification will be sent for all registered inputs. Otherwise, 
      * a notification will only be sent for inputs that have changed value.
+     * @return number of changed pins
      */
-    void updateBLEInputs(bool updateAll = false);
+    int updateBLEInputs(bool updateAll = false);
 
-
-    // Bluetooth stack we're running on.
-    BLEDevice           &ble;
+    /**
+      * Edge connector pin
+      *
+      * @param index the enumeration of the pin
+      * @return a reference to the pin
+      */
+    MicroBitPin &edgePin( int index);
+    
+    // IO we're using
     MicroBitIO          &io;
 
-    // memory for our 8 bit control characteristics.
+    // memory for our characteristics.
     uint32_t            ioPinServiceADCharacteristicBuffer;
     uint32_t            ioPinServiceIOCharacteristicBuffer;
     IOPWMData           ioPinServicePWMCharacteristicBuffer[MICROBIT_PWM_PIN_SERVICE_DATA_SIZE];
@@ -145,12 +148,29 @@ class MicroBitIOPinService : public MicroBitComponent
 
     // Historic information about our pin data data.
     uint8_t             ioPinServiceIOData[MICROBIT_IO_PIN_SERVICE_PINCOUNT];
+    
+    // Index for each charactersitic in arrays of handles and UUIDs
+    typedef enum mbbs_cIdx
+    {
+        mbbs_cIdxADC,
+        mbbs_cIdxIO,
+        mbbs_cIdxPWM,
+        mbbs_cIdxDATA,
+        mbbs_cIdxCOUNT
+    } mbbs_cIdx;
+    
+    // UUIDs for our service and characteristics
+    static const uint16_t serviceUUID;
+    static const uint16_t charUUID[ mbbs_cIdxCOUNT];
+    
+    // Data for each characteristic when they are held by Soft Device.
+    MicroBitBLEChar      chars[ mbbs_cIdxCOUNT];
 
-    // Handles to access each characteristic when they are held by Soft Device.
-    GattCharacteristic ioPinServiceADCharacteristic;
-    GattCharacteristic ioPinServiceIOCharacteristic;
-    GattCharacteristic ioPinServicePWMCharacteristic;
-    GattCharacteristic ioPinServiceDataCharacteristic;
+    public:
+    
+    int              characteristicCount()          { return mbbs_cIdxCOUNT; };
+    MicroBitBLEChar *characteristicPtr( int idx)    { return &chars[ idx]; };
 };
 
+#endif
 #endif

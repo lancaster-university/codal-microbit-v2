@@ -26,9 +26,12 @@ DEALINGS IN THE SOFTWARE.
 #ifndef MICROBIT_UART_SERVICE_H
 #define MICROBIT_UART_SERVICE_H
 
-#include "ble/UUID.h"
-#include "ble/BLE.h"
 #include "MicroBitConfig.h"
+
+#if CONFIG_ENABLED(DEVICE_BLE)
+
+#include "MicroBitBLEManager.h"
+#include "MicroBitBLEService.h"
 #include "MicroBitSerial.h"
 
 #define MICROBIT_UART_S_DEFAULT_BUF_SIZE    20
@@ -42,7 +45,7 @@ DEALINGS IN THE SOFTWARE.
   * Provides a BLE service that acts as a UART port, enabling the reception and transmission
   * of an arbitrary number of bytes.
   */
-class MicroBitUARTService
+class MicroBitUARTService : public MicroBitBLEService
 {
     uint8_t* rxBuffer;
 
@@ -56,19 +59,25 @@ class MicroBitUARTService
 
     uint32_t rxCharacteristicHandle;
 
-    // Bluetooth stack we're running on.
-    BLEDevice           &ble;
-
     //delimeters used for matching on receive.
     ManagedString delimeters;
 
     //a variable used when a user calls the eventAfter() method.
     int rxBuffHeadMatch;
+    
+    uint8_t txBufferHead;
+    uint8_t txBufferTail;
 
+    /**
+      * A callback function for whenever a Bluetooth device consumes our TX Buffer
+      */
+    void onConfirmation( const microbit_ble_evt_hvc_t *params);
+    
+    
     /**
       * A callback function for whenever a Bluetooth device writes to our TX characteristic.
       */
-    void onDataWritten(const GattWriteCallbackParams *params);
+    void onDataWritten(const microbit_ble_evt_write_t *params);
 
     /**
       * An internal method that copies values from a circular buffer to a linear buffer.
@@ -293,17 +302,28 @@ class MicroBitUARTService
       * @return The currently buffered number of bytes in our txBuff.
       */
     int txBufferedSize();
+    
+    // Index for each charactersitic in arrays of handles and UUIDs
+    typedef enum mbbs_cIdx
+    {
+        mbbs_cIdxTX,
+        mbbs_cIdxRX,
+        mbbs_cIdxCOUNT
+    } mbbs_cIdx;
+    
+    // UUIDs for our service and characteristics
+    static const uint8_t  base_uuid[ 16];
+    static const uint16_t serviceUUID;
+    static const uint16_t charUUID[ mbbs_cIdxCOUNT];
+    
+    // Data for each characteristic when they are held by Soft Device.
+    MicroBitBLEChar      chars[ mbbs_cIdxCOUNT];
+
+    public:
+    
+    int              characteristicCount()          { return mbbs_cIdxCOUNT; };
+    MicroBitBLEChar *characteristicPtr( int idx)    { return &chars[ idx]; };
 };
 
-extern const uint8_t  UARTServiceBaseUUID[UUID::LENGTH_OF_LONG_UUID];
-extern const uint16_t UARTServiceShortUUID;
-extern const uint16_t UARTServiceTXCharacteristicShortUUID;
-extern const uint16_t UARTServiceRXCharacteristicShortUUID;
-
-extern const uint8_t  UARTServiceUUID[UUID::LENGTH_OF_LONG_UUID];
-extern const uint8_t  UARTServiceUUID_reversed[UUID::LENGTH_OF_LONG_UUID];
-
-extern const uint8_t  UARTServiceTXCharacteristicUUID[UUID::LENGTH_OF_LONG_UUID];
-extern const uint8_t  UARTServiceRXCharacteristicUUID[UUID::LENGTH_OF_LONG_UUID];
-
+#endif
 #endif

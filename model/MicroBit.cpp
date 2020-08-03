@@ -25,6 +25,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBit.h"
 #include "Timer.h"
+#include "MicroBitDevice.h"
 
 using namespace codal;
 
@@ -47,8 +48,18 @@ static const MatrixPoint ledMatrixPositions[5*5] =
   * that represent various device drivers used to control aspects of the micro:bit.
   */
 MicroBit::MicroBit() :
+
+    storage(),
+
+#if CONFIG_ENABLED(DEVICE_BLE)
+    // Initialize buttonless SVCI bootloader interface before interrupts are enabled
+    bleManager( storage),
+    ble( &bleManager),
+#endif
+
     systemTimer(NRF_TIMER1, TIMER1_IRQn),
     adcTimer(NRF_TIMER2, TIMER2_IRQn),
+
     capTouchTimer(NRF_TIMER3, TIMER3_IRQn),
     timer(systemTimer),
     messageBus(),
@@ -178,6 +189,48 @@ int MicroBit::init()
     NVIC_SetPriority(RADIO_IRQn, 3);          // Packet radio
     NVIC_SetPriority(UARTE0_UART0_IRQn, 2);   // Serial port
 
+#if CONFIG_ENABLED(DEVICE_BLE) && CONFIG_ENABLED(MICROBIT_BLE_PAIRING_MODE)
+    int i=0;
+    // Test if we need to enter BLE pairing mode
+    // If a RebootMode Key has been set boot straight into BLE mode
+    KeyValuePair* RebootMode = storage.get("RebootMode");
+    KeyValuePair* flashIncomplete = storage.get("flashIncomplete");
+    sleep(100);
+    // Animation
+    uint8_t x = 0; uint8_t y = 0;
+    while ((buttonA.isPressed() && buttonB.isPressed() && i<25) || RebootMode != NULL || flashIncomplete != NULL)
+    {
+        display.image.setPixelValue(x,y,255);
+        sleep(50);
+        i++; x++;
+
+        // Gradually fill screen
+        if(x == 5){
+          y++; x = 0;
+        }
+
+        if (i == 25 || RebootMode != NULL)
+        {
+            // Remove KV if it exists
+            if(RebootMode != NULL){
+                storage.remove("RebootMode");
+            }
+            delete RebootMode;
+            delete flashIncomplete;
+
+            // Start the BLE stack, if it isn't already running.
+            bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, true);
+            
+            // Enter pairing mode, using the LED matrix for any necessary pairing operations
+            bleManager.pairingMode(display, buttonA);
+        }
+    }
+#endif
+
+#if CONFIG_ENABLED(DEVICE_BLE) && CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
+    // Start the BLE stack, if it isn't already running.
+    bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, false);
+#endif
     return DEVICE_OK;
 }
 
