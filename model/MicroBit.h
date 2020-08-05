@@ -62,6 +62,10 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitAccelerometer.h"
 #include "MicroBitCompass.h"
 
+#include "StreamNormalizer.h"
+#include "LevelDetector.h"
+#include "LevelDetectorSPL.h"
+
 #include "MESEvents.h"
 
 #if CONFIG_ENABLED(DEVICE_BLE)
@@ -277,11 +281,11 @@ using namespace codal;
 
 #define SOUND_MIRROR_EXTENSION uBit.io.speaker
 
-#define MIC_DEVICE NRF52Microphone
+#define MIC_DEVICE NRF52ADCChannel*
 #define MIC_INIT \
-     : microphone(uBit.io.microphone, 8000) \
-    , level(microphone.output, 95.0, 75.0, 9, 52, DEVICE_ID_MICROPHONE)
+    : microphone(uBit.adc.getChannel(uBit.io.microphone)) \
+    , level((new StreamNormalizer(microphone->output, 1.0f, true))->output, 95.0, 75.0, 9, 52, DEVICE_ID_MICROPHONE)
 
-#define MIC_ENABLE uBit.io.runmic.setDigitalValue(1); microphone.enable()
+#define MIC_ENABLE uBit.io.runmic.setDigitalValue(1); uBit.io.runmic.setHighDrive(true); microphone->setGain(7,0)
 
 #endif
