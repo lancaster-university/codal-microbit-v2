@@ -355,7 +355,7 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
       settings.boot_validation_app.type = VALIDATE_CRC;
       settings.bank_0.image_size = offset + 16 * sizeof( uint32_t) - MICROBIT_APP_REGION_START;
       settings.bank_0.image_crc  = crc32_compute( (uint8_t*) MICROBIT_APP_REGION_START, settings.bank_0.image_size, NULL);
-      *(uint32_t *)&settings.boot_validation_app.bytes[0] = settings.bank_0.image_crc;
+      memcpy(settings.boot_validation_app.bytes, &settings.bank_0.image_crc, sizeof(uint32_t));
 
       // calculate settings page CRCs
       settings.crc = crc32_compute( (const uint8_t *)&settings.settings_version,

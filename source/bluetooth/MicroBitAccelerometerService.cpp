@@ -128,7 +128,7 @@ void MicroBitAccelerometerService::onDataWritten( const microbit_ble_evt_write_t
 {
     if (params->handle == valueHandle( mbbs_cIdxPERIOD) && params->len >= sizeof(accelerometerPeriodCharacteristicBuffer))
     {
-        accelerometerPeriodCharacteristicBuffer = *((uint16_t *)params->data);
+        memcpy(&accelerometerPeriodCharacteristicBuffer, params->data, sizeof(accelerometerPeriodCharacteristicBuffer));
         accelerometer.setPeriod(accelerometerPeriodCharacteristicBuffer);
 
         // The accelerometer will choose the nearest period to that requested that it can support

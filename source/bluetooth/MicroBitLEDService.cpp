@@ -106,7 +106,7 @@ void MicroBitLEDService::onDataWritten( const microbit_ble_evt_write_t *params)
     {
         // Read the speed requested, and store it locally.
         // We use this as the speed for all scroll operations subsquently initiated from BLE.
-        speedValue = *((uint16_t *)params->data);
+        memcpy(&speedValue, params->data, sizeof(speedValue));
     }
 }
 

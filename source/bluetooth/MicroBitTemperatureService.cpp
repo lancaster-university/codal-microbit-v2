@@ -118,7 +118,7 @@ void MicroBitTemperatureService::onDataWritten(const microbit_ble_evt_write_t *p
 {
     if (params->handle == valueHandle( mbbs_cIdxPERIOD) && params->len >= sizeof(temperaturePeriodCharacteristicBuffer))
     {
-        temperaturePeriodCharacteristicBuffer = *((uint16_t *)params->data);
+        memcpy(&temperaturePeriodCharacteristicBuffer, params->data, sizeof(temperaturePeriodCharacteristicBuffer));
         thermometer.setPeriod(temperaturePeriodCharacteristicBuffer);
 
         // The accelerometer will choose the nearest period to that requested that it can support

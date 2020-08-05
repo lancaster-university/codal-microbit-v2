@@ -182,7 +182,7 @@ void MicroBitMagnetometerService::onDataWritten(const microbit_ble_evt_write_t *
 {
     if (params->handle == valueHandle( mbbs_cIdxPERIOD) && params->len >= sizeof(magnetometerPeriodCharacteristicBuffer))
     {
-        magnetometerPeriodCharacteristicBuffer = *((uint16_t *)params->data);
+        memcpy(&magnetometerPeriodCharacteristicBuffer, params->data, sizeof(magnetometerPeriodCharacteristicBuffer));
         MicroBitEvent evt(MICROBIT_ID_COMPASS, MICROBIT_COMPASS_EVT_CONFIG_NEEDED);
         return;
     }
