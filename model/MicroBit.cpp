@@ -82,7 +82,8 @@ MicroBit::MicroBit() :
     thermometer(),
     accelerometer(MicroBitAccelerometer::autoDetect(_i2c)),
     compass(MicroBitCompass::autoDetect(_i2c)),
-    compassCalibrator(compass, accelerometer, display)
+    compassCalibrator(compass, accelerometer, display),
+    power(_i2c, io)
 {
     // Clear our status
     status = 0;
@@ -113,6 +114,11 @@ MicroBit::MicroBit() :
     //SERIAL_TODO:
     // serial.set_flow_control(mbed::Serial::Disabled);
     //serial.baud(115200);
+
+    // Add pullup resisitor to IRQ line (it's floating ACTIVE LO)
+    io.irq1.getDigitalValue();
+    io.irq1.setPull(PullMode::Up);
+    io.irq1.setActiveLo();
 
     _i2c.setFrequency(400000);
 

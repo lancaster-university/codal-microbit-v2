@@ -346,7 +346,10 @@ namespace codal
     class MicroBitIO
     {
         public:
+            // Number of pins in use.
+            int               pins;
 
+            // Enumeration of all pins, ordered by edge connector.
             NRF52Pin          pin[0];
 
             // Edge Connector Pins

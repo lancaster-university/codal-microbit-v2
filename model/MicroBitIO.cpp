@@ -90,6 +90,7 @@ MicroBitIO::MicroBitIO(NRF52ADC &a, TouchSensor &s) :
     buttonA(P5),
     buttonB(P11)
 {
+  pins = 33;
   NRF52Pin::adc = &a;
   NRF52Pin::touchSensor = &s;
 }

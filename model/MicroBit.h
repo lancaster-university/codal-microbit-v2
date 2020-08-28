@@ -61,7 +61,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitCompat.h"
 #include "MicroBitAccelerometer.h"
 #include "MicroBitCompass.h"
-
+#include "MicroBitPowerManager.h"
 #include "StreamNormalizer.h"
 #include "LevelDetector.h"
 #include "LevelDetectorSPL.h"
@@ -132,7 +132,6 @@ namespace codal
             NRF52TouchSensor            touchSensor;
             MicroBitIO                  io;
             NRF52Serial                 serial;
-        private:
             //Internal I2C for motion sensors
             NRF52I2C                    _i2c;
         public:
@@ -150,6 +149,7 @@ namespace codal
             Accelerometer&              accelerometer;
             Compass&                    compass;
             MicroBitCompassCalibrator   compassCalibrator;
+            MicroBitPowerManager        power;
 
             /**
              * Constructor.
