@@ -68,7 +68,11 @@ namespace codal
         ToneEffectFunction      effect;                                                 // Effect function to invoke
         int                     step;                                                   // Current step being executed
         int                     steps;                                                  // Number of time-steps when to apply this effect
-        float                   parameter[EMOJI_SYNTHESIZER_TONE_EFFECT_PARAMETERS];    // Effect specific parameters
+        union {
+            float               parameter[EMOJI_SYNTHESIZER_TONE_EFFECT_PARAMETERS];    // Effect specific parameters
+            uint32_t            parameter_i[EMOJI_SYNTHESIZER_TONE_EFFECT_PARAMETERS];  // Effect specific parameters
+            const void *        parameter_p[EMOJI_SYNTHESIZER_TONE_EFFECT_PARAMETERS];  // Effect specific parameters     
+        };
     };
 
     /**
