@@ -29,6 +29,48 @@ DEALINGS IN THE SOFTWARE.
 
 namespace codal
 {
+
+    /**
+     * Utility structure, used to hold definitions of scales and other progressions.
+     */
+    typedef struct
+    {
+        const float*      interval;
+        const int         length;
+    } Progression;
+
+    /**
+     * Utility class, holds common progressions and intervals.
+     */
+
+    class MusicalIntervals
+    {
+        public:
+
+        static const float chromaticInterval[];
+        static const float majorScaleInterval[];
+        static const float minorScaleInterval[];
+        static const float pentatonicScaleInterval[];
+        static const float majorTriadInterval[];
+        static const float minorTriadInterval[];
+        static const float diminishedInterval[];
+        static const float wholeToneInterval[];
+    };
+
+    class MusicalProgressions
+    {
+        public:
+
+        static const Progression *chromatic;
+        static const Progression *majorScale;
+        static const Progression *minorScale;
+        static const Progression *pentatonic;
+        static const Progression *majorTriad;
+        static const Progression *minorTriad;
+        static const Progression *diminished;
+        static const Progression *wholeTone;
+    };
+
     /**
      * Utility class, containing a library of sound effect functions.
      */
@@ -47,25 +89,15 @@ namespace codal
         static void warbleInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);
         static void vibratoInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);
         static void exponentialRisingInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);
-        static void exponentialFallingInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// SOUNDS_REALLY ODD!
-
-        // TODO:
-        static void majAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// UNTESTED
-        static void majAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// UNTESTED
-        static void minAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// UNTESTED
-        static void minAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// UNTESTED
-        static void dimAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// UNTESTED
-        static void dimAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// UNTESTED
-        static void chromaticAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// UNTESTED
-        static void chromaticAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// UNTESTED
-        static void toneAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// UNTESTED
-        static void toneAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// UNTESTED
+        static void exponentialFallingInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);   // SOUNDS_REALLY ODD...
+        static void appregrioAscending(SoundEmojiSynthesizer *synth, ToneEffect *context);
+        static void appregrioDescending(SoundEmojiSynthesizer *synth, ToneEffect *context);
 
         /**
          * Frequency Delta effects
          */
-        static void vibratoEffect(SoundEmojiSynthesizer *synth, ToneEffect *context);      // UNTESTED
-        static void slowVibratoEffect(SoundEmojiSynthesizer *synth, ToneEffect *context);  // UNTESTED
+        static void frequencyVibratoEffect(SoundEmojiSynthesizer *synth, ToneEffect *context);
+        static void volumeVibratoEffect(SoundEmojiSynthesizer *synth, ToneEffect *context);
 
         /**
          * Volume Delta effects

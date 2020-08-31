@@ -23,8 +23,58 @@ DEALINGS IN THE SOFTWARE.
 */
 
 #include "SoundSynthesizerEffects.h"
+#include "CodalDmesg.h"
 
 using namespace codal;
+
+/**
+ * Definitions of standard progressions.
+ */
+const float MusicalIntervals::chromaticInterval[] = {1.000000f, 1.059463f, 1.122462f, 1.189207f, 1.259921f, 1.334840f, 1.414214f, 1.498307f, 1.587401f, 1.681793f, 1.781797f, 1.887749f};
+const float MusicalIntervals::majorScaleInterval[] = {chromaticInterval[0], chromaticInterval[2], chromaticInterval[4], chromaticInterval[5], chromaticInterval[7], chromaticInterval[9], chromaticInterval[11]};
+const float MusicalIntervals::minorScaleInterval[] = {chromaticInterval[0], chromaticInterval[2], chromaticInterval[3], chromaticInterval[5], chromaticInterval[7], chromaticInterval[8], chromaticInterval[10]};
+const float MusicalIntervals::pentatonicScaleInterval[] = {chromaticInterval[0], chromaticInterval[2], chromaticInterval[4], chromaticInterval[7], chromaticInterval[9]};
+const float MusicalIntervals::majorTriadInterval[] = {chromaticInterval[0], chromaticInterval[4], chromaticInterval[7]};
+const float MusicalIntervals::minorTriadInterval[] = {chromaticInterval[0], chromaticInterval[3], chromaticInterval[7]};
+const float MusicalIntervals::diminishedInterval[] = {chromaticInterval[0], chromaticInterval[3], chromaticInterval[6], chromaticInterval[9]};
+const float MusicalIntervals::wholeToneInterval[] = {chromaticInterval[0], chromaticInterval[2], chromaticInterval[4], chromaticInterval[6], chromaticInterval[8], chromaticInterval[10]};
+
+static const Progression _chromatic = {MusicalIntervals::chromaticInterval, 12};
+static const Progression _majorScale = {MusicalIntervals::majorScaleInterval, 7};
+static const Progression _minorScale = {MusicalIntervals::minorScaleInterval, 7};
+static const Progression _pentatonicScale = {MusicalIntervals::pentatonicScaleInterval, 5};
+static const Progression _majorTriad = {MusicalIntervals::majorTriadInterval, 3};
+static const Progression _minorTriad = {MusicalIntervals::minorTriadInterval, 3};
+static const Progression _diminished = {MusicalIntervals::diminishedInterval, 4};
+static const Progression _wholeTone = {MusicalIntervals::wholeToneInterval, 6};
+
+
+// Export pointers to standard progressions for ease of use.
+const Progression* MusicalProgressions::chromatic = &_chromatic;
+const Progression* MusicalProgressions::majorScale = &_majorScale;
+const Progression* MusicalProgressions::minorScale = &_minorScale;
+const Progression* MusicalProgressions::pentatonic = &_pentatonicScale;
+const Progression* MusicalProgressions::majorTriad = &_majorTriad;
+const Progression* MusicalProgressions::minorTriad = &_minorTriad;
+const Progression* MusicalProgressions::diminished = &_diminished;
+const Progression* MusicalProgressions::wholeTone = &_wholeTone;
+
+
+/**
+ * Determine the frequency of a given note in a given progressions
+ * 
+ * @param root The root frequency of the progression
+ * @param progression The Progression to use
+ * @param offset The offset (interval) of the note to generate
+ * @return The frequency of the note requested in Hz.
+ */
+static float calculateFrequencyFromProgression(float root, const Progression *progression, int offset)
+{
+    int octave = (offset / progression->length);
+    int index = offset % progression->length;
+
+    return root * powf(2, octave) * progression->interval[index];
+}
 
 /**
  * Root Frequency Interpolation Effect Functions
@@ -88,63 +138,47 @@ void SoundSynthesizerEffects::exponentialFallingInterpolation(SoundEmojiSynthesi
     synth->frequency = synth->effect->frequency + cos(0.01745329f*context->step)*context->parameter[0];
 }
 
-void SoundSynthesizerEffects::majAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
+// Argeppio functions
+void SoundSynthesizerEffects::appregrioAscending(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
-    //TODO: implement
+    synth->frequency = calculateFrequencyFromProgression(synth->effect->frequency, (Progression *)context->parameter_p[0], context->step);
 }
-void SoundSynthesizerEffects::majAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
+
+void SoundSynthesizerEffects::appregrioDescending(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
-    //TODO: implement
+    synth->frequency = calculateFrequencyFromProgression(synth->effect->frequency, (Progression *)context->parameter_p[0], context->steps - context->step - 1);
 }
-void SoundSynthesizerEffects::minAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
-{
-    //TODO: implement
-}
-void SoundSynthesizerEffects::minAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
-{
-    //TODO: implement
-}
-void SoundSynthesizerEffects::dimAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
-{
-    //TODO: implement
-}
-void SoundSynthesizerEffects::dimAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
-{
-    //TODO: implement
-}
-void SoundSynthesizerEffects::chromaticAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
-{
-    //TODO: implement
-}
-void SoundSynthesizerEffects::chromaticAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
-{
-    //TODO: implement
-}
-void SoundSynthesizerEffects::toneAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
-{
-    //TODO: implement
-}
-void SoundSynthesizerEffects::toneAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
-{
-    //TODO: implement
-}
+
 
 /**
  * Frequency Delta effects
  */
 
-// Vibrato function
-// parameter[0]: vibrato frequency range
-void SoundSynthesizerEffects::vibratoEffect(SoundEmojiSynthesizer *synth, ToneEffect *context)
-{
-    synth->frequency += sin(context->step)*context->parameter[0];
+// Frequency vibrato function
+// parameter[0]: vibrato frequency multiplier
+void SoundSynthesizerEffects::frequencyVibratoEffect(SoundEmojiSynthesizer *synth, ToneEffect *context)
+{  
+    if (context->step == 0)
+        return;
+
+    if(context->step % 2 == 0)
+        synth->frequency /= context->parameter[0];
+    else
+        synth->frequency *= context->parameter[0];
 }
 
-// Slow Vibrato function
-// parameter[0]: vibrato frequency range
-void SoundSynthesizerEffects::slowVibratoEffect(SoundEmojiSynthesizer *synth, ToneEffect *context)
+// Volume vibrato function
+// parameter[0]: vibrato volume multiplier
+void SoundSynthesizerEffects::volumeVibratoEffect(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
-    synth->frequency += sin(context->step/10)*context->parameter[0];
+    if (context->step == 0)
+        return;
+
+    if(context->step % 2 == 0)
+        synth->volume /= context->parameter[0];
+    else
+        synth->volume *= context->parameter[0];
+
 }
 
 /**
