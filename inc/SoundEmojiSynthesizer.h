@@ -42,13 +42,17 @@ DEALINGS IN THE SOFTWARE.
 
 namespace codal
 {
-    class SoundEmojiSynthesizer;
-
-    typedef uint16_t (*TonePrintFunction)(void *arg, int position);
-    typedef void     (*ToneEffectFunction)(SoundEmojiSynthesizer *synth, float *parameter);
 
     /**
-     * Definition of a parameterised Tone Effect (e.g. vibrato, chromatic interpolator etc)
+     * Tone Generator and Effect function prototypes
+     */
+    class SoundEmojiSynthesizer;
+    typedef struct ToneEffect ToneEffect;
+    typedef uint16_t (*TonePrintFunction)(void *arg, int position);
+    typedef void     (*ToneEffectFunction)(SoundEmojiSynthesizer *synth, ToneEffect *context);
+
+    /**
+     * Definition of a parameterised Toneprint (e.g.SquareWave, SinWave etc)
      */
     typedef struct
     {
@@ -59,13 +63,13 @@ namespace codal
     /**
      * Definition of a parameterised Tone Effect (e.g. vibrato, chromatic interpolator etc)
      */
-    typedef struct
+    struct ToneEffect
     {
-        ToneEffectFunction      effect;
-        float                   parameter[EMOJI_SYNTHESIZER_TONE_EFFECT_PARAMETERS];
-    } ToneEffect;
-
-
+        ToneEffectFunction      effect;                                                 // Effect function to invoke
+        int                     step;                                                   // Current step being executed
+        int                     steps;                                                  // Number of time-steps when to apply this effect
+        float                   parameter[EMOJI_SYNTHESIZER_TONE_EFFECT_PARAMETERS];    // Effect specific parameters
+    };
 
     /**
      * Definition of a sound effect that can be synthesized.
@@ -77,7 +81,6 @@ namespace codal
         float               duration;                                       // Duration of hthe sound in milliseconds
         TonePrint           tone;                                           // TonePrint function and parameters
         ToneEffect          effects[EMOJI_SYNTHESIZER_TONE_EFFECTS];        // Optional Effects to apply to the SoundEffect
-        int                 steps;                                          // The number of steps when the effects will be applied
     } SoundEffect;
 
     /**
@@ -104,9 +107,8 @@ namespace codal
         float                   volume;                 // The instantaneous volume currently being generated within an effect.
         int                     samplesToWrite;         // The number of samples needed from the current sound effect block.
         int                     samplesWritten;         // The number of samples written from the current sound effect block.
-        float                   samplesPerStep;         // The number of samples to render for each interpolation step in an effect.
         float                   position;               // Position within the tonePrint.
-        int                     step;                   // the currnet step being rendered.
+        float                   samplesPerStep[EMOJI_SYNTHESIZER_TONE_EFFECTS];     // The number of samples to render per step for each effect.
 
         /**
           * Default Constructor.

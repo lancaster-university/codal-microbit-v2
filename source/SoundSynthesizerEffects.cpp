@@ -30,101 +30,101 @@ using namespace codal;
  * Root Frequency Interpolation Effect Functions
  */
 
-void SoundSynthesizerEffects::noInterpolation(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::noInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
 }
 
 // Linear interpolate function.
 // parameter[0]: end frequency
-void SoundSynthesizerEffects::linearInterpolation(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::linearInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
-    float interval = (parameter[0] - synth->effect->frequency) / synth->effect->steps;
-    synth->frequency = synth->effect->frequency+interval*synth->step;
+    float interval = (context->parameter[0] - synth->effect->frequency) / context->steps;
+    synth->frequency = synth->effect->frequency+interval*context->step;
 }
 
 // Linear interpolate function.
 // parameter[0]: end frequency
-void SoundSynthesizerEffects::logarithmicInterpolation(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::logarithmicInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
-    synth->frequency = synth->effect->frequency+(log10(synth->step)*(parameter[0]-synth->effect->frequency)/1.95);
+    synth->frequency = synth->effect->frequency+(log10(context->step)*(context->parameter[0]-synth->effect->frequency)/1.95);
 }
 
 // Curve interpolate function
 // parameter[0]: end frequency
-void SoundSynthesizerEffects::curveInterpolation(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::curveInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
-    synth->frequency = (sin(synth->step*3.12159f/180.0f)*(parameter[0]-synth->effect->frequency)+synth->effect->frequency);
+    synth->frequency = (sin(context->step*3.12159f/180.0f)*(context->parameter[0]-synth->effect->frequency)+synth->effect->frequency);
 }
 
 // Cosine interpolate function
 // parameter[0]: end frequency
-void SoundSynthesizerEffects::slowVibratoInterpolation(SoundEmojiSynthesizer *synth, float *parameter){
-    synth->frequency = sin(synth->step/10)*parameter[0]+synth->effect->frequency;
+void SoundSynthesizerEffects::slowVibratoInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context){
+    synth->frequency = sin(context->step/10)*context->parameter[0]+synth->effect->frequency;
 }
 
 //warble function
 // parameter[0]: end frequency
-void SoundSynthesizerEffects::warbleInterpolation(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::warbleInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
-    synth->frequency = (sin(synth->step)*(parameter[0]-synth->effect->frequency)+synth->effect->frequency);
+    synth->frequency = (sin(context->step)*(context->parameter[0]-synth->effect->frequency)+synth->effect->frequency);
 }
 
 // Vibrato function
 // parameter[0]: end frequency
-void SoundSynthesizerEffects::vibratoInterpolation(SoundEmojiSynthesizer *synth, float *parameter){
-    synth->frequency = synth->effect->frequency + sin(synth->step)*parameter[0];
+void SoundSynthesizerEffects::vibratoInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context){
+    synth->frequency = synth->effect->frequency + sin(context->step)*context->parameter[0];
 }
 
 // Exponential rising function
 // parameter[0]: end frequency
-void SoundSynthesizerEffects::exponentialRisingInterpolation(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::exponentialRisingInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
-    synth->frequency = synth->effect->frequency + sin(0.01745329f*synth->step)*parameter[0];
+    synth->frequency = synth->effect->frequency + sin(0.01745329f*context->step)*context->parameter[0];
 }
 
 // Exponential falling function
-void SoundSynthesizerEffects::exponentialFallingInterpolation(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::exponentialFallingInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
-    synth->frequency = synth->effect->frequency + cos(0.01745329f*synth->step)*parameter[0];
+    synth->frequency = synth->effect->frequency + cos(0.01745329f*context->step)*context->parameter[0];
 }
 
-void SoundSynthesizerEffects::majAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::majAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
     //TODO: implement
 }
-void SoundSynthesizerEffects::majAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::majAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
     //TODO: implement
 }
-void SoundSynthesizerEffects::minAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::minAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
     //TODO: implement
 }
-void SoundSynthesizerEffects::minAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::minAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
     //TODO: implement
 }
-void SoundSynthesizerEffects::dimAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::dimAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
     //TODO: implement
 }
-void SoundSynthesizerEffects::dimAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::dimAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
     //TODO: implement
 }
-void SoundSynthesizerEffects::chromaticAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::chromaticAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
     //TODO: implement
 }
-void SoundSynthesizerEffects::chromaticAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::chromaticAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
     //TODO: implement
 }
-void SoundSynthesizerEffects::toneAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::toneAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
     //TODO: implement
 }
-void SoundSynthesizerEffects::toneAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::toneAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
     //TODO: implement
 }
@@ -135,16 +135,16 @@ void SoundSynthesizerEffects::toneAppregrioDescendInterpolation(SoundEmojiSynthe
 
 // Vibrato function
 // parameter[0]: vibrato frequency range
-void SoundSynthesizerEffects::vibratoEffect(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::vibratoEffect(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
-    synth->frequency += sin(synth->step)*parameter[0];
+    synth->frequency += sin(context->step)*context->parameter[0];
 }
 
 // Slow Vibrato function
 // parameter[0]: vibrato frequency range
-void SoundSynthesizerEffects::slowVibratoEffect(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::slowVibratoEffect(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
-    synth->frequency += sin(synth->step/10)*parameter[0];
+    synth->frequency += sin(context->step/10)*context->parameter[0];
 }
 
 /**
@@ -156,17 +156,17 @@ void SoundSynthesizerEffects::slowVibratoEffect(SoundEmojiSynthesizer *synth, fl
  * parameter[1]: End volume
  * effect->volume: start volume
  */
-void SoundSynthesizerEffects::adsrVolumeEffect(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::adsrVolumeEffect(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
-    float halfSteps = synth->effect->steps*0.5f;
+    float halfSteps = context->steps*0.5f;
 
-    if(synth->step <= halfSteps)
+    if(context->step <= halfSteps)
     {
-        float delta = (parameter[0] - synth->effect->volume ) / halfSteps;
-        synth->volume = synth->effect->volume + synth->step * delta;
+        float delta = (context->parameter[0] - synth->effect->volume ) / halfSteps;
+        synth->volume = synth->effect->volume + context->step * delta;
     }else{
-        float delta = (parameter[1] - parameter[0]) / halfSteps;
-        synth->volume = parameter[0] + (synth->step - halfSteps) * delta;         
+        float delta = (context->parameter[1] - context->parameter[0]) / halfSteps;
+        synth->volume = context->parameter[0] + (context->step - halfSteps) * delta;         
     }
 }
 
@@ -175,8 +175,8 @@ void SoundSynthesizerEffects::adsrVolumeEffect(SoundEmojiSynthesizer *synth, flo
  * parameter[0]: End volume
  * effect->volume: start volume
  */
-void SoundSynthesizerEffects::volumeRampEffect(SoundEmojiSynthesizer *synth, float *parameter)
+void SoundSynthesizerEffects::volumeRampEffect(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
-    float delta = (parameter[0] - synth->effect->volume) / synth->effect->steps;
-    synth->volume = synth->effect->volume + synth->step * delta;
+    float delta = (context->parameter[0] - synth->effect->volume) / context->steps;
+    synth->volume = synth->effect->volume + context->step * delta;
 }

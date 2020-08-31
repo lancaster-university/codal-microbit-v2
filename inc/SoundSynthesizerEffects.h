@@ -39,39 +39,39 @@ namespace codal
         /**
          * Root Frequency Interpolation Effect Functions
          */
-        static void noInterpolation(SoundEmojiSynthesizer *synth, float *parameter);
-        static void logarithmicInterpolation(SoundEmojiSynthesizer *synth, float *parameter);
-        static void linearInterpolation(SoundEmojiSynthesizer *synth, float *parameter);
-        static void curveInterpolation(SoundEmojiSynthesizer *synth, float *parameter);
-        static void slowVibratoInterpolation(SoundEmojiSynthesizer *synth, float *parameter);
-        static void warbleInterpolation(SoundEmojiSynthesizer *synth, float *parameter);
-        static void vibratoInterpolation(SoundEmojiSynthesizer *synth, float *parameter);
-        static void exponentialRisingInterpolation(SoundEmojiSynthesizer *synth, float *parameter);
-        static void exponentialFallingInterpolation(SoundEmojiSynthesizer *synth, float *parameter);// SOUNDS_REALLY ODD!
+        static void noInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);
+        static void logarithmicInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);
+        static void linearInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);
+        static void curveInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);
+        static void slowVibratoInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);
+        static void warbleInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);
+        static void vibratoInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);
+        static void exponentialRisingInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);
+        static void exponentialFallingInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// SOUNDS_REALLY ODD!
 
         // TODO:
-        static void majAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, float *parameter);// UNTESTED
-        static void majAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, float *parameter);// UNTESTED
-        static void minAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, float *parameter);// UNTESTED
-        static void minAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, float *parameter);// UNTESTED
-        static void dimAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, float *parameter);// UNTESTED
-        static void dimAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, float *parameter);// UNTESTED
-        static void chromaticAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, float *parameter);// UNTESTED
-        static void chromaticAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, float *parameter);// UNTESTED
-        static void toneAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, float *parameter);// UNTESTED
-        static void toneAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, float *parameter);// UNTESTED
+        static void majAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// UNTESTED
+        static void majAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// UNTESTED
+        static void minAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// UNTESTED
+        static void minAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// UNTESTED
+        static void dimAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// UNTESTED
+        static void dimAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// UNTESTED
+        static void chromaticAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// UNTESTED
+        static void chromaticAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// UNTESTED
+        static void toneAppregrioAscendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// UNTESTED
+        static void toneAppregrioDescendInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context);// UNTESTED
 
         /**
          * Frequency Delta effects
          */
-        static void vibratoEffect(SoundEmojiSynthesizer *synth, float *parameter);      // UNTESTED
-        static void slowVibratoEffect(SoundEmojiSynthesizer *synth, float *parameter);  // UNTESTED
+        static void vibratoEffect(SoundEmojiSynthesizer *synth, ToneEffect *context);      // UNTESTED
+        static void slowVibratoEffect(SoundEmojiSynthesizer *synth, ToneEffect *context);  // UNTESTED
 
         /**
          * Volume Delta effects
          */
-        static void adsrVolumeEffect(SoundEmojiSynthesizer *synth, float *parameter);
-        static void volumeRampEffect(SoundEmojiSynthesizer *synth, float *parameter);
+        static void adsrVolumeEffect(SoundEmojiSynthesizer *synth, ToneEffect *context);
+        static void volumeRampEffect(SoundEmojiSynthesizer *synth, ToneEffect *context);
     };
 }
 

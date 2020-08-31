@@ -140,20 +140,24 @@ void SoundEmojiSynthesizer::nextSoundEffect()
         effectBuffer = emptyBuffer;
         samplesWritten = 0;
         samplesToWrite = 0;
-        samplesPerStep = 0;
         position = 0.0f;
         return;
     }
 
     // We have a valid buffer. Set up our synthesizer to the requested parameters.
     DMESG("SOUND_SYNTH: Loading Sound Effect... ");
-    effect->steps = max(effect->steps, 1);
     samplesToWrite = determineSampleCount(effect->duration * 1000.0f);
     frequency = effect->frequency;
     volume = effect->volume;
     samplesWritten = 0;
-    step = 0;
-    samplesPerStep = (float) samplesToWrite / (float) effect->steps;
+
+    // validate and initialise per effect rendering state.
+    for (int i=0; i<EMOJI_SYNTHESIZER_TONE_EFFECTS; i++)
+    {
+        effect->effects[i].step = 0;
+        effect->effects[i].steps = max(effect->effects[i].steps, 1);
+        samplesPerStep[i] = (float) samplesToWrite / (float) effect->effects[i].steps;
+    }
 }
 
 /**
@@ -189,12 +193,20 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
         }
         
         // Generate some samples with the current effect parameters.
-        while(!done && step < effect->steps)
+        while(samplesWritten < samplesToWrite)
         {
             float skip = ((EMOJI_SYNTHESIZER_TONE_WIDTH_F * frequency) / sampleRate);
             float gain = (sampleRange * volume) / 1024.0f;
-            int stepEndPosition = (int) (samplesPerStep * (step+1));
+            int effectStepEnd[EMOJI_SYNTHESIZER_TONE_EFFECTS];
 
+            for (int i = 0; i < EMOJI_SYNTHESIZER_TONE_EFFECTS; i++)
+                effectStepEnd[i] = (int) (samplesPerStep[i] * (effect->effects[i].step+1));
+                
+            int stepEndPosition = effectStepEnd[0];
+            for (int i = 1; i < EMOJI_SYNTHESIZER_TONE_EFFECTS; i++)
+                stepEndPosition = min(stepEndPosition, effectStepEnd[i]);
+
+            // Write samples until the end of the next effect-step
             while (samplesWritten < stepEndPosition)
             {
                 // Stop processing when we've filled the requested buffer
@@ -220,12 +232,19 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
                     position -= EMOJI_SYNTHESIZER_TONE_WIDTH_F;
             }
 
-            step++;
-            if (step < effect->steps)
+            // Move invoke the effect function for any effects that are due.
+            for (int i = 0; i < EMOJI_SYNTHESIZER_TONE_EFFECTS; i++)
             {
-                for (int i=0; i<EMOJI_SYNTHESIZER_TONE_EFFECTS;i++)
-                    if (effect->effects[i].effect)
-                        effect->effects[i].effect(this, effect->effects[i].parameter);
+                if (samplesWritten == effectStepEnd[i])
+                {
+                    effect->effects[i].step++;
+
+                    if (effect->effects[i].step < effect->effects[i].steps)
+                    {
+                        if (effect->effects[i].effect)
+                            effect->effects[i].effect(this, &effect->effects[i]);
+                    }
+                }
             }
         }
     }
