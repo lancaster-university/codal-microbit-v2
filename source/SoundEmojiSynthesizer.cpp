@@ -26,152 +26,19 @@ DEALINGS IN THE SOFTWARE.
 #include "Synthesizer.h"
 #include "CodalFiber.h"
 #include "CodalUtil.h"
+#include "CodalDmesg.h"
 #include "ErrorNo.h"
 
 using namespace codal;
-
-static const KeyValueTableEntry soundEmojiTonePrintData[] = {
-    {0, (const uint32_t) Synthesizer::SineTone},
-    {1, (const uint32_t) Synthesizer::SawtoothTone},
-    {2, (const uint32_t) Synthesizer::TriangleTone},
-    {3, (const uint32_t) Synthesizer::SquareWaveTone},
-    {4, (const uint32_t) Synthesizer::NoiseTone},
-    {5, (const uint32_t) Synthesizer::SquareWaveToneExt}
-};
-CREATE_KEY_VALUE_TABLE(soundEmojiTonePrint, soundEmojiTonePrintData);
-
-static const KeyValueTableEntry soundEmojiInterpolatorsData[] = {
-    {0, (const uint32_t) SoundEmojiSynthesizer::noInterpolation},
-    {1, (const uint32_t) SoundEmojiSynthesizer::linearInterpolation},
-    {2, (const uint32_t) SoundEmojiSynthesizer::curveInterpolation},
-    {3, (const uint32_t) SoundEmojiSynthesizer::slowVibratoInterpolation},
-    {4, (const uint32_t) SoundEmojiSynthesizer::warbleInterpolation},
-    {5, (const uint32_t) SoundEmojiSynthesizer::exponentialRisingInterpolation},
-    {6, (const uint32_t) SoundEmojiSynthesizer::exponentialFallingInterpolation},
-    {7, (const uint32_t) SoundEmojiSynthesizer::vibratoInterpolation},
-    {8, (const uint32_t) SoundEmojiSynthesizer::majAppregrioAscendInterpolation},
-    {9, (const uint32_t) SoundEmojiSynthesizer::majAppregrioDescendInterpolation},
-    {10, (const uint32_t) SoundEmojiSynthesizer::minAppregrioAscendInterpolation},
-    {11, (const uint32_t) SoundEmojiSynthesizer::minAppregrioDescendInterpolation},
-    {12, (const uint32_t) SoundEmojiSynthesizer::dimAppregrioAscendInterpolation},
-    {13, (const uint32_t) SoundEmojiSynthesizer::dimAppregrioDescendInterpolation},
-    {14, (const uint32_t) SoundEmojiSynthesizer::chromaticAppregrioAscendInterpolation},
-    {15, (const uint32_t) SoundEmojiSynthesizer::chromaticAppregrioDescendInterpolation},
-    {16, (const uint32_t) SoundEmojiSynthesizer::toneAppregrioAscendInterpolation},
-    {17, (const uint32_t) SoundEmojiSynthesizer::toneAppregrioDescendInterpolation},
-    {20, (const uint32_t) SoundEmojiSynthesizer::logarithmicInterpolation}
-
-};
-CREATE_KEY_VALUE_TABLE(soundEmojiInterpolators, soundEmojiInterpolatorsData);
-
-static const KeyValueTableEntry soundEmojiStepsData[] = {
-    {500, 9},
-    {1150, 15},
-    {1800, 20},
-    {2070, 50},
-    {2100, 90}
-};
-CREATE_KEY_VALUE_TABLE(soundEmojiSteps, soundEmojiStepsData);
-
-/**
- * Interpolation functions
- */
-float SoundEmojiSynthesizer::noInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount){
-    return startFrequency;
-}
-
-// Linear interpolate function
-float SoundEmojiSynthesizer::linearInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount){
-    float interval = (endFrequency - startFrequency) / stepCount;
-    return startFrequency+interval*stepNumber;
-}
-float SoundEmojiSynthesizer::logarithmicInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount){
-    return startFrequency+(log10(stepNumber)*(endFrequency-startFrequency)/1.95);
-}
-
-// Curve interpolate function
-float SoundEmojiSynthesizer::curveInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount){
-    return (sin(stepNumber*3.12159f/180.0f)*(endFrequency-startFrequency)+startFrequency);
-}
-
-// Cosine interpolate function
-float SoundEmojiSynthesizer::slowVibratoInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount){
-    return sin(stepNumber/10)*endFrequency+startFrequency;
-}
-
-//warble function
-float SoundEmojiSynthesizer::warbleInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount){
-    return (sin(stepNumber)*(endFrequency-startFrequency)+startFrequency);
-}
-
-// Vibrato function
-float SoundEmojiSynthesizer::vibratoInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount){
-    return startFrequency + sin(stepNumber)*endFrequency;
-}
-
-// Exponential rising function
-float SoundEmojiSynthesizer::exponentialRisingInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount){
-    return startFrequency + sin(0.01745329f*stepNumber)*endFrequency;
-}
-
-// Exponential falling function
-float SoundEmojiSynthesizer::exponentialFallingInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount){
-    return startFrequency + cos(0.01745329f*stepNumber)*endFrequency;
-}
-
-float SoundEmojiSynthesizer::majAppregrioAscendInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount){
-    //TODO: implement
-    return startFrequency;
-}
-float SoundEmojiSynthesizer::majAppregrioDescendInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount){
-    //TODO: implement
-    return startFrequency;
-}
-float SoundEmojiSynthesizer::minAppregrioAscendInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount){
-    //TODO: implement
-    return startFrequency;
-}
-float SoundEmojiSynthesizer::minAppregrioDescendInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount){
-    //TODO: implement
-    return startFrequency;
-}
-float SoundEmojiSynthesizer::dimAppregrioAscendInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount){
-    //TODO: implement
-    return startFrequency;
-}
-float SoundEmojiSynthesizer::dimAppregrioDescendInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount){
-    //TODO: implement
-    return startFrequency;
-}
-float SoundEmojiSynthesizer::chromaticAppregrioAscendInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount){
-    //TODO: implement
-    return startFrequency;
-}
-float SoundEmojiSynthesizer::chromaticAppregrioDescendInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount){
-    //TODO: implement
-    return startFrequency;
-}
-float SoundEmojiSynthesizer::toneAppregrioAscendInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount){
-    //TODO: implement
-    return startFrequency;
-}
-float SoundEmojiSynthesizer::toneAppregrioDescendInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount){
-    //TODO: implement
-    return startFrequency;
-}
-
-
-
 
 /**
   * Class definition for a Synthesizer.
   * A Synthesizer generates a tone waveform based on a number of overlapping waveforms.
   */
-SoundEmojiSynthesizer::SoundEmojiSynthesizer(int sampleRate) : buffer(EMOJI_SYNTHESIZER_BUFFER_SIZE)
+SoundEmojiSynthesizer::SoundEmojiSynthesizer(int sampleRate) : buffer(EMOJI_SYNTHESIZER_BUFFER_SIZE), emptyBuffer(0)
 {
     this->downStream = NULL;
     this->bufferSize = EMOJI_SYNTHESIZER_BUFFER_SIZE;
-    this->bytesWritten = 0;
     this->position = 0.0f;
     this->effect = NULL;
 
@@ -270,47 +137,23 @@ void SoundEmojiSynthesizer::nextSoundEffect()
     if ((uint8_t *)effect >= &effectBuffer[0] + effectBuffer.length())
     {
         effect = NULL;
+        effectBuffer = emptyBuffer;
+        samplesWritten = 0;
         samplesToWrite = 0;
         samplesPerStep = 0;
+        position = 0.0f;
         return;
     }
 
     // We have a valid buffer. Set up our synthesizer to the requested parameters.
-    tonePrint = (TonePrintFunction)soundEmojiTonePrint.get(effect->tone);
-    tonePrintArg = NULL;
-
-    interpolator = (ToneInterpolator)soundEmojiInterpolators.get(effect->effect);
-
-    samplesToWrite = determineSampleCount(effect->duration);
+    DMESG("SOUND_SYNTH: Loading Sound Effect... ");
+    effect->steps = max(effect->steps, 1);
+    samplesToWrite = determineSampleCount(effect->duration * 1000.0f);
+    frequency = effect->frequency;
+    volume = effect->volume;
     samplesWritten = 0;
-    position = 0.0f;
-
-    // Define the number of steps in the effect. This seems fairly arbitrary, but maintaining here for compatibility...
-    // TODO: Simply replace all this with a configurable parameter???
     step = 0;
-    steps = soundEmojiSteps.find(effect->duration)->value;
-
-    // major/minor effects have four steps.
-    if (effect->effect >=8 && effect->effect < 12)
-        steps = 4;
-
-    // diminished effects have five steps.
-    if (effect->effect >=12 && effect->effect < 14)
-        steps = 5;
-
-    // chromatic effects have 13 steps.
-    if (effect->effect >=14 && effect->effect < 15)
-        steps = 13;
-
-    // wholetone effects have 7 steps.
-    if (effect->effect >=16 && effect->effect < 18)
-        steps = 7;
-
-    samplesPerStep = (float) samplesToWrite / (float) steps;
-
-    frequency = effect->startFrequency;
-    volume = effect->startvolume;
-    volumeDeltaPerStep = (effect->endVolume - effect->startvolume) / steps;
+    samplesPerStep = (float) samplesToWrite / (float) effect->steps;
 }
 
 /**
@@ -321,58 +164,55 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
     // Generate a buffer on demand. This is likely to be in interrupt context, so
     // the receiver driven nature reduces glitching on audio output.
     bool done = false;
-    uint16_t sample;
+    uint16_t *sample;
+    uint16_t *bufferEnd;
 
     buffer = ManagedBuffer(bufferSize);
+    sample = (uint16_t *) &buffer[0];
+    bufferEnd = (uint16_t *) (&buffer[0] + buffer.length());
 
     while (!done)
     {
         if (samplesWritten == samplesToWrite)
         {
             bool renderComplete = samplesWritten > 0;
-            
             nextSoundEffect();
 
             // If we have just completed active playout of an effect, and there are no more effects scheduled, 
-            // unblock any waiting fibers.
+            // unblock any fibers that may be waiting to play a sound effect.
             if (samplesToWrite == 0)
             {
+                done = true;
                 if (renderComplete)
                     lock.notify();
-
-                break;
             }
         }
         
         // Generate some samples with the current effect parameters.
-        while(step < steps)
+        while(!done && step < effect->steps)
         {
             float skip = ((EMOJI_SYNTHESIZER_TONE_WIDTH_F * frequency) / sampleRate);
-            int stepEndPosition = (int) (samplesPerStep * step);
+            float gain = (sampleRange * volume) / 1024.0f;
+            int stepEndPosition = (int) (samplesPerStep * (step+1));
 
             while (samplesWritten < stepEndPosition)
             {
                 // Stop processing when we've filled the requested buffer
-                if (bytesWritten == bufferSize)
+                if (sample == bufferEnd)
                 {
-                    bytesWritten = 0;
                     downStream->pullRequest();
                     return buffer;
                 }
 
                 // Synthesize a sample
-                float s = tonePrint((void *)effect->effectParameter1, (int) position);
+                float s = effect->tone.tonePrint(effect->tone.parameter, (int) position);
 
-                // Apply volume envelope. 
-                // n.b. would like to avoid this integer/float recast here!
-                sample = (uint16_t) (s * volume);
-
-                // Apply Or mask, if specified.
-                sample |= orMask;
+                // Apply volume scaling and OR mask (if specified).
+                *sample = ((uint16_t) (s * gain)) | orMask;
 
                 // Move on our pointers.
+                sample++;
                 samplesWritten++;
-                bytesWritten += 2;
                 position += skip;
 
                 // Keep our toneprint pointer in range
@@ -381,12 +221,21 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
             }
 
             step++;
-            if (step < steps)
+            if (step < effect->steps)
             {
-                frequency = interpolator(effect->startvolume, effect->endFrequency, step, steps);
-                volume = (sampleRange * (effect->startvolume + step * volumeDeltaPerStep)) / 1024.0;
+                for (int i=0; i<EMOJI_SYNTHESIZER_TONE_EFFECTS;i++)
+                    if (effect->effects[i].effect)
+                        effect->effects[i].effect(this, effect->effects[i].parameter);
             }
         }
+    }
+
+    // Pad the output buffer with silence if necessary.
+    uint16_t silence = ((uint16_t) (sampleRange *0.5f)) | orMask;
+    while(sample < bufferEnd)
+    {
+        *sample = silence;
+        sample++;
     }
 
     // Issue a Pull Request so that we are always receiver driven, and we're done.
@@ -433,7 +282,7 @@ int SoundEmojiSynthesizer::determineSampleCount(int playoutTimeUs)
  */
 uint16_t SoundEmojiSynthesizer::getSampleRange()
 {
-    return sampleRange;
+    return (uint16_t)sampleRange;
 }
 
 /**
@@ -443,7 +292,7 @@ uint16_t SoundEmojiSynthesizer::getSampleRange()
  */
 int SoundEmojiSynthesizer::setSampleRange(uint16_t sampleRange)
 {
-    this->sampleRange = sampleRange;
+    this->sampleRange = (float)sampleRange;
     return DEVICE_OK;
 }
 

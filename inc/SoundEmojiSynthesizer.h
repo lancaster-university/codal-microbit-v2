@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2017 Lancaster University.
+Copyright (c) 2020 Lancaster University.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -32,36 +32,53 @@ DEALINGS IN THE SOFTWARE.
 #define EMOJI_SYNTHESIZER_TONE_WIDTH_F        1024.0f
 #define EMOJI_SYNTHESIZER_BUFFER_SIZE         512
 
+#define EMOJI_SYNTHESIZER_TONE_EFFECT_PARAMETERS        2
+#define EMOJI_SYNTHESIZER_TONE_EFFECTS                  3
+
 //
 // Status flags
-#define EMOJI_SYNTHESIZER_STATUS_ACTIVE       0x01
 //
+#define EMOJI_SYNTHESIZER_STATUS_ACTIVE       0x01
 
 namespace codal
 {
+    class SoundEmojiSynthesizer;
+
     typedef uint16_t (*TonePrintFunction)(void *arg, int position);
-    typedef float    (*ToneInterpolator)(float startFrequency, int endFrequency, int stepNumber, int stepCount);
+    typedef void     (*ToneEffectFunction)(SoundEmojiSynthesizer *synth, float *parameter);
+
+    /**
+     * Definition of a parameterised Tone Effect (e.g. vibrato, chromatic interpolator etc)
+     */
+    typedef struct
+    {
+        TonePrintFunction       tonePrint;
+        void *                  parameter;
+    } TonePrint;
+
+    /**
+     * Definition of a parameterised Tone Effect (e.g. vibrato, chromatic interpolator etc)
+     */
+    typedef struct
+    {
+        ToneEffectFunction      effect;
+        float                   parameter[EMOJI_SYNTHESIZER_TONE_EFFECT_PARAMETERS];
+    } ToneEffect;
+
+
 
     /**
      * Definition of a sound effect that can be synthesized.
      */
     typedef struct
     {
-        float       startvolume;            // Initial volume of the effect (0..1)
-        float       endVolume;              // Final volume of the effect (0..1)
-        float       startFrequency;         // Initial frequency of the effect (Hz)
-        float       endFrequency;           // Initial frequency of the effect (Hz)
-        float       duration;               // milliseconds
-        uint16_t    tone;                   // Tone identifier
-        uint16_t    effect;                 // Effect identifier
-        uint32_t    effectParameter1;        // Optional context sensitive effect parameter. 
-        uint32_t    effectParameter2;        // Optional context sensitive effect parameter. 
-        uint16_t    effect2;                 // Effect identifier
-        uint32_t    effect2Parameter1;        // Optional context sensitive effect parameter. 
-        uint32_t    effect2Parameter2;        // Optional context sensitive effect parameter. 
-
+        float               frequency;                                      // Central frequency of this sound effect
+        float               volume;                                         // Central volume of this sound effect
+        float               duration;                                       // Duration of hthe sound in milliseconds
+        TonePrint           tone;                                           // TonePrint function and parameters
+        ToneEffect          effects[EMOJI_SYNTHESIZER_TONE_EFFECTS];        // Optional Effects to apply to the SoundEffect
+        int                 steps;                                          // The number of steps when the effects will be applied
     } SoundEffect;
-
 
     /**
       * Class definition for the micro:bit Sound Emoji Synthesizer.
@@ -69,58 +86,27 @@ namespace codal
       */
     class SoundEmojiSynthesizer : public DataSource, public CodalComponent
     {
+        public:
+
         DataSink*               downStream;             // Our downstream component.
         FiberLock               lock;                   // Ingress queue to handle concurrent playback requests.
         ManagedBuffer           buffer;                 // Current playout buffer.
         ManagedBuffer           effectBuffer;           // Current sound effect sequence being generated.
+        ManagedBuffer           emptyBuffer;            // Zero length buffer.
+        SoundEffect*            effect;                 // The effect within the current EffectBuffer that's being generated.
 
         int                     sampleRate;             // The sample rate of our output, measure in samples per second (e.g. 44000).
-        uint16_t                sampleRange;            // The maximum sample value that can be output.
+        float                   sampleRange;            // The maximum sample value that can be output.
         uint16_t                orMask;                 // A bitmask that is logically OR'd with each output sample.
         int                     bufferSize;             // The number of samples to create in a single buffer before scheduling it for playback
-        int                     bytesWritten;           // Number of bytes written to the current output buffer.
 
+        float                   frequency;              // The instantaneous frequency currently being generated within an effect.
+        float                   volume;                 // The instantaneous volume currently being generated within an effect.
         int                     samplesToWrite;         // The number of samples needed from the current sound effect block.
         int                     samplesWritten;         // The number of samples written from the current sound effect block.
         float                   samplesPerStep;         // The number of samples to render for each interpolation step in an effect.
-        float                   volumeDeltaPerStep;     // The volume change to apply for each interpolation step.
-        float                   frequency;              // The instantaneous frequency currently being generated within an effect.
-        float                   volume;                 // The instantaneous volume currently being generated within an effect.
-        SoundEffect*            effect;                 // The effect within the current EffectBuffer that's being generated.
-
-        void*                   tonePrintArg;
-        TonePrintFunction       tonePrint;              // The currently selected playout tone (always unsigned).
         float                   position;               // Position within the tonePrint.
-
-        ToneInterpolator        interpolator;           // The currently selected interpolation effect.
-        int                     step;                   // the currnet step being rendered/
-        int                     steps;                  // the number of discrete steps in an effect (e.g. an appregio)
-
-        public:
-
-        /**
-         * Frequency Interpolation Effect Functions
-         */
-        static float noInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount);
-        static float logarithmicInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount);
-        static float linearInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount);
-        static float curveInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount);
-        static float slowVibratoInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount);
-        static float warbleInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount);
-        static float vibratoInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount);
-        static float exponentialRisingInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount);
-        static float exponentialFallingInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount);
-        static float majAppregrioAscendInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount);
-        static float majAppregrioDescendInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount);
-        static float minAppregrioAscendInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount);
-        static float minAppregrioDescendInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount);
-        static float dimAppregrioAscendInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount);
-        static float dimAppregrioDescendInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount);
-        static float chromaticAppregrioAscendInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount);
-        static float chromaticAppregrioDescendInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount);
-        static float toneAppregrioAscendInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount);
-        static float toneAppregrioDescendInterpolation(float startFrequency, int endFrequency, int stepNumber, int stepCount);
-
+        int                     step;                   // the currnet step being rendered.
 
         /**
           * Default Constructor.
