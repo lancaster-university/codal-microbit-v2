@@ -32,9 +32,9 @@ using namespace codal;
  */
 
 #if CONFIG_ENABLED(JUST_SCALE)
-const float MusicalIntervals::chromaticInterval[] = {1.000000f, 1.0417f, 1.1250f, 1.2000f, 1.2500f, 1.3333f, 1.4063f, 1.5000f, 1.6000f, 1.6667f, 1.8000f, 1.8750f};
-#else
 const float MusicalIntervals::chromaticInterval[] = {1.000000f, 1.059463f, 1.122462f, 1.189207f, 1.259921f, 1.334840f, 1.414214f, 1.498307f, 1.587401f, 1.681793f, 1.781797f, 1.887749f};
+#else
+const float MusicalIntervals::chromaticInterval[] = {1.000000f, 1.0417f, 1.1250f, 1.2000f, 1.2500f, 1.3333f, 1.4063f, 1.5000f, 1.6000f, 1.6667f, 1.8000f, 1.8750f};
 #endif
 
 const float MusicalIntervals::majorScaleInterval[] = {chromaticInterval[0], chromaticInterval[2], chromaticInterval[4], chromaticInterval[5], chromaticInterval[7], chromaticInterval[9], chromaticInterval[11]};
