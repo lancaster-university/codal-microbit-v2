@@ -150,7 +150,11 @@ namespace codal
          */
         int readLightLevel();
 
-
+        /**
+         * Puts the component in (or out of) sleep (low power) mode.
+         */
+        virtual int setSleep(bool doSleep) override;
+        
         /**
          * Destructor for CodalDisplay, where we deregister this instance from the array of system components.
          */

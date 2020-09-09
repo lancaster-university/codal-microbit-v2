@@ -67,6 +67,14 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_UIPM_PROPERTY_USB_STATE            0x06
 #define MICROBIT_UIPM_PROPERTY_KL27_POWER_MODE      0x07
 #define MICROBIT_UIPM_PROPERTY_KL27_POWER_LED_STATE 0x08
+#define MICROBIT_UIPM_PROPERTY_KL27_USER_EVENT      0x09
+
+//
+// KL27 User event sources
+//
+#define MICROBIT_UIPM_EVENT_WAKE_RESET              0x01
+#define MICROBIT_UIPM_EVENT_WAKE_USB_INSERTION      0x02
+#define MICROBIT_UIPM_EVENT_RESET_LONG_PRESS        0x03
 
 //
 // USB Interface Power Management Protocol error codes
@@ -227,20 +235,13 @@ class MicroBitPowerManager : public CodalComponent
          * Device can subsequently be awoken only via a RESET. User program state will be lost and will restart
          * from main().
          */
-        void standby();
+        void off();
 
         /**
          * A periodic callback invoked by the fiber scheduler idle thread.
          * Service any IRQ requests raised by the USB interface chip.
          */
         virtual void idleCallback() override;
-
-        /**
-         * Periodic housekeeping callback.
-         * If any IRQ requests have gone unserviced for a while, poll the USB interface chip to 
-         * determine if we should be going into shutdown mode.
-         */
-        virtual void periodicCallback() override;
 
         /**
          * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
@@ -266,6 +267,16 @@ class MicroBitPowerManager : public CodalComponent
          * Destructor.
          */
         ~MicroBitPowerManager();
+
+        private:
+
+        /**
+         * Prepares the micro:bit to enter or leave deep sleep mode.
+         * This includes updating the status of the power LED, peripheral drivers and SENSE events on the combined IRQ line.
+         * 
+         * @param doSleep Set to true to preapre for sleep, false to prepare to reawaken.
+         */
+        void setSleepMode(bool doSleep);
 
 };
 #endif

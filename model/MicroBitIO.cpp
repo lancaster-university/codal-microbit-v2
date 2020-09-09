@@ -28,6 +28,7 @@ DEALINGS IN THE SOFTWARE.
   */
 
 #include "CodalConfig.h"
+#include "CodalDmesg.h"
 #include "MicroBitIO.h"
 
 using namespace codal;
@@ -93,4 +94,85 @@ MicroBitIO::MicroBitIO(NRF52ADC &a, TouchSensor &s) :
   pins = 33;
   NRF52Pin::adc = &a;
   NRF52Pin::touchSensor = &s;
+
+  savedStatus = ManagedBuffer(pins);
+}
+
+#ifdef NRF_P1
+#define PORT (name < 32 ? NRF_P0 : NRF_P1)
+#define PIN ((name) & 31)
+#define NUM_PINS 48
+#else
+#define PORT (NRF_P0)
+#define PIN (name)
+#define NUM_PINS 32
+#endif
+
+/**
+ * Puts the component in (or out of) sleep (low power) mode.
+ */
+int MicroBitIO::setSleep(bool doSleep)
+{
+    int name;
+
+    if (doSleep)
+    {
+        // Record current state of pins, so we can return the configuration to the same state later.       
+        for (int i = 0; i < pins; i++)
+        {
+            name = pin[i].name;
+            savedStatus[i] = 0;
+
+#if CONFIG_ENABLED(DEEP_SLEEP_GPIO_OUTPUTS)
+            // If this pin is in GPIO output mode, record its value and set to high impedance input.
+            // Other components are reponsible for storing/restoring the state of higher level peripherals.
+            if (pin[i].isOutput())
+            {
+                savedStatus[i] |= PORT->OUT & (1 << PIN) ? IO_SAVED_STATUS_OUTPUT_HI : IO_SAVED_STATUS_OUTPUT_LO;
+                PORT->PIN_CNF[PIN] &= 0xfffffffc;
+            }
+#endif
+
+            // Disable any interrupts associated with this GPIO pin
+            if ((PORT->PIN_CNF[PIN] & GPIO_PIN_CNF_SENSE_Msk) == (GPIO_PIN_CNF_SENSE_Low << GPIO_PIN_CNF_SENSE_Pos))
+                savedStatus[i] |= IO_SAVED_STATUS_DETECT_LOW_ENABLED;
+
+            // Disable any interrupts associated with this GPIO pin
+            if ((PORT->PIN_CNF[PIN] & GPIO_PIN_CNF_SENSE_Msk) == (GPIO_PIN_CNF_SENSE_High << GPIO_PIN_CNF_SENSE_Pos))
+                savedStatus[i] |= IO_SAVED_STATUS_DETECT_HIGH_ENABLED;
+
+            pin[i].setDetect(GPIO_PIN_CNF_SENSE_Disabled);
+        }
+    }
+
+    // Restore any saved GPIO state
+    if (!doSleep)
+    {
+        for (int i = 0; i < pins; i++)
+        {
+            name = pin[i].name;
+
+#if CONFIG_ENABLED(DEEP_SLEEP_GPIO_OUTPUTS)
+            // Re-enable GPIO outputs that were placed into high impedance mode.
+            if (savedStatus[i] & IO_SAVED_STATUS_OUTPUT_HI){
+                PORT->OUTSET = 1 << PIN;
+                PORT->PIN_CNF[PIN] = PORT->PIN_CNF[PIN] | 1;
+            }
+
+            if (savedStatus[i] & IO_SAVED_STATUS_OUTPUT_LO){
+                PORT->OUTCLR = 1 << PIN;
+                PORT->PIN_CNF[PIN] = PORT->PIN_CNF[PIN] | 1;
+            }
+#endif
+
+            // Re-enable any interrupts associated with this GPIO pin
+            if(savedStatus[i] & IO_SAVED_STATUS_DETECT_LOW_ENABLED)
+                pin[i].setDetect(GPIO_PIN_CNF_SENSE_Low);
+
+            if(savedStatus[i] & IO_SAVED_STATUS_DETECT_HIGH_ENABLED)
+                pin[i].setDetect(GPIO_PIN_CNF_SENSE_High);
+        }
+    }
+   
+    return DEVICE_OK;
 }

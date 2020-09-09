@@ -336,15 +336,25 @@ typedef enum {
 #define ID_PIN_P46       (DEVICE_ID_IO_P0 + 46)
 #define ID_PIN_P47       (DEVICE_ID_IO_P0 + 47)
 
-
+//
+// Saved status values to restore GPIO configurations after deep sleep
+//
+#define IO_SAVED_STATUS_OUTPUT_NA               0
+#define IO_SAVED_STATUS_OUTPUT_LO               1
+#define IO_SAVED_STATUS_OUTPUT_HI               2
+#define IO_SAVED_STATUS_DETECT_LOW_ENABLED      4
+#define IO_SAVED_STATUS_DETECT_HIGH_ENABLED     8
 
 namespace codal
 {
     /**
      * Represents a collection of all I/O pins exposed by the device.
      */
-    class MicroBitIO
+    class MicroBitIO : public CodalComponent
     {
+        private:
+            ManagedBuffer     savedStatus;
+
         public:
             // Number of pins in use.
             int               pins;
@@ -410,6 +420,11 @@ namespace codal
              * by MicroBitPin instances on the default EventModel.
              */
             MicroBitIO(NRF52ADC &a, TouchSensor &s);
+
+            /**
+             * Puts the component in (or out of) sleep (low power) mode.
+             */
+            virtual int setSleep(bool doSleep) override;
     };
 }
 

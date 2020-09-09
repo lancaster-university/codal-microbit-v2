@@ -68,13 +68,6 @@ NRF52LEDMatrix::NRF52LEDMatrix(NRFLowLevelTimer &displayTimer, const MatrixMap &
         timer.setClockSpeed(NRF52_LED_MATRIX_CLOCK_FREQUENCY/1000);
         timer.timer_pointer = display_irq;
 
-        // Configure for the requested mode.
-        this->setDisplayMode(mode);
-
-        // Ensure row drive pins are disabled, and have no pull resistors configured
-        for (int row = 0; row < matrixMap.rows; row++)
-            matrixMap.rowPins[row]->getDigitalValue(PullMode::None);
-
         this->enable();
     }
 }
@@ -143,6 +136,13 @@ void NRF52LEDMatrix::enable()
     if (enabled)
         return;
 
+    // Configure for the requested mode.
+    this->setDisplayMode(mode);
+
+    // Ensure row drive pins are disabled, and have no pull resistors configured
+    for (int row = 0; row < matrixMap.rows; row++)
+        matrixMap.rowPins[row]->getDigitalValue(PullMode::None);
+
     timer.enable();
     timer.enableIRQ();
 
@@ -162,6 +162,21 @@ void NRF52LEDMatrix::disable()
 {
     if (!enabled)
         return;
+
+    // Disable the timer that drivers the display
+    timer.disable();
+    timer.disableIRQ();
+
+    // Disable GPIOTE control of the display pins
+    for (int column = 0; column < matrixMap.columns; column++)
+        NRF_GPIOTE->CONFIG[gpiote[column]] = 0;
+
+    // Put all pins into high impedance mode.
+    for (int column = 0; column < matrixMap.columns; column++)
+         matrixMap.columnPins[column]->getDigitalValue();
+
+    for (int row = 0; row < matrixMap.rows; row++)
+         matrixMap.rowPins[row]->getDigitalValue();
 
     enabled = false;
 }
@@ -302,6 +317,27 @@ NRF52LEDMatrix::readLightLevel()
         setDisplayMode(DisplayMode::DISPLAY_MODE_GREYSCALE_LIGHT_SENSE);
 
     return lightLevel;
+}
+
+/**
+ * Puts the component in (or out of) sleep (low power) mode.
+ */
+int NRF52LEDMatrix::setSleep(bool doSleep)
+{
+    static bool wasEnabled;
+
+    if (doSleep)
+    {
+        wasEnabled = enabled;
+        disable();
+    }
+
+    if (!doSleep && wasEnabled)
+    {
+        enable();
+    }
+   
+    return DEVICE_OK;
 }
 
 /**

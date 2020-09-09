@@ -53,7 +53,6 @@ MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins,
     this->id = id;
 
     // Indicate we'd like to receive periodic callbacks both in idle and interrupt context.
-    status |= DEVICE_COMPONENT_STATUS_SYSTEM_TICK;
     status |= DEVICE_COMPONENT_STATUS_IDLE_TICK;
 }
 
@@ -141,6 +140,7 @@ uint32_t MicroBitPowerManager::getPowerConsumption()
  */
 int MicroBitPowerManager::sendUIPMPacket(ManagedBuffer packet)
 {
+    //i2cBus.read(MICROBIT_UIPM_I2C_ADDRESS, &packet[0], 0, false);
     return i2cBus.write(MICROBIT_UIPM_I2C_ADDRESS, &packet[0], packet.length(), false);
 }
 
@@ -156,6 +156,7 @@ ManagedBuffer MicroBitPowerManager::recvUIPMPacket()
 
     if(io.irq1.isActive())
     {
+        //i2cBus.read(MICROBIT_UIPM_I2C_ADDRESS, &packet[0], 0, false);
         if (i2cBus.read(MICROBIT_UIPM_I2C_ADDRESS, &b[0], MICROBIT_UIPM_MAX_BUFFER_SIZE, false) == MICROBIT_OK)
             return b;
     }
@@ -251,32 +252,23 @@ ManagedBuffer MicroBitPowerManager::readProperty(int property)
  * Device can subsequently be awoken only via a RESET. User program state will be lost and will restart
  * from main().
  */
-void MicroBitPowerManager::standby()
+void MicroBitPowerManager::off()
 {
-    // Instruct the KL27 interface chip to disable the power LED
-    ManagedBuffer sleepCommand(4);
-    sleepCommand[0] = MICROBIT_UIPM_COMMAND_WRITE_REQUEST;
-    sleepCommand[1] = MICROBIT_UIPM_PROPERTY_KL27_POWER_LED_STATE;
-    sleepCommand[2] = 1;
-    sleepCommand[3] = 0;
-    writeProperty(sleepCommand);
+    setSleepMode(true);
 
     // Instruct the KL27 interface chip to go into deep sleep.
+    ManagedBuffer sleepCommand(4);
     sleepCommand[0] = MICROBIT_UIPM_COMMAND_WRITE_REQUEST;
     sleepCommand[1] = MICROBIT_UIPM_PROPERTY_KL27_POWER_MODE;
     sleepCommand[2] = 1;
     sleepCommand[3] = MICROBIT_USB_INTERFACE_POWER_MODE_VLLS0;
     writeProperty(sleepCommand);
 
-    // Ensure all DMA transactions are complete by deepsleeping all perpherals.
-    CodalComponent::setAllSleep(true);
+    // Wait a little while to ensure all hardware and peripherals have reacted to the change of power mode.
+    target_wait(10);
 
-    // Ensure no pins are configured to raise a DETECT event.
-    for (int i=0; i<io.pins; i++)
-        io.pin[i].setDetect(GPIO_PIN_CNF_SENSE_Disabled);
-
-    // Configure combined IRQ line to raise a DETECT event on a HI->LO transition.
-    // This allows us to reset on USB insertion, as raised by the KL27 interface chip.
+    // Configure combined IRQ line to DETECT HI->LO transitions and reset the NRF52.
+    // When sleeping, this allows us to reset on USB insertion, as raised by the KL27 interface chip.
     io.irq1.setDetect(GPIO_PIN_CNF_SENSE_Low);
 
     // Enter System Off state.
@@ -289,58 +281,37 @@ void MicroBitPowerManager::standby()
  */
 void MicroBitPowerManager::idleCallback()
 {
-    static int count = 0;
-
-    return;
-
-    if(io.irq1.isActive())
-        uBit.display.print("A");
-
     // Do nothing if there is a transaction in progress.
     if (status & MICROBIT_USB_INTERFACE_AWAITING_RESPONSE || !io.irq1.isActive())
         return;
 
-    count++;
-    DMESG("UIPM_IRQ: %d times", count);
-    uBit.display.print("S");
-
-    // Determine if the KL27 is trying to indicate that we should enter standby mode
+    // Determine if the KL27 is trying to indicate an event
     ManagedBuffer response;
     response = recvUIPMPacket();
 
-    if (response.length() > 0)
+    if (response.length() > 0 && response[0] == MICROBIT_UIPM_COMMAND_READ_RESPONSE && response[1] == MICROBIT_UIPM_PROPERTY_KL27_USER_EVENT && response[2] == 1)
     {
-        if (response[0] == MICROBIT_UIPM_COMMAND_WRITE_REQUEST)
+        switch (response[3])
         {
-            // TODO: Check what we have here
-            DMESG("UIPM_WRITE_REQUEST:");
-        }
+            case MICROBIT_UIPM_EVENT_WAKE_RESET:
+                DMESG("WAKE FROM RESET BUTTON");
+                break;
 
-        if (response[0] == MICROBIT_UIPM_COMMAND_READ_REQUEST)
-        {
-            // TODO: Check what we have here
-            DMESG("UIPM_READ_REQUEST:");
-        }
+            case MICROBIT_UIPM_EVENT_WAKE_USB_INSERTION:
+                DMESG("WAKE FROM USB");
+                break;
 
-        for (int i=0; i<response.length(); i++)
-            DMESG("  %d", response[i]);
+            case MICROBIT_UIPM_EVENT_RESET_LONG_PRESS:
+                DMESG("LONG RESET BUTTON PRESS");
+                off();
+                break;
+
+            default:
+                DMESG("UNKNOWN KL27 EVENT CODE [%d]", response[2]);
+        }
     }
-    else
-    {
-        DMESG("  FALSE ALARM");
-    }
-    
 }
 
-/**
- * Periodic housekeeping callback.
- * If any IRQ requests have gone unserviced for a while, poll the USB interface chip to 
- * determine if we should be going into shutdown mode.
- */
-void MicroBitPowerManager::periodicCallback()
-{
-
-}
 
 /**
  * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
@@ -365,7 +336,51 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
  */
 void MicroBitPowerManager::deepSleep(MicroBitPin &pin)
 {
-    // TODO
+    // Configure for sleep mode
+    setSleepMode(true);
+
+    // Wait a little while to ensure all hardware and peripherals have reacted to the change of power mode.
+    //target_wait(10);
+
+    // Ensure the requested pin into digital input mode. 
+    pin.getDigitalValue();
+
+    // Enable an interrupt on the requested pin or an interrupt from the KL27.
+    pin.setDetect(pin.getPolarity() ? GPIO_PIN_CNF_SENSE_High : GPIO_PIN_CNF_SENSE_Low);
+
+    // Enable wakeup from the the KL27 interrupt line.
+    io.irq1.setDetect(GPIO_PIN_CNF_SENSE_Low);
+
+    // Wait for an interrupt to occur. This will either be the requested transition,
+    // or an asynchronous event from the KL27 interface chip.
+    __WFI();
+
+    // Diasble DETECT events 
+    pin.setDetect(GPIO_PIN_CNF_SENSE_Disabled);
+    io.irq1.setDetect(GPIO_PIN_CNF_SENSE_Disabled);
+
+    // Configure for running mode.
+    setSleepMode(false);
+}
+
+/**
+ * Prepares the micro:bit to enter or leave deep sleep mode.
+ * This includes updating the status of the power LED, peripheral drivers and SENSE events on the combined IRQ line.
+ * 
+ * @param doSleep Set to true to preapre for sleep, false to prepare to reawaken.
+ */
+void MicroBitPowerManager::setSleepMode(bool doSleep)
+{
+    // Instruct the KL27 interface chip to update its LED status the power LED
+    ManagedBuffer sleepCommand(4);
+    sleepCommand[0] = MICROBIT_UIPM_COMMAND_WRITE_REQUEST;
+    sleepCommand[1] = MICROBIT_UIPM_PROPERTY_KL27_POWER_LED_STATE;
+    sleepCommand[2] = 1;
+    sleepCommand[3] = doSleep ? 0 : 1;
+    writeProperty(sleepCommand);
+
+    // Update peripheral drivers
+    CodalComponent::setAllSleep(doSleep);
 }
 
 /**
