@@ -278,5 +278,12 @@ class MicroBitPowerManager : public CodalComponent
          */
         void setSleepMode(bool doSleep);
 
+        /**
+         * Perform a NULL opertion I2C transcation wit the interface chip.
+         * This is used to awken the KL27 interface chip from light sleep, 
+         * as a work around for silicon errata in the KL27.
+         */
+        void nop();
+
 };
 #endif

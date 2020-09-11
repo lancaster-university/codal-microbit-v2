@@ -25,7 +25,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitPowerManager.h"
 #include "MicroBit.h"
 
-extern MicroBit uBit;
+static const uint8_t UIPM_I2C_NOP[3] = {0,0,0};
 
 static const KeyValueTableEntry uipmPropertyLengthData[] = {
     {MICROBIT_UIPM_PROPERTY_BOARD_REVISION, 2},
@@ -97,7 +97,7 @@ MicroBitVersion MicroBitPowerManager::getVersion()
         memcpy(&version.daplink, &b[3], 2);
 
         // Version data in non-volatile, so cache it for later.
-        status |= MICROBIT_USB_INTERFACE_VERSION_LOADED;
+        //status |= MICROBIT_USB_INTERFACE_VERSION_LOADED;
     }
 
     return version;
@@ -134,13 +134,24 @@ uint32_t MicroBitPowerManager::getPowerConsumption()
 }
 
 /**
+ * Perform a NULL opertion I2C transcation wit the interface chip.
+ * This is used to awken the KL27 interface chip from light sleep, 
+ * as a work around for silicon errata in the KL27.
+ */
+void MicroBitPowerManager::nop()
+{
+    i2cBus.write(MICROBIT_UIPM_I2C_ADDRESS, (uint8_t *)UIPM_I2C_NOP, 3, false);
+    target_wait(1);
+}
+
+/**
  * Attempts to issue a control packet to the USB interface chip.
  * @param packet The data to send
  * @return MICROBIT_OK on success, or an I2C related error code on failure.
  */
 int MicroBitPowerManager::sendUIPMPacket(ManagedBuffer packet)
 {
-    //i2cBus.read(MICROBIT_UIPM_I2C_ADDRESS, &packet[0], 0, false);
+    nop();
     return i2cBus.write(MICROBIT_UIPM_I2C_ADDRESS, &packet[0], packet.length(), false);
 }
 
@@ -152,17 +163,17 @@ int MicroBitPowerManager::sendUIPMPacket(ManagedBuffer packet)
  */
 ManagedBuffer MicroBitPowerManager::recvUIPMPacket()
 {
-    ManagedBuffer b(MICROBIT_UIPM_MAX_BUFFER_SIZE);
 
     if(io.irq1.isActive())
     {
-        //i2cBus.read(MICROBIT_UIPM_I2C_ADDRESS, &packet[0], 0, false);
+        ManagedBuffer b(MICROBIT_UIPM_MAX_BUFFER_SIZE);
+
+        nop();  
         if (i2cBus.read(MICROBIT_UIPM_I2C_ADDRESS, &b[0], MICROBIT_UIPM_MAX_BUFFER_SIZE, false) == MICROBIT_OK)
             return b;
     }
 
-    b.truncate(0);
-    return b;
+    return ManagedBuffer();
 }
 
 /**
@@ -195,10 +206,6 @@ ManagedBuffer MicroBitPowerManager::awaitUIPMPacket()
         // Sanitize the length of the packet to meet specification and return it.
         response.truncate((response[0] == MICROBIT_UIPM_COMMAND_ERROR_RESPONSE || response[0] == MICROBIT_UIPM_COMMAND_WRITE_RESPONSE) ? 2 : 3 + uipmPropertyLengths.get(response[1]));
         status &= ~MICROBIT_USB_INTERFACE_AWAITING_RESPONSE;
-
-        //DMESG("AWAIT_RESPONSE:");
-        //for (int i=0; i<response.length(); i++)
-        //    DMESG("  %d", response[i]);
 
         return response;
     }
