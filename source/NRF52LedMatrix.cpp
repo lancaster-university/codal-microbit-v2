@@ -59,6 +59,7 @@ NRF52LEDMatrix::NRF52LEDMatrix(NRFLowLevelTimer &displayTimer, const MatrixMap &
     strobeRow = 0;
     instance = this;
     lightLevel = 0;
+    this->mode = mode;
 
     // Validate that we can deliver the requested display.
     if (matrixMap.columns <= NRF52_LED_MATRIX_MAXIMUM_COLUMNS)
@@ -86,17 +87,19 @@ void NRF52LEDMatrix::setDisplayMode(DisplayMode mode)
 {
     // Allocate GPIOTE and PPI channels
     // TODO: use a global allocator here, rather than static allocation.
-    for (int channel = 0; channel < matrixMap.columns; channel++)
+    if (!enabled)
     {
-        gpiote[channel] = NRF52_LEDMATRIX_GPIOTE_CHANNEL_BASE + channel;
-        ppi[channel] = NRF52_LEDMATRIX_PPI_CHANNEL_BASE + channel;
+        for (int channel = 0; channel < matrixMap.columns; channel++)
+        {
+            gpiote[channel] = NRF52_LEDMATRIX_GPIOTE_CHANNEL_BASE + channel;
+            ppi[channel] = NRF52_LEDMATRIX_PPI_CHANNEL_BASE + channel;
 
-        NRF_GPIOTE->CONFIG[gpiote[channel]] = 0x00010003 | (matrixMap.columnPins[channel]->name << 8);
-        NRF_PPI->CH[ppi[channel]].EEP = (uint32_t) &timer.timer->EVENTS_COMPARE[channel+1];
-        NRF_PPI->CH[ppi[channel]].TEP = (uint32_t) &NRF_GPIOTE->TASKS_SET[gpiote[channel]];
-        NRF_PPI->CHENSET = 1 << ppi[channel]; 
+            NRF_GPIOTE->CONFIG[gpiote[channel]] = 0x00010003 | (matrixMap.columnPins[channel]->name << 8);
+            NRF_PPI->CH[ppi[channel]].EEP = (uint32_t) &timer.timer->EVENTS_COMPARE[channel+1];
+            NRF_PPI->CH[ppi[channel]].TEP = (uint32_t) &NRF_GPIOTE->TASKS_SET[gpiote[channel]];
+            NRF_PPI->CHENSET = 1 << ppi[channel];
+        }
     }
-            
     // Determine the number of timeslots we'll need.
     timeslots = matrixMap.rows;
 
