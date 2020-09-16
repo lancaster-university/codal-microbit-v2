@@ -78,7 +78,7 @@ MicroBit::MicroBit() :
     buttonA(io.P5, DEVICE_ID_BUTTON_A, DEVICE_BUTTON_ALL_EVENTS, ACTIVE_LOW),
     buttonB(io.P11, DEVICE_ID_BUTTON_B, DEVICE_BUTTON_ALL_EVENTS, ACTIVE_LOW),
     buttonAB(DEVICE_ID_BUTTON_A, DEVICE_ID_BUTTON_B, DEVICE_ID_BUTTON_AB),
-    face(io.face, touchSensor),
+    face(io.face, touchSensor, 2500),
     radio(),
     thermometer(),
     accelerometer(MicroBitAccelerometer::autoDetect(_i2c)),
