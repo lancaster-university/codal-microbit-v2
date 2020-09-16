@@ -144,6 +144,7 @@ namespace codal
             Button                      buttonA;
             Button                      buttonB;
             MultiButton                 buttonAB;
+            TouchButton                 face;
             MicroBitRadio               radio;
             MicroBitThermometer         thermometer;
             Accelerometer&              accelerometer;
