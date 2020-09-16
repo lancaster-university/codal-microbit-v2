@@ -221,7 +221,7 @@ class MicroBitPowerManager : public CodalComponent
          * @param packet The data to send
          * @return MICROBIT_OK on success 
          */
-        ManagedBuffer writeProperty(ManagedBuffer request);
+        ManagedBuffer writeProperty(ManagedBuffer request, bool ack = true);
 
         /**
          * Attempts to issue a control packet to the USB interface chip.

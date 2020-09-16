@@ -140,8 +140,8 @@ uint32_t MicroBitPowerManager::getPowerConsumption()
  */
 void MicroBitPowerManager::nop()
 {
-    i2cBus.write(MICROBIT_UIPM_I2C_ADDRESS, (uint8_t *)UIPM_I2C_NOP, 3, false);
-    target_wait(1);
+    //i2cBus.write(MICROBIT_UIPM_I2C_ADDRESS, (uint8_t *)UIPM_I2C_NOP, 3, false);
+    //target_wait(10);
 }
 
 /**
@@ -193,7 +193,7 @@ ManagedBuffer MicroBitPowerManager::awaitUIPMPacket()
     // Retry until we get a valid response or we time out.
     while(attempts++ < MICROBIT_UIPM_MAX_RETRIES)
     {
-        fiber_sleep(1);
+        target_wait(1);
 
         // Try to read a response from the KL27
         response = recvUIPMPacket();
@@ -225,12 +225,14 @@ ManagedBuffer MicroBitPowerManager::awaitUIPMPacket()
  * @param packet The data to send
  * @return MICROBIT_OK on success 
  */
-ManagedBuffer MicroBitPowerManager::writeProperty(ManagedBuffer request)
+ManagedBuffer MicroBitPowerManager::writeProperty(ManagedBuffer request, bool ack)
 {
     ManagedBuffer response;
 
-    if (sendUIPMPacket(request) == MICROBIT_OK)
+    if (sendUIPMPacket(request) == MICROBIT_OK && ack)
+    {
         response = awaitUIPMPacket();
+    }
 
     return response;
 }
@@ -269,7 +271,7 @@ void MicroBitPowerManager::off()
     sleepCommand[1] = MICROBIT_UIPM_PROPERTY_KL27_POWER_MODE;
     sleepCommand[2] = 1;
     sleepCommand[3] = MICROBIT_USB_INTERFACE_POWER_MODE_VLLS0;
-    writeProperty(sleepCommand);
+    writeProperty(sleepCommand, true);
 
     // Wait a little while to ensure all hardware and peripherals have reacted to the change of power mode.
     target_wait(10);
