@@ -338,6 +338,8 @@ typedef codal::EventLaunchMode MicroBitEventLaunchMode;
 #define MICROBIT_ID_IO_P16                                      ID_PIN_P16
 #define MICROBIT_ID_IO_P19                                      ID_PIN_P19
 #define MICROBIT_ID_IO_P20                                      ID_PIN_P20
+#define MICROBIT_ID_IO_FACE_TOUCH                               ID_PIN_FACE
+
 #define MICROBIT_ID_MESSAGE_BUS_LISTENER                        DEVICE_ID_MESSAGE_BUS_LISTENER
 #define MICROBIT_ID_MULTIBUTTON_ATTACH                          DEVICE_ID_MULTIBUTTON_ATTACH
 #define MICROBIT_ID_NOTIFY                                      DEVICE_ID_NOTIFY

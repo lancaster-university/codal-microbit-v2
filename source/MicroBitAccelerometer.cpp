@@ -37,7 +37,7 @@ DEALINGS IN THE SOFTWARE.
 
 
 Accelerometer* MicroBitAccelerometer::detectedAccelerometer = NULL;
-NRF52Pin MicroBitAccelerometer::irq1(ID_PIN_P25, P0_25, PIN_CAPABILITY_AD);
+NRF52Pin MicroBitAccelerometer::irq1(ID_PIN_IRQ1, P0_25, PIN_CAPABILITY_AD);
 CoordinateSpace MicroBitAccelerometer::coordinateSpace(SIMPLE_CARTESIAN, true, COORDINATE_SPACE_ROTATED_0);
 CoordinateSpace MicroBitAccelerometer::coordinateSpaceFXOS8700(SIMPLE_CARTESIAN, true, COORDINATE_SPACE_ROTATED_180);
 
