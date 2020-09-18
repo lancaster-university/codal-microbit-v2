@@ -43,7 +43,7 @@ DEALINGS IN THE SOFTWARE.
 //
 // General constants 
 //
-#define MICROBIT_USB_FLASH_MAX_RETRIES              2
+#define MICROBIT_USB_FLASH_MAX_RETRIES              4
 
 //
 // Command codes for the USB Interface Chip
@@ -191,36 +191,19 @@ class MicroBitUSBFlashManager : public CodalComponent
         private:
 
         /**
-         * Attempts to issue a control packet to the USB interface chip.
-         * @param packet The data to send
-         * @return MICROBIT_OK on success, or an I2C related error code on failure.
+         * Performs a flash storage transaction with the interface chip.
+         * @param packet The data to write to the interface chip as a request operation.
+         * @param responseLength The length of the expected reponse packet.
+         * @return a buffer containing the response to the request, or a zero length buffer on failure.
          */
-        int sendPacket(ManagedBuffer packet);
+        ManagedBuffer transact(ManagedBuffer request, int responseLength);
 
         /**
-         * Attempts to read a packet from the USB interface chip, either as a response to a
-         * prior request, or following an interrupt request.
-         * 
-         * @return A buffer containing the complete response.
+         * Performs a flash storage transaction with the interface chip.
+         * @param command Identifier of a command to issue (one byte write operation).
+         * @return a buffer containing the response to the request, or a zero length buffer on failure.
          */
-        ManagedBuffer recvPacket();
-
-        /**
-         * Attempts to read a packet from the USB interface chip, either as a response to a
-         * prior request, or following an interrupt request.
-         * 
-         * @param command instruction data to send as part of the read request
-         * @return A buffer containing the complete response.
-         */
-        ManagedBuffer recvPacket(uint8_t command);
-
-        /**
-         * Awaits a response to a previous requests to the USB interface chip.
-         * Up to MICROBIT_UIPM_MAX_RETRIES attempts will be made at ~1ms intervals.
-         * 
-         * @return A buffer containing the complete response.
-         */
-        ManagedBuffer awaitPacket();
+        ManagedBuffer transact(int command);
 
         /**
          * Determines if the given char is valid for an 8.3 filename.

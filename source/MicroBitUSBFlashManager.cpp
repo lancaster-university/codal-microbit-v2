@@ -24,6 +24,17 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitUSBFlashManager.h"
 
+static const KeyValueTableEntry usbFlashPropertyLengthData[] = {
+    {MICROBIT_USB_FLASH_FILENAME_CMD, 12},
+    {MICROBIT_USB_FLASH_FILESIZE_CMD, 3},
+    {MICROBIT_USB_FLASH_VISIBILITY_CMD, 2},
+    {MICROBIT_USB_FLASH_WRITE_CONFIG_CMD, 1},
+    {MICROBIT_USB_FLASH_ERASE_CONFIG_CMD, 1},
+    {MICROBIT_USB_FLASH_DISK_SIZE_CMD, 2},
+    {MICROBIT_USB_FLASH_REMOUNT_CMD, 1}
+};
+CREATE_KEY_VALUE_TABLE(usbFlashPropertyLength, usbFlashPropertyLengthData);
+
 /**
  * Constructor.
  * Create a software abstraction of a USB Flash manager.
@@ -52,16 +63,16 @@ MicroBitUSBFlashConfig MicroBitUSBFlashManager::getConfiguration()
         ManagedBuffer response;
 
         // Load the configured filename
-        response = recvPacket(MICROBIT_USB_FLASH_FILENAME_CMD);
+        response = transact(MICROBIT_USB_FLASH_FILENAME_CMD);
         ManagedString s = response;
         config.fileName = s.substring(0, 8) + "." + s.substring(8, 3);
 
         // Load the filesize
-        response = recvPacket(MICROBIT_USB_FLASH_FILESIZE_CMD);
+        response = transact(MICROBIT_USB_FLASH_FILESIZE_CMD);
         config.fileSize = *(uint32_t *) &response[0];
 
         // Load the visibility status
-        response = recvPacket(MICROBIT_USB_FLASH_VISIBILITY_CMD);
+        response = transact(MICROBIT_USB_FLASH_VISIBILITY_CMD);
         config.visible = response[0] != 0;
 
         status |= MICROBIT_USB_FLASH_CONFIG_LOADED;
@@ -116,8 +127,8 @@ int MicroBitUSBFlashManager::setConfiguration(MicroBitUSBFlashConfig config, boo
 
     // Now copy in the filename and extension (right justified extension)
     fname[0] = MICROBIT_USB_FLASH_FILENAME_CMD;
-    memcpy(&fname[1], config.fileName.toCharArray(), config.fileName.length() - 4);
-    memcpy(&fname[9], config.fileName.toCharArray() + config.fileName.length() - 3, 3);
+    memcpy(&fname[1], config.fileName.toCharArray(), config.fileName.length());
+    fname[config.fileName.length()-3] = ' ';
 
     // Encode file size command.
     fsize[0] = MICROBIT_USB_FLASH_FILESIZE_CMD;
@@ -128,9 +139,9 @@ int MicroBitUSBFlashManager::setConfiguration(MicroBitUSBFlashConfig config, boo
     fvisible[1] = config.visible ? 1 : 0;
 
     // Write out each of the parameters in turn.
-    sendPacket(fname);
-    sendPacket(fsize);
-    sendPacket(fvisible);
+    transact(fname, 1);
+    transact(fsize, 1);
+    transact(fvisible, 1);
 
     // Cache for later.
     this->config = config;
@@ -152,11 +163,11 @@ MicroBitUSBFlashGeometry MicroBitUSBFlashManager::getGeometry()
         ManagedBuffer response;
 
         // Load the block size data
-        response = recvPacket(MICROBIT_USB_FLASH_SECTOR_SIZE_CMD);
+        response = transact(MICROBIT_USB_FLASH_SECTOR_SIZE_CMD);
         geometry.blockSize = *(uint16_t *) &response[2];
 
         // Load the number of blocks
-        response = recvPacket(MICROBIT_USB_FLASH_DISK_SIZE_CMD);
+        response = transact(MICROBIT_USB_FLASH_DISK_SIZE_CMD);
         geometry.blockCount = *(uint8_t *) &response[2];
 
         status |= MICROBIT_USB_FLASH_GEOMETRY_LOADED;
@@ -172,6 +183,11 @@ MicroBitUSBFlashGeometry MicroBitUSBFlashManager::getGeometry()
  */
 int MicroBitUSBFlashManager::remount()
 {
+    ManagedBuffer cmd(1);
+
+    cmd[0] = MICROBIT_USB_FLASH_REMOUNT_CMD;
+    transact(cmd, 1);
+
     return DEVICE_OK;
 }
 
@@ -185,7 +201,14 @@ int MicroBitUSBFlashManager::remount()
  */
 ManagedBuffer MicroBitUSBFlashManager::read(int address, int length)
 {
-    return ManagedBuffer();
+    ManagedBuffer request(8);
+
+    uint32_t *p = (uint32_t *) &request[0];
+    *p++ = ((uint32_t) address) | (MICROBIT_USB_FLASH_READ_CMD << 24);
+    *p++ = (uint32_t) (length);
+
+
+    return transact(request, length+8);
 }
 
 /**
@@ -199,7 +222,20 @@ ManagedBuffer MicroBitUSBFlashManager::read(int address, int length)
  */
 int MicroBitUSBFlashManager::write(uint8_t *data, int address, int length)
 {
-    return DEVICE_OK;
+    ManagedBuffer request(8+length);
+    ManagedBuffer response;
+
+    uint32_t *p = (uint32_t *) &request[0];
+    *p++ = ((uint32_t) address) | (MICROBIT_USB_FLASH_WRITE_CMD << 24);
+    *p++ = (uint32_t) (length);
+    memcpy(p, &data[0], length);
+
+    response = transact(request, 1);
+
+    if (response.length() == 0)
+        return DEVICE_I2C_ERROR;
+    else
+        return DEVICE_OK;
 }
 
 /**
@@ -212,7 +248,7 @@ int MicroBitUSBFlashManager::write(uint8_t *data, int address, int length)
  */
 int MicroBitUSBFlashManager::write(ManagedBuffer data, int address)
 {
-    return DEVICE_OK;
+    return write(&data[0], address, data.length());
 }
 
 /**
@@ -231,51 +267,63 @@ int MicroBitUSBFlashManager::write(ManagedBuffer data, int address)
  */
 int MicroBitUSBFlashManager::erase(int address, int length)
 {
-    return DEVICE_OK;
+    ManagedBuffer request(8);
+    ManagedBuffer response;
+
+    uint32_t *p = (uint32_t *) &request[0];
+    *p++ = ((uint32_t) address) | (MICROBIT_USB_FLASH_ERASE_CMD << 24);
+    *p++ = (uint32_t) (address+length);
+
+    response = transact(request, 1);
+
+    if (response.length() == 0)
+        return DEVICE_I2C_ERROR;
+    else
+        return DEVICE_OK;
 }
 
 /**
- * Attempts to issue a control packet to the USB interface chip.
- * @param packet The data to send
- * @return MICROBIT_OK on success, or an I2C related error code on failure.
+ * Performs a flash storage transaction with the interface chip.
+ * @param packet The data to write to the interface chip as a request operation.
+ * @param responseLength The length of the expected reponse packet.
+ * @return a buffer containing the response to the request, or a zero length buffer on failure.
  */
-int MicroBitUSBFlashManager::sendPacket(ManagedBuffer packet)
+ManagedBuffer MicroBitUSBFlashManager::transact(ManagedBuffer request, int responseLength)
 {
-    return DEVICE_OK;
-}
+    int attempts = 0;
 
-/**
- * Attempts to read a packet from the USB interface chip, either as a response to a
- * prior request, or following an interrupt request.
- * 
- * @return A buffer containing the complete response.
- */
-ManagedBuffer MicroBitUSBFlashManager::recvPacket()
-{
+    if (i2cBus.write(MICROBIT_USB_FLASH_I2C_ADDRESS, &request[0], request.length(), false) != DEVICE_OK)
+        return ManagedBuffer();
+
+    while(attempts < MICROBIT_USB_FLASH_MAX_RETRIES)
+    {
+        fiber_sleep(5);
+        if(io.irq1.isActive())
+        {
+            ManagedBuffer b(responseLength);
+            if (i2cBus.read(MICROBIT_USB_FLASH_I2C_ADDRESS, &b[0], responseLength, false) == MICROBIT_OK)
+                return b;
+        }
+
+        attempts++;
+    }
+
     return ManagedBuffer();
 }
 
-/**
- * Attempts to read a packet from the USB interface chip, either as a response to a
- * prior request, or following an interrupt request.
- * 
- * @param command instruction data to send as part of the read request
- * @return A buffer containing the complete response.
- */
-ManagedBuffer MicroBitUSBFlashManager::recvPacket(uint8_t command)
-{
-    return ManagedBuffer();
-}
 
 /**
- * Awaits a response to a previous requests to the USB interface chip.
- * Up to MICROBIT_UIPM_MAX_RETRIES attempts will be made at ~1ms intervals.
- * 
- * @return A buffer containing the complete response.
+ * Performs a flash storage transaction with the interface chip.
+ * @param command Identifier of a command to issue (one byte write operation).
+ * @param responseLength The length of the expected reponse packet.
+ * @return a buffer containing the response to the request, or a zero length buffer on failure.
  */
-ManagedBuffer MicroBitUSBFlashManager::awaitPacket()
+ManagedBuffer MicroBitUSBFlashManager::transact(int command)
 {
-    return ManagedBuffer();
+    ManagedBuffer request(1);
+
+    request[0] = command;
+    return transact(command, usbFlashPropertyLength.get(command));
 }
 
 /**
