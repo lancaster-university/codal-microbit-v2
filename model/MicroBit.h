@@ -88,6 +88,9 @@ DEALINGS IN THE SOFTWARE.
 // Status flag values
 #define DEVICE_INITIALIZED                    0x01
 
+// Flag that we have integrate face-touch as a feature
+#define MICROBIT_UBIT_FACE_TOUCH_BUTTON       1
+
 /**
  * Class definition for a MicroBit device.
  *
