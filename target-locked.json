@@ -6,6 +6,7 @@
         "MBED_LEGACY_TOOLCHAIN": "GCC_ARM;"
     }, 
     "config": {
+        "CAPTOUCH_DEFAULT_CALIBRATION": 3500, 
         "CODAL_DEBUG": "CODAL_DEBUG_DISABLED", 
         "CODAL_PROVIDE_PRINTF": 1, 
         "CODAL_TIMESTAMP": "uint64_t", 
@@ -34,6 +35,9 @@
         "NRF52ADC_SOFTWARE_OVERSAMPLING": 1, 
         "PROCESSOR_WORD_TYPE": "uint32_t", 
         "SCHEDULER_TICK_PERIOD_US": 4000, 
+        "TOUCH_BUTTON_CALIBRATION_PERIOD": 500, 
+        "TOUCH_BUTTON_DECAY_AVERAGE": 2, 
+        "TOUCH_BUTTON_SENSITIVITY": 5, 
         "USE_ACCEL_LSB": 0
     }, 
     "cpp_flags": "-std=c++11 -fwrapv -fno-rtti -fno-threadsafe-statics -fno-exceptions -fno-unwind-tables -Wl,--gc-sections -Wl,--sort-common -Wl,--sort-section=alignment -Wno-array-bounds", 
@@ -44,13 +48,13 @@
     "generate_hex": true, 
     "libraries": [
         {
-            "branch": "24dc5dfd093cd90fd93b651ce9d460943f831df6", 
+            "branch": "05c9728ab56e43ac7bd5e9852a3177a75c112663", 
             "name": "codal-core", 
             "type": "git", 
             "url": "https://github.com/microbit-foundation/codal-core"
         }, 
         {
-            "branch": "e76b2961d8267280c6c0b38bb99327e56903ad44", 
+            "branch": "11309c03127181edfc41f145a967c1855ec7a765", 
             "name": "codal-nrf52", 
             "type": "git", 
             "url": "https://github.com/lancaster-university/codal-nrf52"
@@ -65,6 +69,6 @@
     "linker_flags": "-Wl,--no-wchar-size-warning -Wl,--gc-sections -Wl,--wrap,atexit -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -Wl,--start-group -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys -Wl,--end-group", 
     "post_process": "", 
     "processor": "NRF52833", 
-    "snapshot_version": "v0.2.0", 
+    "snapshot_version": "v0.2.1", 
     "toolchain": "ARM_GCC"
 }
