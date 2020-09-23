@@ -187,7 +187,7 @@ ManagedBuffer MicroBitPowerManager::awaitUIPMPacket()
     ManagedBuffer response;
     int attempts = 0;
 
-    status |= MICROBIT_USB_INTERFACE_AWAITING_RESPONSE;
+    awaitingPacket(true);
 
     // Wait for a response, signalled (possibly!) by a LOW on the combined irq line
     // Retry until we get a valid response or we time out.
@@ -205,7 +205,7 @@ ManagedBuffer MicroBitPowerManager::awaitUIPMPacket()
 
         // Sanitize the length of the packet to meet specification and return it.
         response.truncate((response[0] == MICROBIT_UIPM_COMMAND_ERROR_RESPONSE || response[0] == MICROBIT_UIPM_COMMAND_WRITE_RESPONSE) ? 2 : 3 + uipmPropertyLengths.get(response[1]));
-        status &= ~MICROBIT_USB_INTERFACE_AWAITING_RESPONSE;
+        awaitingPacket(false);
 
         return response;
     }
@@ -214,7 +214,7 @@ ManagedBuffer MicroBitPowerManager::awaitUIPMPacket()
     ManagedBuffer error(2);
     error[0] = MICROBIT_UIPM_COMMAND_ERROR_RESPONSE;
     error[1] = MICROBIT_UIPM_WRITE_FAIL;
-    status &= ~MICROBIT_USB_INTERFACE_AWAITING_RESPONSE;
+    awaitingPacket(false);
 
     return error;    
 }
@@ -298,26 +298,37 @@ void MicroBitPowerManager::idleCallback()
     ManagedBuffer response;
     response = recvUIPMPacket();
 
-    if (response.length() > 0 && response[0] == MICROBIT_UIPM_COMMAND_READ_RESPONSE && response[1] == MICROBIT_UIPM_PROPERTY_KL27_USER_EVENT && response[2] == 1)
-    {
-        switch (response[3])
+    if (response.length() > 0)
+    {    
+        // We have a valid frame.
+        if(response[0] == MICROBIT_UIPM_COMMAND_READ_RESPONSE && response[1] == MICROBIT_UIPM_PROPERTY_KL27_USER_EVENT && response[2] == 1)
         {
-            case MICROBIT_UIPM_EVENT_WAKE_RESET:
-                DMESG("WAKE FROM RESET BUTTON");
-                break;
+            // The frame is for us - process the event.
+            switch (response[3])
+            {
+                case MICROBIT_UIPM_EVENT_WAKE_RESET:
+                    DMESG("WAKE FROM RESET BUTTON");
+                    break;
 
-            case MICROBIT_UIPM_EVENT_WAKE_USB_INSERTION:
-                DMESG("WAKE FROM USB");
-                break;
+                case MICROBIT_UIPM_EVENT_WAKE_USB_INSERTION:
+                    DMESG("WAKE FROM USB");
+                    break;
 
-            case MICROBIT_UIPM_EVENT_RESET_LONG_PRESS:
-                DMESG("LONG RESET BUTTON PRESS");
-                off();
-                break;
+                case MICROBIT_UIPM_EVENT_RESET_LONG_PRESS:
+                    DMESG("LONG RESET BUTTON PRESS");
+                    off();
+                    break;
 
-            default:
-                DMESG("UNKNOWN KL27 EVENT CODE [%d]", response[2]);
+                default:
+                    DMESG("UNKNOWN KL27 EVENT CODE [%d]", response[2]);
+            }
         }
+        else
+        {
+            // The frame is not for us - forward the event to a Flash Manager if it has been registered
+            DMESG("UIPM: RECEIVED UNKNWON FRAME");
+        }
+        
     }
 }
 
@@ -390,6 +401,21 @@ void MicroBitPowerManager::setSleepMode(bool doSleep)
 
     // Update peripheral drivers
     CodalComponent::setAllSleep(doSleep);
+}
+
+/**
+ * Allows a subsystem to indicate that it is actively waiting for a I2C response from the KL27
+ * (e.g. the USBFlashManager). If set, the PowerManager will defer polling of the KL27 control interface
+ * if an interrupt is asserted.
+ *
+ * @param awaiting true if a subsystem is awaiting a packet from the KL27, false otherwise.
+ */
+void MicroBitPowerManager::awaitingPacket(bool awaiting)
+{
+    if (awaiting)
+        status |= MICROBIT_USB_INTERFACE_AWAITING_RESPONSE;
+    else
+        status &= ~MICROBIT_USB_INTERFACE_AWAITING_RESPONSE;
 }
 
 /**
