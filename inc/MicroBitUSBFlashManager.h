@@ -31,6 +31,7 @@ DEALINGS IN THE SOFTWARE.
 #include "codal-core/inc/core/CodalComponent.h"
 #include "codal-core/inc/driver-models/I2C.h"
 #include "codal-core/inc/driver-models/Pin.h"
+#include "MicroBitPowerManager.h"
 
 
 // Constants for USB Interface Flash Management Protocol
@@ -88,14 +89,14 @@ typedef struct
  */
 class MicroBitUSBFlashManager : public CodalComponent
 {
-    public:
-        MicroBitI2C                 &i2cBus;                            // The I2C bus to use to communicate with USB interface chip.
-        MicroBitIO                  &io;                                // Pins used by this device.
-
     private:
+        MicroBitI2C                 &i2cBus;                            // The I2C bus to use to communicate with USB interface chip.
+        MicroBitIO                  &io;                                // Pins used by this device
+        MicroBitPowerManager        &power;                             // Reference to power manager instance
         MicroBitUSBFlashConfig      config;                             // Current configuration of the USB File interface
         MicroBitUSBFlashGeometry    geometry;                           // Current geomtry of the USB File interface
 
+    public:
         /**
          * Constructor.
          * Create a software abstraction of a USB Flash manager.
@@ -105,7 +106,7 @@ class MicroBitUSBFlashManager : public CodalComponent
          * @param id the unique EventModel id of this component. Defaults to: MICROBIT_ID_USB_FLASH_MANAGER
          *
          */
-        MicroBitUSBFlashManager(MicroBitI2C &i2c, MicroBitIO &ioPins, uint16_t id = MICROBIT_ID_USB_FLASH_MANAGER);
+        MicroBitUSBFlashManager(MicroBitI2C &i2c, MicroBitIO &ioPins, MicroBitPowerManager &powerManager, uint16_t id = MICROBIT_ID_USB_FLASH_MANAGER);
 
         /**
          * Determines the filename, filesize and visibility of the USB file presented on the MICROBIT drive.
@@ -140,6 +141,13 @@ class MicroBitUSBFlashManager : public CodalComponent
          * @return DEVICE_OK on success, or error code.
          */
         int remount();
+
+        /**
+         * Reset the KL27 Flash Storage configuration to its default settings.
+         * 
+         * @return DEVICE_OK on success, or error code.
+         */
+        int eraseConfig();
 
         /**
          * Reads data from the specified location in the USB file staorage area.
@@ -188,6 +196,11 @@ class MicroBitUSBFlashManager : public CodalComponent
          */
         int erase(int address, int length);
 
+        /**
+         * Destructor.
+         */
+        ~MicroBitUSBFlashManager();
+
         private:
 
         /**
@@ -209,11 +222,6 @@ class MicroBitUSBFlashManager : public CodalComponent
          * Determines if the given char is valid for an 8.3 filename.
          */
         bool isValidChar(char c);
-
-        /**
-         * Destructor.
-         */
-        ~MicroBitUSBFlashManager();
 
 };
 #endif
