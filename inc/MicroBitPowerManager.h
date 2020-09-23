@@ -38,7 +38,7 @@ DEALINGS IN THE SOFTWARE.
 //
 // I2C Address of the USB Interface Chip (Control interface)
 //
-#define MICROBIT_UIPM_I2C_ADDRESS	                0xE0
+#define MICROBIT_UIPM_I2C_ADDRESS	                (0x70 << 1)
 
 //
 // General constants 
@@ -262,6 +262,15 @@ class MicroBitPowerManager : public CodalComponent
          * simply use uBit.sleep();
          */
         void deepSleep(MicroBitPin &pin);
+
+        /**
+         * Allows a subsystem to indicate that it is actively waiting for a I2C response from the KL27
+         * (e.g. the USBFlashManager). If set, the PowerManager will defer polling of the KL27 control interface
+         * if an interrupt is asserted.
+         *
+         * @param awaiting true if a subsystem is awaiting a packet from the KL27, false otherwise.
+         */
+        void awaitingPacket(bool awaiting);
 
         /**
          * Destructor.
