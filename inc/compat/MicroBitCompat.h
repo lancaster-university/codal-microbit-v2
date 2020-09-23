@@ -379,6 +379,8 @@ typedef codal::EventLaunchMode MicroBitEventLaunchMode;
 namespace codal
 {
     void fiber_add_idle_component(CodalComponent *c);
+    uint32_t htonl(uint32_t v);
+    uint16_t htons(uint16_t v);
 };
 
 using namespace codal;
