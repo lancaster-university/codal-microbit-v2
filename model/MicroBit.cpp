@@ -84,7 +84,8 @@ MicroBit::MicroBit() :
     accelerometer(MicroBitAccelerometer::autoDetect(_i2c)),
     compass(MicroBitCompass::autoDetect(_i2c)),
     compassCalibrator(compass, accelerometer, display),
-    power(_i2c, io)
+    power(_i2c, io),
+    flash(_i2c, io, power)
 {
     // Clear our status
     status = 0;

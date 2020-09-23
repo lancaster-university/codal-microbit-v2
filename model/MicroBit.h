@@ -62,6 +62,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitAccelerometer.h"
 #include "MicroBitCompass.h"
 #include "MicroBitPowerManager.h"
+#include "MicroBitUSBFlashManager.h"
 #include "StreamNormalizer.h"
 #include "LevelDetector.h"
 #include "LevelDetectorSPL.h"
@@ -154,6 +155,8 @@ namespace codal
             Compass&                    compass;
             MicroBitCompassCalibrator   compassCalibrator;
             MicroBitPowerManager        power;
+            MicroBitUSBFlashManager     flash; 
+
 
             /**
              * Constructor.
