@@ -87,7 +87,7 @@ void NRF52LEDMatrix::setDisplayMode(DisplayMode mode)
 {
     // Allocate GPIOTE and PPI channels
     // TODO: use a global allocator here, rather than static allocation.
-    if (!enabled)
+    if (!enabled || (status & NRF52_LEDMATRIX_STATUS_RESET))
     {
         for (int channel = 0; channel < matrixMap.columns; channel++)
         {
@@ -99,7 +99,9 @@ void NRF52LEDMatrix::setDisplayMode(DisplayMode mode)
             NRF_PPI->CH[ppi[channel]].TEP = (uint32_t) &NRF_GPIOTE->TASKS_SET[gpiote[channel]];
             NRF_PPI->CHENSET = 1 << ppi[channel];
         }
+        status &= ~NRF52_LEDMATRIX_STATUS_RESET;
     }
+
     // Determine the number of timeslots we'll need.
     timeslots = matrixMap.rows;
 
@@ -200,9 +202,11 @@ void NRF52LEDMatrix::render()
     }
     else
     {
-        // We just completed a light sense strobe.
-        // Record the light level sensed, and restore the hardware configuration into LED drive mode.
+        // We just completed a light sense strobe. Record the light level sensed.
         lightLevel = 255 - ((255 * timer.timer->CC[1]) / (timerPeriod * NRF52_LED_MATRIX_LIGHTSENSE_STROBES));
+        
+        // Restore the hardware configuration into LED drive mode.
+        status |= NRF52_LEDMATRIX_STATUS_RESET;
         setDisplayMode(mode);
     }
     
