@@ -50,13 +50,6 @@ CREATE_KEY_VALUE_TABLE(usbFlashPropertyLength, usbFlashPropertyLengthData);
 MicroBitUSBFlashManager::MicroBitUSBFlashManager(MicroBitI2C &i2c, MicroBitIO &ioPins, MicroBitPowerManager &powerManager, uint16_t id) : i2cBus(i2c), io(ioPins), power(powerManager)
 {
     this->id = id;
-
-    // Ensure we know the USB FLASH geometry.
-    while(!(status & MICROBIT_USB_FLASH_GEOMETRY_LOADED))
-    {
-        target_wait(1);
-        getGeometry();
-    }
 }
 
 /**
@@ -115,6 +108,9 @@ int MicroBitUSBFlashManager::setConfiguration(MicroBitUSBFlashConfig config, boo
 
     int dots = 0;
     bool invalidChar = false;
+
+    // Ensure we know the device geometry
+    getGeometry();
 
     // If the requested file is too long/short, we can't proceed.
     if (config.fileSize <= 0 || 1024 * config.fileSize >= geometry.blockSize*geometry.blockCount)
@@ -343,6 +339,9 @@ int MicroBitUSBFlashManager::erase(int address, int length)
     // Ensure we have a valid request
     if (length <= 0 || address < 0 || address + length > geometry.blockSize * geometry.blockCount)
         return DEVICE_INVALID_PARAMETER;
+
+    // Ensure we know the device geometry
+    getGeometry();
 
     // Calculcate block aligned start and end addresses for the erase operation, taking into account that he KL27 
     // uses INCLUSIVE end addresses.
