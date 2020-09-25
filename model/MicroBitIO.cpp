@@ -65,7 +65,7 @@ MicroBitIO::MicroBitIO(NRF52ADC &a, TouchSensor &s) :
     P20(ID_PIN_P20, P1_00, PIN_CAPABILITY_AD),
 
     // Other exposed pins
-    face(ID_PIN_FACE, P1_04, PIN_CAPABILITY_AD),
+    logo(ID_PIN_LOGO, P1_04, PIN_CAPABILITY_AD),
 
     // Internal Pins
     speaker(ID_PIN_SPEAKER, P0_00, PIN_CAPABILITY_AD),
@@ -89,7 +89,8 @@ MicroBitIO::MicroBitIO(NRF52ADC &a, TouchSensor &s) :
     col4(P6),
     col5(P10),
     buttonA(P5),
-    buttonB(P11)
+    buttonB(P11),
+    face(logo)
 {
   pins = 33;
   NRF52Pin::adc = &a;

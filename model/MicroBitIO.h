@@ -243,7 +243,10 @@ typedef enum {
 // User Input
 #define MICROBIT_PIN_BUTTON_A                       P0_14
 #define MICROBIT_PIN_BUTTON_B                       P0_23
-#define MICROBIT_PIN_FACE_TOUCH                     P1_04
+#define MICROBIT_PIN_LOGO_TOUCH                     P1_04
+
+// FOR MakeCode extension compat. Delete ASAP.
+#define MICROBIT_PIN_FACE_TOUCH                     MICROBIT_PIN_LOGO_TOUCH
 
 // Audio
 #define MICROBIT_PIN_RUN_MIC                        P0_20
@@ -307,7 +310,7 @@ typedef enum {
 #define ID_PIN_P18       (DEVICE_ID_IO_P0 + 18)
 #define ID_PIN_P19       (DEVICE_ID_IO_P0 + 19)
 #define ID_PIN_P20       (DEVICE_ID_IO_P0 + 20)
-#define ID_PIN_FACE      (DEVICE_ID_IO_P0 + 21)
+#define ID_PIN_LOGO      (DEVICE_ID_IO_P0 + 21)
 #define ID_PIN_SPEAKER   (DEVICE_ID_IO_P0 + 22)
 #define ID_PIN_RUNMIC    (DEVICE_ID_IO_P0 + 23)
 #define ID_PIN_SDA       (DEVICE_ID_IO_P0 + 24)
@@ -334,6 +337,9 @@ typedef enum {
 #define ID_PIN_P45       (DEVICE_ID_IO_P0 + 45)
 #define ID_PIN_P46       (DEVICE_ID_IO_P0 + 46)
 #define ID_PIN_P47       (DEVICE_ID_IO_P0 + 47)
+
+// For MakeCode extension compat. Delete ASAP.
+#define ID_PIN_FACE      (ID_PIN_LOGO)
 
 //
 // Saved status values to restore GPIO configurations after deep sleep
@@ -383,7 +389,7 @@ namespace codal
             NRF52Pin          P20;          // P1_00
 
             // Other exposed pins
-            NRF52Pin          face;         // P1_04
+            NRF52Pin          logo;         // P1_04
 
             // Internal Pins
             NRF52Pin          speaker;      // P0_00
@@ -408,6 +414,7 @@ namespace codal
             NRF52Pin&         col5;
             NRF52Pin&         buttonA;
             NRF52Pin&         buttonB;
+            NRF52Pin&         face;         // Temporary compat for MakeCode extension. Delete ASAP.
 
 
             /**
