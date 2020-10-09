@@ -229,7 +229,14 @@ class MicroBitPowerManager : public CodalComponent
          * @return A response or error packet 
          */
         ManagedBuffer readProperty(int property);
-        
+
+        /**
+         * Perform a NULL opertion I2C transcation wit the interface chip.
+         * This is used to awken the KL27 interface chip from light sleep, 
+         * as a work around for silicon errata in the KL27.
+         */
+        void nop();
+
         /**
          * Powers down the CPU and USB interface and enters STANDBY state. All user code and peripherals will cease operation. 
          * Device can subsequently be awoken only via a RESET. User program state will be lost and will restart
@@ -286,13 +293,6 @@ class MicroBitPowerManager : public CodalComponent
          * @param doSleep Set to true to preapre for sleep, false to prepare to reawaken.
          */
         void setSleepMode(bool doSleep);
-
-        /**
-         * Perform a NULL opertion I2C transcation wit the interface chip.
-         * This is used to awken the KL27 interface chip from light sleep, 
-         * as a work around for silicon errata in the KL27.
-         */
-        void nop();
 
 };
 #endif

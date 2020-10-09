@@ -140,8 +140,8 @@ uint32_t MicroBitPowerManager::getPowerConsumption()
  */
 void MicroBitPowerManager::nop()
 {
-    //i2cBus.write(MICROBIT_UIPM_I2C_ADDRESS, (uint8_t *)UIPM_I2C_NOP, 3, false);
-    //target_wait(10);
+    i2cBus.write(MICROBIT_UIPM_I2C_ADDRESS, (uint8_t *)UIPM_I2C_NOP, 3, false);
+    target_wait(10);
 }
 
 /**

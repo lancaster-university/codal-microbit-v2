@@ -416,7 +416,8 @@ int MicroBitUSBFlashManager::erase(int address, int length)
 ManagedBuffer MicroBitUSBFlashManager::transact(ManagedBuffer request, int responseLength)
 {
     int attempts = 0;
-       
+
+    power.nop();
     if (i2cBus.write(MICROBIT_USB_FLASH_I2C_ADDRESS, &request[0], request.length(), false) != DEVICE_OK)
         return ManagedBuffer();
  
@@ -430,6 +431,7 @@ ManagedBuffer MicroBitUSBFlashManager::transact(ManagedBuffer request, int respo
         {
             ManagedBuffer b(responseLength);
 
+            power.nop();
             int r = i2cBus.read(MICROBIT_USB_FLASH_I2C_ADDRESS, &b[0], responseLength, false);
             
             if (r == MICROBIT_OK)
