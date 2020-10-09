@@ -450,3 +450,10 @@ __attribute__((weak)) void target_panic( int statusCode)
 {
     codal::microbit_panic( statusCode);
 }
+
+extern "C"
+{
+__attribute__((weak)) int __wrap_atexit(void (*function)(void)) {
+    return -1;
+}
+}
