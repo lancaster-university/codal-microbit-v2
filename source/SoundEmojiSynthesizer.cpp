@@ -199,7 +199,11 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
             int effectStepEnd[EMOJI_SYNTHESIZER_TONE_EFFECTS];
 
             for (int i = 0; i < EMOJI_SYNTHESIZER_TONE_EFFECTS; i++)
+            {
                 effectStepEnd[i] = (int) (samplesPerStep[i] * (effect->effects[i].step));
+                if (effect->effects[i].step == effect->effects[i].steps - 1)
+                    effectStepEnd[i] = samplesToWrite;
+            }
                 
             int stepEndPosition = effectStepEnd[0];
             for (int i = 1; i < EMOJI_SYNTHESIZER_TONE_EFFECTS; i++)
