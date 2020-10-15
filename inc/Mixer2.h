@@ -32,8 +32,13 @@ DEALINGS IN THE SOFTWARE.
 #endif
 
 #ifndef CONFIG_MIXER_INTERNAL_RANGE
-#define CONFIG_MIXER_INTERNAL_RANGE 1024.0f
+#define CONFIG_MIXER_INTERNAL_RANGE 1023
 #endif
+
+#ifndef CONFIG_MIXER_DEFAULT_SAMPLERATE
+#define CONFIG_MIXER_DEFAULT_SAMPLERATE 44100
+#endif
+
 
 namespace codal
 {
@@ -41,20 +46,24 @@ namespace codal
 class MixerChannel : public DataSink
 {
 private:
-    MixerChannel    *next;
-    DataSource      *stream;
-    ManagedBuffer   buffer;
-    int             pullRequests;
-    uint8_t         *in;
-    uint8_t         *end;
+    DataSource      *stream;                    // The DataSource feeding this mixer channel.
+    ManagedBuffer   buffer;                     // The last buffer received from the DataSource.
+    int             pullRequests;               // The number of buffers ready to be read from the DataSource.
 
-    float           range;
-    float           offset;
-    float           gain;
+    uint8_t         *in;                        // Pointer to the next sample that should be read from the current buffer.
+    uint8_t         *end;                       // Pointer to the end of the current buffer (optimisation).
 
-    float           volume;
-    int             format;
-    int             bytesPerSample;    
+    float           range;                      // The number of quantization levels in the input data.
+    float           rate;                       // The sample rate of the input data.
+    float           offset;                     // Offset applied to every sample before mixing (for unsigned samples)
+    float           gain;                       // Input gain to applied ot each sample to normalise (optimisation)
+    float           skip;                       // Number of input samples to progress for each output sample (when sub/super sampling)
+
+    float           volume;                     // Volume leve of channel, in the range 0..CONFIG_MIXER_INTERNAL_RANGE
+    int             format;                     // Format of the data recieved on this channel (e.g. DATASTREAM_FORMAT_16BIT_UNSIGNED...)
+    int             bytesPerSample;             // The number of bytes used in the input stream for each sample (optimisation)
+
+    MixerChannel    *next;                      // Internal Linkage - list of all mixer channels
 
     friend class    Mixer2;
 
@@ -73,6 +82,7 @@ class Mixer2 : public DataSource
     DataSink        *downStream;
     float           mix[CONFIG_MIXER_BUFFER_SIZE/2];
     float           outputRange;
+    float           outputRate;
     int             outputFormat;
     int             bytesPerSampleOut;
     float           volume;
@@ -80,12 +90,13 @@ class Mixer2 : public DataSource
 
 public:
     /**
-     * Default Constructor.
+     * Constructor.
      * Creates an empty Mixer.
-     * 
-     * @param format The format the mixer will output.
+     * @param sampleRate (samples per second) of the mixer output
+     * @param sampleRange (quantization levels) the difference between the maximum and minimum sample level on the output channel
+     * @param format The format the mixer will output (DATASTREAM_FORMAT_16BIT_UNSIGNED or DATASTREAM_FORMAT_16BIT_SIGNED)
      */
-    Mixer2(int format = DATASTREAM_FORMAT_16BIT_UNSIGNED);
+    Mixer2(int sampleRate = CONFIG_MIXER_DEFAULT_SAMPLERATE, int sampleRange = CONFIG_MIXER_INTERNAL_RANGE, int format = DATASTREAM_FORMAT_16BIT_UNSIGNED);
 
     /**
      * Destructor.
@@ -93,8 +104,14 @@ public:
      */
     ~Mixer2();
 
-    MixerChannel *addChannel(DataSource &stream, int range = 1023);
-    void configureChannel(MixerChannel *c);
+    /**
+     * Add a new channel to the mixer.
+     * 
+     * @oaram stream DataSource to connect to the new input channel
+     * @param sampleRate (samples per second) - if set to zero, defaults to the output sample rate of the Mixer
+     * @param sampleRange (quantization levels) the difference between the maximum and minimum sample level on the input channel
+     */
+    MixerChannel *addChannel(DataSource &stream, int sampleRate = 0, int sampleRange = CONFIG_MIXER_INTERNAL_RANGE);
 
     /**
      * Provide the next available ManagedBuffer to our downstream caller, if available.
@@ -138,10 +155,30 @@ public:
 
     /**
      * Change the sample range used by this Synthesizer,
-     * @param sampleRange The new sample range, that defines by the maximum sample value that will be output by the mixer.
+     * @param sampleRange (quantization levels) the difference between the maximum and minimum sample level on the output channel
      * @return DEVICE_OK on success.
      */
     int setSampleRange(uint16_t sampleRange);
+
+    /**
+     * Change the sample rate output of this Mixer.
+     * @param sampleRate The new sample rate (samples per second) of the mixer output
+     * @return DEVICE_OK on success.
+     */
+    int setSampleRate(int sampleRate);
+
+    /**
+     * Determine the sample range used by this Synthesizer,
+     * @param sampleRange The new sample range, that defines by the maximum sample value that will be output by the mixer.
+     * @return the sample range (quantization levels) the difference between the maximum and minimum sample level on the output channel.
+     */
+    int getSampleRange();
+
+    /**
+     * Determine the sample rate output of this Mixer.
+     * @return The sample rate (samples per second) of the mixer output.
+     */
+    int getSampleRate();
 
     /**
      * Defines an optional bit mask to logical OR with each sample.
@@ -152,6 +189,8 @@ public:
      */
     int setOrMask(uint32_t mask);
 
+    private:
+    void configureChannel(MixerChannel *c);
 };
 
 } // namespace codal

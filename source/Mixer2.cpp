@@ -29,9 +29,15 @@ DEALINGS IN THE SOFTWARE.
 
 using namespace codal;
 
-volatile int thingy;
 
-Mixer2::Mixer2(int format)
+/**
+ * Constructor.
+ * Creates an empty Mixer.
+ * @param sampleRate (samples per second) of the mixer output
+ * @param sampleRange (quantization levels) the difference between the maximum and minimum sample level on the output channel
+ * @param format The format the mixer will output (DATASTREAM_FORMAT_16BIT_UNSIGNED or DATASTREAM_FORMAT_16BIT_SIGNED)
+ */
+Mixer2::Mixer2(int sampleRate, int sampleRange, int format)
 {
     // Set valid defaults.
     this->channels = NULL;
@@ -39,11 +45,12 @@ Mixer2::Mixer2(int format)
     this->outputFormat = DATASTREAM_FORMAT_16BIT_UNSIGNED;
     this->bytesPerSampleOut = 2;
     this->volume = 1.0f;
-    this->outputRange = CONFIG_MIXER_INTERNAL_RANGE;
     this->orMask = 0;
 
     // Attempt to configure output format to requested value
     this->setFormat(format);
+    this->setSampleRate(sampleRate);
+    this->setSampleRange(sampleRange);
 }
 
 Mixer2::~Mixer2()
@@ -63,19 +70,29 @@ void Mixer2::configureChannel(MixerChannel *c)
     c->format = c->stream->getFormat();
     c->bytesPerSample = DATASTREAM_FORMAT_BYTES_PER_SAMPLE(c->format);
     c->gain = CONFIG_MIXER_INTERNAL_RANGE / (float) c->range;
+    c->skip = outputRate / c->rate;
     c->offset = 0.0f;
 
     if (c->format == DATASTREAM_FORMAT_8BIT_UNSIGNED || c->format == DATASTREAM_FORMAT_16BIT_UNSIGNED)
         c->offset = c->range * -0.5f;       
 }
 
-MixerChannel *Mixer2::addChannel(DataSource &stream, int range)
+/**
+ * Add a new channel to the mixer.
+ * 
+ * @oaram stream DataSource to connect to the new input channel
+ * @param sampleRate (samples per second) - if set to zero, defaults to the output sample rate of the Mixer
+ * @param sampleRange (quantization levels) the difference between the maximum and minimum sample level on the input channel
+ */
+MixerChannel *Mixer2::addChannel(DataSource &stream, int sampleRate, int sampleRange)
 {
     MixerChannel *c = new MixerChannel();
     c->stream = &stream;
-    c->range = range;
+    c->range = sampleRange;
+    c->rate = sampleRate ? sampleRate : outputRate;
     c->pullRequests = 0;
     c->in = NULL;
+    c->end = NULL;
     configureChannel(c);
 
     // Add channel to list.
@@ -250,14 +267,49 @@ Mixer2::getVolume()
 }
 
 /**
- * Change the sample range used by this Synthesizer,
- * @param sampleRange The new sample range, that defines by the maximum sample value that will be output by the mixer.
+ * Change the sample range output of this mixer,
+ * @param sampleRange (quantization levels) the difference between the maximum and minimum sample level on the output channel
  * @return DEVICE_OK on success.
  */
 int Mixer2::setSampleRange(uint16_t sampleRange)
 {
     this->outputRange = (float)sampleRange;
     return DEVICE_OK;
+}
+
+/**
+ * Change the sample rate output of this Mixer.
+ * @param sampleRate The new sample rate (samples per second) of the mixer output
+ * @return DEVICE_OK on success.
+ */
+int Mixer2::setSampleRate(int sampleRate)
+{
+    this->outputRate = (float)sampleRate;
+
+    // Recompute the sub/super sampling constants for each channel.    
+    for (MixerChannel *c = channels; c; c=c->next)
+        c->skip = outputRate / c->rate;
+
+    return DEVICE_OK;
+}
+
+/**
+ * Determine the sample range used by this Synthesizer,
+ * @param sampleRange The new sample range, that defines by the maximum sample value that will be output by the mixer.
+ * @return the sample range (quantization levels) the difference between the maximum and minimum sample level on the output channel.
+ */
+int Mixer2::getSampleRange()
+{
+    return (int) this->outputRange;
+}
+
+/**
+ * Determine the sample rate output of this Mixer.
+ * @return The sample rate (samples per second) of the mixer output.
+ */
+int Mixer2::getSampleRate()
+{
+    return (int) this->outputRate;
 }
 
 /**
