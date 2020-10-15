@@ -58,6 +58,7 @@ private:
     float           offset;                     // Offset applied to every sample before mixing (for unsigned samples)
     float           gain;                       // Input gain to applied ot each sample to normalise (optimisation)
     float           skip;                       // Number of input samples to progress for each output sample (when sub/super sampling)
+    float           position;                   // fractional position within the buffer of next sample (sub/super sampling) 
 
     float           volume;                     // Volume leve of channel, in the range 0..CONFIG_MIXER_INTERNAL_RANGE
     int             format;                     // Format of the data recieved on this channel (e.g. DATASTREAM_FORMAT_16BIT_UNSIGNED...)

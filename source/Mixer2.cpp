@@ -70,7 +70,7 @@ void Mixer2::configureChannel(MixerChannel *c)
     c->format = c->stream->getFormat();
     c->bytesPerSample = DATASTREAM_FORMAT_BYTES_PER_SAMPLE(c->format);
     c->gain = CONFIG_MIXER_INTERNAL_RANGE / (float) c->range;
-    c->skip = outputRate / c->rate;
+    c->skip = c->rate / outputRate;
     c->offset = 0.0f;
 
     if (c->format == DATASTREAM_FORMAT_8BIT_UNSIGNED || c->format == DATASTREAM_FORMAT_16BIT_UNSIGNED)
@@ -93,6 +93,8 @@ MixerChannel *Mixer2::addChannel(DataSource &stream, int sampleRate, int sampleR
     c->pullRequests = 0;
     c->in = NULL;
     c->end = NULL;
+    c->position = 0;
+
     configureChannel(c);
 
     // Add channel to list.
@@ -138,7 +140,12 @@ ManagedBuffer Mixer2::pull()
 
         while (out < end)
         {
-            int len =  min(CONFIG_MIXER_BUFFER_SIZE / bytesPerSampleOut, (ch->end - ch->in) / ch->bytesPerSample);
+            // precalculate the maximum number of samples the we can process with the current buffer allocations.
+            // choose the minimum between the available samples in the input buffer and the space in the output buffer.
+            int outLen = (int) (end - out);
+            int inLen = ((ch->buffer.length() / ch->bytesPerSample) - ch->position) / ch->skip;
+            int len =  min(outLen, inLen);
+
             uint8_t *d = ch->in;
 
             while(len--)
@@ -149,27 +156,27 @@ ManagedBuffer Mixer2::pull()
                 v *= ch->volume;    
                 *out += v;
  
-                d += ch->bytesPerSample;
+                ch->position += ch->skip;
+                d = ch->in + (int)(ch->position * ch->bytesPerSample);
+
                 out++;
             }
 
-            ch->in = d;
-
             // Check if we've completed an input buffer. If so, pull down another if available.
             // if no buffer is available, then move on to the next channel.
-            if (ch->in >= ch->end)
+            if (inLen <= outLen)
             {
-                if (ch->pullRequests)
-                {
-                    ch->pullRequests--;
-                    ch->buffer = ch->stream->pull();
-                    ch->in = &ch->buffer[0];
-                    ch->end = ch->in + ch->buffer.length();
-                }
-                else
-                {
+                if (ch->pullRequests == 0)
                     break;
-                }
+
+                ch->pullRequests--;
+                ch->buffer = ch->stream->pull();
+                ch->in = &ch->buffer[0];
+                ch->position = 0;
+                ch->end = ch->in + ch->buffer.length();
+
+                if (ch->buffer.length() == 0)
+                    break;
             }                
         }
     }       
@@ -190,8 +197,11 @@ ManagedBuffer Mixer2::pull()
         float sample = *r * scale;
         sample += offset;
         
+        // Clamp output range. Would be nice to use apply some compression here, 
+        // but we don't really want ot use more CPU than we already do.
         if (sample < lo)
             sample = lo;
+
         if (sample > hi)
             sample = hi;
 
@@ -288,7 +298,7 @@ int Mixer2::setSampleRate(int sampleRate)
 
     // Recompute the sub/super sampling constants for each channel.    
     for (MixerChannel *c = channels; c; c=c->next)
-        c->skip = outputRate / c->rate;
+        c->skip = c->rate / outputRate;
 
     return DEVICE_OK;
 }
