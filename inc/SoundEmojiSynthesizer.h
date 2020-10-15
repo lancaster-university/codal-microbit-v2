@@ -82,7 +82,7 @@ namespace codal
     {
         float               frequency;                                      // Central frequency of this sound effect
         float               volume;                                         // Central volume of this sound effect
-        float               duration;                                       // Duration of hthe sound in milliseconds
+        float               duration;                                       // Duration of the sound in milliseconds. Negative values are interpreted as infinite.
         TonePrint           tone;                                           // TonePrint function and parameters
         ToneEffect          effects[EMOJI_SYNTHESIZER_TONE_EFFECTS];        // Optional Effects to apply to the SoundEffect
     } SoundEffect;
@@ -205,11 +205,11 @@ namespace codal
         /**
          * Determine the number of samples required for the given playout time.
          *
-         * @param playoutTimeUs The playout time (in microseconds)
+         * @param playoutTime The playout time (in milliseconds)
          * @return The number if samples required to play for the given amount fo time
          * (at the currently defined sample rate)
          */
-        int determineSampleCount(int playoutTimeUs);
+        int determineSampleCount(float playoutTime);
 
     };
 }

@@ -47,6 +47,7 @@ SoundEmojiSynthesizer::SoundEmojiSynthesizer(int sampleRate) : buffer(EMOJI_SYNT
 
     setSampleRate(sampleRate);
     setSampleRange(1023);
+    setOrMask(0);
 }
 
 /**
@@ -136,16 +137,22 @@ void SoundEmojiSynthesizer::nextSoundEffect()
     // Validate that we have a valid sound effect. If not, record that we have nothing to play.
     if ((uint8_t *)effect >= &effectBuffer[0] + effectBuffer.length())
     {
-        effect = NULL;
-        effectBuffer = emptyBuffer;
-        samplesWritten = 0;
-        samplesToWrite = 0;
-        position = 0.0f;
-        return;
+        // if we have an effect with a negative duration, reset the buffer (unless there is an update pending)
+        effect = (SoundEffect *) &effectBuffer[0];
+
+        if (effect->duration > 0 || lock.getWaitCount() > 0)
+        {
+            effect = NULL;
+            effectBuffer = emptyBuffer;
+            samplesWritten = 0;
+            samplesToWrite = 0;
+            position = 0.0f;
+            return;
+        }
     }
 
     // We have a valid buffer. Set up our synthesizer to the requested parameters.
-    samplesToWrite = determineSampleCount(effect->duration * 1000.0f);
+    samplesToWrite = determineSampleCount(effect->duration);
     frequency = effect->frequency;
     volume = effect->volume;
     samplesWritten = 0;
@@ -288,13 +295,16 @@ int SoundEmojiSynthesizer::setSampleRate(int sampleRate)
 /**
  * Determine the number of samples required for the given playout time.
  *
- * @param playoutTimeUs The playout time (in microseconds)
+ * @param playoutTime The playout time (in milliseconds)
  * @return The number of samples required to play for the given amount of time
  * (at the currently defined sample rate)
  */
-int SoundEmojiSynthesizer::determineSampleCount(int playoutTimeUs)
+int SoundEmojiSynthesizer::determineSampleCount(float playoutTime)
 {
-    float seconds = (float)playoutTimeUs / 1000000.0f;
+    if (playoutTime < 0)
+        playoutTime = -playoutTime;
+
+    float seconds = playoutTime / 1000.0f;
     return (int) ((float)sampleRate * seconds);
 }
 
