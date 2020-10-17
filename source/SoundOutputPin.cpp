@@ -83,7 +83,7 @@ int SoundOutputPin::getAnalogValue()
   *
   * @return DEVICE_OK on success.
   */
-int SoundOutputPin::setAnalogPeriodUs(int period)
+int SoundOutputPin::setAnalogPeriodUs(uint32_t period)
 {
     this->periodUs = period;
     update();

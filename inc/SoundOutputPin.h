@@ -72,7 +72,7 @@ namespace codal
          * @return DEVICE_OK on success, DEVICE_INVALID_PARAMETER if value is out of range, or DEVICE_NOT_SUPPORTED
          *         if the given pin does not have analog capability.
          */
-        int setAnalogValue(int value);
+        virtual int setAnalogValue(int value) override;
 
         /**
          * Configures this IO pin as an analogue input (if necessary), and samples the Pin for its analog value.
@@ -85,7 +85,7 @@ namespace codal
          * P0.getAnalogValue(); // P0 is a value in the range of 0 - 1024
          * @endcode
          */
-        int getAnalogValue();
+        virtual int getAnalogValue() override;
 
         /**
          * Configures the PWM period of the analog output to the given value.
@@ -95,7 +95,7 @@ namespace codal
          * @return DEVICE_OK on success, or DEVICE_NOT_SUPPORTED if the
          *         given pin is not configured as an analog output.
          */
-        int setAnalogPeriod(int period);
+        virtual int setAnalogPeriod(int period) override;
 
         /**
          * Configures the PWM period of the analog output to the given value.
@@ -105,7 +105,7 @@ namespace codal
          * @return DEVICE_OK on success, or DEVICE_NOT_SUPPORTED if the
          *         given pin is not configured as an analog output.
          */
-        int setAnalogPeriodUs(int period);
+        virtual int setAnalogPeriodUs(uint32_t period) override;
 
         /**
          * Obtains the PWM period of the analog output in microseconds.
@@ -113,7 +113,7 @@ namespace codal
          * @return the period on success, or DEVICE_NOT_SUPPORTED if the
          *         given pin is not configured as an analog output.
          */
-        uint32_t getAnalogPeriodUs();
+        virtual uint32_t getAnalogPeriodUs() override;
 
         /**
          * Obtains the PWM period of the analog output in milliseconds.
@@ -121,7 +121,7 @@ namespace codal
          * @return the period on success, or DEVICE_NOT_SUPPORTED if the
          *         given pin is not configured as an analog output.
          */
-        int getAnalogPeriod();
+        virtual int getAnalogPeriod() override;
 
         private:
 
