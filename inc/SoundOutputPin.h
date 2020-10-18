@@ -49,6 +49,7 @@ namespace codal
         Mixer2                  &mix;
         MixerChannel            *channel;
         SoundEmojiSynthesizer   synth;
+        SoundEffect             *fx;
         int                     periodUs;
         int                     value;
 

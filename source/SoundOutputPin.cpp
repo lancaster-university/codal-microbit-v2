@@ -44,6 +44,7 @@ SoundOutputPin::SoundOutputPin(Mixer2 &mixer, int id) : codal::Pin(id, 0, PIN_CA
 {
     this->value = 512;
     this->periodUs = 0;
+    this->fx = NULL;
     this->channel = mixer.addChannel(synth);
 }
 
@@ -134,13 +135,22 @@ void SoundOutputPin::update()
     float v = (float) value;
     float volume = v < 512.0f ? v / 512.0f : (1023.0f - v) / 512.0f;
 
-    ManagedBuffer b(sizeof(SoundEffect));
-    SoundEffect *fx = (SoundEffect *)&b[0];
+    // If this is the first time we've been asked to produce a sound, prime a SoundEffect buffer.
+    if (fx == NULL)
+    {
+        ManagedBuffer b(sizeof(SoundEffect));
 
-    fx->duration = -CONFIG_SOUND_OUTPUT_PIN_PERIOD;
-    fx->tone.tonePrint = Synthesizer::SquareWaveTone;
-    fx->frequency = periodUs == 0 ? 6068 : 1000000.0f / (float) periodUs;
-    fx->volume = periodUs == 0 ? 0 : volume;
+        fx = (SoundEffect *)&b[0];
+        fx->duration = -CONFIG_SOUND_OUTPUT_PIN_PERIOD;
+        fx->tone.tonePrint = Synthesizer::SquareWaveTone;
+        fx->frequency = periodUs == 0 ? 6068 : 1000000.0f / (float) periodUs;
+        fx->volume = periodUs == 0 ? 0 : volume;
 
-    synth.play(b);
+        synth.play(b);
+    }
+    else
+    {
+        fx->frequency = periodUs == 0 ? 6068 : 1000000.0f / (float) periodUs;
+        fx->volume = periodUs == 0 ? 0 : volume;
+    }
 }
