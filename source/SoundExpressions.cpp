@@ -30,7 +30,6 @@ DEALINGS IN THE SOFTWARE.
 #include "SoundEmojiSynthesizer.h"
 #include "SoundSynthesizerEffects.h"
 #include "ManagedString.h"
-#include "NotifyEvents.h"
 
 #define CLAMP(lo, v, hi) ((v) = ((v) < (lo) ? (lo) : (v) > (hi) ? (hi) : (v)))
 
