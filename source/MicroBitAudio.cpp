@@ -40,7 +40,7 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker):
     speakerEnabled(false),
     pin(pin), 
     speaker(speaker),
-    synth(DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_1),
+    synth(DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_0),
     soundExpressionChannel(NULL),
     pwm(NULL),
     soundExpressions(synth),
