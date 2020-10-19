@@ -48,7 +48,6 @@ namespace codal
 
         /**
          * Plays a sound encoded as a series of decimal encoded effects or specified by name and blocks.
-         * TODO: blocking!
          */
         void play(ManagedString sound);
 

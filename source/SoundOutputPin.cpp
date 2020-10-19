@@ -40,7 +40,7 @@ using namespace codal;
  * @param id the unique EventModel id of this component.
  * @param mixer the mixer to use
  */
-SoundOutputPin::SoundOutputPin(Mixer2 &mixer, int id) : codal::Pin(id, 0, PIN_CAPABILITY_ANALOG), mix(mixer), synth(44100)
+SoundOutputPin::SoundOutputPin(Mixer2 &mixer, int id) : codal::Pin(id, 0, PIN_CAPABILITY_ANALOG), mix(mixer), synth(DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_1)
 {
     this->value = 512;
     this->periodUs = 0;

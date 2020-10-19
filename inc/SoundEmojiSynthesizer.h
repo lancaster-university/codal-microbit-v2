@@ -40,6 +40,19 @@ DEALINGS IN THE SOFTWARE.
 //
 #define EMOJI_SYNTHESIZER_STATUS_ACTIVE       0x01
 
+#define DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_0 3010
+#define DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_1 3011
+#define DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_2 3012
+#define DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_3 3013
+#define DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_4 3014
+#define DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_5 3015
+#define DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_6 3016
+#define DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_7 3017
+#define DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_8 3018
+#define DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_9 3019
+
+#define DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_DONE 1
+
 namespace codal
 {
 
@@ -118,9 +131,10 @@ namespace codal
           * Default Constructor.
           * Creates an empty DataStream.
           *
+          * @param id The ID of this synthesizer.
           * @param sampleRate The sample rate at which this synthesizer will produce data.
           */
-        SoundEmojiSynthesizer(int sampleRate = EMOJI_SYNTHESIZER_SAMPLE_RATE);
+        SoundEmojiSynthesizer(uint16_t id, int sampleRate = EMOJI_SYNTHESIZER_SAMPLE_RATE);
 
         /**
           * Destructor.

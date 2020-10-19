@@ -49,7 +49,9 @@ SoundExpressions::~SoundExpressions()
 }
 
 void SoundExpressions::play(ManagedString sound) {
+    fiber_wake_on_event(synth.id, DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_DONE);
     playAsync(sound);
+    schedule();
 }
 
 void SoundExpressions::playAsync(ManagedString sound) {
