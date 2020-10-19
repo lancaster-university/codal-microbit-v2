@@ -35,7 +35,7 @@ using namespace codal;
   * Class definition for a Synthesizer.
   * A Synthesizer generates a tone waveform based on a number of overlapping waveforms.
   */
-SoundEmojiSynthesizer::SoundEmojiSynthesizer(int sampleRate) : buffer(EMOJI_SYNTHESIZER_BUFFER_SIZE), emptyBuffer(0)
+SoundEmojiSynthesizer::SoundEmojiSynthesizer(uint16_t id, int sampleRate) : CodalComponent(id, 0), buffer(EMOJI_SYNTHESIZER_BUFFER_SIZE), emptyBuffer(0)
 {
     this->downStream = NULL;
     this->bufferSize = EMOJI_SYNTHESIZER_BUFFER_SIZE;
@@ -194,7 +194,10 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
             {
                 done = true;
                 if (renderComplete)
+                {
+                    Event(id, DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_DONE);
                     lock.notify();
+                }
             }
         }
         

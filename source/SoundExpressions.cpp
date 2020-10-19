@@ -30,6 +30,7 @@ DEALINGS IN THE SOFTWARE.
 #include "SoundEmojiSynthesizer.h"
 #include "SoundSynthesizerEffects.h"
 #include "ManagedString.h"
+#include "NotifyEvents.h"
 
 #define CLAMP(lo, v, hi) ((v) = ((v) < (lo) ? (lo) : (v) > (hi) ? (hi) : (v)))
 
@@ -49,7 +50,9 @@ SoundExpressions::~SoundExpressions()
 }
 
 void SoundExpressions::play(ManagedString sound) {
+    fiber_wake_on_event(synth.id, DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_DONE);
     playAsync(sound);
+    schedule();
 }
 
 void SoundExpressions::playAsync(ManagedString sound) {
