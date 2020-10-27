@@ -206,6 +206,8 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
         {
             float skip = ((EMOJI_SYNTHESIZER_TONE_WIDTH_F * frequency) / sampleRate);
             float gain = (sampleRange * volume) / 1024.0f;
+            float offset = 512.0f - (512.0f * gain);
+
             int effectStepEnd[EMOJI_SYNTHESIZER_TONE_EFFECTS];
 
             for (int i = 0; i < EMOJI_SYNTHESIZER_TONE_EFFECTS; i++)
@@ -233,7 +235,7 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
                 float s = effect->tone.tonePrint(effect->tone.parameter, (int) position);
 
                 // Apply volume scaling and OR mask (if specified).
-                *sample = ((uint16_t) (s * gain)) | orMask;
+                *sample = ((uint16_t) ((s * gain) + offset)) | orMask;
 
                 // Move on our pointers.
                 sample++;
