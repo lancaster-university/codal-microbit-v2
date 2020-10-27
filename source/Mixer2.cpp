@@ -116,7 +116,7 @@ ManagedBuffer Mixer2::pull()
     }
 
     // Clear the accumulator buffer
-    for (int i=0; i<CONFIG_MIXER_BUFFER_SIZE/2; i++)
+    for (int i=0; i<CONFIG_MIXER_BUFFER_SIZE/bytesPerSampleOut; i++)
         mix[i] = 0.0f;
 
     MixerChannel *next;
@@ -135,7 +135,7 @@ ManagedBuffer Mixer2::pull()
         }
 
         float *out = &mix[0];
-        float *end = &mix[CONFIG_MIXER_BUFFER_SIZE/2];
+        float *end = &mix[CONFIG_MIXER_BUFFER_SIZE/bytesPerSampleOut];
         int inputFormat = ch->format;
 
         while (out < end)
@@ -188,9 +188,9 @@ ManagedBuffer Mixer2::pull()
 
     int len = output.length() / bytesPerSampleOut;
     float scale = volume * outputRange / CONFIG_MIXER_INTERNAL_RANGE;
-    int offset = (outputFormat == DATASTREAM_FORMAT_16BIT_UNSIGNED) ? outputRange/2 : 0;
-    float lo = (outputFormat == DATASTREAM_FORMAT_16BIT_UNSIGNED) ? 0 : -outputRange/2;
-    float hi = (outputFormat == DATASTREAM_FORMAT_16BIT_UNSIGNED) ? outputRange : outputRange/2;
+    int offset = (outputFormat == DATASTREAM_FORMAT_16BIT_UNSIGNED || outputFormat == DATASTREAM_FORMAT_8BIT_UNSIGNED) ? outputRange/2 : 0;
+    float lo = (outputFormat == DATASTREAM_FORMAT_16BIT_UNSIGNED || outputFormat == DATASTREAM_FORMAT_8BIT_UNSIGNED) ? 0 : -outputRange/2;
+    float hi = (outputFormat == DATASTREAM_FORMAT_16BIT_UNSIGNED || outputFormat == DATASTREAM_FORMAT_8BIT_UNSIGNED) ? outputRange : outputRange/2;
 
     while(len--)
     {
@@ -239,7 +239,7 @@ int Mixer2::getFormat()
     
 int Mixer2::setFormat(int format)
 {
-    if (format == DATASTREAM_FORMAT_16BIT_UNSIGNED || format == DATASTREAM_FORMAT_16BIT_SIGNED)
+    if (format == DATASTREAM_FORMAT_16BIT_UNSIGNED || format == DATASTREAM_FORMAT_16BIT_SIGNED || format == DATASTREAM_FORMAT_8BIT_UNSIGNED || format == DATASTREAM_FORMAT_8BIT_SIGNED)
     {
         this->outputFormat = format;
         this->bytesPerSampleOut = DATASTREAM_FORMAT_BYTES_PER_SAMPLE(format);

@@ -81,7 +81,7 @@ class Mixer2 : public DataSource
 {
     MixerChannel    *channels;
     DataSink        *downStream;
-    float           mix[CONFIG_MIXER_BUFFER_SIZE/2];
+    float           mix[CONFIG_MIXER_BUFFER_SIZE];
     float           outputRange;
     float           outputRate;
     int             outputFormat;
@@ -136,6 +136,8 @@ public:
      * @param format The fomrat to output. Valid values are:
      * DATASTREAM_FORMAT_16BIT_UNSIGNED
      * DATASTREAM_FORMAT_16BIT_SIGNED
+     * DATASTREAM_FORMAT_8BIT_UNSIGNED
+     * DATASTREAM_FORMAT_8BIT_SIGNED
      */
     virtual int setFormat(int format);
 
