@@ -109,7 +109,6 @@ namespace codal
         public:
 
         DataSink*               downStream;             // Our downstream component.
-        FiberLock               lock;                   // Ingress queue to handle concurrent playback requests.
         ManagedBuffer           buffer;                 // Current playout buffer.
         ManagedBuffer           effectBuffer;           // Current sound effect sequence being generated.
         ManagedBuffer           emptyBuffer;            // Zero length buffer.

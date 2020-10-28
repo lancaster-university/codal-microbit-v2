@@ -101,11 +101,10 @@ int SoundEmojiSynthesizer::play(ManagedBuffer sound)
     if (sound.length() < (int) sizeof(SoundEffect))
         return DEVICE_INVALID_PARAMETER;
 
-    // If a playout is already in progress, block until it has been scheduled.
-    lock.wait();
-
-    // Store the requested sequence of sound effects.
     effectBuffer = sound;
+    // Reset state
+    effect = NULL;
+    position = 0.0f;
 
     // Scheduled this sound effect for playout. 
     // Generation will start the next time a pull() operation is called from downstream.
@@ -140,7 +139,7 @@ void SoundEmojiSynthesizer::nextSoundEffect()
         // if we have an effect with a negative duration, reset the buffer (unless there is an update pending)
         effect = (SoundEffect *) &effectBuffer[0];
 
-        if (effect->duration > 0 || lock.getWaitCount() > 0)
+        if (effect->duration > 0)
         {
             effect = NULL;
             effectBuffer = emptyBuffer;
@@ -189,14 +188,13 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
             nextSoundEffect();
 
             // If we have just completed active playout of an effect, and there are no more effects scheduled, 
-            // unblock any fibers that may be waiting to play a sound effect.
+            // unblock anyone waiting for the synthesizer to be available.
             if (samplesToWrite == 0)
             {
                 done = true;
                 if (renderComplete)
                 {
                     Event(id, DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_DONE);
-                    lock.notify();
                 }
             }
         }
