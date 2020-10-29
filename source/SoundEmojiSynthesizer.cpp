@@ -28,6 +28,7 @@ DEALINGS IN THE SOFTWARE.
 #include "CodalUtil.h"
 #include "CodalDmesg.h"
 #include "ErrorNo.h"
+#include "MicroBitAudio.h"
 
 using namespace codal;
 
@@ -97,6 +98,9 @@ int SoundEmojiSynthesizer::setBufferSize(int size)
 */
 int SoundEmojiSynthesizer::play(ManagedBuffer sound)
 {
+    // Enable audio pipeline if needed.
+    MicroBitAudio::requestActivation();
+
     // Validate inputs
     if (sound.length() < (int) sizeof(SoundEffect))
         return DEVICE_INVALID_PARAMETER;

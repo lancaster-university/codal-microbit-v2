@@ -39,19 +39,20 @@ namespace codal
     class MicroBitAudio : public CodalComponent
     {
         public:
-        Mixer2           mixer;      
+        static MicroBitAudio    *instance;      // Primary instance of MicroBitAudio, on demand activated.
+        Mixer2                  mixer;          // Multi channel audio mixer
 
         private:
-        bool speakerEnabled;
-        NRF52Pin &pin;
-        NRF52Pin &speaker;
-        SoundEmojiSynthesizer synth;
-        MixerChannel *soundExpressionChannel;
-        NRF52PWM *pwm;
+        bool speakerEnabled;                    // State of on board speaker
+        NRF52Pin &pin;                          // Auxiliary pin to route audio to
+        NRF52Pin &speaker;                      // Primary pin for onboard speaker
+        SoundEmojiSynthesizer synth;            // Synthesizer used bfor SoundExpressions
+        MixerChannel *soundExpressionChannel;   // Mixer channel associated with sound expression audio
+        NRF52PWM *pwm;                          // PWM driver used for sound generation (mixer output)
 
         public:
-        SoundExpressions soundExpressions;  
-        SoundOutputPin   virtualOutputPin;
+        SoundExpressions soundExpressions;      // SoundExpression intepreter
+        SoundOutputPin   virtualOutputPin;      // Virtual PWM channel (backward compatibility).
 
         /**
          * Constructor.
@@ -64,9 +65,14 @@ namespace codal
         ~MicroBitAudio();
 
         /**
+         * Demand request from a component to enable the default instance of this audio pipeline
+         */
+        static void requestActivation();
+
+        /**
          * post-constructor initialisation method
          */
-        virtual int init() override;
+        int enable();
 
         /**
          * Get the current volume.

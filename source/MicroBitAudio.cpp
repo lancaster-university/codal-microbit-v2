@@ -33,11 +33,13 @@ DEALINGS IN THE SOFTWARE.
 
 using namespace codal;
 
+MicroBitAudio* MicroBitAudio::instance = NULL;
+
 /**
   * Default Constructor.
   */
 MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker):
-    speakerEnabled(false),
+    speakerEnabled(true),
     pin(pin), 
     speaker(speaker),
     synth(DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_0),
@@ -46,25 +48,40 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker):
     soundExpressions(synth),
     virtualOutputPin(mixer)
 {
+    // If we are the first instance created, schedule it for on demand activation
+    if (MicroBitAudio::instance == NULL)
+        MicroBitAudio::instance = this;
 }
 
 /**
  * post-constructor initialisation method
  */
-int MicroBitAudio::init()
+int MicroBitAudio::enable()
 {
-    pwm = new NRF52PWM(NRF_PWM1, mixer, 44100);
-    pwm->setDecoderMode(PWM_DECODER_LOAD_Common);
-    pwm->connectPin(pin, 0);
+    if (pwm == NULL)
+    {
+        pwm = new NRF52PWM(NRF_PWM1, mixer, 44100);
+        pwm->setDecoderMode(PWM_DECODER_LOAD_Common);
+        pwm->connectPin(pin, 0);
 
-    mixer.setSampleRange(pwm->getSampleRange());
-    mixer.setOrMask(0x8000);
-    
-    setSpeakerEnabled(true);
+        mixer.setSampleRange(pwm->getSampleRange());
+        mixer.setOrMask(0x8000);
 
-    soundExpressionChannel = mixer.addChannel(synth);
+        setSpeakerEnabled(speakerEnabled);
+
+        soundExpressionChannel = mixer.addChannel(synth);
+    }
 
     return DEVICE_OK;
+}
+
+/**
+ * Demand request from a component to enable the default instance of this audio pipeline
+ */
+void MicroBitAudio::requestActivation()
+{
+    if (MicroBitAudio::instance)
+        MicroBitAudio::instance->enable();
 }
 
 /**

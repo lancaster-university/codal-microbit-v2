@@ -46,7 +46,7 @@ namespace codal
     class SoundOutputPin : public codal::Pin
     {
     private:
-        Mixer2                  &mix;
+        Mixer2                  &mixer;
         MixerChannel            *channel;
         SoundEmojiSynthesizer   synth;
         SoundEffect             *fx;
@@ -62,7 +62,7 @@ namespace codal
          * @param id the unique EventModel id of this component.
          * @param mixer the mixer to use
          */
-        SoundOutputPin(Mixer2 &mixer, int id = MICROBIT_ID_VIRTUAL_SPEAKER_PIN);
+        SoundOutputPin(Mixer2 &mix, int id = MICROBIT_ID_VIRTUAL_SPEAKER_PIN);
 
 
         /**

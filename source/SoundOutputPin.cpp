@@ -30,6 +30,7 @@ DEALINGS IN THE SOFTWARE.
 #include "SoundOutputPin.h"
 #include "Synthesizer.h"
 #include "CodalDmesg.h"
+#include "MicroBitAudio.h"
 
 using namespace codal;
 
@@ -40,12 +41,12 @@ using namespace codal;
  * @param id the unique EventModel id of this component.
  * @param mixer the mixer to use
  */
-SoundOutputPin::SoundOutputPin(Mixer2 &mixer, int id) : codal::Pin(id, 0, PIN_CAPABILITY_ANALOG), mix(mixer), synth(DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_1)
+SoundOutputPin::SoundOutputPin(Mixer2 &mix, int id) : codal::Pin(id, 0, PIN_CAPABILITY_ANALOG), mixer(mix), synth(DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_1)
 {
     this->value = 512;
     this->periodUs = 0;
     this->fx = NULL;
-    this->channel = mixer.addChannel(synth);
+    this->channel = NULL;
 }
 
 
@@ -138,13 +139,17 @@ void SoundOutputPin::update()
     // If this is the first time we've been asked to produce a sound, prime a SoundEffect buffer.
     if (fx == NULL)
     {
-        ManagedBuffer b(sizeof(SoundEffect));
+        // Enable the audio output pipeline, if needed.
+        MicroBitAudio::requestActivation();
 
+        // Create a sound effect buffer, and configure a synthesizer for a raw squarewave output into the mixer.
+        ManagedBuffer b(sizeof(SoundEffect));
         fx = (SoundEffect *)&b[0];
         fx->duration = -CONFIG_SOUND_OUTPUT_PIN_PERIOD;
         fx->tone.tonePrint = Synthesizer::SquareWaveTone;
         fx->frequency = periodUs == 0 ? 6068 : 1000000.0f / (float) periodUs;
         fx->volume = periodUs == 0 ? 0 : volume;
+        channel = mixer.addChannel(synth);
 
         synth.play(b);
     }
