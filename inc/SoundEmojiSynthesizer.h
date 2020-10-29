@@ -38,7 +38,9 @@ DEALINGS IN THE SOFTWARE.
 //
 // Status flags
 //
-#define EMOJI_SYNTHESIZER_STATUS_ACTIVE       0x01
+#define EMOJI_SYNTHESIZER_STATUS_ACTIVE                         0x01
+#define EMOJI_SYNTHESIZER_STATUS_OUTPUT_SILENCE_AS_EMPTY        0x02
+
 
 #define DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_0 3010
 #define DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_1 3011
@@ -212,6 +214,14 @@ namespace codal
          * @return DEVICE_OK on success.
          */
         int setOrMask(uint16_t mask);
+
+        /**
+         * Define how silence is treated on this components output.
+         * 
+         * @param mode if set to true, this component will return empty buffers when there is no data to send.
+         * Otherwise, a full buffer containing silence will be genersated.
+         */
+        void allowEmptyBuffers(bool mode);
 
 
         private:

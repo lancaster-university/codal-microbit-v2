@@ -51,6 +51,8 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker):
     // If we are the first instance created, schedule it for on demand activation
     if (MicroBitAudio::instance == NULL)
         MicroBitAudio::instance = this;
+
+    synth.allowEmptyBuffers(true);
 }
 
 /**

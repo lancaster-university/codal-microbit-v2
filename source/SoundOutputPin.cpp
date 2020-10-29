@@ -47,6 +47,7 @@ SoundOutputPin::SoundOutputPin(Mixer2 &mix, int id) : codal::Pin(id, 0, PIN_CAPA
     this->periodUs = 0;
     this->fx = NULL;
     this->channel = NULL;
+    synth.allowEmptyBuffers(true);
 }
 
 
@@ -160,7 +161,6 @@ void SoundOutputPin::update()
         fx->frequency = periodUs == 0 ? 6068 : 1000000.0f / (float) periodUs;
         fx->volume = periodUs == 0 ? 0 : volume;
         channel = mixer.addChannel(synth);
-
         synth.play(b);
     }
     else

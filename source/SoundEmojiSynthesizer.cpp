@@ -178,12 +178,8 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
     // Generate a buffer on demand. This is likely to be in interrupt context, so
     // the receiver driven nature reduces glitching on audio output.
     bool done = false;
-    uint16_t *sample;
+    uint16_t *sample = NULL;
     uint16_t *bufferEnd;
-
-    buffer = ManagedBuffer(bufferSize);
-    sample = (uint16_t *) &buffer[0];
-    bufferEnd = (uint16_t *) (&buffer[0] + buffer.length());
 
     while (!done)
     {
@@ -205,6 +201,15 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
             }
         }
         
+        // If we have something to do, ensure our buffers are created.
+        // We defer creation to avoid unecessary heap allocation when genertaing silence.
+        if (((samplesWritten < samplesToWrite) || !(status & EMOJI_SYNTHESIZER_STATUS_OUTPUT_SILENCE_AS_EMPTY)) && sample == NULL)
+        {
+            buffer = ManagedBuffer(bufferSize);
+            sample = (uint16_t *) &buffer[0];
+            bufferEnd = (uint16_t *) (&buffer[0] + buffer.length());
+        }
+
         // Generate some samples with the current effect parameters.
         while(samplesWritten < samplesToWrite)
         {
@@ -268,12 +273,20 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
         }
     }
 
-    // Pad the output buffer with silence if necessary.
-    uint16_t silence = ((uint16_t) (sampleRange *0.5f)) | orMask;
-    while(sample < bufferEnd)
+    // if we have no data to send, return an empty buffer (if requested)
+    if (sample == NULL)
     {
-        *sample = silence;
-        sample++;
+        buffer = ManagedBuffer();
+    }
+    else
+    {
+        // Pad the output buffer with silence if necessary.
+        uint16_t silence = ((uint16_t) (sampleRange *0.5f)) | orMask;
+        while(sample < bufferEnd)
+        {
+            *sample = silence;
+            sample++;
+        }
     }
 
     // Issue a Pull Request so that we are always receiver driven, and we're done.
@@ -350,3 +363,19 @@ int SoundEmojiSynthesizer::setOrMask(uint16_t mask)
     return DEVICE_OK;
 }
 
+
+/**
+ * Define how silence is treated on this components output.
+ * 
+ * @param mode if set to true, this component will return empty buffers when there is no data to send.
+ * Otherwise, a full buffer containing silence will be genersated.
+ */
+void SoundEmojiSynthesizer::allowEmptyBuffers(bool mode)
+{
+    if (mode)
+        this->status |= EMOJI_SYNTHESIZER_STATUS_OUTPUT_SILENCE_AS_EMPTY;
+    else
+        this->status &= ~EMOJI_SYNTHESIZER_STATUS_OUTPUT_SILENCE_AS_EMPTY;
+
+    
+}
