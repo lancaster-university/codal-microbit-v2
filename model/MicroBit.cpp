@@ -192,7 +192,7 @@ int MicroBit::init()
 
     NVIC_SetPriority(SAADC_IRQn, 3);          // Analogue to Digital Converter (microphone etc)
     NVIC_SetPriority(PWM0_IRQn, 3);           // General Purpose PWM on edge connector (servo, square wave sounds)
-    NVIC_SetPriority(PWM1_IRQn, 2);           // PCM audio on speaker (high definition sound)
+    NVIC_SetPriority(PWM1_IRQn, 3);           // PCM audio on speaker (high definition sound)
     NVIC_SetPriority(PWM2_IRQn, 2);           // Waveform Generation (neopixel)
 
     NVIC_SetPriority(RADIO_IRQn, 3);          // Packet radio
