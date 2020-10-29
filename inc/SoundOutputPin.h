@@ -68,7 +68,9 @@ namespace codal
         /**
          * Configures this IO pin as an analog/pwm output, and change the output value to the given level.
          *
-         * @param value the level to set on the output pin, in the range 0 - 1024
+         * @param value the level to set on the output pin. The value is normalized to match the behaviour of 
+         * a typical hardware PWM pin. Hence, the value set will clip at a maximum value of 0..128 / 896..1024. 
+         * Values within those ranges will be mapped to 0..100% volume of the associated audio channel.
          *
          * @return DEVICE_OK on success, DEVICE_INVALID_PARAMETER if value is out of range, or DEVICE_NOT_SUPPORTED
          *         if the given pin does not have analog capability.

@@ -53,14 +53,24 @@ SoundOutputPin::SoundOutputPin(Mixer2 &mix, int id) : codal::Pin(id, 0, PIN_CAPA
 /**
   * Configures this IO pin as an analog/pwm output, and change the output value to the given level.
   *
-  * @param value the level to set on the output pin, in the range 0 - 1024
+  * @param value the level to set on the output pin. The value is normalized to match the behaviour of 
+  * a typical hardware PWM pin. Hence, the value set will clip at a maximum value of 0..128 / 896..1024. 
+  * Values within those ranges will be mapped to 0..100% volume of the associated audio channel.
   *
   * @return DEVICE_OK on success, DEVICE_INVALID_PARAMETER if value is out of range, or DEVICE_NOT_SUPPORTED
   *         if the given pin does not have analog capability.
   */
 int SoundOutputPin::setAnalogValue(int value)
 {
-    this->value = value;
+    if (value < 0 || value > 1024)
+        return DEVICE_INVALID_PARAMETER;
+
+    // Normalize the duty cycle (we don't care if duty cycle is hi or lo)
+    if (value > 512)
+        value = 1024 - value;
+
+    // Normalize volume to approximately the behaviour of a micro:bit v1 with headphones on edge connector pin 0.
+    this->value = min(128, value);
     update();
 
     return DEVICE_OK;
@@ -134,7 +144,7 @@ int SoundOutputPin::getAnalogPeriod()
 void SoundOutputPin::update()
 {
     float v = (float) value;
-    float volume = v < 512.0f ? v / 512.0f : (1023.0f - v) / 512.0f;
+    float volume = (4.0f * v) / 512.0f;
 
     // If this is the first time we've been asked to produce a sound, prime a SoundEffect buffer.
     if (fx == NULL)
