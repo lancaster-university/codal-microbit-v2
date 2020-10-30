@@ -45,7 +45,6 @@ SoundEmojiSynthesizer::SoundEmojiSynthesizer(uint16_t id, int sampleRate) : Coda
 
     this->samplesToWrite = 0;
     this->samplesWritten = 0;
-    this->stopping = false;
 
     setSampleRate(sampleRate);
     setSampleRange(1023);
@@ -129,7 +128,7 @@ int SoundEmojiSynthesizer::play(ManagedBuffer sound)
 
 void SoundEmojiSynthesizer::stop() {
     if (effect)
-        stopping = true;
+        status |= EMOJI_SYNTHESIZER_STATUS_STOPPING;
 }
 
 /**
@@ -189,10 +188,10 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
 
     while (!done)
     {
-        if (samplesWritten == samplesToWrite || stopping)
+        if (samplesWritten == samplesToWrite || status & EMOJI_SYNTHESIZER_STATUS_STOPPING)
         {
             bool renderComplete = samplesWritten > 0;
-            if (stopping)
+            if (status & EMOJI_SYNTHESIZER_STATUS_STOPPING)
             {
                 effect = NULL;
                 effectBuffer = emptyBuffer;
@@ -201,12 +200,12 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
 
             // If we have just completed active playout of an effect, and there are no more effects scheduled, 
             // unblock any fibers that may be waiting to play a sound effect.
-            if (samplesToWrite == 0 || stopping)
+            if (samplesToWrite == 0 || status & EMOJI_SYNTHESIZER_STATUS_STOPPING)
             {
                 done = true;
-                if (renderComplete || stopping)
+                if (renderComplete || status & EMOJI_SYNTHESIZER_STATUS_STOPPING)
                 {
-                    stopping = false;
+                    status &= ~EMOJI_SYNTHESIZER_STATUS_STOPPING;
                     Event(id, DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_DONE);
                     lock.notify();
                 }

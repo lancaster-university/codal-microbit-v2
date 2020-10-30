@@ -40,6 +40,7 @@ DEALINGS IN THE SOFTWARE.
 //
 #define EMOJI_SYNTHESIZER_STATUS_ACTIVE                         0x01
 #define EMOJI_SYNTHESIZER_STATUS_OUTPUT_SILENCE_AS_EMPTY        0x02
+#define EMOJI_SYNTHESIZER_STATUS_STOPPING                       0x04
 
 
 #define DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_0 3010
@@ -128,7 +129,6 @@ namespace codal
         int                     samplesWritten;         // The number of samples written from the current sound effect block.
         float                   position;               // Position within the tonePrint.
         float                   samplesPerStep[EMOJI_SYNTHESIZER_TONE_EFFECTS];     // The number of samples to render per step for each effect.
-        bool                    stopping;               // Tracks when a stop is requested until it is acted on in a pull.
         /**
           * Default Constructor.
           * Creates an empty DataStream.
