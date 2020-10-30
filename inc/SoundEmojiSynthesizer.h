@@ -128,7 +128,7 @@ namespace codal
         int                     samplesWritten;         // The number of samples written from the current sound effect block.
         float                   position;               // Position within the tonePrint.
         float                   samplesPerStep[EMOJI_SYNTHESIZER_TONE_EFFECTS];     // The number of samples to render per step for each effect.
-
+        bool                    stopping;               // Tracks when a stop is requested until it is acted on in a pull.
         /**
           * Default Constructor.
           * Creates an empty DataStream.
@@ -172,6 +172,11 @@ namespace codal
         * @return DEVICE_OK on success, or DEVICE_INVALID_PARAMETER
         */
         int play(ManagedBuffer sound);
+
+        /**
+        * Stops play of the current buffer of SoundEffects and discards it.
+        */
+        void stop();
 
         /**
         * Define the size of the audio buffer to hold. The larger the buffer, the lower the CPU overhead, but the longer the delay.

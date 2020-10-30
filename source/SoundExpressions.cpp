@@ -100,6 +100,10 @@ int SoundExpressions::parseDigits(const char *input, const int digits) {
     return result;
 }
 
+void SoundExpressions::stop() {
+    synth.stop();
+}
+
 int SoundExpressions::applyRandom(int value, int rand) {
     if (value < 0 || rand < 0) {
         return -1;

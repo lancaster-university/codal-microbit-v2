@@ -47,7 +47,8 @@ namespace codal
         ~SoundExpressions();
 
         /**
-         * Plays a sound encoded as a series of decimal encoded effects or specified by name and blocks.
+         * Plays a sound encoded as a series of decimal encoded effects or specified by name.
+         * Blocks until the sound is complete.
          */
         void play(ManagedString sound);
 
@@ -56,6 +57,11 @@ namespace codal
          * Does not block.
          */
         void playAsync(ManagedString sound);
+
+        /**
+         * Stops the currently playing sound.
+         */
+        void stop();
 
         private:
         SoundEmojiSynthesizer &synth;
