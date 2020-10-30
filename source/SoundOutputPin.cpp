@@ -47,6 +47,10 @@ SoundOutputPin::SoundOutputPin(Mixer2 &mix, int id) : codal::Pin(id, 0, PIN_CAPA
     this->periodUs = 0;
     this->fx = NULL;
     this->channel = NULL;
+    this->timeOfLastUpdate = 0;
+
+    // Enable lazy periodic callback and optimised silence generation.
+    CodalComponent::status |= DEVICE_COMPONENT_STATUS_IDLE_TICK;
     synth.allowEmptyBuffers(true);
 }
 
@@ -146,6 +150,9 @@ void SoundOutputPin::update()
 {
     float volume = periodUs == 0.0f ? 0.0f : (4.0f * ((float)value)) / 512.0f;
 
+    // Snapshot the curent time, so we can determine periods of silence.
+    this->timeOfLastUpdate = system_timer_current_time();
+
     // If this is the first time we've been asked to produce a sound, prime a SoundEffect buffer.
     if (fx == NULL)
     {
@@ -158,21 +165,28 @@ void SoundOutputPin::update()
         fx->tone.tonePrint = Synthesizer::SquareWaveTone;
         fx->volume = 0.0f;
         channel = mixer.addChannel(synth);
-
     }
-
-    // Snapshot previous volume setting
-    float previousVolume = fx->volume;
 
     // Update our parameters
     fx->frequency = periodUs == 0 ? 6068 : 1000000.0f / (float) periodUs;
     fx->volume = volume;
+}
 
-    // If the new volume is zero, simply stop playing as an optimisation.
-    if (volume == 0.0f)
+/**
+ * Disable the synthesizer during long periods of silence, for efficiency.
+ */
+void SoundOutputPin::idleCallback()
+{
+    if ((CodalComponent::status & SOUND_OUTPUT_PIN_STATUS_ACTIVE) && (fx->volume == 0.0f) && (system_timer_current_time() - this->timeOfLastUpdate > CONFIG_SOUND_OUTPUT_PIN_SILENCE_GATE))
+    {
+        CodalComponent::status &= ~SOUND_OUTPUT_PIN_STATUS_ACTIVE;
         synth.stop();
+    }
 
-    // If our volume was zero, but is no longer zero, we'll need to restart to synthesizer
-    if (volume > 0.0f && previousVolume == 0.0f)
+    // If our volume is non-zero and we're not active, then restart to synthesizer.
+    if (!(CodalComponent::status & SOUND_OUTPUT_PIN_STATUS_ACTIVE) && fx && fx->volume > 0.0f)
+    {
+        CodalComponent::status |= SOUND_OUTPUT_PIN_STATUS_ACTIVE;
         synth.play(outputBuffer);
+    }
 }

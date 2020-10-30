@@ -36,6 +36,12 @@ DEALINGS IN THE SOFTWARE.
 #define CONFIG_SOUND_OUTPUT_PIN_PERIOD  50
 #endif
 
+#ifndef CONFIG_SOUND_OUTPUT_PIN_SILENCE_GATE
+#define CONFIG_SOUND_OUTPUT_PIN_SILENCE_GATE  100
+#endif
+
+#define SOUND_OUTPUT_PIN_STATUS_ACTIVE        0x0001        // Synthesizer is actively generating sound
+
 /**
   * Class definition for a SoundPin.
   *
@@ -43,7 +49,7 @@ DEALINGS IN THE SOFTWARE.
   */
 namespace codal
 {
-    class SoundOutputPin : public codal::Pin
+    class SoundOutputPin : public codal::Pin, public CodalComponent
     {
     private:
         Mixer2                  &mixer;
@@ -53,6 +59,7 @@ namespace codal
         SoundEffect             *fx;
         int                     periodUs;
         int                     value;
+        uint32_t                timeOfLastUpdate;
 
     public:
 
@@ -126,6 +133,12 @@ namespace codal
          *         given pin is not configured as an analog output.
          */
         virtual int getAnalogPeriod() override;
+
+        /**
+          * Callback when the device is idling. We use this to determine long periods of silence,
+          * and disable the synthesizer.
+          */
+        virtual void idleCallback() override;
 
         private:
 
