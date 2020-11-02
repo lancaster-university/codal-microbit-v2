@@ -163,8 +163,9 @@ namespace codal
 
         /**
          * Schedules the next sound effect as defined in the effectBuffer, if available.
+         * @return true if we've just completed a buffer of effects, false otherwise.
          */
-        void nextSoundEffect();
+        bool nextSoundEffect();
 
         /**
         * Schedules playout of the given sound effect.

@@ -133,9 +133,17 @@ void SoundEmojiSynthesizer::stop() {
 
 /**
  * Schedules the next sound effect as defined in the effectBuffer, if available.
+ * @return true if we've just completed a buffer of effects, false otherwise.
  */
-void SoundEmojiSynthesizer::nextSoundEffect()
+bool SoundEmojiSynthesizer::nextSoundEffect()
 {
+    const bool hadEffect = effect != NULL;
+    if (status & EMOJI_SYNTHESIZER_STATUS_STOPPING)
+    {
+        effect = NULL;
+        effectBuffer = emptyBuffer;
+    }
+
     // If a sequence of SoundEffects are being played, attempt to move on to the next.
     // If not, select the first in the buffer.
     if (effect)
@@ -156,7 +164,7 @@ void SoundEmojiSynthesizer::nextSoundEffect()
             samplesWritten = 0;
             samplesToWrite = 0;
             position = 0.0f;
-            return;
+            return hadEffect;
         }
     }
 
@@ -173,6 +181,7 @@ void SoundEmojiSynthesizer::nextSoundEffect()
         effect->effects[i].steps = max(effect->effects[i].steps, 1);
         samplesPerStep[i] = (float) samplesToWrite / (float) effect->effects[i].steps;
     }
+    return false;
 }
 
 /**
@@ -190,13 +199,7 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
     {
         if (samplesWritten == samplesToWrite || status & EMOJI_SYNTHESIZER_STATUS_STOPPING)
         {
-            bool renderComplete = samplesWritten > 0;
-            if (status & EMOJI_SYNTHESIZER_STATUS_STOPPING)
-            {
-                effect = NULL;
-                effectBuffer = emptyBuffer;
-            }
-            nextSoundEffect();
+            bool renderComplete = nextSoundEffect();
 
             // If we have just completed active playout of an effect, and there are no more effects scheduled, 
             // unblock any fibers that may be waiting to play a sound effect.
