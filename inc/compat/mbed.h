@@ -18,5 +18,8 @@
 #define PullDown PullMode::Down
 #define NoPull PullMode::None
 
+#define DEVICE_ID_IO_MBED_INTERRUPT_IN 0xE0
+#define DEVICE_ID_IO_MBED_PWM          0xE1
+
 using std::vector;
 using std::map;
