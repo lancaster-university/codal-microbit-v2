@@ -157,7 +157,7 @@ bool SoundEmojiSynthesizer::nextSoundEffect()
         // if we have an effect with a negative duration, reset the buffer (unless there is an update pending)
         effect = (SoundEffect *) &effectBuffer[0];
 
-        if (effect->duration > 0 || lock.getWaitCount() > 0)
+        if (effect->duration >= 0 || lock.getWaitCount() > 0)
         {
             effect = NULL;
             effectBuffer = emptyBuffer;
