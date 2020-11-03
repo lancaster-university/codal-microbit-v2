@@ -13,6 +13,23 @@ class DigitalIn: public codal::NRF52Pin {
             this->setPull(pull);
         }
 
+        void mode(int pull) {
+            switch(pull) {
+                case PullNone:
+                    this->setPull(PullMode::None);
+                    break;
+                case PullDown:
+                    this->setPull(PullMode::Down);
+                    break;
+                case PullUp:
+                    this->setPull(PullMode::Up);
+                    break;
+                default:
+                    this->setPull(PullMode::Up);
+                    break;
+            }
+        }
+
         int read() {
             return this->getDigitalValue();
         }

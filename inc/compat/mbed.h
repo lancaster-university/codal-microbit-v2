@@ -18,3 +18,6 @@
 
 using std::vector;
 using std::map;
+
+// Missing in codal-core::Pin
+#define PIN_CAPABILITY_STANDARD (codal::PinCapability)(0x4 | 0x2 | 0x1)
