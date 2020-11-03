@@ -1,9 +1,10 @@
 #ifndef PwmOut_h
 #define PwmOut_h
 
-#include "mbed.h"
 #include "MicroBitIO.h"
 #include "NRF52Pin.h"
+
+#define DEVICE_ID_IO_MBED_PWM          0xE1
 
 class PwmOut {
 
