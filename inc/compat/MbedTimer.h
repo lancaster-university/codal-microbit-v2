@@ -4,7 +4,7 @@
 class MbedTimer {
     private:
         uint32_t _start;
-        uint32_t _stop = -1;
+        uint32_t _stop = 0;
     public:
         void start() {
             _start = system_timer_current_time_us();
