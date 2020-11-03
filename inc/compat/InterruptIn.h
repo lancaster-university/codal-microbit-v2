@@ -3,9 +3,12 @@
 
 #include "mbed.h"
 #include "Pin.h"
+#include "MemberFunctionCallback.h"
 
 class InterruptIn {
-
+    
+    MemberFunctionCallback *_rise;
+    MemberFunctionCallback *_fall;
 
     public:
         MessageBus bus;
@@ -20,14 +23,26 @@ class InterruptIn {
             p.setPull(pull);
         }
 
+        void onFall() {
+            MicroBitEvent e;
+            _fall->fire(e);
+        }
+
         template<typename T>
         void fall(T* tptr, void (T::*mptr)(void)) {
-            bus.listen(DEVICE_ID_IO_MBED_INTERRUPT_IN, DEVICE_PIN_EVT_FALL, (&T)::*mptr, MESSAGE_BUS_LISTENER_IMMEDIATE);
+            this->_fall = new MemberFunctionCallback(tptr, mptr);
+            bus.listen(DEVICE_ID_IO_MBED_INTERRUPT_IN, DEVICE_PIN_EVT_FALL, this, &InterruptIn::onFall);
+        }
+
+        void onRise() {
+            MicroBitEvent e;
+            _rise->fire(e);
         }
 
         template<typename T>
         void rise(T* tptr, void (T::*mptr)(void)) {
-            bus.listen(DEVICE_ID_IO_MBED_INTERRUPT_IN, DEVICE_PIN_EVT_RISE, (&T)::*mptr, MESSAGE_BUS_LISTENER_IMMEDIATE);
+            this->_rise = new MemberFunctionCallback(tptr, mptr);
+            bus.listen(DEVICE_ID_IO_MBED_INTERRUPT_IN, DEVICE_PIN_EVT_RISE, this, &InterruptIn::onRise);
         }
     
 };
