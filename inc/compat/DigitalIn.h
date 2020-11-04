@@ -39,4 +39,6 @@ class DigitalIn: public codal::NRF52Pin {
         }
 };
 
+#warning "Use of mbed with CODAL is not recommended! These classes will not always behave as expected and are provided to attempt to support existing extensions. Please write your extension using CODAL."
+
 #endif

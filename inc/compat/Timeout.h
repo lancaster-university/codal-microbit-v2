@@ -1,13 +1,18 @@
 #ifndef Timeout_h
 #define Timeout_h
 
+/* uBit object from PXT or CODAL */
+#if __has_include ("pxt.h")
+#include "pxt.h"
+#else
+extern MicroBit uBit;
+#endif
+
 #include "MbedMemberFunctionCallback.h"
 #include "Timer.h"
 #include "MicroBitEvent.h"
 
 #define DEVICE_ID_MBED_TIMEOUT 0xE2
-
-extern MicroBit uBit;
 
 class Timeout {
 
@@ -47,5 +52,7 @@ class Timeout {
         }
 
 };
+
+#warning "Use of mbed with CODAL is not recommended! These classes will not always behave as expected and are provided to attempt to support existing extensions. Please write your extension using CODAL."
 
 #endif

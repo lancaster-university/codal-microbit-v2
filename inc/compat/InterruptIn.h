@@ -1,13 +1,18 @@
 #ifndef InterruptIn_h
 #define InterruptIn_h
 
+/* uBit object from PXT or CODAL */
+#if __has_include ("pxt.h")
+#include "pxt.h"
+#else
+extern MicroBit uBit;
+#endif
+
 #include "Pin.h"
 #include "MbedMemberFunctionCallback.h"
 #include "MicroBitEvent.h"
 
 #define DEVICE_ID_MBED_INTERRUPT_IN 0xE0
-
-extern MicroBit uBit;
 
 class InterruptIn {
     
@@ -60,5 +65,7 @@ class InterruptIn {
         }
     
 };
+
+#warning "Use of mbed with CODAL is not recommended! These classes will not always behave as expected and are provided to attempt to support existing extensions. Please write your extension using CODAL."
 
 #endif

@@ -21,3 +21,5 @@ using std::map;
 
 // Missing in codal-core::Pin
 #define PIN_CAPABILITY_STANDARD (codal::PinCapability)(0x4 | 0x2 | 0x1)
+
+#warning "Use of mbed with CODAL is not recommended! These classes will not always behave as expected and are provided to attempt to support existing extensions. Please write your extension using CODAL."

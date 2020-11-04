@@ -1,13 +1,18 @@
 #ifndef Ticker_h
 #define Ticker_h
 
+/* uBit object from PXT or CODAL */
+#if __has_include ("pxt.h")
+#include "pxt.h"
+#else
+extern MicroBit uBit;
+#endif
+
 #include "MbedMemberFunctionCallback.h"
 #include "Timer.h"
 #include "MicroBitEvent.h"
 
 #define DEVICE_ID_MBED_TICKER 0xE3
-
-extern MicroBit uBit;
 
 class Ticker {
     private:
@@ -44,5 +49,7 @@ class Ticker {
             system_timer_cancel_event(DEVICE_ID_MBED_TICKER, 0x0);
         }
 };
+
+#warning "Use of mbed with CODAL is not recommended! These classes will not always behave as expected and are provided to attempt to support existing extensions. Please write your extension using CODAL."
 
 #endif
