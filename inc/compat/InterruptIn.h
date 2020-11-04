@@ -13,27 +13,28 @@ class InterruptIn {
     
     MbedMemberFunctionCallback *_rise;
     MbedMemberFunctionCallback *_fall;
-    NRF52Pin p;
+    NRF52Pin *p;
 
     public:
-        InterruptIn(PinName pin) : p(DEVICE_ID_MBED_INTERRUPT_IN, pin, PIN_CAPABILITY_DIGITAL) {
-            p.eventOn(DEVICE_PIN_INTERRUPT_ON_EDGE);
+        InterruptIn(PinName pin) {
+            p = new NRF52Pin(DEVICE_ID_MBED_INTERRUPT_IN, pin, PIN_CAPABILITY_DIGITAL);
+            p->eventOn(DEVICE_PIN_EVENT_ON_EDGE);
             return;
         }
 
         void mode(int pull) {
             switch(pull) {
                 case PullNone:
-                    p.setPull(PullMode::None);
+                    p->setPull(PullMode::None);
                     break;
                 case PullDown:
-                    p.setPull(PullMode::Down);
+                    p->setPull(PullMode::Down);
                     break;
                 case PullUp:
-                    p.setPull(PullMode::Up);
+                    p->setPull(PullMode::Up);
                     break;
                 default:
-                    p.setPull(PullMode::Up);
+                    p->setPull(PullMode::Up);
                     break;
             }
         }
