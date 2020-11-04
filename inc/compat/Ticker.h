@@ -4,15 +4,15 @@
 #include "MbedMemberFunctionCallback.h"
 #include "Timer.h"
 #include "MicroBitEvent.h"
-#include "MessageBus.h"
 
 #define DEVICE_ID_MBED_TICKER 0xE3
+
+extern MicroBit uBit;
 
 class Ticker {
     private:
         uint32_t interval;
         MbedMemberFunctionCallback *func;
-        MessageBus bus;
 
     public:
 
@@ -27,7 +27,7 @@ class Ticker {
         void attach(T* tptr, void (T::*mptr)(void), float s) {
             this->func = new MbedMemberFunctionCallback(tptr, mptr);
             this->interval = (s * 1000000.0f);
-            bus.listen(DEVICE_ID_MBED_TICKER, 0x0, this, &Ticker::onTick);
+            uBit.messageBus.listen(DEVICE_ID_MBED_TICKER, 0x0, this, &Ticker::onTick);
             system_timer_event_every_us(interval, DEVICE_ID_MBED_TICKER, 0x0);
         }
         
@@ -36,7 +36,7 @@ class Ticker {
             this->func = new MbedMemberFunctionCallback(tptr, mptr);
             this->interval = (us * 1000);
 
-            bus.listen(DEVICE_ID_MBED_TICKER, 0x0, this, &Ticker::onTick);
+            uBit.messageBus.listen(DEVICE_ID_MBED_TICKER, 0x0, this, &Ticker::onTick);
             system_timer_event_every_us(interval, DEVICE_ID_MBED_TICKER, 0x0);
         }
 
