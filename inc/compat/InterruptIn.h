@@ -4,16 +4,16 @@
 #include "Pin.h"
 #include "MbedMemberFunctionCallback.h"
 #include "MicroBitEvent.h"
+#include "MessageBus.h"
 
 #define DEVICE_ID_MBED_INTERRUPT_IN 0xE0
-
-extern MicroBit uBit;
 
 class InterruptIn {
     
     MbedMemberFunctionCallback *_rise;
     MbedMemberFunctionCallback *_fall;
     NRF52Pin *p;
+    MessageBus bus;
 
     public:
         InterruptIn(PinName pin) {
@@ -46,7 +46,7 @@ class InterruptIn {
         template<typename T>
         void fall(T* tptr, void (T::*mptr)(void)) {
             this->_fall = new MbedMemberFunctionCallback(tptr, mptr);
-            uBit.messageBus.listen(DEVICE_ID_MBED_INTERRUPT_IN, DEVICE_PIN_EVT_FALL, this, &InterruptIn::onFall);
+            bus.listen(DEVICE_ID_MBED_INTERRUPT_IN, DEVICE_PIN_EVT_FALL, this, &InterruptIn::onFall);
         }
 
         void onRise(MicroBitEvent e) {
@@ -56,7 +56,7 @@ class InterruptIn {
         template<typename T>
         void rise(T* tptr, void (T::*mptr)(void)) {
             this->_rise = new MbedMemberFunctionCallback(tptr, mptr);
-            uBit.messageBus.listen(DEVICE_ID_MBED_INTERRUPT_IN, DEVICE_PIN_EVT_RISE, this, &InterruptIn::onRise);
+            bus.listen(DEVICE_ID_MBED_INTERRUPT_IN, DEVICE_PIN_EVT_RISE, this, &InterruptIn::onRise);
         }
     
 };

@@ -4,16 +4,16 @@
 #include "MbedMemberFunctionCallback.h"
 #include "Timer.h"
 #include "MicroBitEvent.h"
+#include "MessageBus.h"
 
 #define DEVICE_ID_MBED_TIMEOUT 0xE2
-
-extern MicroBit uBit;
 
 class Timeout {
 
     private:
         uint32_t interval;
         MbedMemberFunctionCallback *func;
+        MessageBus bus;
             
     public:
 
@@ -29,7 +29,7 @@ class Timeout {
             this->func = new MbedMemberFunctionCallback(tptr, mptr);
             this->interval = (s * 1000000.0f);
 
-            uBit.messageBus.listen(DEVICE_ID_MBED_TIMEOUT, 0x0, this, &Timeout::onTimeout);
+            bus.listen(DEVICE_ID_MBED_TIMEOUT, 0x0, this, &Timeout::onTimeout);
             system_timer_event_after_us(interval, DEVICE_ID_MBED_TIMEOUT, 0x0);
         }
         
@@ -38,7 +38,7 @@ class Timeout {
             this->func = new MbedMemberFunctionCallback(tptr, mptr);
             this->interval = (us * 1000);
 
-            uBit.messageBus.listen(DEVICE_ID_MBED_TIMEOUT, 0x0, this, &Timeout::onTimeout);
+            bus.listen(DEVICE_ID_MBED_TIMEOUT, 0x0, this, &Timeout::onTimeout);
             system_timer_event_after_us(interval, DEVICE_ID_MBED_TIMEOUT, 0x0);
         }
 
