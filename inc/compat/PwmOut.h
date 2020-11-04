@@ -4,7 +4,7 @@
 #include "MicroBitIO.h"
 #include "NRF52Pin.h"
 
-#define DEVICE_ID_IO_MBED_PWM          0xE1
+#define DEVICE_ID_MBED_PWM          0xE1
 
 class PwmOut {
 
@@ -12,7 +12,7 @@ class PwmOut {
         NRF52Pin p;
 
     public:
-        PwmOut(PinName pin) : p(DEVICE_ID_IO_MBED_PWM, pin, PIN_CAPABILITY_ANALOG) {
+        PwmOut(PinName pin) : p(DEVICE_ID_MBED_PWM, pin, PIN_CAPABILITY_ANALOG) {
             return;
         }
 
