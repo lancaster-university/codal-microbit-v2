@@ -338,6 +338,9 @@ typedef codal::EventLaunchMode MicroBitEventLaunchMode;
 #define MICROBIT_ID_IO_P16                                      ID_PIN_P16
 #define MICROBIT_ID_IO_P19                                      ID_PIN_P19
 #define MICROBIT_ID_IO_P20                                      ID_PIN_P20
+#define MICROBIT_ID_LOGO                                        ID_PIN_LOGO
+
+// For MakeCode extension compat. Delete ASAP.
 #define MICROBIT_ID_FACE                                        ID_PIN_FACE
 
 #define MICROBIT_ID_MESSAGE_BUS_LISTENER                        DEVICE_ID_MESSAGE_BUS_LISTENER
@@ -352,6 +355,8 @@ typedef codal::EventLaunchMode MicroBitEventLaunchMode;
 #define MICROBIT_ID_PARTIAL_FLASHING                            36
 #define MICROBIT_ID_POWER_MANAGER                               37
 #define MICROBIT_ID_USB_FLASH_MANAGER                           38
+
+#define MICROBIT_ID_VIRTUAL_SPEAKER_PIN                         39
 
 #define MICROBIT_ID_MBED_INTERRUPT_IN                           40 
 #define MICROBIT_ID_MBED_PWM                                    41
@@ -384,6 +389,8 @@ typedef codal::EventLaunchMode MicroBitEventLaunchMode;
 namespace codal
 {
     void fiber_add_idle_component(CodalComponent *c);
+    uint32_t htonl(uint32_t v);
+    uint16_t htons(uint16_t v);
 };
 
 using namespace codal;

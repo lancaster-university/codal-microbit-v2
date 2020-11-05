@@ -30,3 +30,31 @@ codal::fiber_add_idle_component(codal::CodalComponent *c)
 {
     c->status |= DEVICE_COMPONENT_STATUS_IDLE_TICK;
 }
+
+uint32_t codal::htonl(uint32_t v)
+{
+    uint32_t result;
+    uint8_t *w = (uint8_t *) &result;
+    uint8_t *r = (uint8_t *) &v;
+
+    r += 3;
+
+    for (int i=0; i<4; i++)
+        *w++ = *r--;
+
+    return result;
+}
+
+uint16_t codal::htons(uint16_t v)
+{
+    uint16_t result;
+    uint8_t *w = (uint8_t *) &result;
+    uint8_t *r = (uint8_t *) &v;
+
+    r += 1;
+
+    for (int i=0; i<2; i++)
+        *w++ = *r--;
+
+    return result;
+}

@@ -28,6 +28,7 @@ DEALINGS IN THE SOFTWARE.
 #include "CodalUtil.h"
 #include "CodalDmesg.h"
 #include "ErrorNo.h"
+#include "MicroBitAudio.h"
 
 using namespace codal;
 
@@ -35,7 +36,7 @@ using namespace codal;
   * Class definition for a Synthesizer.
   * A Synthesizer generates a tone waveform based on a number of overlapping waveforms.
   */
-SoundEmojiSynthesizer::SoundEmojiSynthesizer(int sampleRate) : buffer(EMOJI_SYNTHESIZER_BUFFER_SIZE), emptyBuffer(0)
+SoundEmojiSynthesizer::SoundEmojiSynthesizer(uint16_t id, int sampleRate) : CodalComponent(id, 0), buffer(EMOJI_SYNTHESIZER_BUFFER_SIZE), emptyBuffer(0)
 {
     this->downStream = NULL;
     this->bufferSize = EMOJI_SYNTHESIZER_BUFFER_SIZE;
@@ -47,6 +48,7 @@ SoundEmojiSynthesizer::SoundEmojiSynthesizer(int sampleRate) : buffer(EMOJI_SYNT
 
     setSampleRate(sampleRate);
     setSampleRange(1023);
+    setOrMask(0);
 }
 
 /**
@@ -96,6 +98,9 @@ int SoundEmojiSynthesizer::setBufferSize(int size)
 */
 int SoundEmojiSynthesizer::play(ManagedBuffer sound)
 {
+    // Enable audio pipeline if needed.
+    MicroBitAudio::requestActivation();
+
     // Validate inputs
     if (sound.length() < (int) sizeof(SoundEffect))
         return DEVICE_INVALID_PARAMETER;
@@ -121,11 +126,24 @@ int SoundEmojiSynthesizer::play(ManagedBuffer sound)
     return DEVICE_OK;
 }
 
+void SoundEmojiSynthesizer::stop() {
+    if (effect)
+        status |= EMOJI_SYNTHESIZER_STATUS_STOPPING;
+}
+
 /**
  * Schedules the next sound effect as defined in the effectBuffer, if available.
+ * @return true if we've just completed a buffer of effects, false otherwise.
  */
-void SoundEmojiSynthesizer::nextSoundEffect()
+bool SoundEmojiSynthesizer::nextSoundEffect()
 {
+    const bool hadEffect = effect != NULL;
+    if (status & EMOJI_SYNTHESIZER_STATUS_STOPPING)
+    {
+        effect = NULL;
+        effectBuffer = emptyBuffer;
+    }
+
     // If a sequence of SoundEffects are being played, attempt to move on to the next.
     // If not, select the first in the buffer.
     if (effect)
@@ -136,16 +154,22 @@ void SoundEmojiSynthesizer::nextSoundEffect()
     // Validate that we have a valid sound effect. If not, record that we have nothing to play.
     if ((uint8_t *)effect >= &effectBuffer[0] + effectBuffer.length())
     {
-        effect = NULL;
-        effectBuffer = emptyBuffer;
-        samplesWritten = 0;
-        samplesToWrite = 0;
-        position = 0.0f;
-        return;
+        // if we have an effect with a negative duration, reset the buffer (unless there is an update pending)
+        effect = (SoundEffect *) &effectBuffer[0];
+
+        if (effect->duration >= 0 || lock.getWaitCount() > 0)
+        {
+            effect = NULL;
+            effectBuffer = emptyBuffer;
+            samplesWritten = 0;
+            samplesToWrite = 0;
+            position = 0.0f;
+            return hadEffect;
+        }
     }
 
     // We have a valid buffer. Set up our synthesizer to the requested parameters.
-    samplesToWrite = determineSampleCount(effect->duration * 1000.0f);
+    samplesToWrite = determineSampleCount(effect->duration);
     frequency = effect->frequency;
     volume = effect->volume;
     samplesWritten = 0;
@@ -157,6 +181,7 @@ void SoundEmojiSynthesizer::nextSoundEffect()
         effect->effects[i].steps = max(effect->effects[i].steps, 1);
         samplesPerStep[i] = (float) samplesToWrite / (float) effect->effects[i].steps;
     }
+    return false;
 }
 
 /**
@@ -167,39 +192,53 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
     // Generate a buffer on demand. This is likely to be in interrupt context, so
     // the receiver driven nature reduces glitching on audio output.
     bool done = false;
-    uint16_t *sample;
+    uint16_t *sample = NULL;
     uint16_t *bufferEnd;
-
-    buffer = ManagedBuffer(bufferSize);
-    sample = (uint16_t *) &buffer[0];
-    bufferEnd = (uint16_t *) (&buffer[0] + buffer.length());
 
     while (!done)
     {
-        if (samplesWritten == samplesToWrite)
+        if (samplesWritten == samplesToWrite || status & EMOJI_SYNTHESIZER_STATUS_STOPPING)
         {
-            bool renderComplete = samplesWritten > 0;
-            nextSoundEffect();
+            bool renderComplete = nextSoundEffect();
 
             // If we have just completed active playout of an effect, and there are no more effects scheduled, 
             // unblock any fibers that may be waiting to play a sound effect.
-            if (samplesToWrite == 0)
+            if (samplesToWrite == 0 || status & EMOJI_SYNTHESIZER_STATUS_STOPPING)
             {
                 done = true;
-                if (renderComplete)
+                if (renderComplete || status & EMOJI_SYNTHESIZER_STATUS_STOPPING)
+                {
+                    status &= ~EMOJI_SYNTHESIZER_STATUS_STOPPING;
+                    Event(id, DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_DONE);
                     lock.notify();
+                }
             }
         }
         
+        // If we have something to do, ensure our buffers are created.
+        // We defer creation to avoid unecessary heap allocation when genertaing silence.
+        if (((samplesWritten < samplesToWrite) || !(status & EMOJI_SYNTHESIZER_STATUS_OUTPUT_SILENCE_AS_EMPTY)) && sample == NULL)
+        {
+            buffer = ManagedBuffer(bufferSize);
+            sample = (uint16_t *) &buffer[0];
+            bufferEnd = (uint16_t *) (&buffer[0] + buffer.length());
+        }
+
         // Generate some samples with the current effect parameters.
         while(samplesWritten < samplesToWrite)
         {
             float skip = ((EMOJI_SYNTHESIZER_TONE_WIDTH_F * frequency) / sampleRate);
             float gain = (sampleRange * volume) / 1024.0f;
+            float offset = 512.0f - (512.0f * gain);
+
             int effectStepEnd[EMOJI_SYNTHESIZER_TONE_EFFECTS];
 
             for (int i = 0; i < EMOJI_SYNTHESIZER_TONE_EFFECTS; i++)
+            {
                 effectStepEnd[i] = (int) (samplesPerStep[i] * (effect->effects[i].step));
+                if (effect->effects[i].step == effect->effects[i].steps - 1)
+                    effectStepEnd[i] = samplesToWrite;
+            }
                 
             int stepEndPosition = effectStepEnd[0];
             for (int i = 1; i < EMOJI_SYNTHESIZER_TONE_EFFECTS; i++)
@@ -219,7 +258,7 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
                 float s = effect->tone.tonePrint(effect->tone.parameter, (int) position);
 
                 // Apply volume scaling and OR mask (if specified).
-                *sample = ((uint16_t) (s * gain)) | orMask;
+                *sample = ((uint16_t) ((s * gain) + offset)) | orMask;
 
                 // Move on our pointers.
                 sample++;
@@ -248,12 +287,20 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
         }
     }
 
-    // Pad the output buffer with silence if necessary.
-    uint16_t silence = ((uint16_t) (sampleRange *0.5f)) | orMask;
-    while(sample < bufferEnd)
+    // if we have no data to send, return an empty buffer (if requested)
+    if (sample == NULL)
     {
-        *sample = silence;
-        sample++;
+        buffer = ManagedBuffer();
+    }
+    else
+    {
+        // Pad the output buffer with silence if necessary.
+        uint16_t silence = ((uint16_t) (sampleRange *0.5f)) | orMask;
+        while(sample < bufferEnd)
+        {
+            *sample = silence;
+            sample++;
+        }
     }
 
     // Issue a Pull Request so that we are always receiver driven, and we're done.
@@ -284,13 +331,16 @@ int SoundEmojiSynthesizer::setSampleRate(int sampleRate)
 /**
  * Determine the number of samples required for the given playout time.
  *
- * @param playoutTimeUs The playout time (in microseconds)
+ * @param playoutTime The playout time (in milliseconds)
  * @return The number of samples required to play for the given amount of time
  * (at the currently defined sample rate)
  */
-int SoundEmojiSynthesizer::determineSampleCount(int playoutTimeUs)
+int SoundEmojiSynthesizer::determineSampleCount(float playoutTime)
 {
-    float seconds = (float)playoutTimeUs / 1000000.0f;
+    if (playoutTime < 0)
+        playoutTime = -playoutTime;
+
+    float seconds = playoutTime / 1000.0f;
     return (int) ((float)sampleRate * seconds);
 }
 
@@ -327,3 +377,19 @@ int SoundEmojiSynthesizer::setOrMask(uint16_t mask)
     return DEVICE_OK;
 }
 
+
+/**
+ * Define how silence is treated on this components output.
+ * 
+ * @param mode if set to true, this component will return empty buffers when there is no data to send.
+ * Otherwise, a full buffer containing silence will be genersated.
+ */
+void SoundEmojiSynthesizer::allowEmptyBuffers(bool mode)
+{
+    if (mode)
+        this->status |= EMOJI_SYNTHESIZER_STATUS_OUTPUT_SILENCE_AS_EMPTY;
+    else
+        this->status &= ~EMOJI_SYNTHESIZER_STATUS_OUTPUT_SILENCE_AS_EMPTY;
+
+    
+}
