@@ -1,18 +1,18 @@
 #ifndef Ticker_h
 #define Ticker_h
 
-/* uBit object from PXT or CODAL */
-#if __has_include ("pxt.h")
+/* uBit object from PXT or CODAL. 
+ * TODO: MICROBIT_DAL_PXT will be added to PXT to replace this define */
+#ifdef MICROBIT_DAL_FIBER_USER_DATA
 #include "pxt.h"
 #else
 extern MicroBit uBit;
 #endif
 
+#include "MicroBitCompat.h"
 #include "MbedMemberFunctionCallback.h"
 #include "Timer.h"
 #include "MicroBitEvent.h"
-
-#define DEVICE_ID_MBED_TICKER 0xE3
 
 class Ticker {
     private:
@@ -32,8 +32,8 @@ class Ticker {
         void attach(T* tptr, void (T::*mptr)(void), float s) {
             this->func = new MbedMemberFunctionCallback(tptr, mptr);
             this->interval = (s * 1000000.0f);
-            uBit.messageBus.listen(DEVICE_ID_MBED_TICKER, 0x0, this, &Ticker::onTick);
-            system_timer_event_every_us(interval, DEVICE_ID_MBED_TICKER, 0x0);
+            uBit.messageBus.listen(MICROBIT_ID_MBED_TICKER, 0x0, this, &Ticker::onTick);
+            system_timer_event_every_us(interval, MICROBIT_ID_MBED_TICKER, 0x0);
         }
         
         template<typename T>
@@ -41,12 +41,12 @@ class Ticker {
             this->func = new MbedMemberFunctionCallback(tptr, mptr);
             this->interval = (us * 1000);
 
-            uBit.messageBus.listen(DEVICE_ID_MBED_TICKER, 0x0, this, &Ticker::onTick);
-            system_timer_event_every_us(interval, DEVICE_ID_MBED_TICKER, 0x0);
+            uBit.messageBus.listen(MICROBIT_ID_MBED_TICKER, 0x0, this, &Ticker::onTick);
+            system_timer_event_every_us(interval, MICROBIT_ID_MBED_TICKER, 0x0);
         }
 
         void detach() {
-            system_timer_cancel_event(DEVICE_ID_MBED_TICKER, 0x0);
+            system_timer_cancel_event(MICROBIT_ID_MBED_TICKER, 0x0);
         }
 };
 

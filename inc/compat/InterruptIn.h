@@ -1,18 +1,18 @@
 #ifndef InterruptIn_h
 #define InterruptIn_h
 
-/* uBit object from PXT or CODAL */
-#if __has_include ("pxt.h")
+/* uBit object from PXT or CODAL
+ * TODO: MICROBIT_DAL_PXT will be added to PXT to replace this define */
+#ifdef MICROBIT_DAL_FIBER_USER_DATA
 #include "pxt.h"
 #else
 extern MicroBit uBit;
 #endif
 
+#include "MicroBitCompat.h"
 #include "Pin.h"
 #include "MbedMemberFunctionCallback.h"
 #include "MicroBitEvent.h"
-
-#define DEVICE_ID_MBED_INTERRUPT_IN 0xE0
 
 class InterruptIn {
     
@@ -22,8 +22,8 @@ class InterruptIn {
 
     public:
         InterruptIn(PinName pin) {
-            p = new NRF52Pin(DEVICE_ID_MBED_INTERRUPT_IN, pin, PIN_CAPABILITY_DIGITAL);
-            p->eventOn(DEVICE_PIN_EVENT_ON_EDGE);
+            p = new NRF52Pin(MICROBIT_ID_MBED_INTERRUPT_IN, pin, PIN_CAPABILITY_DIGITAL);
+            p->eventOn(MICROBIT_PIN_EVENT_ON_EDGE);
             return;
         }
 
@@ -51,7 +51,7 @@ class InterruptIn {
         template<typename T>
         void fall(T* tptr, void (T::*mptr)(void)) {
             this->_fall = new MbedMemberFunctionCallback(tptr, mptr);
-            uBit.messageBus.listen(DEVICE_ID_MBED_INTERRUPT_IN, DEVICE_PIN_EVT_FALL, this, &InterruptIn::onFall);
+            uBit.messageBus.listen(MICROBIT_ID_MBED_INTERRUPT_IN, MICROBIT_PIN_EVT_FALL, this, &InterruptIn::onFall);
         }
 
         void onRise(MicroBitEvent e) {
@@ -61,7 +61,7 @@ class InterruptIn {
         template<typename T>
         void rise(T* tptr, void (T::*mptr)(void)) {
             this->_rise = new MbedMemberFunctionCallback(tptr, mptr);
-            uBit.messageBus.listen(DEVICE_ID_MBED_INTERRUPT_IN, DEVICE_PIN_EVT_RISE, this, &InterruptIn::onRise);
+            uBit.messageBus.listen(MICROBIT_ID_MBED_INTERRUPT_IN, MICROBIT_PIN_EVT_RISE, this, &InterruptIn::onRise);
         }
     
 };

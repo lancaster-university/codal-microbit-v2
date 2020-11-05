@@ -1,18 +1,18 @@
 #ifndef Timeout_h
 #define Timeout_h
 
-/* uBit object from PXT or CODAL */
-#if __has_include ("pxt.h")
+/* uBit object from PXT or CODAL
+ * TODO: MICROBIT_DAL_PXT will be added to PXT to replace this define */
+#ifdef MICROBIT_DAL_FIBER_USER_DATA
 #include "pxt.h"
 #else
 extern MicroBit uBit;
 #endif
 
+#include "MicroBitCompat.h"
 #include "MbedMemberFunctionCallback.h"
 #include "Timer.h"
 #include "MicroBitEvent.h"
-
-#define DEVICE_ID_MBED_TIMEOUT 0xE2
 
 class Timeout {
 
@@ -34,8 +34,8 @@ class Timeout {
             this->func = new MbedMemberFunctionCallback(tptr, mptr);
             this->interval = (s * 1000000.0f);
 
-            uBit.messageBus.listen(DEVICE_ID_MBED_TIMEOUT, 0x0, this, &Timeout::onTimeout);
-            system_timer_event_after_us(interval, DEVICE_ID_MBED_TIMEOUT, 0x0);
+            uBit.messageBus.listen(MICROBIT_ID_MBED_TIMEOUT, 0x0, this, &Timeout::onTimeout);
+            system_timer_event_after_us(interval, MICROBIT_ID_MBED_TIMEOUT, 0x0);
         }
         
         template<typename T>
@@ -43,12 +43,12 @@ class Timeout {
             this->func = new MbedMemberFunctionCallback(tptr, mptr);
             this->interval = (us * 1000);
 
-            uBit.messageBus.listen(DEVICE_ID_MBED_TIMEOUT, 0x0, this, &Timeout::onTimeout);
-            system_timer_event_after_us(interval, DEVICE_ID_MBED_TIMEOUT, 0x0);
+            uBit.messageBus.listen(MICROBIT_ID_MBED_TIMEOUT, 0x0, this, &Timeout::onTimeout);
+            system_timer_event_after_us(interval, MICROBIT_ID_MBED_TIMEOUT, 0x0);
         }
 
         void detach() {
-            system_timer_cancel_event(DEVICE_ID_MBED_TIMEOUT, 0x0);
+            system_timer_cancel_event(MICROBIT_ID_MBED_TIMEOUT, 0x0);
         }
 
 };
