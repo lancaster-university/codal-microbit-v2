@@ -34,6 +34,7 @@ DEALINGS IN THE SOFTWARE.
   */
 
 #include "CodalConfig.h"
+#define MICROBIT_MBED_MEMBER_FUNCTION_CALLBACK_CPP
 #include "MbedMemberFunctionCallback.h"
 
 using namespace codal;
