@@ -358,6 +358,11 @@ typedef codal::EventLaunchMode MicroBitEventLaunchMode;
 
 #define MICROBIT_ID_VIRTUAL_SPEAKER_PIN                         39
 
+#define MICROBIT_ID_MBED_INTERRUPT_IN                           40 
+#define MICROBIT_ID_MBED_PWM                                    41
+#define MICROBIT_ID_MBED_TIMEOUT                                42
+#define MICROBIT_ID_MBED_TICKER                                 43
+
 #define MICROBIT_MAXIMUM_HEAPS                                  DEVICE_MAXIMUM_HEAPS
 #define MICROBIT_NESTED_HEAP_SIZE                               0
 #define MICROBIT_PANIC_HEAP_FULL                                DEVICE_PANIC_HEAP_FULL
