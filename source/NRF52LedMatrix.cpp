@@ -316,12 +316,24 @@ int NRF52LEDMatrix::setBrightness(int b)
 int 
 NRF52LEDMatrix::readLightLevel()
 {
+    bool modeChanged = false;
+
     // Auto-enable light sensing if it is currently disabled
     if (mode == DisplayMode::DISPLAY_MODE_BLACK_AND_WHITE)
+    {
         setDisplayMode(DisplayMode::DISPLAY_MODE_BLACK_AND_WHITE_LIGHT_SENSE);
+        modeChanged = true;
+    }
 
     if (mode == DisplayMode::DISPLAY_MODE_GREYSCALE)
+    {
         setDisplayMode(DisplayMode::DISPLAY_MODE_GREYSCALE_LIGHT_SENSE);
+        modeChanged = true;
+    }
+
+    // if we've just enabled light sensing, ensure we have a valid reading before returning.
+    if (modeChanged)
+        fiber_sleep(1500.0f/((float)NRF52_LED_MATRIX_FREQUENCY));
 
     return lightLevel;
 }
