@@ -348,7 +348,7 @@ void MicroBitCompassCalibrator::calibrateUX(MicroBitEvent)
         }
 
         // update our model of the flash status of the user controlled pixel.
-        cursor_on = (cursor_on + 1) % 4;
+        cursor_on = (cursor_on + 40) % 200;
 
         // take a snapshot of the current accelerometer data.
         int x = accelerometer.getX();
