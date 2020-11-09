@@ -197,6 +197,7 @@ int MicroBit::init()
 
     NVIC_SetPriority(RADIO_IRQn, 5);          // Packet radio
     NVIC_SetPriority(UARTE0_UART0_IRQn, 2);   // Serial port
+    NVIC_SetPriority(GPIOTE_IRQn, 2);         // Pin interrupt events
 
 #if CONFIG_ENABLED(DEVICE_BLE) && CONFIG_ENABLED(MICROBIT_BLE_PAIRING_MODE)
     int i=0;
