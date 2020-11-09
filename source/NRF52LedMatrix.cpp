@@ -148,6 +148,10 @@ void NRF52LEDMatrix::enable()
     for (int row = 0; row < matrixMap.rows; row++)
         matrixMap.rowPins[row]->getDigitalValue(PullMode::None);
 
+    // Ensure column drive pins are disabled, and have no pull resistors configured
+    for (int col = 0; col < matrixMap.columns; col++)
+        matrixMap.columnPins[col]->getDigitalValue(PullMode::None);
+
     timer.enable();
     timer.enableIRQ();
 
