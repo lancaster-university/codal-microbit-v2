@@ -67,6 +67,7 @@ DEALINGS IN THE SOFTWARE.
 #include "StreamNormalizer.h"
 #include "LevelDetector.h"
 #include "LevelDetectorSPL.h"
+#include "PulseIn.h"
 
 #include "MESEvents.h"
 
