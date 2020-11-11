@@ -36,15 +36,13 @@ DEALINGS IN THE SOFTWARE.
 #include "LSM303Magnetometer.h"
 
 
-Accelerometer* MicroBitAccelerometer::detectedAccelerometer = NULL;
-NRF52Pin MicroBitAccelerometer::irq1(ID_PIN_IRQ1, P0_25, PIN_CAPABILITY_AD);
-CoordinateSpace MicroBitAccelerometer::coordinateSpace(SIMPLE_CARTESIAN, true, COORDINATE_SPACE_ROTATED_0);
-CoordinateSpace MicroBitAccelerometer::coordinateSpaceFXOS8700(SIMPLE_CARTESIAN, true, COORDINATE_SPACE_ROTATED_180);
+Accelerometer* MicroBitAccelerometer::detectedAccelerometer;
 
 MicroBitAccelerometer::MicroBitAccelerometer(MicroBitI2C &i2c, uint16_t id) : Accelerometer(coordinateSpace)
 {
     autoDetect(i2c);
 }
+
 /**
  * Device autodetection. Scans the given I2C bus for supported accelerometer devices.
  * if found, constructs an appropriate driver and returns it.
@@ -55,18 +53,26 @@ MicroBitAccelerometer::MicroBitAccelerometer(MicroBitI2C &i2c, uint16_t id) : Ac
  */
 Accelerometer& MicroBitAccelerometer::autoDetect(MicroBitI2C &i2c)
 {
+    static bool autoDetectCompleted = false;
+    static CoordinateSpace coordinateSpace(SIMPLE_CARTESIAN, true, COORDINATE_SPACE_ROTATED_0);
+    static CoordinateSpace coordinateSpaceFXOS8700(SIMPLE_CARTESIAN, true, COORDINATE_SPACE_ROTATED_180);
+    static NRF52Pin irq1(ID_PIN_IRQ1, P0_25, PIN_CAPABILITY_AD);
+
     /*
      * In essence, the LSM needs at least 6.4ms from power-up before we can use it.
      * https://github.com/microbit-foundation/codal-microbit/issues/33
      */
     target_wait(10);
+
     // Add pullup resisitor to IRQ line (it's floating ACTIVE LO)
     irq1.getDigitalValue();
     irq1.setPull(PullMode::Up);
     irq1.setActiveLo();
     
-    if (MicroBitAccelerometer::detectedAccelerometer == NULL)
+    if (!autoDetectCompleted)
     {
+        MicroBitAccelerometer::detectedAccelerometer = NULL;
+
         // All known accelerometer/magnetometer peripherals have the same alignment
         if (FXOS8700::isDetected(i2c, 0x3E))
         {
@@ -87,6 +93,8 @@ Accelerometer& MicroBitAccelerometer::autoDetect(MicroBitI2C &i2c)
 
         if (MicroBitCompass::detectedCompass)
             MicroBitCompass::detectedCompass->setAccelerometer(*MicroBitAccelerometer::detectedAccelerometer);
+
+        autoDetectCompleted = true;
     }
     
     return *detectedAccelerometer;

@@ -65,7 +65,10 @@ Compass& MicroBitCompass::autoDetect(MicroBitI2C &i2c)
         MicroBitAccelerometer::autoDetect(i2c);
 
     if (MicroBitCompass::detectedCompass == NULL)
-        MicroBitCompass::detectedCompass = new Compass(MicroBitAccelerometer::coordinateSpace);
+    {
+        CoordinateSpace c(CoordinateSystem::RAW);
+        MicroBitCompass::detectedCompass = new Compass(c);
+    }
 
     return *MicroBitCompass::detectedCompass;
 
