@@ -67,7 +67,8 @@ MicroBit::MicroBit() :
     i2c(io.P20, io.P19),
     power(_i2c, io),
     flash(_i2c, io, power),
-    storage(flash, 0),
+    internalFlash(MICROBIT_STORAGE_PAGE, 1, MICROBIT_CODEPAGESIZE),
+    storage(internalFlash, 0),
     ledRowPins{&io.row1, &io.row2, &io.row3, &io.row4, &io.row5},
     ledColPins{&io.col1, &io.col2, &io.col3, &io.col4, &io.col5},
 
@@ -225,7 +226,7 @@ int MicroBit::init()
             delete flashIncomplete;
 
             // Start the BLE stack, if it isn't already running.
-            bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, true);
+            bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, storage, true);
             
             // Enter pairing mode, using the LED matrix for any necessary pairing operations
             bleManager.pairingMode(display, buttonA);
