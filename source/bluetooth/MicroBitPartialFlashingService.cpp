@@ -286,6 +286,8 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
        * Set flashIncomplete flag if not already set to boot into BLE mode
        * upon a failed flash.
        */
+       
+       /*
        MicroBitStorage storage;
        KeyValuePair* flashIncomplete = storage.get("flashIncomplete");
        if(flashIncomplete == NULL){
@@ -293,6 +295,7 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
          storage.put("flashIncomplete", &flashIncompleteVal, sizeof(flashIncompleteVal));
        }
        delete flashIncomplete;
+       */
 
       uint32_t *flashPointer   = (uint32_t *)(offset);
 
@@ -385,8 +388,10 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
       MICROBIT_DEBUG_DMESG( "rebooting");
       // Once the final packet has been written remove the BLE mode flag and reset
       // the micro:bit
+      /*
       MicroBitStorage storage;
       storage.remove("flashIncomplete");
+      */
       microbit_reset();
       break;
     }

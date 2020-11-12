@@ -116,13 +116,14 @@ class MicroBitBLEManager : public CodalComponent
       * @param deviceName The name used when advertising
       * @param serialNumber The serial number exposed by the device information service
       * @param messageBus An instance of an EventModel, used during pairing.
+      * @param keyValuestorage An instance of a MicroBitStorage key/value pair storage class to use to hold bonding metadata
       * @param enableBonding If true, the security manager enabled bonding.
       *
       * @code
       * bleManager.init(uBit.getName(), uBit.getSerial(), uBit.messageBus, true);
       * @endcode
       */
-    void init(ManagedString deviceName, ManagedString serialNumber, EventModel &messageBus, bool enableBonding);
+    void init(ManagedString deviceName, ManagedString serialNumber, EventModel &messageBus, MicroBitStorage &keyValuestorage, bool enableBonding);
     
     /**
      * Change the output power level of the transmitter to the given value.
