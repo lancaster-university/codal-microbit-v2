@@ -62,6 +62,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitAccelerometer.h"
 #include "MicroBitCompass.h"
 #include "MicroBitPowerManager.h"
+#include "NRF52FlashManager.h"
 #include "MicroBitUSBFlashManager.h"
 #include "MicroBitAudio.h"
 #include "StreamNormalizer.h"
@@ -119,9 +120,6 @@ namespace codal
 
         public:
 
-            // Persistent key value store
-            MicroBitStorage           storage;
-        
 #if CONFIG_ENABLED(DEVICE_BLE)
             // Bluetooth related member variables.
             // Initialize buttonless SVCI bootloader interface before interrupts are enabled
@@ -138,11 +136,12 @@ namespace codal
             NRF52TouchSensor            touchSensor;
             MicroBitIO                  io;
             NRF52Serial                 serial;
-            //Internal I2C for motion sensors
-            NRF52I2C                    _i2c;
-        public:
-            //External I2C for edge connector
-            NRF52I2C                    i2c;
+            NRF52I2C                    _i2c;                   //Internal I2C for motion sensors
+            NRF52I2C                    i2c;                    //External I2C for edge connector
+            MicroBitPowerManager        power;
+            MicroBitUSBFlashManager     flash;
+            NRF52FlashManager           internalFlash; 
+            MicroBitStorage             storage;                // Persistent key value store
             NRF52Pin*                   ledRowPins[5];
             NRF52Pin*                   ledColPins[5];
             const MatrixMap             ledMatrixMap;
@@ -156,8 +155,6 @@ namespace codal
             Accelerometer&              accelerometer;
             Compass&                    compass;
             MicroBitCompassCalibrator   compassCalibrator;
-            MicroBitPowerManager        power;
-            MicroBitUSBFlashManager     flash; 
             MicroBitAudio               audio;
 
 

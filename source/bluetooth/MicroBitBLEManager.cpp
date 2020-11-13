@@ -220,13 +220,14 @@ MicroBitBLEManager *MicroBitBLEManager::getInstance()
   * @param deviceName The name used when advertising
   * @param serialNumber The serial number exposed by the device information service
   * @param messageBus An instance of an EventModel, used during pairing.
+  * @param keyValuestorage An instance of a MicroBitStorage key/value pair storage class to use to hold bonding metadata
   * @param enableBonding If true, the security manager enabled bonding.
   *
   * @code
   * bleManager.init(uBit.getName(), uBit.getSerial(), uBit.messageBus, true);
   * @endcode
   */
-void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNumber, EventModel &messageBus, bool enableBonding)
+void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNumber, EventModel &messageBus, MicroBitStorage &keyValueStorage, bool enableBonding)
 {
     if ( this->status & DEVICE_COMPONENT_RUNNING)
       return;
@@ -235,6 +236,7 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
     
     pairingTime = 0;
     shutdownTime = 0;
+    storage = &keyValueStorage;
 
 #if NRF_LOG_ENABLED
     MICROBIT_BLE_ECHK( NRF_LOG_INIT(NULL));
@@ -424,7 +426,7 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
 
 #if CONFIG_ENABLED(MICROBIT_BLE_PARTIAL_FLASHING)
     MICROBIT_DEBUG_DMESG( "PARTIAL_FLASHING");
-    new MicroBitPartialFlashingService( *this, messageBus);
+    new MicroBitPartialFlashingService( *this, messageBus, *storage);
 #endif
 
 #if CONFIG_ENABLED(MICROBIT_BLE_DEVICE_INFORMATION_SERVICE)

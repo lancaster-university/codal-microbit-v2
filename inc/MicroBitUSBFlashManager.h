@@ -32,6 +32,7 @@ DEALINGS IN THE SOFTWARE.
 #include "codal-core/inc/driver-models/I2C.h"
 #include "codal-core/inc/driver-models/Pin.h"
 #include "MicroBitPowerManager.h"
+#include "NVMController.h"
 
 
 // Constants for USB Interface Flash Management Protocol
@@ -87,7 +88,7 @@ typedef struct
 /**
  * Class definition for MicroBitUSBFlashManager.
  */
-class MicroBitUSBFlashManager : public CodalComponent
+class MicroBitUSBFlashManager : public CodalComponent, public NVMController
 {
     private:
         MicroBitI2C                 &i2cBus;                            // The I2C bus to use to communicate with USB interface chip.
@@ -153,32 +154,41 @@ class MicroBitUSBFlashManager : public CodalComponent
          * Reads data from the specified location in the USB file staorage area.
          * 
          * @param address the logical address of the memory to read.
-         * @param length the number of bytes to read.
+         * @param length the number of 32-bit words to read.
          * 
          * @return the data read, or a zero length buffer on failure.
          */
-        ManagedBuffer read(int address, int length);
+        ManagedBuffer read(uint32_t address, uint32_t length);
+
+        /**
+         * Reads a block of memory from non-volatile memory into RAM
+         * 
+         * @param dest The address in RAM in which to store the result of the read operation
+         * @param address The logical address in non-voltile memory to read from
+         * @param length The number 32-bit words to read.
+         */ 
+        virtual int read(uint32_t* dest, uint32_t address, uint32_t length) override;
 
         /**
          * Writes data to the specified location in the USB file staorage area.
          * 
          * @param data a buffer containing the data to write
          * @param address the location to write to
-         * @param length the number of bytes to write
+         * @param length the number of 32-bit words to write
          * 
          * @return DEVICE_OK on success, or error code.
          */
-        int write(uint8_t *data, int address, int length);
+        int write(uint32_t address, uint32_t *data, uint32_t length) override;
 
         /**
          * Writes data to the specified location in the USB file staorage area.
          * 
-         * @param data a buffer containing the data to write
+         * @param data a buffer containing the data to write. Length MUST be 32-bit aligned.
          * @param address the location to write to
          * 
          * @return DEVICE_OK on success, or error code.
          */
-        int write(ManagedBuffer data, int address);
+        int write(ManagedBuffer data, uint32_t address);
 
         /**
          * Flash Erase one or more physical blocks in the USB file staorage area.
@@ -189,12 +199,51 @@ class MicroBitUSBFlashManager : public CodalComponent
          * defined by the disks geometry, areas in an overlapping block outside the given 
          * range will be automatically read, erased and rewritten. 
          * 
-         * @param start the logical address of the memory to start the erase operation.
-         * @param end the logical address of the memory to end the erase operation.
+         * @param address the logical address of the memory to start the erase operation.
+         * @param length the number of 32-bit words to erase.
          * 
          * @return DEVICE_OK on success, or error code.
          */
-        int erase(int address, int length);
+        int erase(uint32_t address, uint32_t length);
+
+        /**
+         * Erases a given page in non-volatile memory.
+         * 
+         * @param page The address of the page to erase (logical address of the start of the page).
+         */
+        virtual int erase(uint32_t page) override;
+
+
+        /**
+         * Determines the logical address of the start of non-volatile memory region
+         * 
+         * @return The logical address of the first valid logical address in the region of non-volatile memory
+         */
+        virtual uint32_t getFlashStart() override;
+
+        /**
+         * Determines the logical address of the end of the non-volatile memory region
+         * 
+         * @return The logical address of the first invalid logical address beyond
+         * the non-volatile memory.
+         */
+        virtual uint32_t getFlashEnd() override;
+
+        /**
+         * Determines the size of a non-volatile memory page. A page is defined as
+         * the block of memory the can be efficiently erased without impacted on
+         * other regions of memory.
+         * 
+         * @return The size of a single page in bytes.
+         */
+        virtual uint32_t getPageSize() override;
+
+        /**
+         * Determines the amount of available storage.
+         * 
+         * @return the amount of available storage, in bytes.
+         */
+        virtual uint32_t getFlashSize() override;
 
         /**
          * Destructor.

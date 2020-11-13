@@ -235,14 +235,18 @@ int MicroBitUSBFlashManager::eraseConfig()
  * Reads data from the specified location in the USB file staorage area.
  * 
  * @param address the logical address of the memory to read.
- * @param length the number of bytes to read.
+ * @param length the number of 32-bit words to read.
  * 
  * @return the data read, or a zero length buffer on failure.
  */
-ManagedBuffer MicroBitUSBFlashManager::read(int address, int length)
+ManagedBuffer 
+MicroBitUSBFlashManager::read(uint32_t address, uint32_t length)
 {
     ManagedBuffer request(8);
     ManagedBuffer response;
+
+    // Convert length parameter from 32-bit count to a byte count.
+    length = length * sizeof(uint32_t);
 
     uint32_t *p = (uint32_t *) &request[0];
     *p++ = htonl((uint32_t) address | (MICROBIT_USB_FLASH_READ_CMD << 24));
@@ -265,6 +269,25 @@ ManagedBuffer MicroBitUSBFlashManager::read(int address, int length)
 }
 
 /**
+ * Reads a block of memory from non-volatile memory into RAM
+ * 
+ * @param dest The address in RAM in which to store the result of the read operation
+ * @param address The logical address in non-voltile memory to read from
+ * @param length The number 32-bit words to read.
+ */ 
+int 
+MicroBitUSBFlashManager::read(uint32_t* dest, uint32_t address, uint32_t length)
+{
+    ManagedBuffer b = read(address, length);
+
+    if (b.length() == 0)
+        return DEVICE_NO_DATA;
+    
+    memcpy(dest, &b[0], length * sizeof(uint32_t));
+    return DEVICE_OK;
+}
+
+/**
  * Writes data to the specified location in the USB file staorage area.
  * 
  * @param data a buffer containing the data to write
@@ -273,8 +296,11 @@ ManagedBuffer MicroBitUSBFlashManager::read(int address, int length)
  * 
  * @return DEVICE_OK on success, or error code.
  */
-int MicroBitUSBFlashManager::write(uint8_t *data, int address, int length)
+int MicroBitUSBFlashManager::write(uint32_t address, uint32_t *data, uint32_t length)
 {
+    // Convert length parameter from 32-bit count to a byte count.
+    length = length * sizeof(uint32_t);
+
     // Ensure address and length is 32 bit aligned (KL27 requirement)
     // Calculate word aligned address and length parameters taking into account any necessary padding
     int writeAddress = (address / 4) * 4;
@@ -305,14 +331,14 @@ int MicroBitUSBFlashManager::write(uint8_t *data, int address, int length)
 /**
  * Writes data to the specified location in the USB file staorage area.
  * 
- * @param data a buffer containing the data to write
- * @param address the location to write to
+ * @param data a buffer containing the data to write. Length MUST be 32-bit aligned.
+ * @param address the location to write to.
  * 
  * @return DEVICE_OK on success, or error code.
  */
-int MicroBitUSBFlashManager::write(ManagedBuffer data, int address)
+int MicroBitUSBFlashManager::write(ManagedBuffer data, uint32_t address)
 {
-    return write(&data[0], address, data.length());
+    return write(address, (uint32_t *)&data[0], data.length()/sizeof(uint32_t));
 }
 
 /**
@@ -324,12 +350,12 @@ int MicroBitUSBFlashManager::write(ManagedBuffer data, int address)
  * defined by the disks geometry, areas in an overlapping block outside the given 
  * range will be automatically read, erased and rewritten. 
  * 
- * @param start the logical address of the memory to start the erase operation.
- * @param end the logical address of the memory to end the erase operation.
+ * @param address the logical address of the memory to start the erase operation.
+ * @param length the number of 32-bit words to erase.
  * 
  * @return DEVICE_OK on success, or error code.
  */
-int MicroBitUSBFlashManager::erase(int address, int length)
+int MicroBitUSBFlashManager::erase(uint32_t address, uint32_t length)
 {
     ManagedBuffer request(8);
     ManagedBuffer response;
@@ -339,14 +365,17 @@ int MicroBitUSBFlashManager::erase(int address, int length)
     // Ensure we know the device geometry
     getGeometry();
 
+    // Convert length parameter from 32-bit count to a byte count.
+    length = length * sizeof(uint32_t);
+
     // Ensure we have a valid request
-    if (length <= 0 || address < 0 || address + length > geometry.blockSize * geometry.blockCount)
+    if ((address + length > geometry.blockSize * geometry.blockCount) || (length % sizeof(uint32_t) != 0)) 
         return DEVICE_INVALID_PARAMETER;
 
     // Calculcate block aligned start and end addresses for the erase operation, taking into account that he KL27 
     // uses INCLUSIVE end addresses.
-    int eraseStart = (address / geometry.blockSize) * geometry.blockSize;
-    int eraseEnd = (((address + length) / geometry.blockSize) * geometry.blockSize) - ((((address + length) % geometry.blockSize) == 0) ? geometry.blockSize : 0);
+    uint32_t eraseStart = (address / geometry.blockSize) * geometry.blockSize;
+    uint32_t eraseEnd = (((address + length) / geometry.blockSize) * geometry.blockSize) - ((((address + length) % geometry.blockSize) == 0) ? geometry.blockSize : 0);
 
     // Determine if we need to undertake a "partial erase" of any blocks
     if (eraseStart != address || length != (eraseEnd - eraseStart) + geometry.blockSize)
@@ -357,14 +386,14 @@ int MicroBitUSBFlashManager::erase(int address, int length)
         int restoreLength2 = (geometry.blockSize - ((address + length) % geometry.blockSize)) % geometry.blockSize;
 
         if (restoreLength1 > 0)
-            restoreBuffer1 = read(eraseStart, restoreLength1);
+            restoreBuffer1 = read(eraseStart, restoreLength1/sizeof(uint32_t));
 
         if (restoreLength2 > 0)
-            restoreBuffer2 = read(address + length, restoreLength2);
+            restoreBuffer2 = read(address + length, restoreLength2/sizeof(uint32_t));
     }
 
 #ifdef KL27_FLASH_ERASE_WORKAROUND
-    for (int page = eraseStart; page <= eraseEnd; page += geometry.blockSize)
+    for (uint32_t page = eraseStart; page <= eraseEnd; page += geometry.blockSize)
     {
         uint32_t *p = (uint32_t *) &request[0];
         *p++ = htonl(page | (MICROBIT_USB_FLASH_ERASE_CMD << 24));
@@ -402,9 +431,72 @@ int MicroBitUSBFlashManager::erase(int address, int length)
         this->write(restoreBuffer1, eraseStart);
     
     if (restoreBuffer2.length() > 0)
-        this->write(restoreBuffer2, address + length);
+        this->write(restoreBuffer2, (address + length));
 
     return DEVICE_OK;
+}
+
+/**
+ * Erases a given page in non-volatile memory.
+ * 
+ * @param page The address of the page to erase (logical address of the start of the page).
+ */
+int 
+MicroBitUSBFlashManager::erase(uint32_t page)
+{
+    getGeometry();
+    return erase(page, geometry.blockSize);
+}
+
+/**
+ * Determines the logical address of the start of non-volatile memory region
+ * 
+ * @return The logical address of the first valid logical address in the region of non-volatile memory
+ */
+uint32_t
+MicroBitUSBFlashManager::getFlashStart()
+{
+    // We index from logival address zero.
+    return 0;
+    
+}
+
+/**
+ * Determines the logical address of the end of the non-volatile memory region
+ * 
+ * @return The logical address of the first invalid logical address beyond
+ * the non-volatile memory.
+ */
+uint32_t
+MicroBitUSBFlashManager::getFlashEnd()
+{
+    getGeometry();
+    return geometry.blockSize * geometry.blockCount;
+}
+
+/**
+ * Determines the size of a non-volatile memory page. A page is defined as
+ * the block of memory the can be efficiently erased without impacted on
+ * other regions of memory.
+ * 
+ * @return The size of a single page in bytes.
+ */
+uint32_t
+MicroBitUSBFlashManager::getPageSize()
+{
+    getGeometry();
+    return geometry.blockSize;
+}
+
+/**
+ * Determines the amount of available storage.
+ * 
+ * @return the amount of available storage, in bytes.
+ */
+uint32_t
+MicroBitUSBFlashManager::getFlashSize()
+{
+    return getFlashEnd();
 }
 
 /**

@@ -46,15 +46,15 @@ const uint8_t  MicroBitPartialFlashingService::base_uuid[ 16] =
 const uint16_t MicroBitPartialFlashingService::serviceUUID               = 0xd91d;
 const uint16_t MicroBitPartialFlashingService::charUUID[ mbbs_cIdxCOUNT] = { 0x3b10 };
 
-
 /**
-  * Constructor.
-  * Create a representation of the PartialFlashService
-  * @param _ble The instance of a BLE device that we're running on.
-  * @param _messageBus The instance of a EventModel that we're running on.
-  */
-MicroBitPartialFlashingService::MicroBitPartialFlashingService( BLEDevice &_ble, EventModel &_messageBus) :
-    messageBus(_messageBus)
+     * Constructor.
+     * Create a representation of the Partial Flash Service
+     * @param _ble The instance of a BLE device that we're running on.
+     * @param _messageBus An instance of a MessageBus to interface with.
+     * @param _storage A persistent storage manager to use to hold non-volatile state.
+     */
+MicroBitPartialFlashingService::MicroBitPartialFlashingService( BLEDevice &_ble, EventModel &_messageBus, MicroBitStorage &_storage) :
+    messageBus(_messageBus), storage(_storage)
 {
     // Set up partial flashing characteristic
     memclr( characteristicValue, sizeof( characteristicValue));
@@ -286,7 +286,7 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
        * Set flashIncomplete flag if not already set to boot into BLE mode
        * upon a failed flash.
        */
-       MicroBitStorage storage;
+       
        KeyValuePair* flashIncomplete = storage.get("flashIncomplete");
        if(flashIncomplete == NULL){
          uint8_t flashIncompleteVal = 0x01;
@@ -385,8 +385,9 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
       MICROBIT_DEBUG_DMESG( "rebooting");
       // Once the final packet has been written remove the BLE mode flag and reset
       // the micro:bit
-      MicroBitStorage storage;
+
       storage.remove("flashIncomplete");
+
       microbit_reset();
       break;
     }

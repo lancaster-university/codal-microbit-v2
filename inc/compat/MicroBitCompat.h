@@ -40,6 +40,8 @@ DEALINGS IN THE SOFTWARE.
 #include "codal-core/inc/drivers/LEDMatrix.h"
 #include "codal-core/inc/drivers/AnimatedDisplay.h"
 #include "codal-core/inc/driver-models/I2C.h"
+#include "codal-core/inc/drivers/KeyValueStorage.h"
+
 #include "MicroBitIO.h"
 #include "NRF52Pin.h"
 #include "NRF52I2C.h"
@@ -68,6 +70,7 @@ typedef codal::Button MicroBitButton;
 typedef codal::SerialMode MicroBitSerialMode;
 typedef codal::CodalComponent MicroBitComponent;
 typedef codal::EventLaunchMode MicroBitEventLaunchMode;
+typedef codal::KeyValueStorage MicroBitStorage;
 
 //
 // MICROBIT specific error codes
