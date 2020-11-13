@@ -151,7 +151,7 @@ class MicroBitBLEManager : public CodalComponent
      * bleManager.pairingMode(uBit.display, uBit.buttonA);
      * @endcode
      */
-    void pairingMode(MicroBitDisplay &display, MicroBitButton &authorisationButton);
+    void pairingMode(MicroBitDisplay &display, Button &authorisationButton);
 
     /**
      * When called, the micro:bit will begin advertising for a predefined period,
