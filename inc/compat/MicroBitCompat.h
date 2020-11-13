@@ -66,7 +66,6 @@ typedef codal::NRF52I2C MicroBitI2C;
 typedef codal::Event MicroBitEvent;
 typedef codal::Listener MicroBitListener;
 typedef codal::Image MicroBitImage;
-typedef codal::Button MicroBitButton;
 typedef codal::SerialMode MicroBitSerialMode;
 typedef codal::CodalComponent MicroBitComponent;
 typedef codal::EventLaunchMode MicroBitEventLaunchMode;
