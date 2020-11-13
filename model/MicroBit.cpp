@@ -50,6 +50,7 @@ static const MatrixPoint ledMatrixPositions[5*5] =
 MicroBit::MicroBit() :
 
 #if CONFIG_ENABLED(DEVICE_BLE)
+    bleManager(),
     ble( &bleManager),
 #endif
 
