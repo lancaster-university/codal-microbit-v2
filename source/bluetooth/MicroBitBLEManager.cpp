@@ -426,7 +426,7 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
 
 #if CONFIG_ENABLED(MICROBIT_BLE_PARTIAL_FLASHING)
     MICROBIT_DEBUG_DMESG( "PARTIAL_FLASHING");
-    new MicroBitPartialFlashingService( *this, messageBus);
+    new MicroBitPartialFlashingService( *this, messageBus, *storage);
 #endif
 
 #if CONFIG_ENABLED(MICROBIT_BLE_DEVICE_INFORMATION_SERVICE)
