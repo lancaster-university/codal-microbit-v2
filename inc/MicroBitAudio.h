@@ -44,6 +44,7 @@ namespace codal
 
         private:
         bool speakerEnabled;                    // State of on board speaker
+        bool pinEnabled;                        // State of on auxiliary output pin
         NRF52Pin &pin;                          // Auxiliary pin to route audio to
         NRF52Pin &speaker;                      // Primary pin for onboard speaker
         SoundEmojiSynthesizer synth;            // Synthesizer used bfor SoundExpressions
@@ -99,6 +100,23 @@ namespace codal
          */
         bool isSpeakerEnabled();
 
+        /**
+         * Define which pin on the edge connector is used for audio.
+         * @param pin The pin to use for auxiliary audio.
+         */
+        void setPin(NRF52Pin &pin);
+
+        /**
+         * Define if audio is enabled on the edge connector pin.
+         * @param on New value.
+         */
+        void setPinEnabled(bool on);
+
+        /**
+         * Query whether the audio is enabled on the edge connector.
+         * @return true if enabled, false otherwise.
+         */
+        bool isPinEnabled();
     };
 }
 

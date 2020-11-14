@@ -40,6 +40,7 @@ MicroBitAudio* MicroBitAudio::instance = NULL;
   */
 MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker):
     speakerEnabled(true),
+    pinEnabled(true),
     pin(pin), 
     speaker(speaker),
     synth(DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_0),
@@ -64,12 +65,12 @@ int MicroBitAudio::enable()
     {
         pwm = new NRF52PWM(NRF_PWM1, mixer, 44100);
         pwm->setDecoderMode(PWM_DECODER_LOAD_Common);
-        pwm->connectPin(pin, 0);
 
         mixer.setSampleRange(pwm->getSampleRange());
         mixer.setOrMask(0x8000);
 
         setSpeakerEnabled(speakerEnabled);
+        setPinEnabled(pinEnabled);
 
         soundExpressionChannel = mixer.addChannel(synth);
     }
@@ -123,7 +124,6 @@ void MicroBitAudio::setSpeakerEnabled(bool on) {
         else
             pwm->disconnectPin(speaker);
     }
-    
 }
 
 /**
@@ -132,6 +132,45 @@ void MicroBitAudio::setSpeakerEnabled(bool on) {
  */
 bool MicroBitAudio::isSpeakerEnabled() {
     return speakerEnabled;
+}
+
+/**
+ * Define which pin on the edge connector is used for audio.
+ * @param pin The pin to use for auxiliary audio.
+ */
+void MicroBitAudio::setPin(NRF52Pin &pin)
+{
+    bool wasEnabled = pinEnabled;
+
+    setPinEnabled(false);
+    this->pin = pin;
+    setPinEnabled(wasEnabled);
+}
+
+/**
+ * Define if audio is enabled on the edge connector pin.
+ * @param on New value.
+ */
+void MicroBitAudio::setPinEnabled(bool on)
+{
+    pinEnabled = on;
+
+    if (pwm)
+    {
+        if (on)
+            pwm->connectPin(pin, 0);
+        else
+            pwm->disconnectPin(pin);
+    }
+}
+
+/**
+ * Query whether the audio is enabled on the edge connector.
+ * @return true if enabled, false otherwise.
+ */
+bool MicroBitAudio::isPinEnabled()
+{
+    return this->pinEnabled;
 }
 
 /**
