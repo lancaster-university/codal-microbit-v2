@@ -290,9 +290,23 @@ void MicroBitPowerManager::off()
  */
 void MicroBitPowerManager::idleCallback()
 {
+    static int activeCount = 0;
+
     // Do nothing if there is a transaction in progress.
     if (status & MICROBIT_USB_INTERFACE_AWAITING_RESPONSE || !io.irq1.isActive())
+    {
+        activeCount = 0;
         return;
+    }
+
+    // Ensure the line has been held low for a little before services, as other sensors
+    // are much more likley to be the source of the IRQ.
+    if (activeCount++ < MICROBIT_USB_INTERFACE_IRQ_THRESHOLD)
+        return;
+
+    // The line has been held active beyond our threshold.
+    // Reset our counter, and see if the USB interface chip has any data ready for us.
+    activeCount  = 0;
 
     // Determine if the KL27 is trying to indicate an event
     ManagedBuffer response;
