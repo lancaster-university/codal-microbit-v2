@@ -72,6 +72,7 @@ Accelerometer& MicroBitAccelerometer::autoDetect(MicroBitI2C &i2c)
     if (!autoDetectCompleted)
     {
         MicroBitAccelerometer::detectedAccelerometer = NULL;
+        MicroBitCompass::detectedCompass = NULL;
 
         // All known accelerometer/magnetometer peripherals have the same alignment
         if (FXOS8700::isDetected(i2c, 0x3E))
