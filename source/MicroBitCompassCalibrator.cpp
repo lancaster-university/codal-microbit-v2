@@ -81,7 +81,7 @@ MicroBitCompassCalibrator::MicroBitCompassCalibrator(Compass& _compass, Accelero
 
     if(calibrationData != NULL)
     {
-        CompassCalibration cal = CompassCalibration();
+        CompassCalibration cal;
         memcpy(&cal, calibrationData->value, sizeof(CompassCalibration));
         compass.setCalibration(cal);
         delete calibrationData;
@@ -412,9 +412,8 @@ void MicroBitCompassCalibrator::calibrateUX(MicroBitEvent)
     CompassCalibration cal = calibrate(data, samples); 
     compass.setCalibration(cal);
 
-    // TODO: Reintroduce when persistent storage is implemented
-    //if(this->storage)
-    //    this->storage->put(ManagedString("compassCal"), (uint8_t *) &cal, sizeof(CompassCalibration));
+    if(this->storage)
+        this->storage->put("compassCal", (uint8_t *) &cal, sizeof(CompassCalibration));
 
     // Show a smiley to indicate that we're done, and continue on with the user program.
     display.clear();
