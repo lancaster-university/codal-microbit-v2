@@ -114,7 +114,8 @@ const char *MICROBIT_BLE_MODEL = "BBC micro:bit";
 const char *MICROBIT_BLE_HARDWARE_VERSION = NULL;
 const char *MICROBIT_BLE_FIRMWARE_VERSION = MICROBIT_DAL_VERSION;
 const char *MICROBIT_BLE_SOFTWARE_VERSION = NULL;
-const int8_t MICROBIT_BLE_POWER_LEVEL[] = { -20, -16, -12, -8, -4, 0, 4, 8};
+
+const int8_t MICROBIT_BLE_POWER_LEVEL[] = { -40, -20, -16, -12, -8, -4, 0, 4};
 
 /*
  * Many of the interfaces we need to use only support callbacks to plain C functions, rather than C++ methods.
