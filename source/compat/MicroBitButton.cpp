@@ -72,7 +72,7 @@ MicroBitButton::MicroBitButton(PinName name, uint16_t id, MicroBitButtonEventCon
  * @param mode the configuration of internal pullups/pulldowns, as defined in the mbed PullMode class. PullNone by default.
  *
  */
-MicroBitButton::MicroBitButton(Pin &pin, uint16_t id, ButtonEventConfiguration eventConfiguration, ButtonPolarity polarity, PullMode mode) : NRF52Pin(id, name, PIN_CAPABILITY_DIGITAL), Button(pin, id, eventConfiguration, polarity, mode)
+MicroBitButton::MicroBitButton(Pin &p, uint16_t id, ButtonEventConfiguration eventConfiguration, ButtonPolarity polarity, PullMode mode) : NRF52Pin(id, name, PIN_CAPABILITY_DIGITAL), Button(p, id, eventConfiguration, polarity, mode)
 {
 
 }
