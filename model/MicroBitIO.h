@@ -33,7 +33,7 @@ DEALINGS IN THE SOFTWARE.
 //
 // Unique Pin number for each pin (synonymous with mbedos PinName)
 //
-typedef enum {
+typedef enum : uint8_t{
     p0  = 0,
     p1  = 1,
     p2  = 2,
@@ -214,7 +214,7 @@ typedef enum {
     QSPI_FLASH1_CSN = QSPI1_CSN,
 
     // Not connected
-    NC = (int)0xFFFFFFFF
+    NC = (int)0xFF
 } PinName;
 
 
