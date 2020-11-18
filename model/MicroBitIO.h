@@ -214,7 +214,7 @@ typedef enum {
     QSPI_FLASH1_CSN = QSPI1_CSN,
 
     // Not connected
-    NC = (int)0xFFFFFFFF;
+    NC = (int)0xFFFFFFFF
 } PinName;
 
 
