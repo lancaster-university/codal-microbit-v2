@@ -87,31 +87,9 @@ MicroBitIOPinService::MicroBitIOPinService(BLEDevice &_ble, MicroBitIO &_io) :
 
 MicroBitPin &MicroBitIOPinService::edgePin( int index)
 {
-    unsigned char edgePin[ MICROBIT_IO_PIN_SERVICE_PINCOUNT] =
-    {
-        MICROBIT_PIN_P0,
-        MICROBIT_PIN_P1,
-        MICROBIT_PIN_P2,
-        MICROBIT_PIN_P3,
-        MICROBIT_PIN_P4,
-        MICROBIT_PIN_P5,
-        MICROBIT_PIN_P6,
-        MICROBIT_PIN_P7,
-        MICROBIT_PIN_P8,
-        MICROBIT_PIN_P9,
-        MICROBIT_PIN_P10,
-        MICROBIT_PIN_P11,
-        MICROBIT_PIN_P12,
-        MICROBIT_PIN_P13,
-        MICROBIT_PIN_P14,
-        MICROBIT_PIN_P15,
-        MICROBIT_PIN_P16,
-        MICROBIT_PIN_P19,
-        MICROBIT_PIN_P20
-    };
     if ( index < 0 || index >= MICROBIT_IO_PIN_SERVICE_PINCOUNT)
         index = 0;
-    return io.pin[ edgePin[ index]];
+    return io.pin[ index];
 };
 
 
