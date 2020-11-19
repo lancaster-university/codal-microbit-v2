@@ -70,6 +70,7 @@ typedef codal::SerialMode MicroBitSerialMode;
 typedef codal::CodalComponent MicroBitComponent;
 typedef codal::EventLaunchMode MicroBitEventLaunchMode;
 typedef codal::KeyValueStorage MicroBitStorage;
+typedef codal::BitmapFont MicroBitFont;
 
 //
 // MICROBIT specific error codes
