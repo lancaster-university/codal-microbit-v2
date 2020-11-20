@@ -46,6 +46,7 @@ DEALINGS IN THE SOFTWARE.
 #include "NRF52Pin.h"
 #include "NRF52I2C.h"
 #include "NRF52SPI.h"
+#include "NRF52Serial.h"
 
 //
 // Historic mbed types
@@ -71,7 +72,6 @@ typedef codal::CodalComponent MicroBitComponent;
 typedef codal::EventLaunchMode MicroBitEventLaunchMode;
 typedef codal::KeyValueStorage MicroBitStorage;
 typedef codal::BitmapFont MicroBitFont;
-typedef codal::Serial MicroBitSerial;
 
 //
 // MICROBIT specific error codes
