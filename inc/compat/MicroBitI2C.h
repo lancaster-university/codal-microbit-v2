@@ -46,7 +46,7 @@ class MicroBitI2C : public NRF52I2C
       *
       * @param device
       */
-     MicroBitI2C(Pin &sda, Pin &scl);
+     MicroBitI2C(NRF52Pin &sda, NRF52Pin &scl);
 
     /**
       * Constructor.

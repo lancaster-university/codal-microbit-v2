@@ -35,7 +35,7 @@ using namespace codal;
   *
   * @param device
   */
- MicroBitI2C::MicroBitI2C(Pin &sda, Pin &scl) : NRF52I2C(sda, scl) {
+ MicroBitI2C::MicroBitI2C(NRF52Pin &sda, NRF52Pin &scl) : NRF52I2C(sda, scl) {
  }
 
 /**
