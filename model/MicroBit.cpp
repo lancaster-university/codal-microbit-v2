@@ -172,6 +172,7 @@ int MicroBit::init()
     // We do this to enable initialisation of those services only when they're used,
     // which saves processor time, memeory and battery life.
     messageBus.listen(DEVICE_ID_MESSAGE_BUS_LISTENER, DEVICE_EVT_ANY, this, &MicroBit::onListenerRegisteredEvent);
+    messageBus.listen(DEVICE_ID_MESSAGE_BUS_LISTENER, ID_PIN_P0, this, &MicroBit::onP0ListenerRegisteredEvent, MESSAGE_BUS_LISTENER_IMMEDIATE);
 
 #if CONFIG_ENABLED(DMESG_SERIAL_DEBUG)
 #if DEVICE_DMESG_BUFFER_SIZE > 0
@@ -247,6 +248,14 @@ int MicroBit::init()
     sleep(10);
 
     return DEVICE_OK;
+}
+
+/**
+  * A callback listener to disable default audio streaming to P0 if an event handler is registered on that pin.
+  */
+void MicroBit::onP0ListenerRegisteredEvent(Event evt)
+{
+    audio.setPinEnabled(false);
 }
 
 /**
