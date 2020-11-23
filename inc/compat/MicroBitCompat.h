@@ -47,6 +47,7 @@ DEALINGS IN THE SOFTWARE.
 #include "NRF52I2C.h"
 #include "NRF52SPI.h"
 #include "NRF52Serial.h"
+#include "MicroBitI2C.h"
 
 //
 // Historic mbed types
