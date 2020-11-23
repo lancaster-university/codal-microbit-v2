@@ -136,8 +136,8 @@ namespace codal
             NRF52TouchSensor            touchSensor;
             MicroBitIO                  io;
             NRF52Serial                 serial;
-            NRF52I2C                    _i2c;                   //Internal I2C for motion sensors
-            NRF52I2C                    i2c;                    //External I2C for edge connector
+            MicroBitI2C                 _i2c;                   //Internal I2C for motion sensors
+            MicroBitI2C                 i2c;                    //External I2C for edge connector
             MicroBitPowerManager        power;
             MicroBitUSBFlashManager     flash;
             NRF52FlashManager           internalFlash; 
