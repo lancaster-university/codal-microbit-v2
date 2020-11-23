@@ -101,6 +101,30 @@ class MicroBitSerial : public NRF52Serial
       */
     MicroBitSerial(PinNumber tx, PinNumber rx, uint8_t rxBufferSize = CODAL_SERIAL_DEFAULT_BUFFER_SIZE, uint8_t txBufferSize = CODAL_SERIAL_DEFAULT_BUFFER_SIZE, uint16_t id  = DEVICE_ID_SERIAL);
 
+
+    /**
+      * A way of dynamically configuring the serial instance to use pins other than USBTX and USBRX.
+      *
+      * @param tx the new transmission pin.
+      *
+      * @param rx the new reception pin.
+      *
+      * @return CODAL_SERIAL_IN_USE if another fiber is currently transmitting or receiving, otherwise DEVICE_OK.
+      */
+    int redirect(PinName tx, PinName rx);
+
+
+    /**
+      * A way of dynamically configuring the serial instance to use pins other than USBTX and USBRX.
+      *
+      * @param tx the new transmission pin.
+      *
+      * @param rx the new reception pin.
+      *
+      * @return CODAL_SERIAL_IN_USE if another fiber is currently transmitting or receiving, otherwise DEVICE_OK.
+      */
+    int redirect(PinNumber tx, PinNumber rx);
+
 };
 
 }

@@ -101,3 +101,29 @@ MicroBitSerial::MicroBitSerial(PinName tx, PinName rx, uint8_t rxBufferSize, uin
 MicroBitSerial::MicroBitSerial(PinNumber tx, PinNumber rx, uint8_t rxBufferSize, uint8_t txBufferSize, uint16_t id) : NRF52Serial(*new NRF52Pin(tx, tx, PIN_CAPABILITY_ALL), *new NRF52Pin(rx, rx, PIN_CAPABILITY_ALL))
 {
 }
+
+/**
+  * A way of dynamically configuring the serial instance to use pins other than USBTX and USBRX.
+  *
+  * @param tx the new transmission pin.
+  *
+  * @param rx the new reception pin.
+  *
+  * @return CODAL_SERIAL_IN_USE if another fiber is currently transmitting or receiving, otherwise DEVICE_OK.
+  */
+int MicroBitSerial::redirect(PinName tx, PinName rx) {
+        Serial::redirect(*new Pin(tx, tx, PIN_CAPABILITY_ALL), *new Pin(rx, rx, PIN_CAPABILITY_ALL));
+}
+
+/**
+  * A way of dynamically configuring the serial instance to use pins other than USBTX and USBRX.
+  *
+  * @param tx the new transmission pin.
+  *
+  * @param rx the new reception pin.
+  *
+  * @return CODAL_SERIAL_IN_USE if another fiber is currently transmitting or receiving, otherwise DEVICE_OK.
+  */
+int MicroBitSerial::redirect(PinNumber tx, PinNumber rx) {
+        Serial::redirect(*new Pin(tx, tx, PIN_CAPABILITY_ALL), *new Pin(rx, rx, PIN_CAPABILITY_ALL));
+}
