@@ -116,6 +116,11 @@ namespace codal
              */
             void onListenerRegisteredEvent(Event evt);
 
+            /**
+             * A callback listener to disable default audio streaming to P0 if an event handler is registered on that pin.
+             */
+            void onP0ListenerRegisteredEvent(Event evt);
+
             // Pin ranges used for LED matrix display.
 
         public:
