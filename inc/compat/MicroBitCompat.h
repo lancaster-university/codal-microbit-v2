@@ -63,7 +63,6 @@ typedef enum {
 // MicroBit types
 //
 typedef codal::NRF52Pin MicroBitPin;
-typedef codal::NRF52I2C MicroBitI2C;
 typedef codal::Event MicroBitEvent;
 typedef codal::Listener MicroBitListener;
 typedef codal::Image MicroBitImage;

@@ -22,56 +22,42 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef MICROBIT_I2C_H
-#define MICROBIT_I2C_H
+#include "MicroBitI2C.h"
 
-#include "MicroBitCompat.h"
-
-namespace codal
-{
+using namespace codal;
 
 /**
-  * Class definition for MicroBit I2C
+  * Constructor.
   *
+  * @param sda the physical pin on the processor that should be used as output.
+  *
+  * @param scl the physical pin on the processor that should be used as output.
+  *
+  * @param device
   */
-class MicroBitI2C : public NRF52I2C
-{
-    public:
-    /**
-      * Constructor.
-      *
-      * @param sda the physical pin on the processor that should be used as output.
-      *
-      * @param scl the physical pin on the processor that should be used as output.
-      *
-      * @param device
-      */
-     MicroBitI2C(Pin &sda, Pin &scl);
+ MicroBitI2C::MicroBitI2C(Pin &sda, Pin &scl) : NRF52I2C(sda, scl) {
+ }
 
-    /**
-      * Constructor.
-      *
-      * @param sda the physical pin on the processor that should be used as output.
-      *
-      * @param scl the physical pin on the processor that should be used as output.
-      *
-      * @param device
-      */
-     MicroBitI2C(PinName sda, PinName scl);
-    
-     /**
-      * Constructor.
-      *
-      * @param sda the physical pin on the processor that should be used as output.
-      *
-      * @param scl the physical pin on the processor that should be used as output.
-      *
-      * @param device
-      */
-     MicroBitI2C(PinNumber sda, PinNumber scl);
+/**
+  * Constructor.
+  *
+  * @param sda the physical pin on the processor that should be used as output.
+  *
+  * @param scl the physical pin on the processor that should be used as output.
+  *
+  * @param device
+  */
+ MicroBitI2C::MicroBitI2C(PinName sda, PinName scl) : NRF52I2C(*new NRF52Pin(sda, sda, PIN_CAPABILITY_ALL), *new NRF52Pin(scl, scl, PIN_CAPABILITY_ALL)) {
+ }
 
-};
-
-}
-
-#endif
+/**
+  * Constructor.
+  *
+  * @param sda the physical pin on the processor that should be used as output.
+  *
+  * @param scl the physical pin on the processor that should be used as output.
+  *
+  * @param device
+  */
+ MicroBitI2C::MicroBitI2C(PinNumber sda, PinNumber scl) : NRF52I2C(*new NRF52Pin(sda, sda, PIN_CAPABILITY_ALL), *new NRF52Pin(scl, scl, PIN_CAPABILITY_ALL)) {
+ }
