@@ -112,7 +112,7 @@ MicroBitSerial::MicroBitSerial(PinNumber tx, PinNumber rx, uint8_t rxBufferSize,
   * @return CODAL_SERIAL_IN_USE if another fiber is currently transmitting or receiving, otherwise DEVICE_OK.
   */
 int MicroBitSerial::redirect(PinName tx, PinName rx) {
-        Serial::redirect(*new Pin(tx, tx, PIN_CAPABILITY_ALL), *new Pin(rx, rx, PIN_CAPABILITY_ALL));
+    return Serial::redirect(*new Pin(tx, tx, PIN_CAPABILITY_ALL), *new Pin(rx, rx, PIN_CAPABILITY_ALL));
 }
 
 /**
@@ -125,5 +125,5 @@ int MicroBitSerial::redirect(PinName tx, PinName rx) {
   * @return CODAL_SERIAL_IN_USE if another fiber is currently transmitting or receiving, otherwise DEVICE_OK.
   */
 int MicroBitSerial::redirect(PinNumber tx, PinNumber rx) {
-        Serial::redirect(*new Pin(tx, tx, PIN_CAPABILITY_ALL), *new Pin(rx, rx, PIN_CAPABILITY_ALL));
+    return Serial::redirect(*new Pin(tx, tx, PIN_CAPABILITY_ALL), *new Pin(rx, rx, PIN_CAPABILITY_ALL));
 }
