@@ -477,7 +477,7 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
     cp_init.next_conn_params_update_delay  = APP_TIMER_TICKS(30000);    // 30 seconds
     cp_init.max_conn_params_update_count   = 3;
     cp_init.start_on_notify_cccd_handle    = BLE_GATT_HANDLE_INVALID;
-    cp_init.disconnect_on_fail             = true;
+    cp_init.disconnect_on_fail             = false;
     MICROBIT_BLE_ECHK( ble_conn_params_init(&cp_init));
 
     setAdvertiseOnDisconnect( true);
