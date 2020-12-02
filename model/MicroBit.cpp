@@ -182,7 +182,7 @@ int MicroBit::init()
     status |= DEVICE_COMPONENT_STATUS_IDLE_TICK;
 
     // Set IRQ priorities for peripherals we use.
-    // Note that low values have highest priority, and only 2, 3, 5, 6 and 7 are available with SoftDevice enabled.
+    // Note that low values have highest priority, and only 2, 3, 4, 5 and 7 are available with SoftDevice enabled.
 
     NVIC_SetPriority(TIMER1_IRQn, 7);         // System timer (general purpose)
     NVIC_SetPriority(TIMER2_IRQn, 5);         // ADC timer.
