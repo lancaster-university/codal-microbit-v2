@@ -88,6 +88,7 @@ class Mixer2 : public DataSource
     int             bytesPerSampleOut;
     float           volume;
     uint32_t        orMask;
+    float           silenceLevel;
 
 public:
     /**
@@ -191,6 +192,15 @@ public:
      * @return DEVICE_OK on success.
      */
     int setOrMask(uint32_t mask);
+
+    /**
+     * Defines an optional sample level to generate during periods of silence.
+     * If undefined, the mixer defaults to a normalized level of 0.0f...1024.0f
+     *
+     * @param level The output level to apply for silence, in the range 0.0f...1024.0f
+     * @return DEVICE_OK on success or DEVICE_INVALID_PARAMETER.
+     */
+    int setSilenceLevel(float level);
 
     private:
     void configureChannel(MixerChannel *c);
