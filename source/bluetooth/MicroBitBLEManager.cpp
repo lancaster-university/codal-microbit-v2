@@ -235,6 +235,9 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
 
     MICROBIT_DEBUG_DMESG( "MicroBitBLEManager::init");
     
+    MICROBIT_DEBUG_DMESG( "NRF_SDH_BLE_VS_UUID_COUNT = %d", (int) NRF_SDH_BLE_VS_UUID_COUNT);
+    MICROBIT_DEBUG_DMESG( "NRF_SDH_BLE_GATTS_ATTR_TAB_SIZE = %x", (int) NRF_SDH_BLE_GATTS_ATTR_TAB_SIZE);
+
     pairingTime = 0;
     shutdownTime = 0;
     storage = &keyValueStorage;
