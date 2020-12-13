@@ -75,6 +75,8 @@ MicroBitUARTService::MicroBitUARTService(BLEDevice &_ble, uint8_t rxBufferSize, 
     txBufferTail = 0;
     this->txBufferSize = txBufferSize;
 
+    waitingForEmpty = false;
+
     // Register the base UUID and create the service.
     RegisterBaseUUID( base_uuid);
     CreateService( serviceUUID);
@@ -89,6 +91,19 @@ MicroBitUARTService::MicroBitUARTService(BLEDevice &_ble, uint8_t rxBufferSize, 
                           txBuffer,
                           1, txBufferSize,
                           microbit_propINDICATE);
+}
+
+
+/**
+  * Invoked when BLE disconnects.
+  */
+void MicroBitUARTService::onDisconnect( const microbit_ble_evt_t *p_ble_evt)
+{
+    if ( waitingForEmpty)
+    {
+        txBufferTail = txBufferHead;
+        MicroBitEvent(MICROBIT_ID_NOTIFY, MICROBIT_UART_S_EVT_TX_EMPTY);
+    }
 }
 
 
@@ -296,12 +311,18 @@ int MicroBitUARTService::send(const uint8_t *buf, int length, MicroBitSerialMode
         circularCopy(txBuffer, txBufferSize, temp, txBufferTail, txBufferHead);
 
         if(mode == SYNC_SLEEP)
+        {
+            waitingForEmpty = true;
             fiber_wake_on_event(MICROBIT_ID_NOTIFY, MICROBIT_UART_S_EVT_TX_EMPTY);
+        }
 
         indicateChrValue( mbbs_cIdxTX, temp, size);
 
         if(mode == SYNC_SLEEP)
+        {
             schedule();
+            waitingForEmpty = false;
+        }
         else
             break;
 
