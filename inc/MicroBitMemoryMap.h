@@ -102,10 +102,16 @@ class MicroBitMemoryMap
     int updateRegion(Region region);
 
     /**
-     * Function to fetch hashes from PXT build
+     * Function to fetch hashes from PXT/uPy Build
      *
      */
     void findHashes();
+
+    /**
+     * Function to process records from uPy Build
+     *
+     */
+    void processRecord(uint32_t *address);
 };
 
 #endif
