@@ -329,17 +329,16 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
       // Iterate through until reaching the scratch page
       while(flashPointer < (uint32_t *)DEFAULT_SCRATCH_PAGE)
       {
-        // Check for embedded source magic
-        if(*flashPointer == 0x41140EF && *(uint32_t *)(flashPointer + 0x1) == 0xB82FA2BB)
+
+        // Check if page is blank
+        if(crc32_compute((uint8_t*)flashPointer, MICROBIT_CODEPAGESIZE, NULL) != 0xc71c0011)
         {
-          MICROBIT_DEBUG_DMESG( "Embedded Source Found @ %x", (unsigned int) flashPointer);
-          // Embedded Source Found!
-          uint8_t blank = 0x00;
-          flash.flash_write(flashPointer, &blank, sizeof(blank));
+          // Erase page
+          flash.erase_page(flashPointer);
         }
 
-        // Next 16 byte alignment
-        flashPointer = flashPointer + 0x2;
+        // Next page
+        flashPointer = flashPointer + MICROBIT_CODEPAGESIZE;
       }
 
       // make bootloader settings page

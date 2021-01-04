@@ -126,10 +126,6 @@ void MicroBitMemoryMap::findHashes()
     int step = PAGE_SIZE / sizeof( uint32_t);
     uint32_t *nxt = ( uint32_t *)DEFAULT_SCRATCH_PAGE;
     
-    DMESG("add %x", add);
-    DMESG("rem %x", rem);
-    DMESG("step %x", step);
-    DMESG("nxt %x", nxt);
 
     for( uint32_t *magicAddress = (uint32_t *) add; magicAddress < nxt; magicAddress += step)
     {
@@ -151,13 +147,12 @@ void MicroBitMemoryMap::findHashes()
             // Found uPy Magic
             DMESG("FOUND UPY_MAGIC");
             uint8_t nRegions = (*(magicAddress - (sizeof(magicAddress)/2)));
-            DMESG("nRegions: %x", nRegions);
-
+            
+            // Iterate through regions
             for(int i = 0; i < nRegions; i++) {
                processRecord(magicAddress - ((2 + i) * sizeof(magicAddress))); 
             }
 
-            // memcpy( memoryMapStore.memoryMap[1].hash, magicAddress + (PAGE_SIZE - 4), 8);
         }
     }
 }
@@ -167,9 +162,15 @@ void MicroBitMemoryMap::findHashes()
  * Function to process record from uPy build
  */
 void MicroBitMemoryMap::processRecord(uint32_t *address) {
-    uint8_t id = *address;
+    uint8_t id = (*address) - 1;
     uint8_t hashType = ((*address) >> 8) & 0xFF;
-    uint16_t start; memcpy(&start, address + 1, 2);
+
+    uint32_t start; memcpy(&start, address, 4); 
+    start = (start & 0xFFFF0000) >> 8;
+    start = start * 4096;
+
+    uint32_t length; memcpy(&length, address + 1, 4); 
+
     uint32_t hash[2]; 
     if(hashType == 2) {
         memcpy(&hash, (uint32_t *) *(address + 2), 8);
@@ -177,16 +178,20 @@ void MicroBitMemoryMap::processRecord(uint32_t *address) {
         memcpy(&hash, address + 2, 8);
     }
     
-    DMESG("Python Layout Record. Record: %d Hash Type: %d Start: %d (*1024) Hash: %x"
+    DMESG("Python Layout Record. Record: %d Hash Type: %d Start: %x Length: %x Hash: %x %x"
                     , id
                     , hashType
                     , start
-                    , hash);
+                    , length
+                    , hash[1]
+                    , hash[0]);
 
     for(uint8_t i = 0; i < 4; i++) {
         DMESG("byte %x value %x", i, *(address + i));
     }
     
     memcpy(memoryMapStore.memoryMap[id].hash, &hash, 8);
+    memoryMapStore.memoryMap[id].startAddress = (uint32_t)start;
+    memoryMapStore.memoryMap[id].endAddress = (uint32_t)(start + length);
 
 }
