@@ -45,11 +45,13 @@ class MicroBitAudioProcessor : public DataSink
     uint16_t position;
     bool recording;
     float rec[AUDIO_SAMPLES_NUMBER * 2];
+    int lastFreq;
 
     public:
     MicroBitAudioProcessor(DataSource& source); 
     ~MicroBitAudioProcessor(); 
     virtual int pullRequest();
+    int getFrequency();
     int setDivisor(int d);
     void startRecording();
     void stopRecording(MicroBit& uBit);

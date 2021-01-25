@@ -55,9 +55,7 @@ MicroBitAudioProcessor::~MicroBitAudioProcessor()
 
 int MicroBitAudioProcessor::pullRequest()
 {
-    int z = 0;
-    int minimum = 0;
-    int maximum = 0;
+
     int s;
     int result;
 
@@ -66,27 +64,17 @@ int MicroBitAudioProcessor::pullRequest()
     if (!recording)
         return DEVICE_OK;
 
+    //using 8 bits produces more accurate to input results (not 2x like using 16) but issue with 
+    //F and G both producing 363hz -> investigate futher with crossing 8 bit + differnet sample numbers
+    //int8_t *data = (int8_t *) &mic_samples[0];
     int16_t *data = (int16_t *) &mic_samples[0];
     int samples = mic_samples.length() / 2;
 
     for (int i=0; i < samples; i++)
     {
-        z += *data;
-
-        s = (int) *data;
-        //s = s - zeroOffset;
-        //s = s / divisor;
-        result = s;
-
-        if (s < minimum)
-            minimum = s;
-
-        if (s > maximum)
-            maximum = s;
-
-        //if (recording)
-        //    rec[position] = (float)result;
-
+        
+        result = (int) *data;
+        
         data++;
         buf[position++] = (float)result;
 
@@ -102,9 +90,14 @@ int MicroBitAudioProcessor::pullRequest()
                 position = 0;
 
             DMESG("Run FFT, %d", offset);
+            //auto a = system_timer_current_time();
             arm_rfft_fast_f32(&fft_instance, buf + offset, output, 0);
             arm_cmplx_mag_f32(output, mag, AUDIO_SAMPLES_NUMBER / 2);
             arm_max_f32(mag + 1, AUDIO_SAMPLES_NUMBER / 2 - 1, &maxValue, &index);
+            //auto b = system_timer_current_time();
+
+            //DMESG("Before FFT: %d", (int)a);
+            //DMESG("After FFT: %d (%d)", (int)b, (int)(b - a));
 
             uint32_t freq = ((uint32_t)MIC_SAMPLE_RATE / AUDIO_SAMPLES_NUMBER) * (index + 1);
             DMESG("Freq: %d (max: %d.%d, Index: %d)",
@@ -115,9 +108,11 @@ int MicroBitAudioProcessor::pullRequest()
         }
     }
 
-    z = z / samples;
-    zeroOffset = z;
     return DEVICE_OK;
+}
+
+int MicroBitAudioProcessor::getFrequency(){
+    return lastFreq;
 }
 
 int MicroBitAudioProcessor::setDivisor(int d)
