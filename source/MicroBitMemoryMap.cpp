@@ -38,7 +38,9 @@ DEALINGS IN THE SOFTWARE.
 
 #include "sdk_config.h"
 #include "app_util.h"
+#include "crc32.h"
 
+#define MAX_STRING_LENGTH 40
 
 /**
   * Default constructor.
@@ -173,7 +175,30 @@ void MicroBitMemoryMap::processRecord(uint32_t *address) {
 
     uint32_t hash[2]; 
     if(hashType == 2) {
-        memcpy(&hash, (uint32_t *) *(address + 2), 8);
+        // Points to a string
+        // Take string and generate 8 byte hash
+        uint32_t * string = (uint32_t *) *(address + 2);
+        int n   = 0;
+        int rem = 0;
+        
+        while(n < MAX_STRING_LENGTH) {
+            uint32_t word = *(string + n); 
+            
+            // DMESG("%c%c%c%c", word, word >> 8, word >> 16, word >> 24);
+            DMESG("%x", word);
+            
+            if(word >> 24 == '\0') { rem = 0; break; }
+            if(word >> 16 == '\0') { rem = 1; break; }
+            if(word >> 8  == '\0') { rem = 2; break; }
+            if(word       == '\0') { rem = 3; break; }
+
+            n++;
+        }
+
+        uint32_t crc = crc32_compute((uint8_t *)string, (4 * n) + rem, NULL);
+        memcpy(&hash, &crc, 4);
+    
+        DMESG("Hash from string: %x Length: %u n: %u rem: %u", crc, (4*n) + rem, n, rem);
     } else {
         memcpy(&hash, address + 2, 8);
     }
