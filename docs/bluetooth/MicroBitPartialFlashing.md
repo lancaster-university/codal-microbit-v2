@@ -10,14 +10,40 @@ Diagrams showing the flow of data during partial flashing can be found at [the b
 
 ## Bluetooth Service Specification
 
-TODO: Does BLE profile exist for v2?
+The micro:bit v2 follows the same BLE specification as the micro:bit v1. The specification can be found [here](https://lancaster-university.github.io/microbit-docs/resources/bluetooth/bluetooth_profile.html)
 
 ## Enabling the service
 
-Currently partial flashing is supported by programs built using MakeCode or the Python editor. This is because the service requires the user program to be appended onto the end of CODAL, something which can't be guaranteed in a pure C++ program. The partial flashing service is enabled by default for MakeCode and Python programs.
+In order to work properly, the partial flashing service requires certain things to be true about the memory map, and it must be possible for the MemoryMapService to be able to build a model of the flash layout. Most significantly, the service is ideal for updating data outside the main C/C++ build containing CODAL. This is currently possible for MakeCode and MicroPython builds, but not trivial for CODAL programs, where the program is linked into a single executable.
+
+The partial flashing service is included by default in MakeCode builds for micro:bit V1 (using microbit-dal, not CODAL) and V2, and MicroPython builds for micro:bit V2 only. The Partial Flashing service is available in both application and pairing modes.
+
+To enable it in a CODAL build the `MICROBIT_BLE_PARTIAL_FLASHING` option is set to `1` in `codal.json`
+
+```
+"config":{
+        "SOFTDEVICE_PRESENT": 1,
+        "DEVICE_BLE": 1,
+        "MICROBIT_BLE_ENABLED" : 1,
+        "MICROBIT_BLE_PAIRING_MODE": 1,
+        "MICROBIT_BLE_DFU_SERVICE": 1,
+        "MICROBIT_BLE_DEVICE_INFORMATION_SERVICE": 1,
+        "MICROBIT_BLE_EVENT_SERVICE" : 1,
+        "MICROBIT_BLE_PARTIAL_FLASHING" : 1,
+        "MICROBIT_BLE_SECURITY_LEVEL": "SECURITY_MODE_ENCRYPTION_NO_MITM"
+    }
+```
 
 ## Characteristic Commands
-The service consists of a single Bluetooth GATT characteristic that responds to a client's WRITE WITHOUT RESPONSE request with a BLE Notification. The characteristic supports commands to: Read the REGION INFO i.e. request Memory Map information, WRITE DATA to the flash, inform the micro:bit that the sevice has reached END OF TRANSMISSION, obtain the MICROBIT STATUS (PFS version #, current m:b mode), and to RESET the micro:bit into either application (MakeCode) or BLE mode.
+The service consists of a single Bluetooth GATT characteristic that responds to a client's WRITE WITHOUT RESPONSE request with a BLE Notification. The characteristic supports commands to: 
+
+- Read the REGION INFO 
+- WRITE DATA to the flash
+- Inform the micro:bit that the sevice has reached END OF TRANSMISSION
+- Obtain the MICROBIT STATUS (PFS version #, current m:b mode)
+- RESET the micro:bit into either application (MakeCode) or BLE mode.
+
+These are documented below:
 
 ### Region Info Command
 
@@ -59,16 +85,26 @@ To send the new firmware and write it to the flash a WRITE_WITHOUT_RESPONSE comm
 |---|---|---|---|
 | COMMAND   | OFFSET  | PACKET# | DATA |
 
-The micro:bit handles data in blocks of 4 packets. This allows the micro:bit to process a 64 byte buffer and ensure that it can be successfully processed. 
+The micro:bit handles data in blocks of 4 packets. This allows the micro:bit to keep a 64 byte buffer and ensure that it can be successfully processed before moing onto the next block.
 
-The offset from the first packet in the block is stored whilst waiting for the remaining 3 packets. Once all 4 packets have been received the block of 4 is written to the flash at the offset specified by the packet and a notification is sent to the client to request the next block of packets.
+The address of the current block is split between the first two packets. The first packet contains the lower 2 bytes of the address, and the second packet contains the upper 2 bytes of the address.
 
-**The offset used is the address bytes of the current record in the hex file**
-e.g.: 
-:10__0100__00214601360121470136007EFE09D2190140
-
-
-
+```
+// blockNum is 0: set up the offset
+case 0:
+    {
+        offset = ((data[1] << 8) | data[2] << 0);
+        blockNum++;
+        break;
+    }
+// blockNum is 1: complete the offset
+case 1:
+    {
+        offset |= ((data[1] << 24) | data[2] << 16);
+        blockNum++;
+        break;
+    }
+```
 
 #### micro:bit Response
 
