@@ -324,8 +324,7 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
 
       // Search for and remove embedded source magic (if it exists!)
       // Move to next page
-      // flashPointer = (flashPointer + MICROBIT_CODEPAGESIZE) & 0xFFFFF000;
-      flashPointer = (flashPointer + MICROBIT_CODEPAGESIZE);
+      flashPointer = (uint32_t *)(((uint32_t)flashPointer + MICROBIT_CODEPAGESIZE) & 0xFFFFF000);
 
       // Iterate through until reaching the scratch page
       while(flashPointer < (uint32_t *)DEFAULT_SCRATCH_PAGE)
