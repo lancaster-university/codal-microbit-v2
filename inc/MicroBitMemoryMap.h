@@ -78,6 +78,8 @@ class MicroBitMemoryMap
         uint32_t hash_data[2];
     };
 
+    enum hash_type{HASH_TYPE_EMPTY, HASH_TYPE_VALUE, HASH_TYPE_POINTER};
+
     uint8_t regionCount = 0;
 
     public:

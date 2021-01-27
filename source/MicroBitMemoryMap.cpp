@@ -166,21 +166,22 @@ void MicroBitMemoryMap::findHashes()
 void MicroBitMemoryMap::processRecord(uint32_t *address) {
 
     MicroPythonLayoutRecord record;
-        uint8_t id;
-        uint8_t ht;
-        uint16_t reg_page;
-        uint32_t reg_len;
-        uint32_t hash_data[2];
-
     memcpy(&record, address, sizeof(record));
 
-    uint32_t start; memcpy(&start, &record.reg_page, 2); 
-    start = start * 4096;
+    uint32_t start = record.reg_page * MICROBIT_CODEPAGESIZE;
 
-    uint32_t length; memcpy(&length, &record.reg_len, 4); 
+    uint32_t length = record.reg_len;
+
+    DMESG("Python Layout Record. Record: %d Hash Type: %d Start: %x Length: %x Hash: %x %x"
+                    , record.id
+                    , record.ht
+                    , start
+                    , length
+                    , record.hash_data[1]
+                    , record.hash_data[0]);
 
     uint32_t hash[2]; 
-    if(record.ht == 2) {
+    if(record.ht == HASH_TYPE_POINTER) {
         // Points to a string
         // Take string and generate 8 byte hash
         uint8_t * string = (uint8_t *) record.hash_data[0];
@@ -196,21 +197,9 @@ void MicroBitMemoryMap::processRecord(uint32_t *address) {
     } else {
         memcpy(&hash, record.hash_data, 8);
     }
-    
-    DMESG("Python Layout Record. Record: %d Hash Type: %d Start: %x Length: %x Hash: %x %x"
-                    , record.id
-                    , record.ht
-                    , start
-                    , length
-                    , record.hash_data[1]
-                    , record.hash_data[0]);
 
-    for(uint8_t i = 0; i < 4; i++) {
-        DMESG("byte %x value %x", i, *(address + i));
-    }
-    
-    memcpy(memoryMapStore.memoryMap[id].hash, &hash, 8);
-    memoryMapStore.memoryMap[id].startAddress = (uint32_t)start;
-    memoryMapStore.memoryMap[id].endAddress = (uint32_t)(start + length);
+    memcpy(memoryMapStore.memoryMap[record.id].hash, &hash, 8);
+    memoryMapStore.memoryMap[record.id].startAddress = (uint32_t)start;
+    memoryMapStore.memoryMap[record.id].endAddress = (uint32_t)(start + length);
 
 }
