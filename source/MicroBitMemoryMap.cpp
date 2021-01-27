@@ -180,14 +180,13 @@ void MicroBitMemoryMap::processRecord(uint32_t *address) {
         uint8_t * string = (uint8_t *) *(address + 2);
         int n   = 0;
         while(n < MAX_STRING_LENGTH && *(string + n) != '\0') {
-            DMESG("%c %x", *(string + n), *(string + n));
             n++;
         }
 
         uint32_t crc = crc32_compute(string, n, NULL);
         memcpy(&hash, &crc, 4);
     
-        DMESG("Hash from string: %x", crc);
+        DMESG("Hash from version string: %x", crc);
     } else {
         memcpy(&hash, address + 2, 8);
     }
