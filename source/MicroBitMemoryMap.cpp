@@ -164,20 +164,26 @@ void MicroBitMemoryMap::findHashes()
  * Function to process record from uPy build
  */
 void MicroBitMemoryMap::processRecord(uint32_t *address) {
-    uint8_t id = (*address) - 1;
-    uint8_t hashType = ((*address) >> 8) & 0xFF;
 
-    uint32_t start; memcpy(&start, address, 4); 
-    start = (start & 0xFFFF0000) >> 8;
+    MicroPythonLayoutRecord record;
+        uint8_t id;
+        uint8_t ht;
+        uint16_t reg_page;
+        uint32_t reg_len;
+        uint32_t hash_data[2];
+
+    memcpy(&record, address, sizeof(record));
+
+    uint32_t start; memcpy(&start, &record.reg_page, 2); 
     start = start * 4096;
 
-    uint32_t length; memcpy(&length, address + 1, 4); 
+    uint32_t length; memcpy(&length, &record.reg_len, 4); 
 
     uint32_t hash[2]; 
-    if(hashType == 2) {
+    if(record.ht == 2) {
         // Points to a string
         // Take string and generate 8 byte hash
-        uint8_t * string = (uint8_t *) *(address + 2);
+        uint8_t * string = (uint8_t *) record.hash_data[0];
         int n   = 0;
         while(n < MAX_STRING_LENGTH && *(string + n) != '\0') {
             n++;
@@ -188,16 +194,16 @@ void MicroBitMemoryMap::processRecord(uint32_t *address) {
     
         DMESG("Hash from version string: %x", crc);
     } else {
-        memcpy(&hash, address + 2, 8);
+        memcpy(&hash, record.hash_data, 8);
     }
     
     DMESG("Python Layout Record. Record: %d Hash Type: %d Start: %x Length: %x Hash: %x %x"
-                    , id
-                    , hashType
+                    , record.id
+                    , record.ht
                     , start
                     , length
-                    , hash[1]
-                    , hash[0]);
+                    , record.hash_data[1]
+                    , record.hash_data[0]);
 
     for(uint8_t i = 0; i < 4; i++) {
         DMESG("byte %x value %x", i, *(address + i));

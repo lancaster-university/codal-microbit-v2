@@ -69,6 +69,15 @@ class MicroBitMemoryMap
         Region memoryMap[NUMBER_OF_REGIONS];
     };
 
+    struct MicroPythonLayoutRecord
+    {
+        uint8_t id;
+        uint8_t ht;
+        uint16_t reg_page;
+        uint32_t reg_len;
+        uint32_t hash_data[2];
+    };
+
     uint8_t regionCount = 0;
 
     public:
