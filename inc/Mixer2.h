@@ -98,7 +98,7 @@ public:
      * @param sampleRange (quantization levels) the difference between the maximum and minimum sample level on the output channel
      * @param format The format the mixer will output (DATASTREAM_FORMAT_16BIT_UNSIGNED or DATASTREAM_FORMAT_16BIT_SIGNED)
      */
-    Mixer2(int sampleRate = CONFIG_MIXER_DEFAULT_SAMPLERATE, int sampleRange = CONFIG_MIXER_INTERNAL_RANGE, int format = DATASTREAM_FORMAT_16BIT_UNSIGNED);
+    Mixer2(float sampleRate = CONFIG_MIXER_DEFAULT_SAMPLERATE, int sampleRange = CONFIG_MIXER_INTERNAL_RANGE, int format = DATASTREAM_FORMAT_16BIT_UNSIGNED);
 
     /**
      * Destructor.
@@ -113,7 +113,7 @@ public:
      * @param sampleRate (samples per second) - if set to zero, defaults to the output sample rate of the Mixer
      * @param sampleRange (quantization levels) the difference between the maximum and minimum sample level on the input channel
      */
-    MixerChannel *addChannel(DataSource &stream, int sampleRate = 0, int sampleRange = CONFIG_MIXER_INTERNAL_RANGE);
+    MixerChannel *addChannel(DataSource &stream, float sampleRate = 0, int sampleRange = CONFIG_MIXER_INTERNAL_RANGE);
 
     /**
      * Provide the next available ManagedBuffer to our downstream caller, if available.
@@ -169,7 +169,7 @@ public:
      * @param sampleRate The new sample rate (samples per second) of the mixer output
      * @return DEVICE_OK on success.
      */
-    int setSampleRate(int sampleRate);
+    int setSampleRate(float sampleRate);
 
     /**
      * Determine the sample range used by this Synthesizer,

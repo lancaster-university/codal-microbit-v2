@@ -37,7 +37,7 @@ using namespace codal;
  * @param sampleRange (quantization levels) the difference between the maximum and minimum sample level on the output channel
  * @param format The format the mixer will output (DATASTREAM_FORMAT_16BIT_UNSIGNED or DATASTREAM_FORMAT_16BIT_SIGNED)
  */
-Mixer2::Mixer2(int sampleRate, int sampleRange, int format)
+Mixer2::Mixer2(float sampleRate, int sampleRange, int format)
 {
     // Set valid defaults.
     this->channels = NULL;
@@ -85,7 +85,7 @@ void Mixer2::configureChannel(MixerChannel *c)
  * @param sampleRate (samples per second) - if set to zero, defaults to the output sample rate of the Mixer
  * @param sampleRange (quantization levels) the difference between the maximum and minimum sample level on the input channel
  */
-MixerChannel *Mixer2::addChannel(DataSource &stream, int sampleRate, int sampleRange)
+MixerChannel *Mixer2::addChannel(DataSource &stream, float sampleRate, int sampleRange)
 {
     MixerChannel *c = new MixerChannel();
     c->stream = &stream;
@@ -304,10 +304,10 @@ int Mixer2::setSampleRange(uint16_t sampleRange)
  * @param sampleRate The new sample rate (samples per second) of the mixer output
  * @return DEVICE_OK on success.
  */
-int Mixer2::setSampleRate(int sampleRate)
+int Mixer2::setSampleRate(float sampleRate)
 {
     this->outputRate = (float)sampleRate;
-
+    
     // Recompute the sub/super sampling constants for each channel.    
     for (MixerChannel *c = channels; c; c=c->next)
         c->skip = c->rate / outputRate;
