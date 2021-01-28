@@ -63,9 +63,11 @@ int MicroBitAudio::enable()
 {
     if (pwm == NULL)
     {
+
         pwm = new NRF52PWM(NRF_PWM1, mixer, 44100);
         pwm->setDecoderMode(PWM_DECODER_LOAD_Common);
 
+        mixer.setSampleRate(44100);
         mixer.setSampleRange(pwm->getSampleRange());
         mixer.setOrMask(0x8000);
 
