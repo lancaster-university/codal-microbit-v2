@@ -339,8 +339,6 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
        if(flashIncomplete == NULL){
          uint8_t flashIncompleteVal = 0x01;
          storage.put("flashIncomplete", &flashIncompleteVal, sizeof(flashIncompleteVal));
-
-         noValidation();
        }
        delete flashIncomplete;
 
@@ -390,6 +388,9 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
         // Next page
         flashPointer = flashPointer + MICROBIT_CODEPAGESIZE;
       }
+
+      // Set no validation
+      noValidation();
 
       MICROBIT_DEBUG_DMESG( "rebooting");
       // Once the final packet has been written remove the BLE mode flag and reset
