@@ -2,9 +2,9 @@
 
 ## Introduction
 
-The Partial Flashing Service allows a BLE client to connect to a micro:bit and read and write the information required to partially update the firmware. For MakeCode programs this is the user's script, and for Python programs this is the file system.
+The Partial Flashing Service allows a BLE client to connect to a micro:bit and read and write the information required to partially update the flash contents. For MakeCode programs this usually means updating the user's script (compiled to asm), and for Python programs this is the entire file system.
 
-This service exists in partnership with the DFU service that allows a client to fully flash the micro:bit.
+This service exists in partnership with the DFU service that allows a client to fully flash the application storage of the micro:bit (for example, for switching between a MicroPython programme and a MakeCode programme).
 
 Diagrams showing the flow of data during partial flashing can be found at [the bottom of the document](#partial flashing client).
 
@@ -17,6 +17,10 @@ The micro:bit v2 follows the same BLE specification as the micro:bit v1. The spe
 In order to work properly, the partial flashing service requires certain things to be true about the memory map, and it must be possible for the MemoryMapService to be able to build a model of the flash layout. Most significantly, the service is ideal for updating data outside the main C/C++ build containing CODAL. This is currently possible for MakeCode and MicroPython builds, but not trivial for CODAL programs, where the program is linked into a single executable.
 
 The partial flashing service is included by default in MakeCode builds for micro:bit V1 (using microbit-dal, not CODAL) and V2, and MicroPython builds for micro:bit V2 only. The Partial Flashing service is available in both application and pairing modes.
+
+- MakeCode: Enabled V1 (microbit-dal) and V2 (CODAL)
+- MicroPython: Enabled on V2 only (CODAL)
+
 
 To enable it in a CODAL build the `MICROBIT_BLE_PARTIAL_FLASHING` option is set to `1` in `codal.json`
 
@@ -180,4 +184,3 @@ If partial flashing is possible the micro:bit needs to be in BLE mode to prevent
 Once the region is completely transferred, the client needs to send an END OF TRANSMISSION BLE WRITE to inform the micro:bit the transfer is over. The micro:bit will the erase any remaining pages in the region, clear flags keeping it in partial flashing mode, and then reset into the transferred program.
 
 ![Do Partial Flashing](/resources/PFFlow.png)
-
