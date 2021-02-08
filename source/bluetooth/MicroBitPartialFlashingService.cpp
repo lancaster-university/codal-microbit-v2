@@ -46,6 +46,8 @@ const uint8_t  MicroBitPartialFlashingService::base_uuid[ 16] =
 const uint16_t MicroBitPartialFlashingService::serviceUUID               = 0xd91d;
 const uint16_t MicroBitPartialFlashingService::charUUID[ mbbs_cIdxCOUNT] = { 0x3b10 };
 
+uint32_t eraseFrom = 0x0; // Address to start erasing from
+
 /**
      * Constructor.
      * Create a representation of the Partial Flash Service
@@ -355,6 +357,22 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
       // Write to flash
       flash.flash_burn(flashPointer, blockPointer, 16);
 
+      // Erase previous pages that were not written
+      // if (offset - eraseFrom) > 1 page: erase pages in between
+      while(eraseFrom < (offset & 0xFFFFF000)) {
+          // Check if page is blank
+          if(crc32_compute((uint8_t*)eraseFrom, MICROBIT_CODEPAGESIZE, NULL) != 0xc71c0011)
+          {
+            // Erase page
+            flash.erase_page(eraseFrom);
+            DMESG("erase page at: 0x%u", eraseFrom);
+          }
+          eraseFrom += MICROBIT_CODEPAGESIZE;
+      }
+
+      // Set next page as 'eraseFrom'
+      eraseFrom = (offset + MICROBIT_CODEPAGESIZE) & 0xFFFFF000;
+
       // Update flash control buffer to send next packet
       uint8_t flashNotificationBuffer[] = {FLASH_DATA, 0xFF};
       notifyChrValue( mbbs_cIdxCTRL, (const uint8_t *)flashNotificationBuffer, sizeof(flashNotificationBuffer));
@@ -373,21 +391,6 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
       // Search for and remove embedded source magic (if it exists!)
       // Move to next page
       flashPointer = (uint32_t *)(((uint32_t)flashPointer + MICROBIT_CODEPAGESIZE) & 0xFFFFF000);
-
-      // Iterate through until reaching the scratch page
-      while(flashPointer < (uint32_t *)DEFAULT_SCRATCH_PAGE)
-      {
-
-        // Check if page is blank
-        if(crc32_compute((uint8_t*)flashPointer, MICROBIT_CODEPAGESIZE, NULL) != 0xc71c0011)
-        {
-          // Erase page
-          flash.erase_page(flashPointer);
-        }
-
-        // Next page
-        flashPointer = flashPointer + MICROBIT_CODEPAGESIZE;
-      }
 
       // Set no validation
       noValidation();
