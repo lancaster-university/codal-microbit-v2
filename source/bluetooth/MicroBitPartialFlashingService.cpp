@@ -364,7 +364,7 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
           if(crc32_compute((uint8_t*)eraseFrom, MICROBIT_CODEPAGESIZE, NULL) != 0xc71c0011)
           {
             // Erase page
-            flash.erase_page(eraseFrom);
+            flash.erase_page((uint32_t *)eraseFrom);
             DMESG("erase page at: 0x%u", eraseFrom);
           }
           eraseFrom += MICROBIT_CODEPAGESIZE;
@@ -394,6 +394,18 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
 
       // Set no validation
       noValidation();
+
+      // Erase final section
+      while(eraseFrom < MICROBIT_DEFAULT_SCRATCH_PAGE) {
+          // Check if page is blank
+          if(crc32_compute((uint8_t*)eraseFrom, MICROBIT_CODEPAGESIZE, NULL) != 0xc71c0011)
+          {
+            // Erase page
+            flash.erase_page((uint32_t *) eraseFrom);
+            DMESG("erase page at: 0x%u", eraseFrom);
+          }
+          eraseFrom += MICROBIT_CODEPAGESIZE;
+      }
 
       MICROBIT_DEBUG_DMESG( "rebooting");
       // Once the final packet has been written remove the BLE mode flag and reset

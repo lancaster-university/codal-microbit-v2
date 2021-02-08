@@ -126,7 +126,7 @@ void MicroBitMemoryMap::findHashes()
     uint32_t rem = add % PAGE_SIZE;
     if ( rem) add += PAGE_SIZE - rem;
     int step = PAGE_SIZE / sizeof( uint32_t);
-    uint32_t *nxt = ( uint32_t *)DEFAULT_SCRATCH_PAGE;
+    uint32_t *nxt = ( uint32_t *)MICROBIT_DEFAULT_SCRATCH_PAGE;
     
 
     for( uint32_t *magicAddress = (uint32_t *) add; magicAddress < nxt; magicAddress += step)
