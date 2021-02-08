@@ -359,13 +359,13 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
 
       // Erase previous pages that were not written
       // if (offset - eraseFrom) > 1 page: erase pages in between
-      while(eraseFrom < (offset & 0xFFFFF000)) {
+      while(eraseFrom != 0x00 && eraseFrom < (offset & 0xFFFFF000)) {
+          MICROBIT_DEBUG_DMESG("erase page at: 0x%u", eraseFrom);
           // Check if page is blank
           if(crc32_compute((uint8_t*)eraseFrom, MICROBIT_CODEPAGESIZE, NULL) != 0xc71c0011)
           {
             // Erase page
             flash.erase_page((uint32_t *)eraseFrom);
-            DMESG("erase page at: 0x%u", eraseFrom);
           }
           eraseFrom += MICROBIT_CODEPAGESIZE;
       }
@@ -396,13 +396,13 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
       noValidation();
 
       // Erase final section
-      while(eraseFrom < MICROBIT_DEFAULT_SCRATCH_PAGE) {
+      while(eraseFrom != 0x00 && eraseFrom < MICROBIT_DEFAULT_SCRATCH_PAGE) {
+          MICROBIT_DEBUG_DMESG("erase page at: 0x%u", eraseFrom);
           // Check if page is blank
           if(crc32_compute((uint8_t*)eraseFrom, MICROBIT_CODEPAGESIZE, NULL) != 0xc71c0011)
           {
             // Erase page
             flash.erase_page((uint32_t *) eraseFrom);
-            DMESG("erase page at: 0x%u", eraseFrom);
           }
           eraseFrom += MICROBIT_CODEPAGESIZE;
       }
