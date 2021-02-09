@@ -61,6 +61,7 @@ MicroBitPartialFlashingService::MicroBitPartialFlashingService( BLEDevice &_ble,
     
     // Clear pagesTouch
     pagesTouched = (uint8_t *)malloc(MICROBIT_CODESIZE);
+    memclr(pagesTouched, MICROBIT_CODESIZE);
 
     // Register the base UUID and create the service.
     RegisterBaseUUID( base_uuid);
