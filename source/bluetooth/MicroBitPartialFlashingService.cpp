@@ -46,8 +46,6 @@ const uint8_t  MicroBitPartialFlashingService::base_uuid[ 16] =
 const uint16_t MicroBitPartialFlashingService::serviceUUID               = 0xd91d;
 const uint16_t MicroBitPartialFlashingService::charUUID[ mbbs_cIdxCOUNT] = { 0x3b10 };
 
-uint32_t eraseFrom = 0x0; // Address to start erasing from
-
 /**
      * Constructor.
      * Create a representation of the Partial Flash Service
@@ -60,6 +58,9 @@ MicroBitPartialFlashingService::MicroBitPartialFlashingService( BLEDevice &_ble,
 {
     // Set up partial flashing characteristic
     memclr( characteristicValue, sizeof( characteristicValue));
+    
+    // Clear pagesTouch
+    pagesTouched = (uint8_t *)malloc(MICROBIT_CODESIZE);
 
     // Register the base UUID and create the service.
     RegisterBaseUUID( base_uuid);
@@ -357,21 +358,8 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
       // Write to flash
       flash.flash_burn(flashPointer, blockPointer, 16);
 
-      // Erase previous pages that were not written
-      // if (offset - eraseFrom) > 1 page: erase pages in between
-      while(eraseFrom != 0x00 && eraseFrom < (offset & 0xFFFFF000)) {
-          MICROBIT_DEBUG_DMESG("erase page at: 0x%u", eraseFrom);
-          // Check if page is blank
-          if(crc32_compute((uint8_t*)eraseFrom, MICROBIT_CODEPAGESIZE, NULL) != 0xc71c0011)
-          {
-            // Erase page
-            flash.erase_page((uint32_t *)eraseFrom);
-          }
-          eraseFrom += MICROBIT_CODEPAGESIZE;
-      }
-
-      // Set next page as 'eraseFrom'
-      eraseFrom = (offset + MICROBIT_CODEPAGESIZE) & 0xFFFFF000;
+      // Mark page as touched
+      pagesTouched[(offset & 0xFFFFF000) / MICROBIT_CODEPAGESIZE] = 1;
 
       // Update flash control buffer to send next packet
       uint8_t flashNotificationBuffer[] = {FLASH_DATA, 0xFF};
@@ -395,16 +383,15 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
       // Set no validation
       noValidation();
 
-      // Erase final section
-      while(eraseFrom != 0x00 && eraseFrom < MICROBIT_DEFAULT_SCRATCH_PAGE) {
-          MICROBIT_DEBUG_DMESG("erase page at: 0x%u", eraseFrom);
-          // Check if page is blank
-          if(crc32_compute((uint8_t*)eraseFrom, MICROBIT_CODEPAGESIZE, NULL) != 0xc71c0011)
-          {
-            // Erase page
-            flash.erase_page((uint32_t *) eraseFrom);
-          }
-          eraseFrom += MICROBIT_CODEPAGESIZE;
+      // Erase untouched pages in filesystem
+      int start = (FLASH_PROGRAM_END / MICROBIT_CODEPAGESIZE);
+      int end   = (MICROBIT_APP_REGION_END / MICROBIT_CODEPAGESIZE);
+      for(int page = start; page < end; page++) {
+        DMESG("Checking page: %u", page);
+        if(!pagesTouched[page]) {
+            DMESG("Erasing page: %u", page);
+            flash.erase_page( (uint32_t *) (page * MICROBIT_CODEPAGESIZE));
+        }
       }
 
       MICROBIT_DEBUG_DMESG( "rebooting");

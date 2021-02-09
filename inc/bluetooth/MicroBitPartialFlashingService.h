@@ -120,6 +120,9 @@ class MicroBitPartialFlashingService : public MicroBitBLEService
     // Data for each characteristic when they are held by Soft Device.
     MicroBitBLEChar      chars[ mbbs_cIdxCOUNT];
 
+    // Keep track of pages touched
+    uint8_t *pagesTouched = NULL;
+
     public:
     
     int              characteristicCount()          { return mbbs_cIdxCOUNT; };
