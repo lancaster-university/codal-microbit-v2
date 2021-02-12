@@ -65,9 +65,6 @@ MicroBitBLEService::~MicroBitBLEService()
 
 void MicroBitBLEService::RegisterBaseUUID( const uint8_t *bytes16UUID)
 {
-    if ( bs_uuid_type)
-        return;
-        
     ble_uuid128_t uuid128;
     for ( int i = 0; i < 16; i++)
         uuid128.uuid128[i] = bytes16UUID[ 15 - i];
