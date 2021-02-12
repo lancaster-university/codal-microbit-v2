@@ -68,6 +68,13 @@ class MicroBitUARTService : public MicroBitBLEService
     uint8_t txBufferHead;
     uint8_t txBufferTail;
 
+    bool waitingForEmpty;
+
+    /**
+      * Invoked when BLE disconnects.
+      */
+    void onDisconnect( const microbit_ble_evt_t *p_ble_evt);
+
     /**
       * A callback function for whenever a Bluetooth device consumes our TX Buffer
       */
