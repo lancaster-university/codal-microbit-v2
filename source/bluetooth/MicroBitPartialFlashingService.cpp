@@ -356,8 +356,11 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
       uint32_t *flashPointer   = (uint32_t *)(offset);
 
       // If the pointer is on a page boundary erase the page
-      if(!((uint32_t)flashPointer % MICROBIT_CODEPAGESIZE))
-          flash.erase_page(flashPointer);
+      if(!((uint32_t)flashPointer % MICROBIT_CODEPAGESIZE)) {
+          if(crc32_compute((uint8_t*)flashPointer, MICROBIT_CODEPAGESIZE, NULL) != 0xc71c0011) {
+            flash.erase_page(flashPointer);
+          }
+      }
 
       // Create a pointer to the data block
       uint32_t *blockPointer;
