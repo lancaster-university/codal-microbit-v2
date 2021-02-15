@@ -384,10 +384,6 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
       blockPointer = block;
       flash.flash_burn(flashPointer, blockPointer, 16);
 
-      // Search for and remove embedded source magic (if it exists!)
-      // Move to next page
-      flashPointer = (uint32_t *)(((uint32_t)flashPointer + MICROBIT_CODEPAGESIZE) & 0xFFFFF000);
-
       // Set no validation
       noValidation();
 
