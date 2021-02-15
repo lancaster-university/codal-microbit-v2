@@ -129,6 +129,14 @@ struct FileDescriptor
   */
 class MicroBitFileSystem
 {
+    public: 
+    /**
+      * Erases an existing filesystem and then reinitialises
+      *
+      * @return MICROBIT_OK on success, or an error code..
+      */ 
+    int reformat();
+
     private:
 
     // Status flags
@@ -305,13 +313,6 @@ class MicroBitFileSystem
     * @return A FileDescriptor matching the given ID, or NULL if the file is not open.
     */
     FileDescriptor* getFileDescriptor(int fd, bool remove = false);
-
-    /**
-      * Erases an existing filesystem and then reinitialises
-      *
-      * @return MICROBIT_OK on success, or an error code..
-      */ 
-    int MicroBitFileSystem::reformat();
 
     /**
     * Initialises a new file system

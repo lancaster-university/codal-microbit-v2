@@ -33,6 +33,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitPartialFlashingService.h"
 #include "MicroBitDevice.h"
+#include "MicroBitFileSystem.h"
 
 #include "nrf_sdm.h"
 #include "nrf_dfu_types.h"
@@ -59,10 +60,6 @@ MicroBitPartialFlashingService::MicroBitPartialFlashingService( BLEDevice &_ble,
     // Set up partial flashing characteristic
     memclr( characteristicValue, sizeof( characteristicValue));
     
-    // Clear pagesTouch
-    pagesTouched = (uint8_t *)malloc(MICROBIT_CODESIZE);
-    memclr(pagesTouched, MICROBIT_CODESIZE);
-
     // Register the base UUID and create the service.
     RegisterBaseUUID( base_uuid);
     CreateService( serviceUUID);
@@ -341,8 +338,18 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
        
        KeyValuePair* flashIncomplete = storage.get("flashIncomplete");
        if(flashIncomplete == NULL){
+
          uint8_t flashIncompleteVal = 0x01;
          storage.put("flashIncomplete", &flashIncompleteVal, sizeof(flashIncompleteVal));
+            
+         // Invalidate filesystem
+         MicroBitFileSystem* fs;
+         if(MicroBitFileSystem::defaultFileSystem == NULL) {
+             fs = new MicroBitFileSystem();
+         } else {
+             fs = MicroBitFileSystem::defaultFileSystem;
+         }
+         fs->reformat();
        }
        delete flashIncomplete;
 
@@ -358,9 +365,6 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
 
       // Write to flash
       flash.flash_burn(flashPointer, blockPointer, 16);
-
-      // Mark page as touched
-      pagesTouched[(offset & 0xFFFFF000) / MICROBIT_CODEPAGESIZE] = 1;
 
       // Update flash control buffer to send next packet
       uint8_t flashNotificationBuffer[] = {FLASH_DATA, 0xFF};
@@ -383,17 +387,6 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
 
       // Set no validation
       noValidation();
-
-      // Erase untouched pages in filesystem
-      int start = (FLASH_PROGRAM_END / MICROBIT_CODEPAGESIZE);
-      int end   = (MICROBIT_APP_REGION_END / MICROBIT_CODEPAGESIZE);
-      for(int page = start; page < end; page++) {
-        DMESG("Checking page: %u", page);
-        if(!pagesTouched[page]) {
-            DMESG("Erasing page: %u", page);
-            flash.erase_page( (uint32_t *) (page * MICROBIT_CODEPAGESIZE));
-        }
-      }
 
       MICROBIT_DEBUG_DMESG( "rebooting");
       // Once the final packet has been written remove the BLE mode flag and reset
