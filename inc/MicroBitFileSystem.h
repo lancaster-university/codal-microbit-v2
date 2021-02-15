@@ -307,6 +307,13 @@ class MicroBitFileSystem
     FileDescriptor* getFileDescriptor(int fd, bool remove = false);
 
     /**
+      * Erases an existing filesystem and then reinitialises
+      *
+      * @return MICROBIT_OK on success, or an error code..
+      */ 
+    int MicroBitFileSystem::reformat();
+
+    /**
     * Initialises a new file system
     *
     * @return MICROBIT_OK on success, or an error code.

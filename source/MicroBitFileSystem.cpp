@@ -241,6 +241,31 @@ int MicroBitFileSystem::load()
     return MICROBIT_OK;
 }
 
+/**
+  * Erases an existing filesystem and then reinitialises
+  *
+  * @return MICROBIT_OK on success, or an error code..
+  */ 
+int MicroBitFileSystem::reformat() {
+    // Erase file system
+    // Flash start is on the first page after the programmed ROM contents.
+    // This is: __etext (program code) for GCC and Image$$RO$$Limit for ARMCC.
+    flashStart = FLASH_PROGRAM_END;
+
+    // Round up to the nearest free page.
+    if (flashStart % MICROBIT_CODEPAGESIZE != 0)
+        flashStart = ((uint32_t)flashStart & ~(MICROBIT_CODEPAGESIZE-1)) + MICROBIT_CODEPAGESIZE;
+    flashPages = (MICROBIT_APP_REGION_END - flashStart) / MICROBIT_CODEPAGESIZE;
+
+    // Erase all pages
+    for(int i = 0; i < flashPages; i++) {
+        (uint32_t *) page = flashStart + (i * MICROBIT_CODEPAGESIZE);
+        flash.erase_page(page);
+    }
+
+    // Reformat
+    return format();
+}
 
 /**
   * Initialises a new file system. Assumes all pages are already erased.
