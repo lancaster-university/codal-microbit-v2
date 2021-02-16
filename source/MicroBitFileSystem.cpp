@@ -26,8 +26,6 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitCompat.h"
 #include "ErrorNo.h"
 
-#include "crc32.h"
-
 static uint32_t *defaultScratchPage = (uint32_t *)MICROBIT_DEFAULT_SCRATCH_PAGE;
 
 MicroBitFileSystem* MicroBitFileSystem::defaultFileSystem = NULL;
@@ -243,37 +241,6 @@ int MicroBitFileSystem::load()
     return MICROBIT_OK;
 }
 
-/**
-  * Erases an existing filesystem and then reinitialises
-  *
-  * @return MICROBIT_OK on success, or an error code..
-  */ 
-int MicroBitFileSystem::reformat() {
-    // Erase file system
-    // Flash start is on the first page after the programmed ROM contents.
-    // This is: __etext (program code) for GCC and Image$$RO$$Limit for ARMCC.
-    uint32_t flashStart = FLASH_PROGRAM_END;
-
-    // Round up to the nearest free page.
-    if (flashStart % MICROBIT_CODEPAGESIZE != 0)
-        flashStart = ((uint32_t)flashStart & ~(MICROBIT_CODEPAGESIZE-1)) + MICROBIT_CODEPAGESIZE;
-
-    // Number of pages
-    int flashPages = (MICROBIT_APP_REGION_END - flashStart) / MICROBIT_CODEPAGESIZE;
-
-    // Erase all pages
-    for(int i = 0; i < flashPages; i++) {
-        uint32_t *page = (uint32_t *)(flashStart + (i * MICROBIT_CODEPAGESIZE));
-
-        // Check if page needs erasing
-        if(crc32_compute((uint8_t*)page, MICROBIT_CODEPAGESIZE, NULL) != 0xF154670A) {
-            flash.erase_page(page);
-        }
-    }
-
-    // Reformat
-    return format();
-}
 
 /**
   * Initialises a new file system. Assumes all pages are already erased.
