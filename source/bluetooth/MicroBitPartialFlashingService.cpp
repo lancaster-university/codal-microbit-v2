@@ -33,7 +33,6 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitPartialFlashingService.h"
 #include "MicroBitDevice.h"
-#include "MicroBitFileSystem.h"
 
 #include "nrf_sdm.h"
 #include "nrf_dfu_types.h"
@@ -342,24 +341,23 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
          uint8_t flashIncompleteVal = 0x01;
          storage.put("flashIncomplete", &flashIncompleteVal, sizeof(flashIncompleteVal));
             
-         // Invalidate filesystem
-         MicroBitFileSystem* fs;
-         if(MicroBitFileSystem::defaultFileSystem == NULL) {
-             fs = new MicroBitFileSystem();
-         } else {
-             fs = MicroBitFileSystem::defaultFileSystem;
-         }
-         fs->reformat();
+         // Erae MicroPython filesystem
+
        }
        delete flashIncomplete;
 
       uint32_t *flashPointer   = (uint32_t *)(offset);
 
-      // If the pointer is on a page boundary erase the page
+      // If the pointer is on a page boundary check if it needs erasing
       if(!((uint32_t)flashPointer % MICROBIT_CODEPAGESIZE)) {
-          if(crc32_compute((uint8_t*)flashPointer, MICROBIT_CODEPAGESIZE, NULL) != 0xF154670A) {
-            flash.erase_page(flashPointer);
+          // Check words
+          for(int i = 0; i < 1024; i++) {
+            if(*(flashPointer + i) != 0xFFFFFFFF) {
+                flash.erase_page(flashPointer);
+                break; // If page has been erased we can skip the remaining bytes
+            }
           }
+
       }
 
       // Create a pointer to the data block
