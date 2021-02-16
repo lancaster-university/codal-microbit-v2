@@ -357,7 +357,7 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
 
       // If the pointer is on a page boundary erase the page
       if(!((uint32_t)flashPointer % MICROBIT_CODEPAGESIZE)) {
-          if(crc32_compute((uint8_t*)flashPointer, MICROBIT_CODEPAGESIZE, NULL) != 0xc71c0011) {
+          if(crc32_compute((uint8_t*)flashPointer, MICROBIT_CODEPAGESIZE, NULL) != 0xF154670A) {
             flash.erase_page(flashPointer);
           }
       }

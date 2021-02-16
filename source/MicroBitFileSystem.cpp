@@ -266,7 +266,7 @@ int MicroBitFileSystem::reformat() {
         uint32_t *page = (uint32_t *)(flashStart + (i * MICROBIT_CODEPAGESIZE));
 
         // Check if page needs erasing
-        if(crc32_compute((uint8_t*)page, MICROBIT_CODEPAGESIZE, NULL) != 0xc71c0011) {
+        if(crc32_compute((uint8_t*)page, MICROBIT_CODEPAGESIZE, NULL) != 0xF154670A) {
             flash.erase_page(page);
         }
     }
