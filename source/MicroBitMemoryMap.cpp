@@ -49,23 +49,7 @@ DEALINGS IN THE SOFTWARE.
   */
 MicroBitMemoryMap::MicroBitMemoryMap()
 {
-      // Assumes PXT Built program
-      // SD
-      pushRegion(Region(0x00, 0x00, MICROBIT_APP_REGION_START, 0x00));  // Soft Device
-
-      // DAL
-      pushRegion(Region(0x01, MICROBIT_APP_REGION_START, FLASH_PROGRAM_END, 0x00)); // micro:bit Device Abstractation Layer
-
-      // PXT
-      // PXT will be on the start of the next page
-      // padding to next page = PAGE_SIZE - (FLASH_PROGRAM_END % PAGE_SIZE);
-      // Assume 
-      pushRegion(Region(0x02,
-                        FLASH_PROGRAM_END + (PAGE_SIZE - ( FLASH_PROGRAM_END % PAGE_SIZE)),
-                        MICROBIT_APP_REGION_END,
-                        0x00)); // micro:bit PXT
-
-      // Find Hashes if PXT Built Program
+      // Find Hashes
       findHashes();
 
 }
@@ -136,6 +120,23 @@ void MicroBitMemoryMap::findHashes()
             && magicAddress[1] == 0x41A815C6
             && magicAddress[2] == 0xC96698C4
             && magicAddress[3] == 0x9751EE75) {
+
+                // SD
+                pushRegion(Region(0x00, 0x00, MICROBIT_APP_REGION_START, 0x00));  // Soft Device
+
+                // DAL
+                pushRegion(Region(0x01, MICROBIT_APP_REGION_START, FLASH_PROGRAM_END, 0x00)); // micro:bit Device Abstractation Layer
+
+                // PXT
+                // PXT will be on the start of the next page
+                // padding to next page = PAGE_SIZE - (FLASH_PROGRAM_END % PAGE_SIZE);
+                // Assume 
+                pushRegion(Region(0x02,
+                        FLASH_PROGRAM_END + (PAGE_SIZE - ( FLASH_PROGRAM_END % PAGE_SIZE)),
+                        MICROBIT_APP_REGION_END,
+                        0x00)); // micro:bit PXT
+
+
                 // If the magic has been found use the hashes follow
                 memcpy( memoryMapStore.memoryMap[1].hash, magicAddress + 4, 8);
                 memcpy( memoryMapStore.memoryMap[2].hash, magicAddress + 6, 8);
@@ -197,7 +198,8 @@ void MicroBitMemoryMap::processRecord(uint32_t *address) {
     } else {
         memcpy(&hash, record.hash_data, 8);
     }
-
+    
+    // Copy to memory map. TODO: should these use (record.id - 1)
     memcpy(memoryMapStore.memoryMap[record.id].hash, &hash, 8);
     memoryMapStore.memoryMap[record.id].startAddress = (uint32_t)start;
     memoryMapStore.memoryMap[record.id].endAddress = (uint32_t)(start + length);

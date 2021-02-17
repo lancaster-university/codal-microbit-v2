@@ -94,6 +94,11 @@ class MicroBitPartialFlashingService : public MicroBitBLEService
      */
     void noValidation();
 
+    /**
+     * Find and erase Micropython Filesystem
+     */
+    void findAndEraseMicroPythonFS();
+
     // Ensure packets are in order
     uint8_t packetCount = 0;
     uint8_t blockPacketCount = 0;

@@ -46,6 +46,9 @@ const uint8_t  MicroBitPartialFlashingService::base_uuid[ 16] =
 const uint16_t MicroBitPartialFlashingService::serviceUUID               = 0xd91d;
 const uint16_t MicroBitPartialFlashingService::charUUID[ mbbs_cIdxCOUNT] = { 0x3b10 };
 
+uint32_t micropython_fs_start = 0x00;
+uint32_t micropython_fs_end   = 0x00;
+
 /**
      * Constructor.
      * Create a representation of the Partial Flash Service
@@ -89,6 +92,13 @@ void MicroBitPartialFlashingService::onDataWritten(const microbit_ble_evt_write_
         {
           // Create instance of Memory Map to return info
           MicroBitMemoryMap memoryMap;
+
+          // Get and set MicroPython FS start/end
+          if(micropython_fs_end == 0x00 && memoryMap.memoryMapStore.memoryMap[3].startAddress != 0x00) {
+            micropython_fs_start = memoryMap.memoryMapStore.memoryMap[3].startAddress;
+            micropython_fs_end   = memoryMap.memoryMapStore.memoryMap[3].endAddress;
+            DMESG("Size of memory map %x : ", sizeof(memoryMap.memoryMapStore.memoryMap));
+          }
 
           uint8_t buffer[18];
           // Response:
@@ -316,7 +326,6 @@ void MicroBitPartialFlashingService::noValidation()
     }
 }
 
-
 /**
   * Write Event
   * Used the write data to the flash outside of the BLE ISR
@@ -341,7 +350,18 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
          uint8_t flashIncompleteVal = 0x01;
          storage.put("flashIncomplete", &flashIncompleteVal, sizeof(flashIncompleteVal));
             
-         // Erae MicroPython filesystem
+         // Check if FS exists
+         if(micropython_fs_end != 0x00) {
+            for(uint32_t *page = (uint32_t *)micropython_fs_start; page < (uint32_t *)micropython_fs_end; page += (MICROBIT_CODEPAGESIZE / sizeof(uint32_t))) {
+                // Check if page needs erasing
+                for(uint32_t i = 0; i < 1024; i++) {
+                    if(*(page + i) != 0xFFFFFFFF) {
+                        DMESG( "Erase page at %x", page);
+                        break; // If page has been erased we can skip the remaining bytes
+                    }
+                }
+            }
+         }
 
        }
        delete flashIncomplete;
@@ -351,7 +371,7 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
       // If the pointer is on a page boundary check if it needs erasing
       if(!((uint32_t)flashPointer % MICROBIT_CODEPAGESIZE)) {
           // Check words
-          for(int i = 0; i < 1024; i++) {
+          for(uint32_t i = 0; i < (MICROBIT_CODEPAGESIZE / sizeof(uint32_t)); i++) {
             if(*(flashPointer + i) != 0xFFFFFFFF) {
                 flash.erase_page(flashPointer);
                 break; // If page has been erased we can skip the remaining bytes

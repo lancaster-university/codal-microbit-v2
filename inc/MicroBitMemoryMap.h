@@ -29,7 +29,7 @@ DEALINGS IN THE SOFTWARE.
 #include "ManagedString.h"
 #include "ErrorNo.h"
 
-#define NUMBER_OF_REGIONS 3
+#define NUMBER_OF_REGIONS 4
 
 /**
   * Class definition for the MicroBitMemoryMap class.
