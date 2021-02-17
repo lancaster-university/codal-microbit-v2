@@ -31,6 +31,9 @@ DEALINGS IN THE SOFTWARE.
 
 #define NUMBER_OF_REGIONS 3
 
+#define REGION_MAKECODE 2
+#define REGION_PYTHON   3 
+
 /**
   * Class definition for the MicroBitMemoryMap class.
   * This allows reading and writing of regions within the memory map.

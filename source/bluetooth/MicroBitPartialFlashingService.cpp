@@ -97,7 +97,7 @@ void MicroBitPartialFlashingService::onDataWritten(const microbit_ble_evt_write_
           // Region with id 3 is MicroPython FS
           if(micropython_fs_end == 0x00 && 
              memoryMap.memoryMapStore.memoryMap[2].startAddress != 0x00 &&
-             memoryMap.memoryMapStore.memoryMap[2].regionId == 3
+             memoryMap.memoryMapStore.memoryMap[2].regionId == REGION_PYTHON 
              ) {
             micropython_fs_start = memoryMap.memoryMapStore.memoryMap[2].startAddress;
             micropython_fs_end   = memoryMap.memoryMapStore.memoryMap[2].endAddress;
