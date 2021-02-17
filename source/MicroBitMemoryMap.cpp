@@ -199,9 +199,9 @@ void MicroBitMemoryMap::processRecord(uint32_t *address) {
         memcpy(&hash, record.hash_data, 8);
     }
     
-    // Copy to memory map. TODO: should these use (record.id - 1)
-    memcpy(memoryMapStore.memoryMap[record.id].hash, &hash, 8);
-    memoryMapStore.memoryMap[record.id].startAddress = (uint32_t)start;
-    memoryMapStore.memoryMap[record.id].endAddress = (uint32_t)(start + length);
+    // Copy to memory map
+    memcpy(memoryMapStore.memoryMap[record.id - 1].hash, &hash, 8);
+    memoryMapStore.memoryMap[record.id - 1].startAddress = (uint32_t)start;
+    memoryMapStore.memoryMap[record.id - 1].endAddress = (uint32_t)(start + length);
 
 }

@@ -94,10 +94,13 @@ void MicroBitPartialFlashingService::onDataWritten(const microbit_ble_evt_write_
           MicroBitMemoryMap memoryMap;
 
           // Get and set MicroPython FS start/end
-          if(micropython_fs_end == 0x00 && memoryMap.memoryMapStore.memoryMap[3].startAddress != 0x00) {
-            micropython_fs_start = memoryMap.memoryMapStore.memoryMap[3].startAddress;
-            micropython_fs_end   = memoryMap.memoryMapStore.memoryMap[3].endAddress;
-            DMESG("Size of memory map %x : ", sizeof(memoryMap.memoryMapStore.memoryMap));
+          // Region with id 3 is MicroPython FS
+          if(micropython_fs_end == 0x00 && 
+             memoryMap.memoryMapStore.memoryMap[2].startAddress != 0x00 &&
+             memoryMap.memoryMapStore.memoryMap[2].id == 3
+             ) {
+            micropython_fs_start = memoryMap.memoryMapStore.memoryMap[2].startAddress;
+            micropython_fs_end   = memoryMap.memoryMapStore.memoryMap[2].endAddress;
           }
 
           uint8_t buffer[18];
