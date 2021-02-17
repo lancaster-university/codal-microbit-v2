@@ -125,16 +125,16 @@ void MicroBitMemoryMap::findHashes()
             && magicAddress[3] == 0x9751EE75) {
 
                 // SD
-                pushRegion(Region(0x00, 0x00, MICROBIT_APP_REGION_START, 0x00));  // Soft Device
+                pushRegion(Region(REGION_SD, 0x00, MICROBIT_APP_REGION_START, 0x00));  // Soft Device
 
                 // DAL
-                pushRegion(Region(0x01, MICROBIT_APP_REGION_START, FLASH_PROGRAM_END, 0x00)); // micro:bit Device Abstractation Layer
+                pushRegion(Region(REGION_CODAL, MICROBIT_APP_REGION_START, FLASH_PROGRAM_END, 0x00)); // micro:bit Device Abstractation Layer
 
                 // PXT
                 // PXT will be on the start of the next page
                 // padding to next page = PAGE_SIZE - (FLASH_PROGRAM_END % PAGE_SIZE);
                 // Assume 
-                pushRegion(Region(0x02,
+                pushRegion(Region(REGION_MAKECODE,
                         FLASH_PROGRAM_END + (PAGE_SIZE - ( FLASH_PROGRAM_END % PAGE_SIZE)),
                         MICROBIT_APP_REGION_END,
                         0x00)); // micro:bit PXT

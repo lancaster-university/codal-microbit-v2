@@ -31,6 +31,8 @@ DEALINGS IN THE SOFTWARE.
 
 #define NUMBER_OF_REGIONS 3
 
+#define REGION_SD       0
+#define REGION_CODAL    1
 #define REGION_MAKECODE 2
 #define REGION_PYTHON   3 
 
