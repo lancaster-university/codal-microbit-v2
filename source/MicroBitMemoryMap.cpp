@@ -115,8 +115,11 @@ void MicroBitMemoryMap::findHashes()
 
     for( uint32_t *magicAddress = (uint32_t *) add; magicAddress < nxt; magicAddress += step)
     {
-        // Check for 16 bytes of Magic
-        if (   magicAddress[0] == 0x923b8e70
+        // Avoid storing magic in flash
+        volatile uint32_t m1 = 0x6DC4718F;
+
+        // Check for PXT magic
+        if (   magicAddress[0] == ~m1
             && magicAddress[1] == 0x41A815C6
             && magicAddress[2] == 0xC96698C4
             && magicAddress[3] == 0x9751EE75) {
@@ -143,7 +146,8 @@ void MicroBitMemoryMap::findHashes()
                 memoryMapStore.memoryMap[2].startAddress = (uint32_t)magicAddress;
                 return;
         }
-        
+       
+        // Check for Python magic 
         if (   *(magicAddress - (sizeof(magicAddress))) == 0x597F30FE
             && *(magicAddress - (sizeof(magicAddress)/4))   == 0xC1B1D79D
            ) {
