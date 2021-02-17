@@ -200,8 +200,10 @@ void MicroBitMemoryMap::processRecord(uint32_t *address) {
     }
     
     // Copy to memory map
-    memcpy(memoryMapStore.memoryMap[record.id - 1].hash, &hash, 8);
-    memoryMapStore.memoryMap[record.id - 1].startAddress = (uint32_t)start;
-    memoryMapStore.memoryMap[record.id - 1].endAddress = (uint32_t)(start + length);
+    uint8_t index = record.id - 1;
+    memcpy(memoryMapStore.memoryMap[index].hash, &hash, 8);
+    memoryMapStore.memoryMap[index].regionId = record.id;
+    memoryMapStore.memoryMap[index].startAddress = (uint32_t)start;
+    memoryMapStore.memoryMap[index].endAddress = (uint32_t)(start + length);
 
 }
