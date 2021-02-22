@@ -355,7 +355,7 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
             
          // Check if FS exists
          if(micropython_fs_end != 0x00) {
-            for(uint32_t *page = (uint32_t *)micropython_fs_start; page < (uint32_t *)(micropython_fs_end - MICROBIT_CODEPAGESIZE); page += (MICROBIT_CODEPAGESIZE / sizeof(uint32_t))) {
+            for(uint32_t *page = (uint32_t *)micropython_fs_start; page < (uint32_t *)(micropython_fs_end); page += (MICROBIT_CODEPAGESIZE / sizeof(uint32_t))) {
                 // Check if page needs erasing
                 for(uint32_t i = 0; i < 1024; i++) {
                     if(*(page + i) != 0xFFFFFFFF) {
