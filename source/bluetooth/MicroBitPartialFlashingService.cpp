@@ -360,6 +360,7 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
                 for(uint32_t i = 0; i < 1024; i++) {
                     if(*(page + i) != 0xFFFFFFFF) {
                         DMESG( "Erase page at %x", page);
+                        flash.erase_page(page);
                         break; // If page has been erased we can skip the remaining bytes
                     }
                 }
