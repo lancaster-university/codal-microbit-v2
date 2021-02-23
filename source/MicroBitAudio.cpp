@@ -24,21 +24,23 @@ DEALINGS IN THE SOFTWARE.
 */
 
 #include "MicroBitAudio.h"
-
+#include "MicroBit.h"
 #include "CodalDmesg.h"
 #include "NRF52PWM.h"
 #include "Synthesizer.h"
 #include "SoundExpressions.h"
 #include "SoundEmojiSynthesizer.h"
+#include "StreamSplitter.h"
 
 using namespace codal;
 
 MicroBitAudio* MicroBitAudio::instance = NULL;
 
+
 /**
   * Default Constructor.
   */
-MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker):
+MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NRF52Pin &microphone, NRF52Pin &runmic):
     speakerEnabled(true),
     pinEnabled(true),
     pin(pin), 
@@ -46,28 +48,82 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker):
     synth(DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_0),
     soundExpressionChannel(NULL),
     pwm(NULL),
+    adc(adc),
+    microphone(microphone),
+    runmic(runmic),
     soundExpressions(synth),
     virtualOutputPin(mixer)
+
 {
     // If we are the first instance created, schedule it for on demand activation
     if (MicroBitAudio::instance == NULL)
         MicroBitAudio::instance = this;
 
     synth.allowEmptyBuffers(true);
+
+    if (mic == NULL){
+        mic = adc.getChannel(microphone, false);
+        mic->setGain(7,0);
+    }
+
+    //Initilise stream normalizer
+    if (processor == NULL)
+        processor = new StreamNormalizer(mic->output, 1.0f, true, DATASTREAM_FORMAT_UNKNOWN, 10);
+
+    //Initilise stream splitter
+    if (splitter == NULL)
+        splitter = new StreamSplitter(processor->output);
+
+    //Initilise SPL level detector and attach to splitter
+    if (level == NULL)  
+        level = new LevelDetector(*splitter, 150, 75);
+
+    //Initilise FFT and attach to splitter
+    // if (level == NULL)  
+    //     fft = new AudioProcessor(*splitter);
+
+    // Register listeners with splitter events to activate and deactivate mic channel when needed
+    if(EventModel::defaultEventBus){
+        EventModel::defaultEventBus->listen(DEVICE_ID_SPLITTER, SPLITTER_ACTIVATE_CHANNEL, this, &MicroBitAudio::activateMicChannel,MESSAGE_BUS_LISTENER_IMMEDIATE);
+        EventModel::defaultEventBus->listen(DEVICE_ID_SPLITTER, SPLITTER_DEACTIVATE_CHANNEL, this, &MicroBitAudio::deactivateMicChannel,MESSAGE_BUS_LISTENER_IMMEDIATE);
+
+    }
+    
+
 }
+
+
+/**
+ * Activate Mic Input Channel
+ */
+void MicroBitAudio::activateMicChannel(MicroBitEvent){
+    runmic.setDigitalValue(1);
+    runmic.setHighDrive(true);
+    adc.activateChannel(mic);
+}
+
+/**
+ * Dectivate Mic Input Channel
+ */
+void MicroBitAudio::deactivateMicChannel(MicroBitEvent){
+    runmic.setDigitalValue(0);
+    runmic.setHighDrive(false);
+    adc.releaseChannel(microphone);
+}
+
+
 
 /**
  * post-constructor initialisation method
  */
 int MicroBitAudio::enable()
 {
+    
     if (pwm == NULL)
     {
-
         pwm = new NRF52PWM(NRF_PWM1, mixer, 44100);
         pwm->setDecoderMode(PWM_DECODER_LOAD_Common);
 
-        mixer.setSampleRate(44100);
         mixer.setSampleRange(pwm->getSampleRange());
         mixer.setOrMask(0x8000);
 
@@ -76,6 +132,8 @@ int MicroBitAudio::enable()
 
         soundExpressionChannel = mixer.addChannel(synth);
     }
+
+
 
     return DEVICE_OK;
 }

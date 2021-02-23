@@ -30,6 +30,9 @@ DEALINGS IN THE SOFTWARE.
 #include "SoundExpressions.h"
 #include "Mixer2.h"
 #include "SoundOutputPin.h"
+#include "StreamNormalizer.h"
+#include "StreamSplitter.h"
+#include "LevelDetector.h"
 
 namespace codal
 {
@@ -41,6 +44,9 @@ namespace codal
         public:
         static MicroBitAudio    *instance;      // Primary instance of MicroBitAudio, on demand activated.
         Mixer2                  mixer;          // Multi channel audio mixer
+        StreamNormalizer *processor;            // Stream Normaliser
+        StreamSplitter *splitter;               // Stream Splitter
+        LevelDetector *level;                   // SPL
 
         private:
         bool speakerEnabled;                    // State of on board speaker
@@ -50,6 +56,12 @@ namespace codal
         SoundEmojiSynthesizer synth;            // Synthesizer used bfor SoundExpressions
         MixerChannel *soundExpressionChannel;   // Mixer channel associated with sound expression audio
         NRF52PWM *pwm;                          // PWM driver used for sound generation (mixer output)
+        NRF52ADC &adc;                          // ADC from MicroBitConstructor
+        NRF52ADCChannel *mic;                   // Microphone ADC Channel from uBit.IO
+        NRF52Pin &microphone;                   // Microphone pin passed from MicroBit constructor
+        NRF52Pin &runmic;                       // Runmic pin passed from MicroBit constructor
+
+
 
         public:
         SoundExpressions soundExpressions;      // SoundExpression intepreter
@@ -58,7 +70,7 @@ namespace codal
         /**
          * Constructor.
          */
-        MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker);
+        MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NRF52Pin &microphone, NRF52Pin &runmic);
 
         /**
          * Destructor.
@@ -69,6 +81,22 @@ namespace codal
          * Demand request from a component to enable the default instance of this audio pipeline
          */
         static void requestActivation();
+
+        /**
+          * Catch activate mic event
+          */
+        void activateMicChannel(MicroBitEvent);
+
+
+        /**
+          * Catch deactivate mic event
+          */
+        void deactivateMicChannel(MicroBitEvent);
+
+        /**
+          * Runs code to activate mic channel
+          */
+        void run();
 
         /**
          * post-constructor initialisation method
