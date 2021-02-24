@@ -305,7 +305,6 @@ void MicroBit::onListenerRegisteredEvent(Event evt)
             //lightSensor.updateSample();
             break;
 
-
         case DEVICE_ID_SYSTEM_LEVEL_DETECTOR:
             // A listener has been registered for the level detector.
             // The level detector uses lazy instantiation, we just need to read the data once to start it running.

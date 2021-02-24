@@ -61,8 +61,6 @@ namespace codal
         NRF52Pin &microphone;                   // Microphone pin passed from MicroBit constructor
         NRF52Pin &runmic;                       // Runmic pin passed from MicroBit constructor
 
-
-
         public:
         SoundExpressions soundExpressions;      // SoundExpression intepreter
         SoundOutputPin   virtualOutputPin;      // Virtual PWM channel (backward compatibility).
@@ -86,7 +84,6 @@ namespace codal
           * Catch activate mic event
           */
         void activateMicChannel(MicroBitEvent);
-
 
         /**
           * Catch deactivate mic event

@@ -36,7 +36,6 @@ using namespace codal;
 
 MicroBitAudio* MicroBitAudio::instance = NULL;
 
-
 /**
   * Default Constructor.
   */
@@ -53,7 +52,6 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
     runmic(runmic),
     soundExpressions(synth),
     virtualOutputPin(mixer)
-
 {
     // If we are the first instance created, schedule it for on demand activation
     if (MicroBitAudio::instance == NULL)
@@ -86,12 +84,8 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
     if(EventModel::defaultEventBus){
         EventModel::defaultEventBus->listen(DEVICE_ID_SPLITTER, SPLITTER_ACTIVATE_CHANNEL, this, &MicroBitAudio::activateMicChannel,MESSAGE_BUS_LISTENER_IMMEDIATE);
         EventModel::defaultEventBus->listen(DEVICE_ID_SPLITTER, SPLITTER_DEACTIVATE_CHANNEL, this, &MicroBitAudio::deactivateMicChannel,MESSAGE_BUS_LISTENER_IMMEDIATE);
-
     }
-    
-
 }
-
 
 /**
  * Activate Mic Input Channel
@@ -111,14 +105,11 @@ void MicroBitAudio::deactivateMicChannel(MicroBitEvent){
     adc.releaseChannel(microphone);
 }
 
-
-
 /**
  * post-constructor initialisation method
  */
 int MicroBitAudio::enable()
-{
-    
+{ 
     if (pwm == NULL)
     {
         pwm = new NRF52PWM(NRF_PWM1, mixer, 44100);
@@ -132,9 +123,6 @@ int MicroBitAudio::enable()
 
         soundExpressionChannel = mixer.addChannel(synth);
     }
-
-
-
     return DEVICE_OK;
 }
 
