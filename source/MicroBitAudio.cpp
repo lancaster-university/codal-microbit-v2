@@ -72,34 +72,43 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
     if (splitter == NULL)
         splitter = new StreamSplitter(processor->output);
 
-    //Initilise SPL level detector and attach to splitter
+    //Initilise level detector and attach to splitter
     if (level == NULL)  
         level = new LevelDetector(*splitter, 150, 75);
 
-    //Initilise FFT and attach to splitter
-    // if (level == NULL)  
-    //     fft = new AudioProcessor(*splitter);
+    //Initilise level detector SPL and attach to splitter
+    if (levelSPL == NULL)
+        levelSPL = new LevelDetectorSPL(*splitter, 75.0, 60.0, 9, 52, DEVICE_ID_MICROPHONE);
 
-    // Register listeners with splitter events to activate and deactivate mic channel when needed
+    // Register listener for splitter events
     if(EventModel::defaultEventBus){
-        EventModel::defaultEventBus->listen(DEVICE_ID_SPLITTER, SPLITTER_ACTIVATE_CHANNEL, this, &MicroBitAudio::activateMicChannel,MESSAGE_BUS_LISTENER_IMMEDIATE);
-        EventModel::defaultEventBus->listen(DEVICE_ID_SPLITTER, SPLITTER_DEACTIVATE_CHANNEL, this, &MicroBitAudio::deactivateMicChannel,MESSAGE_BUS_LISTENER_IMMEDIATE);
+        EventModel::defaultEventBus->listen(DEVICE_ID_SPLITTER, DEVICE_EVT_ANY, this, &MicroBitAudio::onSplitterEvent, MESSAGE_BUS_LISTENER_IMMEDIATE);
     }
 }
 
 /**
- * Activate Mic Input Channel
+ * Handle events from splitter
  */
-void MicroBitAudio::activateMicChannel(MicroBitEvent){
+void MicroBitAudio::onSplitterEvent(MicroBitEvent){
+    if(MicroBitEvent.value == SPLITTER_ACTIVATE_CHANNEL)
+        activateMic();
+    else if (MicroBitEvent.value == SPLITTER_DEACTIVATE_CHANNEL)
+        deactivateMic();
+}
+
+/**
+ * Activate Mic and Input Channel
+ */
+void MicroBitAudio::activateMic(){
     runmic.setDigitalValue(1);
     runmic.setHighDrive(true);
     adc.activateChannel(mic);
 }
 
 /**
- * Dectivate Mic Input Channel
+ * Dectivate Mic and Input Channel
  */
-void MicroBitAudio::deactivateMicChannel(MicroBitEvent){
+void MicroBitAudio::deactivateMic(){
     runmic.setDigitalValue(0);
     runmic.setHighDrive(false);
     adc.releaseChannel(microphone);

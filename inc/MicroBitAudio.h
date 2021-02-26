@@ -33,6 +33,7 @@ DEALINGS IN THE SOFTWARE.
 #include "StreamNormalizer.h"
 #include "StreamSplitter.h"
 #include "LevelDetector.h"
+#include "LevelDetectorSPL.h"
 
 namespace codal
 {
@@ -44,9 +45,10 @@ namespace codal
         public:
         static MicroBitAudio    *instance;      // Primary instance of MicroBitAudio, on demand activated.
         Mixer2                  mixer;          // Multi channel audio mixer
-        StreamNormalizer *processor;            // Stream Normaliser
-        StreamSplitter *splitter;               // Stream Splitter
-        LevelDetector *level;                   // SPL
+        StreamNormalizer        *processor;     // Stream Normaliser instance
+        StreamSplitter          *splitter;      // Stream Splitter instance
+        LevelDetector           *level;         // Level Detector instance
+        LevelDetectorSPL        *levelSPL;      // Level Detector SPL instance
 
         private:
         bool speakerEnabled;                    // State of on board speaker
@@ -81,19 +83,20 @@ namespace codal
         static void requestActivation();
 
         /**
-          * Catch activate mic event
+          * Catch events from the splitter
+          * @param MicroBitEvent
           */
-        void activateMicChannel(MicroBitEvent);
+        void onSplitterEvent(MicroBitEvent);
 
         /**
-          * Catch deactivate mic event
+          * Activate Mic
           */
-        void deactivateMicChannel(MicroBitEvent);
+        void activateMic(MicroBitEvent);
 
         /**
-          * Runs code to activate mic channel
+          * Dectivate Mic
           */
-        void run();
+        void deactivateMic(MicroBitEvent);
 
         /**
          * post-constructor initialisation method
