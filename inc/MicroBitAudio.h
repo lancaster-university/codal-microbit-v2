@@ -91,12 +91,12 @@ namespace codal
         /**
           * Activate Mic
           */
-        void activateMic(MicroBitEvent);
+        void activateMic();
 
         /**
           * Dectivate Mic
           */
-        void deactivateMic(MicroBitEvent);
+        void deactivateMic();
 
         /**
          * post-constructor initialisation method

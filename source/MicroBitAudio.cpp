@@ -78,7 +78,7 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
 
     //Initilise level detector SPL and attach to splitter
     if (levelSPL == NULL)
-        levelSPL = new LevelDetectorSPL(*splitter, 75.0, 60.0, 9, 52, DEVICE_ID_MICROPHONE);
+        levelSPL = new LevelDetectorSPL(*splitter, 75.0, 60.0, 9, 52, DEVICE_ID_MICROPHONE, false);
 
     // Register listener for splitter events
     if(EventModel::defaultEventBus){
@@ -89,10 +89,10 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
 /**
  * Handle events from splitter
  */
-void MicroBitAudio::onSplitterEvent(MicroBitEvent){
-    if(MicroBitEvent.value == SPLITTER_ACTIVATE_CHANNEL)
+void MicroBitAudio::onSplitterEvent(MicroBitEvent e){
+    if(e.value == SPLITTER_ACTIVATE_CHANNEL)
         activateMic();
-    else if (MicroBitEvent.value == SPLITTER_DEACTIVATE_CHANNEL)
+    else if (e.value == SPLITTER_DEACTIVATE_CHANNEL)
         deactivateMic();
 }
 
