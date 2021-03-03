@@ -126,8 +126,9 @@ class MicroBitMemoryMap
     /**
      * Function to process records from uPy Build
      *
+     * @return MICROBIT_OK success, MICROBIT_INVALID_PARAM if the region.id is too great
      */
-    void processRecord(uint32_t *address);
+    int processRecord(uint32_t *address);
 };
 
 #endif

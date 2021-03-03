@@ -167,14 +167,17 @@ void MicroBitMemoryMap::findHashes()
 
 /*
  * Function to process record from uPy build
+ * @return MICROBIT_OK success, MICROBIT_INVALID_PARAM if the region.id is too great
  */
-void MicroBitMemoryMap::processRecord(uint32_t *address) {
+int MicroBitMemoryMap::processRecord(uint32_t *address) {
 
     MicroPythonLayoutRecord record;
     memcpy(&record, address, sizeof(record));
+   
+    // Check for valid record id  
+    if(record.id > NUMBER_OF_REGIONS) return MICROBIT_INVALID_PARAMETER;
 
     uint32_t start = record.reg_page * MICROBIT_CODEPAGESIZE;
-
     uint32_t length = record.reg_len;
 
     DMESG("Python Layout Record. Record: %d Hash Type: %d Start: %x Length: %x Hash: %x %x"
@@ -209,5 +212,6 @@ void MicroBitMemoryMap::processRecord(uint32_t *address) {
     memoryMapStore.memoryMap[index].regionId = record.id;
     memoryMapStore.memoryMap[index].startAddress = (uint32_t)start;
     memoryMapStore.memoryMap[index].endAddress = (uint32_t)(start + length);
-
+    
+    return MICROBIT_OK;
 }
