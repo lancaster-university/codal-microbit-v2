@@ -84,7 +84,7 @@ MicroBit::MicroBit() :
     accelerometer(MicroBitAccelerometer::autoDetect(_i2c)),
     compass(MicroBitCompass::autoDetect(_i2c)),
     compassCalibrator(compass, accelerometer, display, storage),
-    audio(io.P0, io.speaker)
+    audio(io.P0, io.speaker, adc, io.microphone, io.runmic)
 {
     // Clear our status
     status = 0;
@@ -303,6 +303,18 @@ void MicroBit::onListenerRegisteredEvent(Event evt)
             // A listener has been registered for the light sensor.
             // The light sensor uses lazy instantiation, we just need to read the data once to start it running.
             //lightSensor.updateSample();
+            break;
+
+        case DEVICE_ID_SYSTEM_LEVEL_DETECTOR:
+            // A listener has been registered for the level detector.
+            // The level detector uses lazy instantiation, we just need to read the data once to start it running.
+            audio.level->getValue();
+            break;
+
+        case DEVICE_ID_SYSTEM_LEVEL_DETECTOR_SPL:
+            // A listener has been registered for the level detector SPL.
+            // The level detector SPL uses lazy instantiation, we just need to read the data once to start it running.
+            audio.levelSPL->getValue();
             break;
     }
 }
