@@ -74,7 +74,7 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
 
     //Initilise level detector and attach to splitter
     if (level == NULL)  
-        level = new LevelDetector(*splitter, 150, 75);
+        level = new LevelDetector(*splitter, 150, 75, false);
 
     //Initilise level detector SPL and attach to splitter
     if (levelSPL == NULL)
