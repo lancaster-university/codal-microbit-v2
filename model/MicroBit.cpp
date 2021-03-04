@@ -315,7 +315,6 @@ void MicroBit::onListenerRegisteredEvent(Event evt)
         case DEVICE_ID_MICROPHONE:
             // A listener has been registered for the level detector SPL.
             // The level detector SPL uses lazy instantiation, we just need to read the data once to start it running.
-            DMESG("device SPL event");
             audio.levelSPL->getValue();
             break;
     }
