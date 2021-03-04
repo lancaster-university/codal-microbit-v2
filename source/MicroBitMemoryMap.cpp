@@ -198,10 +198,10 @@ int MicroBitMemoryMap::processRecord(uint32_t *address) {
             n++;
         }
 
-        uint32_t crc = crc32_compute(string, n, NULL);
-        memcpy(&hash, &crc, 4);
+        hash[0] = crc32_compute(string, n, NULL);
+        hash[1] = 0;
     
-        DMESG("Hash from version string: %x", crc);
+        DMESG("Hash from version string: %x", hash[0]);
     } else {
         memcpy(&hash, record.hash_data, 8);
     }
