@@ -39,6 +39,11 @@ DEALINGS IN THE SOFTWARE.
 #define CONFIG_MIXER_DEFAULT_SAMPLERATE 44100
 #endif
 
+#define DEVICE_ID_MIXER 3030
+
+#define DEVICE_MIXER_EVT_SILENCE 1
+#define DEVICE_MIXER_EVT_SOUND   2
+
 
 namespace codal
 {
@@ -89,6 +94,7 @@ class Mixer2 : public DataSource
     float           volume;
     uint32_t        orMask;
     float           silenceLevel;
+    bool            silent;
 
 public:
     /**
@@ -201,6 +207,12 @@ public:
      * @return DEVICE_OK on success or DEVICE_INVALID_PARAMETER.
      */
     int setSilenceLevel(float level);
+    
+    /**
+     * Determines if the mixer is silent
+     * @return true if the mixer is silent
+     */
+    bool isSilent();
 
     private:
     void configureChannel(MixerChannel *c);
