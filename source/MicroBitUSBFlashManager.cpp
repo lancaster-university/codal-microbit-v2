@@ -24,7 +24,9 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitUSBFlashManager.h"
 
-#define KL27_FLASH_ERASE_WORKAROUND 1
+#define KL27_FLASH_ERASE_WORKAROUND         1
+#define KL27_FLASH_BULK_WRITE_WORKAROUND    1
+#define KL27_FLASH_MAX_WRITE_LENGTH         128
 
 static const KeyValueTableEntry usbFlashPropertyLengthData[] = {
     {MICROBIT_USB_FLASH_FILENAME_CMD, 12},
@@ -292,7 +294,7 @@ MicroBitUSBFlashManager::read(uint32_t* dest, uint32_t address, uint32_t length)
  * 
  * @param data a buffer containing the data to write
  * @param address the location to write to
- * @param length the number of bytes to write
+ * @param length the number of 32 bit words to write
  * 
  * @return DEVICE_OK on success, or error code.
  */
@@ -308,10 +310,41 @@ int MicroBitUSBFlashManager::write(uint32_t address, uint32_t *data, uint32_t le
     int padding2 = ((writeAddress + padding1 + length) % 4) == 0 ? 0 : 4 - ((writeAddress + padding1 + length) % 4);
     int writeLength = length + padding1 + padding2;
 
-    ManagedBuffer request(writeLength + 8);
     ManagedBuffer response;
 
+#ifdef KL27_FLASH_BULK_WRITE_WORKAROUND
+    int bytesWritten = 0;
+    int segmentLength;
+
+    ManagedBuffer request(min(KL27_FLASH_MAX_WRITE_LENGTH, writeLength) + 8);
+    request.fill(0xFF);
+
+    while (bytesWritten < writeLength)
+    {
+        segmentLength = min(KL27_FLASH_MAX_WRITE_LENGTH, writeLength-bytesWritten);
+
+        uint32_t *p = (uint32_t *) &request[0];
+        *p++ = htonl(((uint32_t) (writeAddress + bytesWritten)) | (MICROBIT_USB_FLASH_WRITE_CMD << 24));
+        *p++ = htonl(segmentLength);
+
+        if (bytesWritten == 0)
+            memcpy(((uint8_t *)p) + padding1, ((uint8_t *)data), segmentLength);
+        else
+            memcpy((uint8_t *)p, ((uint8_t *)data) + bytesWritten, segmentLength);
+
+        request.truncate(segmentLength + 8);
+
+        response = transact(request, 9);
+
+        if (response.length() == 0)
+            return DEVICE_I2C_ERROR;
+
+        bytesWritten += segmentLength;
+    }
+
+#else
     // Ensure any padding bytes to 0xFF
+    ManagedBuffer request(writeLength + 8);
     request.fill(0xFF);
 
     // Add header and user data
@@ -324,6 +357,10 @@ int MicroBitUSBFlashManager::write(uint32_t address, uint32_t *data, uint32_t le
 
     if (response.length() == 0)
         return DEVICE_I2C_ERROR;
+
+#endif
+
+
     
     return DEVICE_OK;
 }
@@ -445,7 +482,7 @@ int
 MicroBitUSBFlashManager::erase(uint32_t page)
 {
     getGeometry();
-    return erase(page, geometry.blockSize);
+    return erase(page, geometry.blockSize/4);
 }
 
 /**
@@ -499,6 +536,7 @@ MicroBitUSBFlashManager::getFlashSize()
     return getFlashEnd();
 }
 
+
 /**
  * Performs a flash storage transaction with the interface chip.
  * @param packet The data to write to the interface chip as a request operation.
@@ -509,28 +547,31 @@ ManagedBuffer MicroBitUSBFlashManager::transact(ManagedBuffer request, int respo
 {
     int attempts = 0;
 
-    power.nop();
     if (i2cBus.write(MICROBIT_USB_FLASH_I2C_ADDRESS, &request[0], request.length(), false) != DEVICE_OK)
         return ManagedBuffer();
  
     power.awaitingPacket(true);
-
+    
+    target_wait_us(100);
+    
     while(attempts < MICROBIT_USB_FLASH_MAX_RETRIES)
     {   
-        fiber_sleep(5);
 
         if(io.irq1.isActive())
         {
             ManagedBuffer b(responseLength);
 
-            power.nop();
             int r = i2cBus.read(MICROBIT_USB_FLASH_I2C_ADDRESS, &b[0], responseLength, false);
-            
+
             if (r == MICROBIT_OK)
             {               
                 power.awaitingPacket(false);
                 return b;
             }
+        }
+        else
+        {
+            fiber_sleep(1);
         }
                   
         attempts++;
