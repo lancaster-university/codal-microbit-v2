@@ -30,7 +30,7 @@ DEALINGS IN THE SOFTWARE.
 
 static const KeyValueTableEntry usbFlashPropertyLengthData[] = {
     {MICROBIT_USB_FLASH_FILENAME_CMD, 12},
-    {MICROBIT_USB_FLASH_FILESIZE_CMD, 2},
+    {MICROBIT_USB_FLASH_FILESIZE_CMD, 5},
     {MICROBIT_USB_FLASH_VISIBILITY_CMD, 2},
     {MICROBIT_USB_FLASH_WRITE_CONFIG_CMD, 1},
     {MICROBIT_USB_FLASH_ERASE_CONFIG_CMD, 1},
@@ -69,11 +69,18 @@ MicroBitUSBFlashConfig MicroBitUSBFlashManager::getConfiguration()
 
         // Load the configured filename
         response = transact(MICROBIT_USB_FLASH_FILENAME_CMD);
-        config.fileName = response;
+        if (response.length() > 5)
+        {
+            ManagedBuffer n = response.slice(1, response.length()-1);
+            n[n.length()-4] = '.';
+            config.fileName = n;
+        }
 
         // Load the filesize
         response = transact(MICROBIT_USB_FLASH_FILESIZE_CMD);
-        config.fileSize = response[1];
+        uint32_t s;
+        memcpy(&s, &response[1], 4);
+        config.fileSize = htonl(s);
 
         // Load the visibility status
         response = transact(MICROBIT_USB_FLASH_VISIBILITY_CMD);
@@ -105,7 +112,7 @@ bool MicroBitUSBFlashManager::isValidChar(char c)
 int MicroBitUSBFlashManager::setConfiguration(MicroBitUSBFlashConfig config, bool persist)
 {
     ManagedBuffer fname(12);
-    ManagedBuffer fsize(2);
+    ManagedBuffer fsize(5);
     ManagedBuffer fvisible(2);
 
     int dots = 0;
@@ -115,7 +122,7 @@ int MicroBitUSBFlashManager::setConfiguration(MicroBitUSBFlashConfig config, boo
     getGeometry();
 
     // If the requested file is too long/short, we can't proceed.
-    if (config.fileSize <= 0 || 1024 * config.fileSize >= geometry.blockSize*geometry.blockCount)
+    if (config.fileSize <= 0 || config.fileSize >= geometry.blockSize*geometry.blockCount)
         return MICROBIT_INVALID_PARAMETER;
 
     // Validate filename as fixed length 8.3 format, as required by USB interface chip.
@@ -146,7 +153,8 @@ int MicroBitUSBFlashManager::setConfiguration(MicroBitUSBFlashConfig config, boo
 
     // Encode file size command.
     fsize[0] = MICROBIT_USB_FLASH_FILESIZE_CMD;
-    fsize[1] = config.fileSize;
+    uint32_t s = htonl(config.fileSize);
+    memcpy(&fsize[1], &s, 4);
 
     // Encode visibility command
     fvisible[0] = MICROBIT_USB_FLASH_VISIBILITY_CMD;
