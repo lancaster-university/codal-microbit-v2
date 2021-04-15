@@ -21,17 +21,28 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBit.h"
 #include "MicroBitAudioProcessor.h"
 
-MicroBitAudioProcessor::MicroBitAudioProcessor(DataSource& source) : audiostream(source)
-{
+
+
+MicroBitAudioProcessor::MicroBitAudioProcessor(DataSource& source) 
+                            : audiostream(source), recogniser(NULL) {
     
     divisor = 1;
     lastFreq = 0;
     arm_rfft_fast_init_f32(&fft_instance, AUDIO_SAMPLES_NUMBER);
 
     /* Double Buffering: We allocate twice the number of samples*/
+    // the C++ way for doing this is (as far as I know)
+    // new float32_t[AUDIO_SAMPLES_NUMBER * 2];
     buf = (float *)malloc(sizeof(float) * AUDIO_SAMPLES_NUMBER * 2);
     output = (float *)malloc(sizeof(float) * AUDIO_SAMPLES_NUMBER);
     mag = (float *)malloc(sizeof(float) * AUDIO_SAMPLES_NUMBER / 2);
+    
+    memset(buf, 0, sizeof(buf));
+
+#ifdef HANN_WINDOW 
+    for(int i=0; i < AUDIO_SAMPLES_NUMBER; i++)
+        hann_window[i] = 0.5 * (1 - arm_cos_f32(2 * 3.14159265 * i / AUDIO_SAMPLES_NUMBER));
+#endif
 
     position = 0;
     recording = false;
@@ -51,6 +62,48 @@ MicroBitAudioProcessor::~MicroBitAudioProcessor()
     free(mag);
 }
 
+uint16_t MicroBitAudioProcessor::frequencyToIndex(int freq) {
+    return (freq / ((uint32_t)MIC_SAMPLE_RATE / AUDIO_SAMPLES_NUMBER));
+} 
+
+float32_t MicroBitAudioProcessor::indexToFrequency(int index) {
+    return ((uint32_t)MIC_SAMPLE_RATE / AUDIO_SAMPLES_NUMBER) * index;
+} 
+
+void MicroBitAudioProcessor::sendAnalysis(uint16_t* freq, uint8_t size) {
+
+    if(consumed_buffer) 
+        out_buffer_len = 0;
+    
+    if(out_buffer_len == 2 * HISTORY_LENGTH){
+        memcpy(out_buffer, &out_buffer[HISTORY_LENGTH], (sizeof(AudioFrameAnalysis) * HISTORY_LENGTH));
+        out_buffer_len = HISTORY_LENGTH;
+    }
+
+    out_buffer[out_buffer_len].size = min(size, 3);
+    if(size > 2)
+        out_buffer[out_buffer_len].buf[2] = freq[2];
+    if(size > 1)
+        out_buffer[out_buffer_len].buf[1] = freq[1];
+    if(size > 0)
+        out_buffer[out_buffer_len].buf[0] = freq[0];
+    out_buffer_len ++;
+
+    if(recogniser)      
+        recogniser -> pullRequest();
+}
+
+void MicroBitAudioProcessor::connect(DataSink *downstream){
+    recogniser = downstream;
+}
+
+ManagedBuffer MicroBitAudioProcessor::pull()
+{
+    consumed_buffer = true;
+    return ManagedBuffer((uint8_t*) out_buffer, sizeof(AudioFrameAnalysis) * out_buffer_len);
+}
+
+
 int MicroBitAudioProcessor::pullRequest()
 {
 
@@ -62,16 +115,11 @@ int MicroBitAudioProcessor::pullRequest()
     if (!recording)
         return DEVICE_OK;
 
-    //using 8 bits produces more accurate to input results (not 2x like using 16) but issue with 
-    //F and G both producing 363hz?
+    // Should be int8_t as this is the type the microphone
+    // records it   
+    int8_t *data = (int8_t *) &mic_samples[0];
 
-    // A 440 matches perfectly, but the rest of the notes dont?
-    //int8_t *data = (int8_t *) &mic_samples[0];
-
-    //Legacy Version
-    int16_t *data = (int16_t *) &mic_samples[0];
-
-    int samples = mic_samples.length() / 2;
+    int samples = mic_samples.length();
 
     for (int i=0; i < samples; i++)
     {
@@ -86,31 +134,57 @@ int MicroBitAudioProcessor::pullRequest()
 
         if (!(position % AUDIO_SAMPLES_NUMBER))
         {
-            float maxValue = 0;
-            uint32_t index = 0;
+            position = 0;
 
-            /* We have AUDIO_SAMPLES_NUMBER samples, we can run the FFT on them */
-            uint16_t offset = position <= AUDIO_SAMPLES_NUMBER ? 0 : AUDIO_SAMPLES_NUMBER;
-            if (offset != 0)
-                position = 0;
+            uint16_t from   = frequencyToIndex(RECOGNITION_START_FREQ);
+            uint16_t to     = min(frequencyToIndex(RECOGNITION_END_FREQ), AUDIO_SAMPLES_NUMBER / 2);
+            uint16_t size   = to - from;
 
-            //DMESG("Run FFT, %d", offset);
-            //auto a = system_timer_current_time();
-            arm_rfft_fast_f32(&fft_instance, buf + offset, output, 0);
-            arm_cmplx_mag_f32(output, mag, AUDIO_SAMPLES_NUMBER / 2);
-            arm_max_f32(mag + 1, AUDIO_SAMPLES_NUMBER / 2 - 1, &maxValue, &index);
-            //auto b = system_timer_current_time();
+            uint16_t    result_freq[size];
+            uint8_t     result_size = 0;
 
-            //DMESG("Before FFT: %d", (int)a);
-            //DMESG("After FFT: %d (%d)", (int)b, (int)(b - a));
+        #ifdef HANN_WINDOW
+            // arm_mult_f32 not found in arm_math.h? -- using an old version of arm_math.h
+            // arm_mult_f32(buf, hann_window, buf, AUDIO_SAMPLES_NUMBER);
+            for (uint16_t i=0;i<size;i++)
+                mag[i] *= hann_window[i];
+        #endif
+        
+        arm_rfft_fast_f32(&fft_instance, buf , output, 0);
 
-            uint32_t freq = ((uint32_t)MIC_SAMPLE_RATE / AUDIO_SAMPLES_NUMBER) * (index + 1);
-            lastFreq = (int) freq;
-            // DMESG("Freq: %d (max: %d.%d, Index: %d)",
-            //       freq,
-            //       (int)maxValue,
-            //       ((int)(maxValue * 100) % 100),
-            //       index);
+        #ifdef HARMONIC_PRODUCT_SPECTRUM
+            for (uint16_t i=from;i<to;i++)
+                mag[i] *= mag[i * 2];
+        #endif
+
+            arm_cmplx_mag_f32(output+ from, mag, size);
+
+        #ifdef SQUARE_BEFORE_ANALYSIS
+            // arm_mult_f32 not found in arm_math.h? -- using an old version of arm_math.h
+            // arm_mult_f32(mag, mag, mag, size);
+            for (uint16_t i=0;i<size;i++)
+                mag[i] *= mag[i];
+        #endif
+
+            float32_t maxFreq = 0;
+            float32_t mean = 0;
+            float32_t std = 0;
+            
+            arm_mean_f32 (mag, size, &mean);
+            arm_std_f32  (mag, size, &std);
+
+            float32_t threshold = mean + std * ANALYSIS_STD_MULT_THRESHOLD;
+            
+            if(std > ANALYSIS_STD_THRESHOLD && mean > ANALYSIS_MEAN_THRESHOLD) {
+                result_freq[0] = 0;
+                for(uint16_t i=0; i < size; i++)
+                    // for now just picking the maximum if satisfies the conditions 
+                    if(mag[i] > threshold && mag[i] > result_freq[0])
+                        result_freq[0] = indexToFrequency(i + from), result_size = 1;
+                
+            }
+   
+            sendAnalysis(result_freq, result_size);
         }
     }
 

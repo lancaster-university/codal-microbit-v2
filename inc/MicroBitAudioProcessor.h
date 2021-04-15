@@ -26,12 +26,35 @@ DEALINGS IN THE SOFTWARE.
 #ifndef MICROBIT_AUDIO_PROCESSOR_H
 #define MICROBIT_AUDIO_PROCESSOR_H
 
-#define MIC_SAMPLE_RATE         (11 * 1024)
-#define AUDIO_SAMPLES_NUMBER    1024
+#define MIC_SAMPLE_RATE         (1000000 / MIC_SAMPLE_DELTA)
+#define AUDIO_SAMPLES_NUMBER    512
+#define HISTORY_LENGTH          50
 
-class MicroBitAudioProcessor : public DataSink
+#define RECOGNITION_START_FREQ  1400
+#define RECOGNITION_END_FREQ    4500
+
+#define ANALYSIS_STD_MULT_THRESHOLD     3
+#define ANALYSIS_STD_THRESHOLD          75 
+#define ANALYSIS_MEAN_THRESHOLD         0 
+
+// #define SQUARE_BEFORE_ANALYSIS
+#define HARMONIC_PRODUCT_SPECTRUM
+#define HANN_WINDOW
+
+
+class MicroBitAudioProcessor : public DataSink, public DataSource
 {
-    DataSource      &audiostream;          
+public:
+
+    struct AudioFrameAnalysis {
+        uint8_t size;
+        uint16_t buf[3];
+    };
+
+private:
+
+    DataSource      &audiostream;   
+    DataSink        *recogniser;       
     int             zeroOffset;             // unsigned value that is the best effort guess of the zero point of the data source
     int             divisor;                // Used for LINEAR modes
     arm_rfft_fast_instance_f32 fft_instance;
@@ -40,13 +63,29 @@ class MicroBitAudioProcessor : public DataSink
     float *mag; 
     uint16_t position;
     bool recording;
+
+#ifdef HANN_WINDOW
+    float32_t           hann_window[AUDIO_SAMPLES_NUMBER];
+#endif
+
+    AudioFrameAnalysis  out_buffer[HISTORY_LENGTH * 2];
+    uint16_t            out_buffer_len;
+    bool                consumed_buffer;
+
+    // What is this used for? Couldn't find any references to it 
     float rec[AUDIO_SAMPLES_NUMBER * 2];
     int lastFreq;
+
+    uint16_t    frequencyToIndex(int freq);
+    float32_t   indexToFrequency(int index);
+    void        sendAnalysis(uint16_t* freq, uint8_t size);
 
     public:
     MicroBitAudioProcessor(DataSource& source); 
     ~MicroBitAudioProcessor(); 
     virtual int pullRequest();
+    void connect(DataSink *downstream);
+    virtual ManagedBuffer pull();
     int getFrequency();
     int setDivisor(int d);
     void startRecording();
