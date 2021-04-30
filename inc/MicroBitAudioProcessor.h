@@ -27,20 +27,19 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_AUDIO_PROCESSOR_H
 
 #define MIC_SAMPLE_RATE         (1000000 / MIC_SAMPLE_DELTA)
-#define AUDIO_SAMPLES_NUMBER    512
-#define HISTORY_LENGTH          50
+#define DEFAULT_AUDIO_SAMPLES_NUMBER    512
+#define EMOJI_AUDIO_SAMPLES_NUMBER      512
+#define MORSE_AUDIO_SAMPLES_NUMBER      128
 
-#define RECOGNITION_START_FREQ  1400
-#define RECOGNITION_END_FREQ    4500
+#define RECOGNITION_START_FREQ  1700
+#define RECOGNITION_END_FREQ    5000
 
 #define ANALYSIS_STD_MULT_THRESHOLD     3
-#define ANALYSIS_STD_THRESHOLD          75 
+#define ANALYSIS_STD_THRESHOLD          60 
 #define ANALYSIS_MEAN_THRESHOLD         0 
 
-// #define SQUARE_BEFORE_ANALYSIS
-#define HARMONIC_PRODUCT_SPECTRUM
-#define HANN_WINDOW
-
+#define MAXIMUM_NUMBER_OF_FREQUENCIES   3
+#define SIMILAR_FREQ_THRESHOLD          100
 
 class MicroBitAudioProcessor : public DataSink, public DataSource
 {
@@ -48,45 +47,38 @@ public:
 
     struct AudioFrameAnalysis {
         uint8_t size;
-        uint16_t buf[3];
+        uint16_t buf[MAXIMUM_NUMBER_OF_FREQUENCIES];
     };
 
 private:
+    
+    MicroBit&               uBit;
 
     DataSource      &audiostream;   
     DataSink        *recogniser;       
     int             zeroOffset;             // unsigned value that is the best effort guess of the zero point of the data source
     int             divisor;                // Used for LINEAR modes
+    uint16_t        audio_samples_number;
     arm_rfft_fast_instance_f32 fft_instance;
     float *buf; 
-    float *output; 
+    float *fft_output; 
     float *mag; 
+
     uint16_t position;
     bool recording;
 
-#ifdef HANN_WINDOW
-    float32_t           hann_window[AUDIO_SAMPLES_NUMBER];
-#endif
-
-    AudioFrameAnalysis  out_buffer[HISTORY_LENGTH * 2];
-    uint16_t            out_buffer_len;
-    bool                consumed_buffer;
-
-    // What is this used for? Couldn't find any references to it 
-    float rec[AUDIO_SAMPLES_NUMBER * 2];
-    int lastFreq;
+    AudioFrameAnalysis  output;
 
     uint16_t    frequencyToIndex(int freq);
     float32_t   indexToFrequency(int index);
-    void        sendAnalysis(uint16_t* freq, uint8_t size);
 
     public:
-    MicroBitAudioProcessor(DataSource& source); 
+    MicroBitAudioProcessor(DataSource& source, MicroBit& uBit, uint16_t audio_samples_number = DEFAULT_AUDIO_SAMPLES_NUMBER); 
     ~MicroBitAudioProcessor(); 
     virtual int pullRequest();
     void connect(DataSink *downstream);
     virtual ManagedBuffer pull();
-    int getFrequency();
+    
     int setDivisor(int d);
     void startRecording();
     void stopRecording(MicroBit& uBit);

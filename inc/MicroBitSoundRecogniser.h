@@ -44,10 +44,14 @@ class MicroBitSoundRecogniser : public DataSink
         };
 
         struct Sound {
-            Sound(uint8_t size, uint8_t max_zeros, uint8_t max_history_len);
+            Sound(uint8_t size, uint8_t max_deviation, uint8_t max_history_len, bool consider_all_frequencies,  MicroBit& ubit);
             ~Sound();
-
-            uint8_t         max_zeros;
+            
+            // debuging only
+            MicroBit& ubit;
+            
+            bool            consider_all_frequencies;
+            uint8_t         max_deviation;
             uint8_t         size;
             SoundSequence** sequences;
             
@@ -59,10 +63,10 @@ class MicroBitSoundRecogniser : public DataSink
             private:
             
             uint8_t matchSequence(  uint8_t seq_id, 
-                                        MicroBitAudioProcessor::AudioFrameAnalysis* buffer, 
-                                        uint8_t buffer_len) const;
+                                    MicroBitAudioProcessor::AudioFrameAnalysis* buffer, 
+                                    uint8_t buffer_len) const;
 
-            uint8_t getZeros(uint8_t frames_ago, uint8_t seq_id) const;
+            uint8_t getDeviation(uint8_t frames_ago, uint8_t seq_id) const;
             void    addToHistory(uint8_t seq_id, uint8_t value);
             void    endHistoryFrame();
 

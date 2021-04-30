@@ -34,6 +34,12 @@ int MicroBitSoundRecogniser::pullRequest(){
         buffer[buffer_len].buf[i] = buf[0].buf[i];
     buffer_len ++;
 
+   
+    for(int i=0; i<min(buf[0].size,1); i++)
+        uBit.serial.send(ManagedString((int)buf[0].buf[i]) + ManagedString(" \t"));
+    uBit.serial.send(ManagedString("\n"));
+
+
     // gives an amortised O(1) for keeping a buffer in order. 
     // could be changed to a circular buffer to reduce the memory
     // to 1/2 if needed -- more complex functions for accessing it 
@@ -102,9 +108,9 @@ MicroBitSoundRecogniser::SoundSequence::~SoundSequence() {
     delete [] samples; 
 }
 
-MicroBitSoundRecogniser::Sound::Sound(uint8_t size, uint8_t max_zeros, uint8_t max_history_len) 
-                            : size(size), max_zeros(max_zeros), history_len(0), 
-                              max_history_len(max_history_len){
+MicroBitSoundRecogniser::Sound::Sound(uint8_t size, uint8_t max_deviation, uint8_t max_history_len, bool consider_all_frequencies, MicroBit& ubit) 
+                            : size(size), max_deviation(max_deviation), history_len(0), 
+                              max_history_len(max_history_len), consider_all_frequencies(consider_all_frequencies), ubit(ubit) {
     sequences   = new SoundSequence* [size];
     history     = new uint8_t[2 * max_history_len * size];
 }
@@ -118,13 +124,18 @@ MicroBitSoundRecogniser::Sound::~Sound() {
 
 void MicroBitSoundRecogniser::Sound::update(MicroBitAudioProcessor::AudioFrameAnalysis* buffer, 
                                     uint8_t buffer_len){
-    for(uint8_t seq_it = 0; seq_it < size; seq_it ++)
-        addToHistory(seq_it, matchSequence(seq_it, buffer, buffer_len));
+    for(uint8_t seq_it = 0; seq_it < size; seq_it ++) {
+        uint8_t x = matchSequence(seq_it, buffer, buffer_len);
+        addToHistory(seq_it, x);
+        // if(x <= max_deviation)
+        //     ubit.serial.send(ManagedString("matched seq ") + ManagedString((int)seq_it) + ManagedString(" with dev ") + ManagedString((int) x) + ManagedString("\n"));
+    }
     endHistoryFrame();
 }
 
 bool MicroBitSoundRecogniser::Sound::matched() {
-    if(getZeros(1, size - 1) <= max_zeros){
+    if(getDeviation(1, size - 1) <= max_deviation){
+        // ubit.serial.send(ManagedString((int)getDeviation(1, size - 1)) + ManagedString("\n"));
         history_len = 0;
         return true;
     }
@@ -135,58 +146,68 @@ uint8_t MicroBitSoundRecogniser::Sound::matchSequence(uint8_t seq_id,
                                             MicroBitAudioProcessor::AudioFrameAnalysis* buffer, 
                                             uint8_t buffer_len) const {
     SoundSequence* seq = sequences[seq_id];
-    uint8_t min_zeros = 255;
+    uint8_t min_dev = 255;
     for(uint8_t sample_it = 0; sample_it < seq -> size; sample_it ++) {
         uint8_t sample_len = seq -> samples[sample_it] -> size;
         if(buffer_len < sample_len) continue;
         
-        uint8_t zeros = 255;
-        if(seq_id == 0) zeros = 0;
-        else if (seq_id && zeros > getZeros(sample_len, seq_id - 1))
-            zeros = getZeros(sample_len, seq_id - 1);
-        else if (seq_id && zeros > getZeros(sample_len, seq_id - 1))
-            zeros = getZeros(sample_len, seq_id - 1);
+        uint8_t deviation = 255;
+        if(seq_id == 0) deviation = 0;
+        else if (seq_id && deviation > getDeviation(sample_len, seq_id - 1))
+            deviation = getDeviation(sample_len, seq_id - 1);
+        else if (seq_id && deviation > getDeviation(sample_len + 1, seq_id - 1))
+            deviation = getDeviation(sample_len, seq_id - 1);
 
-        if(zeros > max_zeros) continue;
+        // ubit.serial.send(ManagedString("match init dev: "));
+        // ubit.serial.send(ManagedString((int) deviation));
+        // ubit.serial.send(ManagedString("\n "));
 
-        uint32_t    dist = 0;
+        if(deviation > max_deviation || deviation >= min_dev) continue;
+
         uint32_t    diff = 0;
         uint8_t     nr_of_diffs = 0;
         uint8_t     deviations_left = seq->deviation;
         
-        for(uint8_t i = 0; i < sample_len; i++ ){
+        for(uint8_t i = 0; i < sample_len; i++) {
             if(seq -> samples[sample_it] -> frames[i] == 0) continue;
-            if(buffer[buffer_len - sample_len + i ].size == 0){
-                zeros ++;
+            if(buffer[buffer_len - sample_len + i].size == 0) {
+                deviation ++;
                 continue;
             }
             
             uint16_t freq = seq -> samples[sample_it] -> frames[i];
 
-            nr_of_diffs ++;
-            diff = 10000;
-            for(uint8_t j = 0; j < buffer[buffer_len - sample_len + i].size; j++){
-                diff = min(diff, max(0, abs(freq - buffer[buffer_len - sample_len + i].buf[j]) - 100 ));
-            }
+            diff = abs(freq - buffer[buffer_len - sample_len + i].buf[0]);
 
-            if(deviations_left && diff*diff > nr_of_diffs * seq -> threshold){
+            if(consider_all_frequencies)
+                for(uint8_t j = 1; j < buffer[buffer_len - sample_len + i].size; j++)
+                    diff = min(diff, abs(freq - buffer[buffer_len - sample_len + i].buf[j]) );
+                
+            if(deviations_left && diff > seq -> threshold && deviation < max_deviation){
                 deviations_left --;
-                nr_of_diffs --;
+                deviation ++;
+            } 
+            else if(diff > seq -> threshold ){
+                deviation = 255;
+                break;
             }
-            else
-                dist += diff * diff;
         }
 
-        if(dist <= nr_of_diffs * seq -> threshold && min_zeros > zeros) {
-            min_zeros = zeros;
-        }
+        // ubit.serial.send(ManagedString("match end dev: "));
+        // ubit.serial.send(ManagedString((int) deviation));
+        // ubit.serial.send(ManagedString("\n "));
+
+
+        if(deviation < min_dev && deviation <= max_deviation) 
+            min_dev = deviation;
+        
     }
 
-    return min_zeros;           
+    return min_dev;           
 }
 
 
-uint8_t MicroBitSoundRecogniser::Sound::getZeros(uint8_t frames_ago, uint8_t seq_id) const {
+uint8_t MicroBitSoundRecogniser::Sound::getDeviation(uint8_t frames_ago, uint8_t seq_id) const {
     if(history_len < frames_ago) return 255;
     return history[(history_len - frames_ago) * size + seq_id];
 }
