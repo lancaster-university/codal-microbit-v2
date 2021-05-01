@@ -48,7 +48,7 @@ CREATE_KEY_VALUE_TABLE(uipmPropertyLengths, uipmPropertyLengthData);
  * @param id the unique EventModel id of this component. Defaults to: MICROBIT_ID_POWER_MANAGER
  *
  */
-MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, uint16_t id) : i2cBus(i2c), io(ioPins)
+MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, uint16_t id, NRFLowLevelTimer *systemTimer) : i2cBus(i2c), io(ioPins), sysTimer(systemTimer)
 {
     this->id = id;
 
