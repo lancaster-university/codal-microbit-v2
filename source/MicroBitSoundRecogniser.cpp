@@ -1,8 +1,8 @@
 
 #include "MicroBitSoundRecogniser.h"
 
-MicroBitSoundRecogniser::MicroBitSoundRecogniser(MicroBitAudioProcessor& audio_processor, MicroBit& uBit) 
-                                : audio_proceesor(audio_processor), uBit(uBit) {
+MicroBitSoundRecogniser::MicroBitSoundRecogniser(MicroBitAudioProcessor& audio_processor) 
+                                : audio_proceesor(audio_processor){
     analysing = false;
     audio_proceesor.connect(this);
     buffer_len = 0;
@@ -33,12 +33,6 @@ int MicroBitSoundRecogniser::pullRequest(){
     for(uint8_t i = 0; i<buf[0].size; i++)  
         buffer[buffer_len].buf[i] = buf[0].buf[i];
     buffer_len ++;
-
-   
-    for(int i=0; i<min(buf[0].size,1); i++)
-        uBit.serial.send(ManagedString((int)buf[0].buf[i]) + ManagedString(" \t"));
-    uBit.serial.send(ManagedString("\n"));
-
 
     // gives an amortised O(1) for keeping a buffer in order. 
     // could be changed to a circular buffer to reduce the memory
@@ -79,7 +73,7 @@ void MicroBitSoundRecogniser::startAnalisying(void (*_callback)(ManagedString)){
 void MicroBitSoundRecogniser::stopAnalisying(){
     analysing = false;
     buffer_len = 0;
-    audio_proceesor.stopRecording(uBit);
+    audio_proceesor.stopRecording();
     for(uint8_t sound_it; sound_it < sounds_size; sound_it ++)
         sounds[sound_it] -> resetHistory();
 }
@@ -108,9 +102,9 @@ MicroBitSoundRecogniser::SoundSequence::~SoundSequence() {
     delete [] samples; 
 }
 
-MicroBitSoundRecogniser::Sound::Sound(uint8_t size, uint8_t max_deviation, uint8_t max_history_len, bool consider_all_frequencies, MicroBit& ubit) 
+MicroBitSoundRecogniser::Sound::Sound(uint8_t size, uint8_t max_deviation, uint8_t max_history_len, bool consider_all_frequencies) 
                             : size(size), max_deviation(max_deviation), history_len(0), 
-                              max_history_len(max_history_len), consider_all_frequencies(consider_all_frequencies), ubit(ubit) {
+                              max_history_len(max_history_len), consider_all_frequencies(consider_all_frequencies) {
     sequences   = new SoundSequence* [size];
     history     = new uint8_t[2 * max_history_len * size];
 }
@@ -127,15 +121,12 @@ void MicroBitSoundRecogniser::Sound::update(MicroBitAudioProcessor::AudioFrameAn
     for(uint8_t seq_it = 0; seq_it < size; seq_it ++) {
         uint8_t x = matchSequence(seq_it, buffer, buffer_len);
         addToHistory(seq_it, x);
-        // if(x <= max_deviation)
-        //     ubit.serial.send(ManagedString("matched seq ") + ManagedString((int)seq_it) + ManagedString(" with dev ") + ManagedString((int) x) + ManagedString("\n"));
     }
     endHistoryFrame();
 }
 
 bool MicroBitSoundRecogniser::Sound::matched() {
     if(getDeviation(1, size - 1) <= max_deviation){
-        // ubit.serial.send(ManagedString((int)getDeviation(1, size - 1)) + ManagedString("\n"));
         history_len = 0;
         return true;
     }
@@ -157,10 +148,6 @@ uint8_t MicroBitSoundRecogniser::Sound::matchSequence(uint8_t seq_id,
             deviation = getDeviation(sample_len, seq_id - 1);
         else if (seq_id && deviation > getDeviation(sample_len + 1, seq_id - 1))
             deviation = getDeviation(sample_len, seq_id - 1);
-
-        // ubit.serial.send(ManagedString("match init dev: "));
-        // ubit.serial.send(ManagedString((int) deviation));
-        // ubit.serial.send(ManagedString("\n "));
 
         if(deviation > max_deviation || deviation >= min_dev) continue;
 
@@ -192,11 +179,6 @@ uint8_t MicroBitSoundRecogniser::Sound::matchSequence(uint8_t seq_id,
                 break;
             }
         }
-
-        // ubit.serial.send(ManagedString("match end dev: "));
-        // ubit.serial.send(ManagedString((int) deviation));
-        // ubit.serial.send(ManagedString("\n "));
-
 
         if(deviation < min_dev && deviation <= max_deviation) 
             min_dev = deviation;

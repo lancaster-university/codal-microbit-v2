@@ -6,15 +6,14 @@
 
 class EmojiRecogniser : public MicroBitSoundRecogniser
 {
-    void addHappySound( MicroBit& ubit);
-    void addHelloSound( MicroBit& ubit);
-    void addSadSound( MicroBit& ubit);
-    void addSoaringSound( MicroBit& ubit);
-    void addTwinkleSound( MicroBit& ubit);
+    void addHappySound();
+    void addHelloSound();
+    void addSadSound();
+    void addSoaringSound();
+    void addTwinkleSound();
 
     public:
-    EmojiRecogniser(MicroBitAudioProcessor& processor, 
-                    MicroBit& uBit);
+    EmojiRecogniser(MicroBitAudioProcessor& processor);
 };
 
 #endif

@@ -24,16 +24,16 @@ DEALINGS IN THE SOFTWARE.
 #include <vector>
 #include <algorithm>
 
-
+/*
+ * Constructor.
+ * 
+ * Initialize the MicroBitAduioProcessor.
+ */
 MicroBitAudioProcessor::MicroBitAudioProcessor( DataSource& source, 
-                                                MicroBit& uBit, 
                                                 uint16_t audio_samples_number) 
                             : audiostream(source), 
                               recogniser(NULL), 
-                              uBit(uBit), 
                               audio_samples_number(audio_samples_number) {
-    
-    divisor = 1;
     
     arm_rfft_fast_init_f32(&fft_instance, audio_samples_number);
 
@@ -44,10 +44,10 @@ MicroBitAudioProcessor::MicroBitAudioProcessor( DataSource& source,
 
     memset(buf, 0, sizeof(buf));
 
-    position = 0;
+    buf_len = 0;
     recording = false;
 
-    if (buf == NULL || fft_output == NULL || mag == NULL || played == NULL) {
+    if (buf == NULL || fft_output == NULL || mag == NULL) {
         DMESG("DEVICE_NO_RESOURCES");
         target_panic(DEVICE_OOM);
     }
@@ -55,6 +55,11 @@ MicroBitAudioProcessor::MicroBitAudioProcessor( DataSource& source,
     audiostream.connect(*this);
 }
 
+/*
+ * Destructor.
+ * 
+ * Deallocates all the memory allocated dynamically.
+ */
 MicroBitAudioProcessor::~MicroBitAudioProcessor()
 {
     delete buf;
@@ -62,23 +67,74 @@ MicroBitAudioProcessor::~MicroBitAudioProcessor()
     delete mag;
 }
 
+/*
+ * Converts from frequency to the index in the array.
+ * 
+ * @param freq a frequency in the range 0 - 5000 Hz. 
+ * 
+ * @return the index to the frequency bucket freq is in 
+ *         as it comes out of the fft
+ */
 uint16_t MicroBitAudioProcessor::frequencyToIndex(int freq) {
     return (freq / ((uint32_t)MIC_SAMPLE_RATE / audio_samples_number));
 } 
 
+/*
+ * Converts from the index in the array to frequency.
+ * 
+ * @param index a index in the range 0 - audio_samples_number / 2. 
+ * 
+ * @return the avg frequency in the bucket
+ */
 float32_t MicroBitAudioProcessor::indexToFrequency(int index) {
     return ((uint32_t)MIC_SAMPLE_RATE / audio_samples_number) * index;
 } 
 
+
+/*
+ * Allow out downstream component to register itself with us
+ */
 void MicroBitAudioProcessor::connect(DataSink *downstream){
     recogniser = downstream;
 }
 
+
+/*
+ * Provides the next available data to the downstream caller.
+ */
 ManagedBuffer MicroBitAudioProcessor::pull()
 {
     return ManagedBuffer(((uint8_t *) (&output)), (int) sizeof(AudioFrameAnalysis));
 }
 
+
+/*
+ * A callback for when the data is ready.
+ *
+ * Analyses the data when enough of it comes in, using 
+ * the following algorithm:
+ * 
+ * The audio processor accumulates microphone data as it comes
+ * in and after getting audio_samples_number of them it process 
+ * the frame.
+ * 
+ * It transforms the date from time domain to frequency domain
+ * using the CMSIS fft. 
+ * 
+ * If the mean of the magnitudes of frequencies is lower than
+ * ANALYSIS_MEAN_THRESHOLD or the standard deviation (std) is
+ * lower than ANALYSIS_STD_THRESHOLD then the frame is considered  
+ * silence - no fundamental frequency. 
+ * 
+ * It then filters out the frequencies that have the magnitude lower 
+ * than the mean + ANALYSIS_STD_MULT_THRESHOLD * std. This ensures 
+ * that only outlier frequencies are being considered.
+ * 
+ * It then filters out the neighbour frequencies around the peaks.
+ * 
+ * Some of these operations are implemented together to optimize the 
+ * algorithm.
+ */
 int MicroBitAudioProcessor::pullRequest()
 {
 
@@ -102,22 +158,18 @@ int MicroBitAudioProcessor::pullRequest()
         result = s;
 
         data++;
-        buf[position++] = (float)result;
+        buf[buf_len++] = (float)result;
 
 
-        if (!(position % audio_samples_number))
+        if (!(buf_len % audio_samples_number))
         {
-            position = 0;
+            buf_len = 0;
 
             uint16_t from   = frequencyToIndex(RECOGNITION_START_FREQ);
             uint16_t to     = min(frequencyToIndex(RECOGNITION_END_FREQ), audio_samples_number / 2);
         
             arm_rfft_fast_f32(&fft_instance, buf , fft_output, 0);
             arm_cmplx_mag_f32(&fft_output[0], mag,  to);
-
-            float32_t maxFreq = 0;
-            uint32_t index;
-            arm_max_f32(&mag[5], (uint32_t)to - 5, &maxFreq, &index);
 
             float32_t mean = 0;
             float32_t std = 0;
@@ -127,9 +179,7 @@ int MicroBitAudioProcessor::pullRequest()
 
             float32_t threshold = mean + std * ANALYSIS_STD_MULT_THRESHOLD;
             
-            memset(played, 0, sizeof(played));
             output.size = 0;
-
 
             if(std > ANALYSIS_STD_THRESHOLD && mean > ANALYSIS_MEAN_THRESHOLD) {
                 std::vector<std::pair<uint16_t, float32_t>> freq_played; 
@@ -172,20 +222,19 @@ int MicroBitAudioProcessor::pullRequest()
 }
 
 
-int MicroBitAudioProcessor::setDivisor(int d)
-{
-    divisor = d;
-    return DEVICE_OK;
-}
-
-
+/*
+ * Starts recording and analysing.
+ */
 void MicroBitAudioProcessor::startRecording()
 {
     this->recording = true;
     DMESG("START RECORDING");
 }
 
-void MicroBitAudioProcessor::stopRecording(MicroBit& uBit)
+/*
+ * Stops from recording and analysing.
+ */
+void MicroBitAudioProcessor::stopRecording()
 {
     this->recording = false;
     DMESG("STOP RECORDING");

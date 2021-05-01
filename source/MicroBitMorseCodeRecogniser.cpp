@@ -40,7 +40,7 @@ void MicroBitMorseCodeRecogniser::startAnalisying(void (*_callback)(ManagedStrin
 void MicroBitMorseCodeRecogniser::stopAnalisying(){
     analysing = false;
     buffer_len = 0;
-    audio_proceesor.stopRecording(uBit);
+    audio_proceesor.stopRecording();
 }
 
 

@@ -1,23 +1,22 @@
 
 #include "EmojiRecogniser.h"
 
-EmojiRecogniser::EmojiRecogniser(   MicroBitAudioProcessor& processor, 
-                                    MicroBit& uBit) 
-                    : MicroBitSoundRecogniser(processor, uBit){
+EmojiRecogniser::EmojiRecogniser( MicroBitAudioProcessor& processor ) 
+                    : MicroBitSoundRecogniser(processor){
     sounds = new Sound* [5];
     sounds_names = new ManagedString* [5];
-    addHappySound(uBit);
-    addHelloSound(uBit);
-    addSadSound(uBit);
-    addSoaringSound(uBit);
-    addTwinkleSound(uBit);
+    addHappySound();
+    addHelloSound();
+    addSadSound();
+    addSoaringSound();
+    addTwinkleSound();
 }
 
 
 // HAPPY Sound ---- 
 
 const uint8_t happy_sequences = 2;
-const uint8_t happy_max_deviations = 3;
+const uint8_t happy_max_deviations = 2;
 
 uint16_t happy_samples[happy_sequences][3][11] = {
     // First sequence
@@ -50,13 +49,13 @@ uint8_t happy_nr_samples[happy_sequences] = {
 };
 
 
-void EmojiRecogniser::addHappySound( MicroBit& ubit) {
+void EmojiRecogniser::addHappySound() {
 
     uint8_t it = sounds_size;
     sounds_size ++;
     sounds_names[it] = new ManagedString("happy");
 
-    sounds[it] = new Sound(happy_sequences, happy_max_deviations, 14, true, ubit);
+    sounds[it] = new Sound(happy_sequences, happy_max_deviations, 14, true);
 
     for(uint8_t i = 0; i < happy_sequences; i++){
         sounds[it] -> sequences[i] = new SoundSequence(happy_nr_samples[i], happy_thresholds[i], happy_deviations[i]);
@@ -102,12 +101,12 @@ uint8_t hello_nr_samples[hello_sequences] = {
 };
 
 
-void EmojiRecogniser::addHelloSound( MicroBit& ubit) {
+void EmojiRecogniser::addHelloSound() {
     uint8_t it = sounds_size;
     sounds_size ++;
     sounds_names[it] = new ManagedString("hello");
 
-    sounds[it] = new Sound(hello_sequences, hello_max_deviations, 12, true, ubit);
+    sounds[it] = new Sound(hello_sequences, hello_max_deviations, 12, true);
 
     for(uint8_t i = 0; i < hello_sequences; i++){
         sounds[it] -> sequences[i] = new SoundSequence(hello_nr_samples[i], hello_thresholds[i], hello_deviations[i]);
@@ -152,12 +151,12 @@ uint8_t sad_nr_samples[sad_sequences] = {
 };
 
 
-void EmojiRecogniser::addSadSound( MicroBit& ubit) {
+void EmojiRecogniser::addSadSound() {
     uint8_t it = sounds_size;
     sounds_size ++;
     sounds_names[it] = new ManagedString("sad");
 
-    sounds[it] = new Sound(sad_sequences, sad_max_deviations, 18, true, ubit);
+    sounds[it] = new Sound(sad_sequences, sad_max_deviations, 18, true);
 
     for(uint8_t i = 0; i < sad_sequences; i++){
         sounds[it] -> sequences[i] = new SoundSequence(sad_nr_samples[i], sad_thresholds[i], sad_deviations[i]);
@@ -169,59 +168,70 @@ void EmojiRecogniser::addSadSound( MicroBit& ubit) {
 
 // SOARING Sound ----
 
-const uint8_t soaring_sequences = 4;
-const uint8_t soaring_max_deviations = 15;
+const uint8_t soaring_sequences = 7;
+const uint8_t soaring_max_deviations = 7;
 
-uint16_t soaring_samples[soaring_sequences][3][10] = {
-    // First sequence
+uint16_t soaring_samples[soaring_sequences][1][7] = {
     {
-        { 9, 2499, 2499, 2814, 2688, 2646, 2646, 2898, 2898, 3759}, 	
-        { 9, 2520, 2520, 2835, 2667, 2667, 2898, 2898, 2898, 3759}, 	
-        { 9, 2499, 2499, 2814, 2814, 2646, 2646, 2898, 2898, 3759}
-    },
+        { 5, 4179, 4179, 4179, 4179, 4179}
+    },	
     {
-        { 7, 3759, 3003, 2646, 2688, 2667, 2667, 4599}, 	
-        { 7, 3003, 3003, 2646, 2646, 2667, 2667, 4599}, 	
-        { 7, 3759, 3003, 3003, 2646, 2646, 2667, 4599}
-    },
+        { 5, 4284, 4284, 4284, 4284, 4284}
+    }, 	
     {
-        { 4, 3528, 2625, 2625, 3507}, 	
-        { 4, 4599, 2625, 2625, 3507}, 	
-        { 4, 4599, 2667, 3528, 3507}
-    },
+        { 5, 4389, 4389, 4389, 4389, 4389}
+    },	
     {
-        { 7, 3528, 3927, 2499, 2499, 2499, 2646, 2646}
-    }
+        { 5, 4494, 4494, 4494, 4494, 4494}
+    },	
+    {
+        { 5, 4599, 4599, 4599, 4599, 4599}
+    },	
+    {
+        { 5, 4704, 4704, 4704, 4704, 4704}
+    },	
+    {
+     	{ 5, 4809, 4809, 4809, 4809, 4809}
+    } 
 };
 
 const uint16_t soaring_thresholds[soaring_sequences] = {
-    150,
+    100,
+    100,
+    100,
+    100,
     100,
     100,
     100
 };
 
 const uint8_t soaring_deviations[soaring_sequences] = {
-    5,
-    5,
-    5, 
-    5
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3
 };
 
 const uint8_t soaring_nr_samples[soaring_sequences] = {
-    3,
-    3,
-    3,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
     1
 };
 
 
-void EmojiRecogniser::addSoaringSound( MicroBit& ubit) {
+void EmojiRecogniser::addSoaringSound() {
     uint8_t it = sounds_size;
     sounds_size ++;
     sounds_names[it] = new ManagedString("soaring");
 
-    sounds[it] = new Sound(soaring_sequences, soaring_max_deviations, 15, true, ubit);
+    sounds[it] = new Sound(soaring_sequences, soaring_max_deviations, 15, true);
 
     for(uint8_t i = 0; i < soaring_sequences; i++){
         sounds[it] -> sequences[i] = new SoundSequence(soaring_nr_samples[i], soaring_thresholds[i], soaring_deviations[i]);
@@ -233,50 +243,64 @@ void EmojiRecogniser::addSoaringSound( MicroBit& ubit) {
 
 // TWINKLE Sound ----
 
-const uint8_t twinkle_sequences = 3;
-const uint8_t twinkle_max_deviations = 4;
+const uint8_t twinkle_sequences = 4;
+const uint8_t twinkle_max_deviations = 5;
 
-uint16_t twinkle_samples[twinkle_sequences][2][7] = {
+uint16_t twinkle_samples[twinkle_sequences][5][8] = {
     // First sequence
-    {
-        { 4, 2163, 1953, 2604, 2604}, 	
-        { 4, 2163, 2163, 2604, 2604}
-    },
-    {
-        { 5, 2436, 2163, 2604, 2310, 2709}, 	
-        { 5, 2436, 2163, 2604, 2604, 2709}
-    },
-    {
-        { 6, 0, 2604, 2604, 2436, 2520, 2604}, 	
-        { 6, 0, 2604, 2604, 2436, 2898, 2604}
+    {	
+        { 5, 1827, 2709, 3612, 4053, 4809}, 	
+        { 6, 1827, 2709, 2709, 3612, 4053, 4809}, 	
+        { 6, 1827, 2730, 3612, 4053, 4053, 4809}, 	
+        { 6, 1827, 2709, 3591, 3612, 4053, 4809}	
+    }, 
+    {		
+        { 7, 4788, 4767, 4473, 4473, 4011, 3570, 3339}, 	
+        { 6, 4788, 4767, 4473, 4032, 3570, 3360}, 	
+        { 7, 4809, 4767, 4473, 4032, 3570, 3570, 3339}
+    }, 
+    {	
+        { 7, 1827, 2625, 2373, 2226, 2016, 2016, 1785}, 	
+        { 7, 1827, 1827, 2604, 2373, 2226, 2016, 1785}, 	
+        { 7, 1827, 1827, 2373, 2373, 2226, 2016, 1785}, 	
+        { 7, 4116, 1827, 2394, 2373, 2226, 2016, 1785}, 	
+        { 6, 4137, 2688, 2373, 2226, 2016, 1785} 	
+    }, 
+    {	
+        { 6, 2982, 2982, 2688, 2373, 2226, 2016}, 	
+        { 6, 3360, 2982, 2688, 2667, 2373, 2226}, 	
+        { 6, 3339, 2982, 2982, 2688, 2373, 2226} 	
     }
 };
 
 const uint16_t twinkle_thresholds[twinkle_sequences] = {
     80,
     80,
+    80,
     80
 };
 
 const uint8_t twinkle_deviations[twinkle_sequences] = {
-    2,
+    3,
+    3,
     3,
     3
 };
 
 const uint8_t twinkle_nr_samples[twinkle_sequences] = {
-    2,
-    2,
-    2
+    4,
+    3,
+    5,
+    3
 };
 
 
-void EmojiRecogniser::addTwinkleSound( MicroBit& ubit) {
+void EmojiRecogniser::addTwinkleSound() {
     uint8_t it = sounds_size;
     sounds_size ++;
     sounds_names[it] = new ManagedString("twinkle");
 
-    sounds[it] = new Sound(twinkle_sequences, twinkle_max_deviations, 15, true, ubit);
+    sounds[it] = new Sound(twinkle_sequences, twinkle_max_deviations, 11, true);
 
     for(uint8_t i = 0; i < twinkle_sequences; i++){
         sounds[it] -> sequences[i] = new SoundSequence(twinkle_nr_samples[i], twinkle_thresholds[i], twinkle_deviations[i]);

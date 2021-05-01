@@ -15,7 +15,6 @@ class MicroBitSoundRecogniser : public DataSink
 {   
     private:
         MicroBitAudioProcessor& audio_proceesor;
-        MicroBit&               uBit;
         
         bool analysing;
 
@@ -44,11 +43,8 @@ class MicroBitSoundRecogniser : public DataSink
         };
 
         struct Sound {
-            Sound(uint8_t size, uint8_t max_deviation, uint8_t max_history_len, bool consider_all_frequencies,  MicroBit& ubit);
+            Sound(uint8_t size, uint8_t max_deviation, uint8_t max_history_len, bool consider_all_frequencies);
             ~Sound();
-            
-            // debuging only
-            MicroBit& ubit;
             
             bool            consider_all_frequencies;
             uint8_t         max_deviation;
@@ -75,7 +71,7 @@ class MicroBitSoundRecogniser : public DataSink
             uint8_t     max_history_len;
         };
 
-        MicroBitSoundRecogniser(MicroBitAudioProcessor& processor, MicroBit& uBit);
+        MicroBitSoundRecogniser(MicroBitAudioProcessor& processor);
         
         Sound**         sounds;
         ManagedString** sounds_names;
