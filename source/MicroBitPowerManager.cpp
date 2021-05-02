@@ -46,7 +46,7 @@ CREATE_KEY_VALUE_TABLE(uipmPropertyLengths, uipmPropertyLengthData);
  * @param i2c the I2C bus to use to communicate with the micro:bit USB interface chip
  * @param ioPins the IO pins in use on this device.
  * @param id the unique EventModel id of this component. Defaults to: MICROBIT_ID_POWER_MANAGER
- * @param systemTimer the system timer. Defaults to NULL.
+ * @param systemTimer the system timer.
  *
  */
 MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, uint16_t id) : i2cBus(i2c), io(ioPins), sysTimer(NULL)

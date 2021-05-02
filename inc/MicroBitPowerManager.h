@@ -166,7 +166,7 @@ class MicroBitPowerManager : public CodalComponent
          * @param i2c the I2C bus to use to communicate with the micro:bit USB interface chip
          * @param ioPins the IO pins in use on this device.
          * @param id the unique EventModel id of this component. Defaults to: MICROBIT_ID_POWER_MANAGER
-         * @param systemTimer the system timer. Defaults to NULL.
+         * @param systemTimer the system timer.
          *
          */
         MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, uint16_t id = MICROBIT_ID_POWER_MANAGER);
@@ -302,7 +302,7 @@ class MicroBitPowerManager : public CodalComponent
          * Prepares the micro:bit to enter or leave deep sleep mode.
          * This includes updating the status of the power LED, peripheral drivers and SENSE events on the combined IRQ line.
          * 
-         * @param doSleep Set to true to preapre for sleep, false to prepare to reawaken.
+         * @param doSleep Set to true to prepare for sleep, false to prepare to reawaken.
          */
         void setSleepMode(bool doSleep);
 
