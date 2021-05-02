@@ -169,7 +169,9 @@ class MicroBitPowerManager : public CodalComponent
          * @param systemTimer the system timer. Defaults to NULL.
          *
          */
-        MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, uint16_t id = MICROBIT_ID_POWER_MANAGER, NRFLowLevelTimer *systemTimer = NULL);
+        MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, uint16_t id = MICROBIT_ID_POWER_MANAGER);
+
+        MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, NRFLowLevelTimer &systemTimer, uint16_t id = MICROBIT_ID_POWER_MANAGER);
 
         /**
          * Attempts to determine the power source currently in use on this micro:bit.

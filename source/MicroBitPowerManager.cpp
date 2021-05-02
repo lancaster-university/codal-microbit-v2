@@ -49,7 +49,15 @@ CREATE_KEY_VALUE_TABLE(uipmPropertyLengths, uipmPropertyLengthData);
  * @param systemTimer the system timer. Defaults to NULL.
  *
  */
-MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, uint16_t id, NRFLowLevelTimer *systemTimer) : i2cBus(i2c), io(ioPins), sysTimer(systemTimer)
+MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, uint16_t id) : i2cBus(i2c), io(ioPins), sysTimer(NULL)
+{
+    this->id = id;
+
+    // Indicate we'd like to receive periodic callbacks both in idle and interrupt context.
+    status |= DEVICE_COMPONENT_STATUS_IDLE_TICK;
+}
+
+MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, NRFLowLevelTimer &systemTimer, uint16_t id) : i2cBus(i2c), io(ioPins), sysTimer(&systemTimer)
 {
     this->id = id;
 
