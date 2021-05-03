@@ -354,6 +354,16 @@ void MicroBitPowerManager::idleCallback()
         
     }
 }
+
+/**
+  * Clear configured wake-up sources
+  * Note: this doesn't clear Timer events
+  */
+void MicroBitPowerManager::clearWakeUpSources()
+{
+    CodalComponent::manageAllWakeUp( wakeUpClear, NULL);
+}
+
 /**
  * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
  * program state is preserved. CPU will deepsleep until the next codal::Timer event or other wake up source event, before returning to normal
@@ -409,7 +419,7 @@ void MicroBitPowerManager::deepSleep(MicroBitPin &pin)
  */
 void MicroBitPowerManager::enableWakeUpSources(bool enable)
 {
-    CodalComponent::manageAllWakeUp( enable ? MicroBitIO::wakeUpEnable : MicroBitIO::wakeUpDisable, NULL);
+    CodalComponent::manageAllWakeUp( enable ? wakeUpEnable : wakeUpDisable, NULL);
 
     if ( enable)
     {
@@ -586,6 +596,7 @@ void MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTim
 
         // Enable wakeup from the the KL27 interrupt line.
         io.irq1.setDetect(GPIO_PIN_CNF_SENSE_Low);
+        NVIC_EnableIRQ(GPIOTE_IRQn);
     }
 
 #ifdef deepSleepDEBUG
@@ -740,6 +751,8 @@ void MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTim
     }
     else
     {
+        NVIC_DisableIRQ(GPIOTE_IRQn);
+
         // Diasble DETECT events 
         io.irq1.setDetect(GPIO_PIN_CNF_SENSE_Disabled);
 

@@ -261,6 +261,12 @@ class MicroBitPowerManager : public CodalComponent
          * Service any IRQ requests raised by the USB interface chip.
          */
         virtual void idleCallback() override;
+        
+        /**
+         * Clear configured wake-up sources
+         * Note: this doesn't clear Timer events
+         */
+        void clearWakeUpSources();
 
         /**
          * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all

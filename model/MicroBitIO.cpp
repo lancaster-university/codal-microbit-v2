@@ -127,6 +127,8 @@ MicroBitIO::MicroBitIO(NRF52ADC &a, TouchSensor &s) :
  */
 int MicroBitIO::setSleep(bool doSleep)
 {
+    static bool wasEnabled;
+
     int name;
 
     if (doSleep)
@@ -158,11 +160,18 @@ int MicroBitIO::setSleep(bool doSleep)
 #endif
 
         }
+
+        wasEnabled = NVIC_GetEnableIRQ(GPIOTE_IRQn);
+        if (wasEnabled)
+            NVIC_DisableIRQ(GPIOTE_IRQn);
     }
 
     // Restore any saved GPIO state
     if (!doSleep)
     {
+        if (wasEnabled)
+            NVIC_EnableIRQ(GPIOTE_IRQn);
+
         for (int i = 0; i < pins; i++)
         {
             name = pin[i].name;
@@ -223,6 +232,7 @@ int MicroBitIO::manageWakeUp( wakeUpReason reason, wakeUpResult *result)
                     DMESG("MicroBitIO::manageWakeUp pin %d OFF", i);
                     // Diasble DETECT events 
                     pin[i].setDetect(GPIO_PIN_CNF_SENSE_Disabled);
+                    NVIC_DisableIRQ(GPIOTE_IRQn);
                 }
             }
             break;
