@@ -431,6 +431,11 @@ namespace codal
              * Puts the component in (or out of) sleep (low power) mode.
              */
             virtual int setSleep(bool doSleep) override;
+
+            /**
+             * Perform functions related to deep sleep wake-up.
+             */
+            virtual int manageWakeUp( wakeUpReason reason, wakeUpResult *result) override;
     };
 }
 

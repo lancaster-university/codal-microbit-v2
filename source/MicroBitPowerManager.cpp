@@ -354,8 +354,21 @@ void MicroBitPowerManager::idleCallback()
         
     }
 }
-
-#define deepSleepDEBUG 1  //TODO remove debug code
+/**
+ * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+ * program state is preserved. CPU will deepsleep until the next codal::Timer event or other wake up source event, before returning to normal
+ * operation.
+ * 
+ * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+ * simply use uBit.sleep();
+ * @return DEVICE_OK if deep sleep occurred, or DEVICE_INVALID_STATE if no usable wake up source is available 
+ */
+void MicroBitPowerManager::deepSleep()
+{
+    CODAL_TIMESTAMP eventTime = 0;
+    bool wakeOnTime = system_timer_deepsleep_wakeup_time( &eventTime);
+    deepSleep( wakeOnTime, eventTime, true /*wakeUpSources*/, NULL /*wakeUpPin*/);
+}
 
 /**
  * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
@@ -367,11 +380,116 @@ void MicroBitPowerManager::idleCallback()
  */
 void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
 {
-    if ( sysTimer == NULL || milliSeconds < MICROBIT_POWER_MANAGER_MINIMUM_DEEP_SLEEP)
+    CODAL_TIMESTAMP wakeUpTime = system_timer_current_time_us() + milliSeconds * 1000;
+    deepSleep( true /*wakeOnTime*/, wakeUpTime, false /*wakeUpSources*/, NULL /*wakeUpPin*/);
+}
+
+/**
+ * Powers down the CPU nd USB interface and instructs peripherals to enter an inoperative low power state. However, all
+ * program state is preserved. CPU will deepsleep until the given pin becomes active, then return to normal
+ * operation.
+ * 
+ * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+ * simply use uBit.sleep();
+ */
+void MicroBitPowerManager::deepSleep(MicroBitPin &pin)
+{
+    deepSleep( false /*wakeOnTime*/, 0 /*wakeUpTime*/, false /*wakeUpSources*/, &pin /*wakeUpPin*/);
+}
+
+////////////////////////////////////////////////////////////////
+// deepSleep implementation
+
+#define deepSleepDEBUG 1  //TODO remove debug code
+
+/**
+ * Prepare configured wake-up sources before entering deep sleep or after return from sleep.
+ * 
+ * @param enable Set to true to prepare for sleep, false to prepare to reawaken.
+ */
+void MicroBitPowerManager::enableWakeUpSources(bool enable)
+{
+    CodalComponent::manageAllWakeUp( enable ? MicroBitIO::wakeUpEnable : MicroBitIO::wakeUpDisable, NULL);
+
+    if ( enable)
+    {
+        // Enable wakeup from the the KL27 interrupt line.
+        io.irq1.setDetect(GPIO_PIN_CNF_SENSE_Low);
+        if (!NVIC_GetEnableIRQ(GPIOTE_IRQn))
+            NVIC_EnableIRQ(GPIOTE_IRQn);
+    }
+    else
+    {
+        // Disable DETECT events 
+        io.irq1.setDetect(GPIO_PIN_CNF_SENSE_Disabled);
+    }
+}
+
+volatile uint16_t MicroBitPowerManager::timer_irq_channels;
+
+void MicroBitPowerManager::deepSleepTimerIRQ(uint16_t chan)
+{
+    timer_irq_channels = chan;
+}
+
+/**
+ * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+ * program state is preserved. CPU will deepsleep until the next codal::Timer event or other wake up source event, before returning to normal
+ * operation.
+ * 
+ * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+ * simply use uBit.sleep();
+ *
+ * @param wakeOnTime    Set to true to wake up at time wakeUpTime
+ * @param wakeUpTime    Time to wake up.
+ * @param wakeUpSources Set to true to use external wake up sources configured by e.g. pin->setAwakeOnActive(true)
+ * @param wakeUpPin     Pin to wake up. Ignored if wakeUpSources == true.
+ */
+void MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime, bool wakeUpSources, NRF52Pin *wakeUpPin)
+{
+    if ( sysTimer == NULL)
       return;
 
     CODAL_TIMESTAMP timeEntry = system_timer_current_time_us();
-    
+
+    if ( wakeOnTime)
+    {
+        if ( wakeUpTime - timeEntry < MICROBIT_POWER_MANAGER_MINIMUM_DEEP_SLEEP * 1000)
+        {
+#ifdef deepSleepDEBUG
+            DMESGF( "timeEntry %d", (int) timeEntry);
+            DMESGF( "wakeUpTime %d", (int) wakeUpTime);
+            DMESGF( "%d < MICROBIT_POWER_MINIMUM_DEEP_SLEEP * 1000", (int) (wakeUpTime - timeEntry));
+#endif
+            return;
+        }
+    }
+    else
+    {
+        if ( wakeUpSources)
+        {
+            wakeUpResult result;
+            CodalComponent::manageAllWakeUp( wakeUpCount, &result);
+            if ( result.count == 0)
+            {
+#ifdef deepSleepDEBUG
+                DMESG( "deepSleep - no wake up sources");
+#endif
+                return;
+            }
+        }
+        else
+        {
+            if ( wakeUpPin == NULL)
+            {
+#ifdef deepSleepDEBUG
+                DMESG( "deepSleep - no wake up pin");
+#endif
+                return;
+            }
+        }
+    }
+
     // Configure for sleep mode
     setSleepMode(true);
 
@@ -385,7 +503,8 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
     sysTimer->timer->INTENCLR = sysTimer->timer->INTENSET;
 
     void (*sysTimerIRQ) (uint16_t channel_bitmsk) = sysTimer->timer_pointer;
-    sysTimer->setIRQ(NULL);
+    sysTimer->setIRQ( deepSleepTimerIRQ);
+    timer_irq_channels = 0;
 
 #ifdef deepSleepDEBUG
     ManagedString dbg;
@@ -450,8 +569,38 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
     //ticksMax = 100000000ul;
 #endif
 
-    // Enable wakeup from the the KL27 interrupt line.
-    io.irq1.setDetect(GPIO_PIN_CNF_SENSE_Low);
+    if ( wakeUpSources)
+    {
+        enableWakeUpSources(true);
+    }
+    else
+    {
+        if ( wakeUpPin)
+        {
+            // Ensure the requested pin into digital input mode. 
+            wakeUpPin->getDigitalValue();
+
+            // Enable an interrupt on the requested pin or an interrupt from the KL27.
+            wakeUpPin->setDetect(wakeUpPin->getPolarity() ? GPIO_PIN_CNF_SENSE_High : GPIO_PIN_CNF_SENSE_Low);
+        }
+
+        // Enable wakeup from the the KL27 interrupt line.
+        io.irq1.setDetect(GPIO_PIN_CNF_SENSE_Low);
+    }
+
+#ifdef deepSleepDEBUG
+    dbg = dbg + "IRQ  ";
+
+    for ( int irq = Reset_IRQn; irq <= SPIM3_IRQn; irq++)
+    {
+      if ( NVIC_GetEnableIRQ( (IRQn_Type) irq))
+      {
+        dbg = dbg + ManagedString( (int) irq);
+        dbg = dbg + " ";
+      }
+    }
+    dbg = dbg + "\n";
+#endif
 
     sysTimer->setCompare( channel, tickStart);
     sysTimer->enableIRQ();
@@ -459,9 +608,15 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
     uint32_t tick0 = tickStart;
     uint32_t tick1 = tick0;
 
-    // assume setSleepMode(false) need at least same time as setSleepMode(true)
+#ifdef deepSleepDEBUG
+    dbg = dbg + "tick0  ";
+    dbg = dbg + ManagedString( (int) tick0);
+    dbg = dbg + "\n";
+#endif
+
+    // assume setSleepMode(false) needs at least same time as setSleepMode(true)
     // it may need much longer in general
-    uint64_t totalTicks = (uint64_t) milliSeconds * ticksPerMS
+    uint64_t totalTicks = wakeUpTime - timeEntry
                         - (timeStart - timeEntry) * 2 / usPerTick
                         - 13;  // __WFI() latency
 
@@ -479,10 +634,22 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
     dbg = dbg + "\n";
 #endif
 
-    while ( sleepTicks < totalTicks)
+    while ( true)
     {
-        uint64_t remain64 = totalTicks - sleepTicks;
-        uint32_t remain   = remain64 > ticksMax ? ticksMax : remain64;
+        uint32_t remain;
+
+        if ( wakeOnTime)
+        {
+            if ( sleepTicks >= totalTicks)
+                break;
+
+            uint64_t remain64 = totalTicks - sleepTicks;
+            remain = remain64 > ticksMax ? ticksMax : remain64;
+        }
+        else
+        {
+          remain = ticksMax;
+        }
 
 #ifdef deepSleepDEBUG
         if ( dbg.length() < 2000)
@@ -522,6 +689,15 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
         uint32_t ticks = tick1 - tick0;
         tick0 = tick1;
 
+#ifdef deepSleepDEBUG
+        if ( dbg.length() < 2000)
+        {
+            dbg = dbg + "ticks  ";
+            dbg = dbg + ManagedString( (int) ticks);
+            dbg = dbg + "\n";
+        }
+#endif
+
         sleepTicks += ticks;
 
 #ifdef deepSleepDEBUG
@@ -533,14 +709,10 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
         }
 #endif
 
-        if ( io.irq1.isActive())
-        {
-#ifdef deepSleepDEBUG
-            dbg = dbg + "io.irq1.isActive()";
-            dbg = dbg + "\n";
-#endif
-            break;
-        }
+        if ( timer_irq_channels == 0)
+            break; // It must be another interrupt
+
+        timer_irq_channels = 0;
 
 #ifdef deepSleepDEBUG
         if ( dbg.length() < 2000)
@@ -562,8 +734,18 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
     dbg = dbg + "\n";
 #endif
 
-    // Disable DETECT events 
-    io.irq1.setDetect(GPIO_PIN_CNF_SENSE_Disabled);
+    if ( wakeUpSources)
+    {
+        enableWakeUpSources(false);
+    }
+    else
+    {
+        // Diasble DETECT events 
+        io.irq1.setDetect(GPIO_PIN_CNF_SENSE_Disabled);
+
+        if ( wakeUpPin)
+            wakeUpPin->setDetect(GPIO_PIN_CNF_SENSE_Disabled);
+    }
 
     // Restore timer state
     sysTimer->disableIRQ();
@@ -598,78 +780,6 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
     dbg = dbg + ManagedString( (int) (timeExit - timeEntry));
     dbg = dbg + "\n";
 #endif
-
-#ifdef deepSleepDEBUG
-    DMESGF( dbg.toCharArray());
-#endif
-}
-
-/**
- * Powers down the CPU nd USB interface and instructs peripherals to enter an inoperative low power state. However, all
- * program state is preserved. CPU will deepsleep until the given pin becomes active, then return to normal
- * operation.
- * 
- * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
- * simply use uBit.sleep();
- */
-void MicroBitPowerManager::deepSleep(MicroBitPin &pin)
-{
-    // Configure for sleep mode
-    setSleepMode(true);
-
-#ifdef deepSleepDEBUG
-    ManagedString dbg;
-    dbg = dbg + "IRQ  ";
-
-    for ( int irq = Reset_IRQn; irq <= SPIM3_IRQn; irq++)
-    {
-      if ( NVIC_GetEnableIRQ( (IRQn_Type) irq))
-      {
-        dbg = dbg + ManagedString( (int) irq);
-        dbg = dbg + " ";
-      }
-    }
-    dbg = dbg + "\n";
-
-    //With BLE, these are enabled
-    //POWER_CLOCK_IRQn          =   0,              /*!< 0  POWER_CLOCK                                                            */
-    //RADIO_IRQn                =   1,              /*!< 1  RADIO                                                                  */
-    //UARTE0_UART0_IRQn         =   2,              /*!< 2  UARTE0_UART0                                                           */
-    //GPIOTE_IRQn               =   6,              /*!< 6  GPIOTE                                                                 */
-    //RTC0_IRQn                 =  11,              /*!< 11 RTC0                                                                   */
-    //RTC1_IRQn                 =  17,              /*!< 17 RTC1                                                                   */
-    //SWI2_EGU2_IRQn            =  22,              /*!< 22 SWI2_EGU2                                                              */
-    //SWI5_EGU5_IRQn            =  25,              /*!< 25 SWI5_EGU5                                                              */
-    //MWU_IRQn                  =  32,              /*!< 32 MWU                                                                    */
-
-    //Without BLE
-    //RADIO_IRQn                =   1,              /*!< 1  RADIO                                                                  */
-    //UARTE0_UART0_IRQn         =   2,              /*!< 2  UARTE0_UART0                                                           */
-    //GPIOTE_IRQn               =   6,              /*!< 6  GPIOTE                                                                 */
-#endif
-
-    // Wait a little while to ensure all hardware and peripherals have reacted to the change of power mode.
-    //target_wait(10);
-
-    // Ensure the requested pin into digital input mode. 
-    pin.getDigitalValue();
-
-    // Enable an interrupt on the requested pin or an interrupt from the KL27.
-    pin.setDetect(pin.getPolarity() ? GPIO_PIN_CNF_SENSE_High : GPIO_PIN_CNF_SENSE_Low);
-
-    // Enable wakeup from the the KL27 interrupt line.
-    io.irq1.setDetect(GPIO_PIN_CNF_SENSE_Low);
-
-    // Wait for an interrupt to occur. This will either be the requested transition,
-    // or an asynchronous event from the KL27 interface chip.
-    __WFI();
-
-    // Diasble DETECT events 
-    pin.setDetect(GPIO_PIN_CNF_SENSE_Disabled);
-    io.irq1.setDetect(GPIO_PIN_CNF_SENSE_Disabled);
-
-    // Configure for running mode.
-    setSleepMode(false);
 
 #ifdef deepSleepDEBUG
     DMESGF( dbg.toCharArray());

@@ -191,3 +191,65 @@ int MicroBitIO::setSleep(bool doSleep)
    
     return DEVICE_OK;
 }
+
+/**
+ * Perform functions related to deep sleep wake-up.
+ */
+int MicroBitIO::manageWakeUp( wakeUpReason reason, wakeUpResult *result)
+{
+    switch (reason)
+    {
+        case wakeUpEnable: 
+            for (int i = 0; i < pins; i++)
+            {
+                if ( pin[i].getWakeOnActive())
+                {
+                    DMESG("MicroBitIO::manageWakeUp pin %d ON", i);
+                    if (!NVIC_GetEnableIRQ(GPIOTE_IRQn))
+                        NVIC_EnableIRQ(GPIOTE_IRQn);
+                    // Ensure the requested pin into digital input mode. 
+                    pin[i].getDigitalValue();
+                    // Enable an interrupt on the requested pin.
+                    pin[i].setDetect(pin[i].getPolarity() ? GPIO_PIN_CNF_SENSE_High : GPIO_PIN_CNF_SENSE_Low);
+                }
+            }
+            break;
+   
+        case wakeUpDisable:
+            for (int i = 0; i < pins; i++)
+            {
+                if ( pin[i].getWakeOnActive())
+                {
+                    DMESG("MicroBitIO::manageWakeUp pin %d OFF", i);
+                    // Diasble DETECT events 
+                    pin[i].setDetect(GPIO_PIN_CNF_SENSE_Disabled);
+                }
+            }
+            break;
+
+        case wakeUpCount:
+        {
+            if ( result == NULL)
+                return DEVICE_INVALID_PARAMETER;
+
+            for (int i = 0; i < pins; i++)
+            {
+                if ( pin[i].getWakeOnActive())
+                {
+                    result->count++;
+                }
+            }
+            break;
+        }
+        case wakeUpClear:
+            for (int i = 0; i < pins; i++)
+            {
+                if ( pin[i].getWakeOnActive())
+                {
+                    pin[i].wakeOnActive(false);
+                }
+            }
+            break;
+    }
+    return DEVICE_OK;
+}

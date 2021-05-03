@@ -269,6 +269,19 @@ class MicroBitPowerManager : public CodalComponent
          * 
          * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
          * simply use uBit.sleep();
+         *
+         * Wake up is triggered at the next Timer event created with the CODAL_TIMER_EVENT_FLAGS_WAKEUP flag
+         * or by externally configured sources, for example, pin->awakeOnActive(true).
+         */
+        void deepSleep();
+
+        /**
+         * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+         * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
+         * operation.
+         * 
+         * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+         * simply use uBit.sleep();
          */
         void deepSleep(uint32_t milliSeconds);
 
@@ -306,5 +319,29 @@ class MicroBitPowerManager : public CodalComponent
          */
         void setSleepMode(bool doSleep);
 
+        /**
+         * Prepare configured wake-up sources before entering deep sleep or after return from sleep.
+         * 
+         * @param enable Set to true to prepare for sleep, false to prepare to reawaken.
+         */
+        void enableWakeUpSources(bool enable);
+        
+        static volatile uint16_t timer_irq_channels;
+        static void deepSleepTimerIRQ(uint16_t chan);
+
+        /**
+         * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+         * program state is preserved. CPU will deepsleep until the next codal::Timer event or other wake up source event, before returning to normal
+         * operation.
+         * 
+         * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+         * simply use uBit.sleep();
+         *
+         * @param wakeOnTime    Set to true to wake up at time wakeUpTime
+         * @param wakeUpTime    Time to trigger wake up. Ignored if wakeOnTime == false;
+         * @param wakeUpSources Set to true to use wake up sources externally configured by, for example, pin->awakeOnActive(true)
+         * @param wakeUpPin     Pin to trigger wake up. Ignored if wakeUpSources == true.
+         */
+        void deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime, bool wakeUpSources, NRF52Pin *wakeUpPin);
 };
 #endif
