@@ -18,34 +18,30 @@ EmojiRecogniser::EmojiRecogniser( MicroBitAudioProcessor& processor )
 const uint8_t happy_sequences = 2;
 const uint8_t happy_max_deviations = 2;
 
-uint16_t happy_samples[happy_sequences][3][11] = {
-    // First sequence
+uint16_t happy_samples[happy_sequences][2][8] = {
     {
-        { 3, 2037, 2289, 2289}, 	
-        { 3, 2037, 2310, 2541}, 	
-        { 3, 2037, 2289, 2310}
+        { 4, 2121, 2394, 2646, 2646}, 	
+        { 5, 2121, 2373, 2373, 2646, 2646}
     },
     {
-        { 8, 2562, 2562, 2562, 2541, 2730, 2562, 2289, 2289}, 	
-        { 10, 2562, 2562, 2562, 2562, 2730, 2562, 2541, 2310, 2310, 2289}, 	
-        { 10, 0, 2562, 2562, 2541, 2730, 2541, 2562, 2310, 2289, 2289}
-
+        { 7, 2646, 2835, 2646, 2646, 2394, 2394, 2394}, 	
+        { 7, 2646, 2835, 2835, 2646, 2394, 2373, 2394}
     }
 };
 
 uint16_t happy_thresholds[happy_sequences] = {
-    50,
+    40,
     50
 };
 
 uint8_t happy_deviations[happy_sequences] = {
-    2,
-    3
+    1,
+    2
 };
 
 uint8_t happy_nr_samples[happy_sequences] = {
-    3,
-    3
+    2,
+    2
 };
 
 
@@ -55,7 +51,13 @@ void EmojiRecogniser::addHappySound() {
     sounds_size ++;
     sounds_names[it] = new ManagedString("happy");
 
-    sounds[it] = new Sound(happy_sequences, happy_max_deviations, 14, true);
+    uint8_t history = 0;
+
+    for(uint8_t i = 0; i < happy_sequences; i++)
+        for(uint8_t j = 0; j < happy_nr_samples[i]; j ++)
+            history = max(history, happy_samples[i][j][0] + 4);
+
+    sounds[it] = new Sound(happy_sequences, happy_max_deviations, history, true);
 
     for(uint8_t i = 0; i < happy_sequences; i++){
         sounds[it] -> sequences[i] = new SoundSequence(happy_nr_samples[i], happy_thresholds[i], happy_deviations[i]);
