@@ -6,11 +6,13 @@ MicroBitMorseCodeRecogniser::MicroBitMorseCodeRecogniser(MicroBitAudioProcessor&
     analysing = false;
     audio_proceesor.connect(this);
     buffer_len = 0;
+    output_len = 0;
 
     timeUnit = 1.0 * MIC_SAMPLE_RATE * _timeUnit / 1000 / MORSE_AUDIO_SAMPLES_NUMBER + 0.5;
 
     memset(buffer, 0, sizeof(buffer));
     memset(normalised_buffer, 0, sizeof(normalised_buffer));
+    memset(output, 0, sizeof(output));
 
     syncronised = false;
     pauses = 0;
@@ -27,12 +29,7 @@ MicroBitAudioProcessor* MicroBitMorseCodeRecogniser::getAudioProcessor(){
     return &audio_proceesor;
 }
 
-void MicroBitMorseCodeRecogniser::setCallback(void (*_callback)(ManagedString)){
-    callback = _callback;
-}
-
-void MicroBitMorseCodeRecogniser::startAnalisying(void (*_callback)(ManagedString)){
-    setCallback(_callback);
+void MicroBitMorseCodeRecogniser::startAnalisying(){
     analysing = true;
     audio_proceesor.startRecording();
 }
@@ -45,18 +42,31 @@ void MicroBitMorseCodeRecogniser::stopAnalisying(){
 
 
 int MicroBitMorseCodeRecogniser::pullRequest() {
-
+    //uBit.serial.send("RECOGNISER PULL");
     auto frames = audio_proceesor.pull();
-
+    //uBit.serial.send(ManagedString((int)analysing));
     if(!analysing) return DEVICE_OK;
 
     MicroBitAudioProcessor::AudioFrameAnalysis* buf = (MicroBitAudioProcessor::AudioFrameAnalysis* ) &frames[0];
     uint16_t size = frames.length() / sizeof(MicroBitAudioProcessor::AudioFrameAnalysis);
+    //uBit.serial.send(frames.length());
     
     for(uint16_t i = 0; i < size; i++)
         processFrame(&buf[i]);
     
     return DEVICE_OK;
+}
+
+
+void MicroBitMorseCodeRecogniser::connect(DataSink *sink){
+    interpreter = sink;
+}
+
+ManagedBuffer MicroBitMorseCodeRecogniser::pull()
+{
+    uint16_t len = output_len;
+    output_len = 0;
+    return ManagedBuffer(((uint8_t *) (&output)), len*sizeof(uint8_t));
 }
 
 
@@ -69,6 +79,16 @@ bool MicroBitMorseCodeRecogniser::recogniseLastMorseFrame(uint16_t to, uint16_t 
         if(buffer[it]) nr_true ++;
 
     return nr_true >= threshold;
+}
+
+void MicroBitMorseCodeRecogniser::pushOut(char c){
+    //uBit.serial.send(c);
+    if (output_len == 0 && (c == ' ' || c == ';' || c == '#')) return;
+    output[output_len] = c;
+    output_len++;
+    if (c == '#'){
+        interpreter->pullRequest();
+    }
 }
 
 void MicroBitMorseCodeRecogniser::processFrame(MicroBitAudioProcessor::AudioFrameAnalysis* frame) {
@@ -90,7 +110,7 @@ void MicroBitMorseCodeRecogniser::processFrame(MicroBitAudioProcessor::AudioFram
     buffer_len ++;
 
 
-    // uBit.serial.send(ManagedString((int)detected_freq) );
+    //uBit.serial.send(ManagedString((int)detected_freq) );
 
     if(!syncronised && buffer_len > timeUnit && recogniseLastMorseFrame(buffer_len, timeUnit - 1) && 
                                                 buffer[buffer_len - timeUnit]) {
@@ -103,13 +123,14 @@ void MicroBitMorseCodeRecogniser::processFrame(MicroBitAudioProcessor::AudioFram
 
         added = true;
 
-        if(pauses <= 4) callback(ManagedString(" "));
-        else   callback(ManagedString(";"));
+        if(pauses <= 4) pushOut(' ');
+        else if (pauses <= 8) pushOut(';');
+        else pushOut('#');
         
         pauses = 0;
 
         // if(normalised_buffer[normalised_buffer_len-1]) uBit.serial.send("   1\n");
-        // else  uBit.serial.send("   .\n");
+        //else  uBit.serial.send("   .\n");
     } 
 
     if(syncronised && buffer_len == timeUnit){
@@ -119,12 +140,15 @@ void MicroBitMorseCodeRecogniser::processFrame(MicroBitAudioProcessor::AudioFram
 
         added = true;
 
-        // if(normalised_buffer[normalised_buffer_len-1]) uBit.serial.send("   1\n");
-        // else  uBit.serial.send("   .\n");
+        //  if(normalised_buffer[normalised_buffer_len-1]) uBit.serial.send("   1\n");
+        //  else  uBit.serial.send("   .\n");
     }
 
     if(buffer_len == 2 * timeUnit) {
         pauses ++;
+        if(pauses == 9) {
+            pushOut('#');
+        }
         if (syncronised)
             normalised_buffer[normalised_buffer_len ++] = recogniseLastMorseFrame(buffer_len - timeUnit);
         memcpy(buffer, &buffer[timeUnit], sizeof(bool) * timeUnit);
@@ -140,7 +164,7 @@ void MicroBitMorseCodeRecogniser::processFrame(MicroBitAudioProcessor::AudioFram
 
     // end of word 
     if(normalised_buffer_len == 6) {
-        callback(ManagedString(";"));
+        //callback(ManagedString(";"));
         syncronised = false;
         normalised_buffer_len = 0;
         return;
@@ -148,6 +172,9 @@ void MicroBitMorseCodeRecogniser::processFrame(MicroBitAudioProcessor::AudioFram
 
     if (normalised_buffer_len == 1 && !normalised_buffer[0]) {
         pauses ++;
+        if(pauses == 9) {
+            pushOut('#');
+        }
         normalised_buffer_len = 0;
         syncronised = false;
     }
@@ -161,10 +188,10 @@ void MicroBitMorseCodeRecogniser::processFrame(MicroBitAudioProcessor::AudioFram
     // end of symbol
     if(firstFrame && !secondFrame) {
         // too short for dash => dot
-        if(normalised_buffer_len <= 2)     
-            callback(ManagedString("."));
+        if(normalised_buffer_len <= 2)
+            pushOut('.');
         else 
-            callback(ManagedString("-"));
+            pushOut('-');
 
         pauses = 1;
         normalised_buffer_len = 0;
