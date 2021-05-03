@@ -466,11 +466,7 @@ void MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTim
     {
         if ( wakeUpTime - timeEntry < MICROBIT_POWER_MANAGER_MINIMUM_DEEP_SLEEP * 1000)
         {
-#ifdef deepSleepDEBUG
-            DMESGF( "timeEntry %d", (int) timeEntry);
-            DMESGF( "wakeUpTime %d", (int) wakeUpTime);
-            DMESGF( "%d < MICROBIT_POWER_MINIMUM_DEEP_SLEEP * 1000", (int) (wakeUpTime - timeEntry));
-#endif
+            DMESG( "deepSleep: time too short");
             return;
         }
     }
@@ -482,9 +478,7 @@ void MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTim
             CodalComponent::manageAllWakeUp( wakeUpCount, &result);
             if ( result.count == 0)
             {
-#ifdef deepSleepDEBUG
-                DMESG( "deepSleep - no wake up sources");
-#endif
+                DMESG( "deepSleep: no wake up sources");
                 return;
             }
         }
@@ -492,9 +486,7 @@ void MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTim
         {
             if ( wakeUpPin == NULL)
             {
-#ifdef deepSleepDEBUG
-                DMESG( "deepSleep - no wake up pin");
-#endif
+                DMESG( "deepSleep: no wake up pin");
                 return;
             }
         }
@@ -529,55 +521,16 @@ void MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTim
       }
     }
     dbg = dbg + "\n";
+    DMESG( dbg.toCharArray());
 
-    //With BLE, these are enabled
-    //POWER_CLOCK_IRQn          =   0,              /*!< 0  POWER_CLOCK                                                            */
-    //RADIO_IRQn                =   1,              /*!< 1  RADIO                                                                  */
-    //UARTE0_UART0_IRQn         =   2,              /*!< 2  UARTE0_UART0                                                           */
-    //GPIOTE_IRQn               =   6,              /*!< 6  GPIOTE                                                                 */
-    //RTC0_IRQn                 =  11,              /*!< 11 RTC0                                                                   */
-    //RTC1_IRQn                 =  17,              /*!< 17 RTC1                                                                   */
-    //SWI2_EGU2_IRQn            =  22,              /*!< 22 SWI2_EGU2                                                              */
-    //SWI5_EGU5_IRQn            =  25,              /*!< 25 SWI5_EGU5                                                              */
-    //MWU_IRQn                  =  32,              /*!< 32 MWU                                                                    */
-
-    //Without BLE
-    //RADIO_IRQn                =   1,              /*!< 1  RADIO                                                                  */
-    //UARTE0_UART0_IRQn         =   2,              /*!< 2  UARTE0_UART0                                                           */
-    //GPIOTE_IRQn               =   6,              /*!< 6  GPIOTE                                                                 */
+    //These are enabled: RADIO_IRQn, UARTE0_UART0_IRQn
+    //With BLE, also: POWER_CLOCK_IRQn, RTC0_IRQn, RTC1_IRQn, SWI2_EGU2_IRQn, SWI5_EGU5_IRQn, MWU_IRQn
 #endif
-
-//    bool enabled[ SPIM3_IRQn - Reset_IRQn + 1];
-//    for ( int idx = 0; idx <= SPIM3_IRQn - Reset_IRQn; idx++)
-//    {
-//      IRQn_Type irq = (IRQn_Type) ( Reset_IRQn + idx);
-//      enabled[ idx] = NVIC_GetEnableIRQ( irq);
-//      if ( enabled[ idx])
-//        NVIC_DisableIRQ( irq);
-//    }
-//
-//#ifdef deepSleepDEBUG
-//    dbg = dbg + "IRQ  ";
-//
-//    for ( int irq = Reset_IRQn; irq <= SPIM3_IRQn; irq++)
-//    {
-//      if ( NVIC_GetEnableIRQ( (IRQn_Type) irq))
-//      {
-//        dbg = dbg + ManagedString( (int) irq);
-//        dbg = dbg + " ";
-//      }
-//    }
-//    dbg = dbg + "\n";
-//#endif
 
     uint32_t usPerTick   = 1;
     uint32_t ticksPerMS  = 1000;
     uint32_t ticksMax    = 0xFFFFFFFFul - ticksPerMS * 1000; // approx 71min
-
-#ifdef deepSleepDEBUG
-    ticksMax = 2000000;
-    //ticksMax = 100000000ul;
-#endif
+    //ticksMax = 2000000;
 
     if ( wakeUpSources)
     {
@@ -599,31 +552,11 @@ void MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTim
         NVIC_EnableIRQ(GPIOTE_IRQn);
     }
 
-#ifdef deepSleepDEBUG
-    dbg = dbg + "IRQ  ";
-
-    for ( int irq = Reset_IRQn; irq <= SPIM3_IRQn; irq++)
-    {
-      if ( NVIC_GetEnableIRQ( (IRQn_Type) irq))
-      {
-        dbg = dbg + ManagedString( (int) irq);
-        dbg = dbg + " ";
-      }
-    }
-    dbg = dbg + "\n";
-#endif
-
     sysTimer->setCompare( channel, tickStart);
     sysTimer->enableIRQ();
 
     uint32_t tick0 = tickStart;
     uint32_t tick1 = tick0;
-
-#ifdef deepSleepDEBUG
-    dbg = dbg + "tick0  ";
-    dbg = dbg + ManagedString( (int) tick0);
-    dbg = dbg + "\n";
-#endif
 
     // assume setSleepMode(false) needs at least same time as setSleepMode(true)
     // it may need much longer in general
@@ -633,18 +566,6 @@ void MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTim
 
     uint64_t sleepTicks = 0;
 
-#ifdef deepSleepDEBUG
-    dbg = dbg + "setSleepMode(true) ";
-    dbg = dbg + ManagedString( (int) (timeStart - timeEntry));
-    dbg = dbg + "\n";
-    dbg = dbg + "tick0  ";
-    dbg = dbg + ManagedString( (int) tick0);
-    dbg = dbg + "\n";
-    dbg = dbg + "totalTicks ";
-    dbg = dbg + ManagedString( (int) totalTicks);
-    dbg = dbg + "\n";
-#endif
-
     while ( true)
     {
         uint32_t remain;
@@ -652,8 +573,10 @@ void MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTim
         if ( wakeOnTime)
         {
             if ( sleepTicks >= totalTicks)
+            {
+                DMESG( "deepSleep: time up");
                 break;
-
+            }
             uint64_t remain64 = totalTicks - sleepTicks;
             remain = remain64 > ticksMax ? ticksMax : remain64;
         }
@@ -662,25 +585,7 @@ void MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTim
           remain = ticksMax;
         }
 
-#ifdef deepSleepDEBUG
-        if ( dbg.length() < 2000)
-        {
-            dbg = dbg + "remain ";
-            dbg = dbg + ManagedString( (int) remain);
-            dbg = dbg + "\n";
-        }
-#endif
-
         sysTimer->setCompare( channel, tick0 + remain);
-
-#ifdef deepSleepDEBUG
-        if ( dbg.length() < 2000)
-        {
-            dbg = dbg + "expect ";
-            dbg = dbg + ManagedString( (int) sysTimer->timer->CC[channel]);
-            dbg = dbg + "\n";
-        }
-#endif
 
         // Wait for an interrupt to occur. This will either be the requested transition,
         // or an asynchronous event from the KL27 interface chip.
@@ -688,62 +593,19 @@ void MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTim
 
         tick1 = sysTimer->captureCounter();
 
-#ifdef deepSleepDEBUG
-        if ( dbg.length() < 2000)
-        {
-            dbg = dbg + "tick1  ";
-            dbg = dbg + ManagedString( (int) tick1);
-            dbg = dbg + "\n";
-        }
-#endif
-
         uint32_t ticks = tick1 - tick0;
         tick0 = tick1;
 
-#ifdef deepSleepDEBUG
-        if ( dbg.length() < 2000)
-        {
-            dbg = dbg + "ticks  ";
-            dbg = dbg + ManagedString( (int) ticks);
-            dbg = dbg + "\n";
-        }
-#endif
-
         sleepTicks += ticks;
 
-#ifdef deepSleepDEBUG
-        if ( dbg.length() < 2000)
-        {
-            dbg = dbg + "ticks  ";
-            dbg = dbg + ManagedString( (int) ticks);
-            dbg = dbg + "\n";
-        }
-#endif
-
         if ( timer_irq_channels == 0)
+        {
+            DMESG( "deepSleep: non-time interrupt");
             break; // It must be another interrupt
+        }
 
         timer_irq_channels = 0;
-
-#ifdef deepSleepDEBUG
-        if ( dbg.length() < 2000)
-        {
-            dbg = dbg + "sleepMillis ";
-            dbg = dbg + ManagedString( (int) ( sleepTicks / ticksPerMS));
-            dbg = dbg + " sleepTicks ";
-            dbg = dbg + ManagedString( (int) ( sleepTicks % ticksPerMS));
-            dbg = dbg + "\n";
-        }
-#endif
     }
-
-#ifdef deepSleepDEBUG
-    dbg = dbg + "sleepMillis ";
-    dbg = dbg + ManagedString( (int) ( sleepTicks / ticksPerMS));
-    dbg = dbg + " sleepTicks ";
-    dbg = dbg + ManagedString( (int) ( sleepTicks % ticksPerMS));
-    dbg = dbg + "\n";
-#endif
 
     if ( wakeUpSources)
     {
@@ -770,33 +632,10 @@ void MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTim
 
     sysTimer->timer->INTENSET = saveIntenset;
 
-    //for ( int idx = 0; idx <= SPIM3_IRQn - Reset_IRQn; idx++)
-    //{
-    //  IRQn_Type irq = (IRQn_Type) ( Reset_IRQn + idx);
-    //  if ( enabled[ idx])
-    //    NVIC_EnableIRQ( irq);
-    //}
-
-#ifdef deepSleepDEBUG
-    CODAL_TIMESTAMP timeWoken = system_timer_current_time_us();
-#endif
-
     // Configure for running mode.
     setSleepMode(false);
 
-#ifdef deepSleepDEBUG
-    CODAL_TIMESTAMP timeExit = system_timer_current_time_us();
-    dbg = dbg + "setSleepMode(false) ";
-    dbg = dbg + ManagedString( (int) (timeExit - timeWoken));
-    dbg = dbg + "\n";
-    dbg = dbg + "totalTime ";
-    dbg = dbg + ManagedString( (int) (timeExit - timeEntry));
-    dbg = dbg + "\n";
-#endif
-
-#ifdef deepSleepDEBUG
-    DMESGF( dbg.toCharArray());
-#endif
+    DMESG( "deepSleep ended after %u ms", (unsigned int) ((system_timer_current_time_us() - timeEntry) / 1000));
 }
 
 /**

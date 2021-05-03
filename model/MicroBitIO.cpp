@@ -213,7 +213,6 @@ int MicroBitIO::manageWakeUp( wakeUpReason reason, wakeUpResult *result)
             {
                 if ( pin[i].getWakeOnActive())
                 {
-                    DMESG("MicroBitIO::manageWakeUp pin %d ON", i);
                     if (!NVIC_GetEnableIRQ(GPIOTE_IRQn))
                         NVIC_EnableIRQ(GPIOTE_IRQn);
                     // Ensure the requested pin into digital input mode. 
@@ -229,7 +228,6 @@ int MicroBitIO::manageWakeUp( wakeUpReason reason, wakeUpResult *result)
             {
                 if ( pin[i].getWakeOnActive())
                 {
-                    DMESG("MicroBitIO::manageWakeUp pin %d OFF", i);
                     // Diasble DETECT events 
                     pin[i].setDetect(GPIO_PIN_CNF_SENSE_Disabled);
                     NVIC_DisableIRQ(GPIOTE_IRQn);
