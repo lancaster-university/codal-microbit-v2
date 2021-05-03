@@ -4,7 +4,7 @@
 EmojiRecogniser::EmojiRecogniser( MicroBitAudioProcessor& processor ) 
                     : MicroBitSoundRecogniser(processor){
     sounds = new Sound* [5];
-    sounds_names = new ManagedString* [5];
+    sound_ids = new uint16_t[5];
     addHappySound();
     addHelloSound();
     addSadSound();
@@ -12,6 +12,33 @@ EmojiRecogniser::EmojiRecogniser( MicroBitAudioProcessor& processor )
     addTwinkleSound();
 }
 
+/*
+ * The function to call when a sound is recognised.
+ */
+void EmojiRecogniser::recognisedSound(uint16_t id){
+    Event evnt(DEVICE_ID_EMOJI_RECOGNISER, id);
+}
+
+/*
+ * Converts from id to sound name.
+ */
+ManagedString EmojiRecogniser::getSoundName(Event& evnt){
+    if(evnt.source != DEVICE_ID_EMOJI_RECOGNISER)
+        return ManagedString("");
+    switch (evnt.value) {
+    case DEVICE_EMOJI_RECOGNISER_EVT_HAPPY:
+        return ManagedString("happy");
+    case DEVICE_EMOJI_RECOGNISER_EVT_HELLO:
+        return ManagedString("hello");
+    case DEVICE_EMOJI_RECOGNISER_EVT_SAD:
+        return ManagedString("sad");
+    case DEVICE_EMOJI_RECOGNISER_EVT_SOARING:
+        return ManagedString("soaring");
+    case DEVICE_EMOJI_RECOGNISER_EVT_TWINKLE:
+        return ManagedString("twinkle");
+    }
+    return ManagedString("");
+}
 
 // HAPPY Sound ---- 
 
@@ -49,7 +76,7 @@ void EmojiRecogniser::addHappySound() {
 
     uint8_t it = sounds_size;
     sounds_size ++;
-    sounds_names[it] = new ManagedString("happy");
+    sound_ids[it] = DEVICE_EMOJI_RECOGNISER_EVT_HAPPY;
 
     uint8_t history = 0;
 
@@ -106,7 +133,7 @@ uint8_t hello_nr_samples[hello_sequences] = {
 void EmojiRecogniser::addHelloSound() {
     uint8_t it = sounds_size;
     sounds_size ++;
-    sounds_names[it] = new ManagedString("hello");
+    sound_ids[it] = DEVICE_EMOJI_RECOGNISER_EVT_HELLO;
 
     sounds[it] = new Sound(hello_sequences, hello_max_deviations, 12, true);
 
@@ -156,7 +183,7 @@ uint8_t sad_nr_samples[sad_sequences] = {
 void EmojiRecogniser::addSadSound() {
     uint8_t it = sounds_size;
     sounds_size ++;
-    sounds_names[it] = new ManagedString("sad");
+    sound_ids[it] = DEVICE_EMOJI_RECOGNISER_EVT_SAD;
 
     sounds[it] = new Sound(sad_sequences, sad_max_deviations, 18, true);
 
@@ -231,7 +258,7 @@ const uint8_t soaring_nr_samples[soaring_sequences] = {
 void EmojiRecogniser::addSoaringSound() {
     uint8_t it = sounds_size;
     sounds_size ++;
-    sounds_names[it] = new ManagedString("soaring");
+    sound_ids[it] = DEVICE_EMOJI_RECOGNISER_EVT_SOARING;
 
     sounds[it] = new Sound(soaring_sequences, soaring_max_deviations, 15, true);
 
@@ -300,7 +327,7 @@ const uint8_t twinkle_nr_samples[twinkle_sequences] = {
 void EmojiRecogniser::addTwinkleSound() {
     uint8_t it = sounds_size;
     sounds_size ++;
-    sounds_names[it] = new ManagedString("twinkle");
+    sound_ids[it] = DEVICE_EMOJI_RECOGNISER_EVT_TWINKLE;
 
     sounds[it] = new Sound(twinkle_sequences, twinkle_max_deviations, 11, true);
 

@@ -42,6 +42,16 @@
 
 #include "MicroBitSoundRecogniser.h"
 
+#define DEVICE_EMOJI_RECOGNISER_EVT_HAPPY       1            
+#define DEVICE_EMOJI_RECOGNISER_EVT_HELLO       2
+#define DEVICE_EMOJI_RECOGNISER_EVT_SAD         3
+#define DEVICE_EMOJI_RECOGNISER_EVT_SOARING     4
+#define DEVICE_EMOJI_RECOGNISER_EVT_TWINKLE     5
+
+// 37 is the first unused id in CodalComponent.
+// It might be better for this to be in CodalComponent.
+#define DEVICE_ID_EMOJI_RECOGNISER    37
+
 class EmojiRecogniser : public MicroBitSoundRecogniser
 {
     void addHappySound();
@@ -50,8 +60,19 @@ class EmojiRecogniser : public MicroBitSoundRecogniser
     void addSoaringSound();
     void addTwinkleSound();
 
+    protected:
+    /*
+     * The function to call when a sound is recognised.
+     */
+    void recognisedSound(uint16_t id); 
+
     public:
     EmojiRecogniser(MicroBitAudioProcessor& processor);
+
+    /*
+     * Converts from id to sound name.
+     */
+    static ManagedString getSoundName(Event& evnt);
 };
 
 #endif

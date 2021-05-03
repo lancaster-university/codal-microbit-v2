@@ -23,13 +23,11 @@ MicroBitSoundRecogniser::~MicroBitSoundRecogniser(){
     if(sounds_size != 0){
         for(uint8_t i = 0; i < sounds_size; i++) {
             delete sounds[i];
-            delete sounds_names[i];
         }
         delete [] sounds;
-        delete [] sounds_names;
+        delete [] sound_ids;
     }
 }
-
 
 /*
  * A callback for when the data is ready.
@@ -62,23 +60,12 @@ int MicroBitSoundRecogniser::pullRequest(){
     for(uint8_t sound_it; sound_it < sounds_size; sound_it ++){
         sounds[sound_it] -> update(buffer, buffer_len);
         if(sounds[sound_it] -> matched()){
-            if(callback != NULL)
-                callback(*sounds_names[sound_it]);
+            recognisedSound(sound_ids[sound_it]);
             return DEVICE_OK;
         }
     }
 
     return DEVICE_OK;
-}
-        
-/*
- * Sets the callback. 
- * 
- * @TODO change it to send a message on the message bus 
- *       rather than having a callback
- */
-void MicroBitSoundRecogniser::setCallback(void (*_callback)(ManagedString)){
-    callback = _callback;
 }
 
 /*
@@ -87,8 +74,7 @@ void MicroBitSoundRecogniser::setCallback(void (*_callback)(ManagedString)){
  * @TODO change it to send a message on the message bus 
  *       rather than having a callback
  */
-void MicroBitSoundRecogniser::startAnalisying(void (*_callback)(ManagedString)){
-    setCallback(_callback);
+void MicroBitSoundRecogniser::startAnalisying(){
     analysing = true;
     audio_proceesor.startRecording();
 }

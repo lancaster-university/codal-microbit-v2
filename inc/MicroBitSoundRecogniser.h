@@ -47,8 +47,6 @@ class MicroBitSoundRecogniser : public DataSink
         
         bool analysing;                             // whether it should analyse the data or be idle
 
-        void (*callback)(ManagedString) = NULL;     // the callback function when a sound is detected
-
         MicroBitAudioProcessor::AudioFrameAnalysis buffer[2 * HISTORY_LENGTH];  // the buffer to collect the incoming data in
         uint8_t buffer_len;                                                     // the length of the buffer
 
@@ -179,12 +177,17 @@ class MicroBitSoundRecogniser : public DataSink
          * 
          * Initialize the MicroBitSoundRecogniser.
          * 
-         * @note is private to make the class abstract.
+         * @note is protected to make the class abstract.
          */
         MicroBitSoundRecogniser(MicroBitAudioProcessor& processor);
+
+        /*
+         * Virtual function to call when a sound is recognised.
+         */
+        virtual void recognisedSound(uint16_t id) = 0; 
         
         Sound**         sounds;         // pointer to the array of sounds to recognise
-        ManagedString** sounds_names;   // pointer to the array of sound names
+        uint16_t*       sound_ids;      // the array of sound ids
         uint8_t         sounds_size;    // the number of sounds to try to recognise
 
     public:
@@ -203,20 +206,9 @@ class MicroBitSoundRecogniser : public DataSink
         virtual int pullRequest();
         
         /*
-         * Sets the callback. 
-         * 
-         * @TODO change it to send a message on the message bus 
-         *       rather than having a callback
-         */
-        void setCallback(void (*_callback)(ManagedString));
-
-        /*
          * Starts analysing the data that comes in. Also sets the callback. 
-         * 
-         * @TODO change it to send a message on the message bus 
-         *       rather than having a callback
          */
-        void startAnalisying(void (*_callback)(ManagedString));
+        void startAnalisying();
 
         
         /*
