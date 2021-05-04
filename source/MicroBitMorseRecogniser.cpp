@@ -1,7 +1,7 @@
-#include "MicroBitMorseCodeRecogniser.h"
+#include "MicroBitMorseRecogniser.h"
 
 
-MicroBitMorseCodeRecogniser::MicroBitMorseCodeRecogniser(MicroBitAudioProcessor& audio_processor, MicroBit& uBit, uint16_t freq, uint16_t _timeUnit) 
+MicroBitMorseRecogniser::MicroBitMorseRecogniser(MicroBitAudioProcessor& audio_processor, MicroBit& uBit, uint16_t freq, uint16_t _timeUnit) 
                                 : audio_proceesor(audio_processor), uBit(uBit), frequency(freq) {
     analysing = false;
     audio_proceesor.connect(this);
@@ -17,31 +17,35 @@ MicroBitMorseCodeRecogniser::MicroBitMorseCodeRecogniser(MicroBitAudioProcessor&
     syncronised = false;
     pauses = 0;
 
+    // Compensate for distorsion
+    frequency -= 50;
+
     uBit.serial.send("time unit: ") ;
     uBit.serial.send(ManagedString((int) timeUnit)) ;
     uBit.serial.send("\n") ;
 }
 
-MicroBitMorseCodeRecogniser::~MicroBitMorseCodeRecogniser(){
+MicroBitMorseRecogniser::~MicroBitMorseRecogniser(){
 }
 
-MicroBitAudioProcessor* MicroBitMorseCodeRecogniser::getAudioProcessor(){
+MicroBitAudioProcessor* MicroBitMorseRecogniser::getAudioProcessor(){
     return &audio_proceesor;
 }
 
-void MicroBitMorseCodeRecogniser::startAnalisying(){
+void MicroBitMorseRecogniser::startAnalisying(){
     analysing = true;
     audio_proceesor.startRecording();
 }
 
-void MicroBitMorseCodeRecogniser::stopAnalisying(){
+void MicroBitMorseRecogniser::stopAnalisying(){
     analysing = false;
     buffer_len = 0;
     audio_proceesor.stopRecording();
 }
 
+extern MicroBit uBit;
 
-int MicroBitMorseCodeRecogniser::pullRequest() {
+int MicroBitMorseRecogniser::pullRequest() {
     //uBit.serial.send("RECOGNISER PULL");
     auto frames = audio_proceesor.pull();
     //uBit.serial.send(ManagedString((int)analysing));
@@ -58,11 +62,11 @@ int MicroBitMorseCodeRecogniser::pullRequest() {
 }
 
 
-void MicroBitMorseCodeRecogniser::connect(DataSink *sink){
+void MicroBitMorseRecogniser::connect(DataSink *sink){
     interpreter = sink;
 }
 
-ManagedBuffer MicroBitMorseCodeRecogniser::pull()
+ManagedBuffer MicroBitMorseRecogniser::pull()
 {
     uint16_t len = output_len;
     output_len = 0;
@@ -70,7 +74,7 @@ ManagedBuffer MicroBitMorseCodeRecogniser::pull()
 }
 
 
-bool MicroBitMorseCodeRecogniser::recogniseLastMorseFrame(uint16_t to, uint16_t threshold = 255) {
+bool MicroBitMorseRecogniser::recogniseLastMorseFrame(uint16_t to, uint16_t threshold = 255) {
     if(to < timeUnit) return false;
     if(threshold == 255) threshold = timeUnit * MORSE_FRAME_TRUE_RATE_THRESHOLD;
 
@@ -81,7 +85,7 @@ bool MicroBitMorseCodeRecogniser::recogniseLastMorseFrame(uint16_t to, uint16_t 
     return nr_true >= threshold;
 }
 
-void MicroBitMorseCodeRecogniser::pushOut(char c){
+void MicroBitMorseRecogniser::pushOut(char c){
     //uBit.serial.send(c);
     if (output_len == 0 && (c == ' ' || c == ';' || c == '#')) return;
     output[output_len] = c;
@@ -91,11 +95,7 @@ void MicroBitMorseCodeRecogniser::pushOut(char c){
     }
 }
 
-void MicroBitMorseCodeRecogniser::processFrame(MicroBitAudioProcessor::AudioFrameAnalysis* frame) {
-
-    // if (frame -> size >= 1) 
-    //     uBit.serial.send(ManagedString((int)frame -> buf[0]));
-    // uBit.serial.send("\n");
+void MicroBitMorseRecogniser::processFrame(MicroBitAudioProcessor::AudioFrameAnalysis* frame) {
     
     // uBit.serial.send("\n");
 

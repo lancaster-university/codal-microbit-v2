@@ -35,20 +35,44 @@ DEALINGS IN THE SOFTWARE.
 */
 
 // Default configuration values
-#define MIC_SAMPLE_RATE         (1000000 / MIC_SAMPLE_DELTA)
+#define MIC_SAMPLE_RATE    (1000000 / MIC_SAMPLE_DELTA)
+
+#define RECOGNITION_START_FREQ          1700
+#define RECOGNITION_END_FREQ            5400
+#define ANALYSIS_STD_MULT_THRESHOLD     2
+
+#define MAXIMUM_NUMBER_OF_FREQUENCIES   4
+#define SIMILAR_FREQ_THRESHOLD          100
+
+// Sampling more often - ~22000 Hz, allows better detection of emoji
+// sounds and gives relibale results when frequency shift morse code
+// with shorter frames ~180ms for a dot
+#if MIC_SAMPLE_DELTA == 45 
+
+#define DEFAULT_AUDIO_SAMPLES_NUMBER    512
+#define EMOJI_AUDIO_SAMPLES_NUMBER      1024
+#define MORSE_AUDIO_SAMPLES_NUMBER      512
+
+#define DEFAULT_STD_THRESHOLD   300
+#define EMOJI_STD_THRESHOLD     180
+#define MORSE_STD_THRESHOLD     300
+
+// If sampling at 11000 Hz the emoji detection would still work, but 
+// the morse code won't be able to produce reliable results when 
+// frequency shiting. This could be mitigated by increasing the time 
+// frame ~360ms for a dot, and increasing MORSE_AUDIO_SAMPLES_NUMBER 
+// to 512.
+#elif MIC_SAMPLE_DELTA == 91
+
 #define DEFAULT_AUDIO_SAMPLES_NUMBER    512
 #define EMOJI_AUDIO_SAMPLES_NUMBER      512
-#define MORSE_AUDIO_SAMPLES_NUMBER      128
+#define MORSE_AUDIO_SAMPLES_NUMBER      216
 
-#define RECOGNITION_START_FREQ  1700
-#define RECOGNITION_END_FREQ    5400
+#define DEFAULT_STD_THRESHOLD   70
+#define EMOJI_STD_THRESHOLD     45
+#define MORSE_STD_THRESHOLD     75
 
-#define ANALYSIS_STD_MULT_THRESHOLD     3
-#define ANALYSIS_STD_THRESHOLD          50
-#define ANALYSIS_MEAN_THRESHOLD         0 
-
-#define MAXIMUM_NUMBER_OF_FREQUENCIES   3
-#define SIMILAR_FREQ_THRESHOLD          100
+#endif
 
 class MicroBitAudioProcessor : public DataSink, public DataSource
 {
@@ -69,6 +93,7 @@ private:
     DataSource      &audiostream;             // the stream of data to analyse 
     DataSink        *recogniser;              // the recogniser the frequencies should be send to 
     uint16_t        audio_samples_number;     // the number of samples to collect before analysing a frame
+    uint16_t        std_threshold;            // the threshold for the standard deviation
     arm_rfft_fast_instance_f32 fft_instance;  // the instance of CMSIS fft that is used to run fft
     float           *buf;                     // the buffer to store the incoming data
     float           *fft_output;              // an array to store the result of the fft
@@ -105,7 +130,7 @@ private:
      * 
      * Initialize the MicroBitAduioProcessor.
      */
-    MicroBitAudioProcessor(DataSource& source, uint16_t audio_samples_number = DEFAULT_AUDIO_SAMPLES_NUMBER); 
+    MicroBitAudioProcessor(DataSource& source, uint16_t audio_samples_number = DEFAULT_AUDIO_SAMPLES_NUMBER, uint16_t std_threshold = DEFAULT_STD_THRESHOLD); 
     
     /*
      * Destructor.

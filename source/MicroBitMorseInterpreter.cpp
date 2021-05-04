@@ -1,6 +1,6 @@
 #include "MicroBitMorseInterpreter.h"
 
-MicroBitMorseInterpreter::MicroBitMorseInterpreter(MicroBitMorseCodeRecogniser& rec, MicroBit& bit)
+MicroBitMorseInterpreter::MicroBitMorseInterpreter(MicroBitMorseRecogniser& rec, MicroBit& bit)
                                 : recogniser(rec), uBit(bit){
     recogniser.connect(this);
     interpreting = false;

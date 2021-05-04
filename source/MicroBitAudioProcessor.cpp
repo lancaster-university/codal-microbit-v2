@@ -30,10 +30,12 @@ DEALINGS IN THE SOFTWARE.
  * Initialize the MicroBitAduioProcessor.
  */
 MicroBitAudioProcessor::MicroBitAudioProcessor( DataSource& source, 
-                                                uint16_t audio_samples_number) 
+                                                uint16_t audio_samples_number,
+                                                uint16_t std_threshold) 
                             : audiostream(source), 
                               recogniser(NULL), 
-                              audio_samples_number(audio_samples_number) {
+                              audio_samples_number(audio_samples_number),
+                              std_threshold(std_threshold) {
     
     arm_rfft_fast_init_f32(&fft_instance, audio_samples_number);
 
@@ -181,7 +183,7 @@ int MicroBitAudioProcessor::pullRequest()
             
             output.size = 0;
 
-            if(std > ANALYSIS_STD_THRESHOLD && mean > ANALYSIS_MEAN_THRESHOLD) {
+            if(std > std_threshold) {
                 std::vector<std::pair<uint16_t, float32_t>> freq_played; 
 
                 for(uint16_t i=from; i < to; i++)

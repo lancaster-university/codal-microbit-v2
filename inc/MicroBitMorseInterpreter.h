@@ -1,13 +1,13 @@
 #include "MicroBit.h"
 #include "DataStream.h"
-#include "MicroBitMorseCodeRecogniser.h"
+#include "MicroBitMorseRecogniser.h"
 #include "MorseEncoder.h"
 
 class MicroBitMorseInterpreter: public DataSink {
     
     private:
 
-    MicroBitMorseCodeRecogniser& recogniser;
+    MicroBitMorseRecogniser& recogniser;
     MicroBit& uBit;
     MorseEncoder encoder;
     bool interpreting;
@@ -16,7 +16,7 @@ class MicroBitMorseInterpreter: public DataSink {
 
 
     public:
-    MicroBitMorseInterpreter(MicroBitMorseCodeRecogniser& rec, MicroBit& bit);
+    MicroBitMorseInterpreter(MicroBitMorseRecogniser& rec, MicroBit& bit);
     virtual int pullRequest();
     void setCallback(void (*_callback)(ManagedString));
     void startInterpreting(void (*_callback)(ManagedString));

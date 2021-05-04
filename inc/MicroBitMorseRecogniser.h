@@ -11,7 +11,7 @@
 #define MAX_TIME_UNIT 500
 #define MAX_MESSAGE 500
 
-class MicroBitMorseCodeRecogniser : public DataSink, public DataSource
+class MicroBitMorseRecogniser : public DataSink, public DataSource
 {   
         MicroBitAudioProcessor& audio_proceesor;
         DataSink*               interpreter;
@@ -38,9 +38,9 @@ class MicroBitMorseCodeRecogniser : public DataSink, public DataSource
         void pushOut(char c);
 
     public:
-        MicroBitMorseCodeRecogniser(MicroBitAudioProcessor& processor, MicroBit& uBit, uint16_t freq, uint16_t timeUnit) ;
+        MicroBitMorseRecogniser(MicroBitAudioProcessor& processor, MicroBit& uBit, uint16_t freq, uint16_t timeUnit) ;
         
-        ~MicroBitMorseCodeRecogniser();
+        ~MicroBitMorseRecogniser();
 
         virtual int pullRequest();
         
