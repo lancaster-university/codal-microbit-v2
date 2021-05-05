@@ -533,6 +533,8 @@ int MicroBitRadio::send(FrameBuffer *buffer)
 
     return DEVICE_OK;
 }
+#define MICROBIT_RADIO_STATUS_DEEPSLEEP         0x0002
+#define MICROBIT_RADIO_STATUS_DEEPSLEEP_INIT    0x0004
 
 /**
  * Puts the component in (or out of) sleep (low power) mode.
@@ -541,18 +543,28 @@ int MicroBitRadio::setSleep(bool doSleep)
 {
     if (doSleep)
     {
-        if ( (status & MICROBIT_RADIO_STATUS_INITIALISED) && !(status & MICROBIT_RADIO_STATUS_DEEPSLEEP))
+        if ( status & MICROBIT_RADIO_STATUS_INITIALISED)
         {
             disable();
-            status |= MICROBIT_RADIO_STATUS_DEEPSLEEP;
+            status |= MICROBIT_RADIO_STATUS_DEEPSLEEP_INIT;
+        }
+        else if ( NVIC_GetEnableIRQ(RADIO_IRQn))
+        {
+            status |=  MICROBIT_RADIO_STATUS_DEEPSLEEP_IRQ;
+            NVIC_DisableIRQ(RADIO_IRQn);
         }
     }
     else
     {
-        if ( status & MICROBIT_RADIO_STATUS_DEEPSLEEP)
+        if ( status & MICROBIT_RADIO_STATUS_DEEPSLEEP_INIT)
         {
+            status &= ~MICROBIT_RADIO_STATUS_DEEPSLEEP_INIT;
             enable();
-            status &= ~MICROBIT_RADIO_STATUS_DEEPSLEEP;
+        }
+        else if ( status & MICROBIT_RADIO_STATUS_DEEPSLEEP_IRQ)
+        {
+            status &= ~MICROBIT_RADIO_STATUS_DEEPSLEEP_IRQ;
+            NVIC_EnableIRQ(RADIO_IRQn);
         }
     }
    

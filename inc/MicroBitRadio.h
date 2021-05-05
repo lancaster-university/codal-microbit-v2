@@ -63,7 +63,8 @@ namespace codal
 
 // Status Flags
 #define MICROBIT_RADIO_STATUS_INITIALISED       0x0001
-#define MICROBIT_RADIO_STATUS_DEEPSLEEP         0x0002
+#define MICROBIT_RADIO_STATUS_DEEPSLEEP_IRQ     0x0002
+#define MICROBIT_RADIO_STATUS_DEEPSLEEP_INIT    0x0004
 
 // Default configuration values
 #define MICROBIT_RADIO_BASE_ADDRESS             0x75626974
