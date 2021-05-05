@@ -9,8 +9,6 @@ word gap ';'
 end of transmission '#'
 */
 
-extern MicroBit uBit;
-
 std::map<char, ManagedString> MorseEncoder::toStr = {
     {'A', ".-"}, {'B', "-..."}, {'C', "-.-."}, {'D', "-.."}, {'E', "."}, {'F', "..-."}, {'G', "--."}, {'H', "...."}, {'I', ".."}, {'J', ".---"},
     {'K', "-.-"}, {'L', ".-.."}, {'M', "--"}, {'N', "-."}, {'O', "---"}, {'P', ".--."}, {'Q', "--.-"}, {'R', ".-."}, {'S', "..."}, {'T', "-"},
@@ -24,7 +22,7 @@ MorseEncoder::MorseEncoder() {
     }
 }
 
-void MorseEncoder::encode(char* in, char* out) {
+void MorseEncoder::encode(const char* in, char* out) {
     int i = 0; // index over in
     int j = 0; // index over out
     char c;
@@ -57,17 +55,15 @@ void MorseEncoder::encode(char* in, char* out) {
     out[j] = 0;
 }
 
-void MorseEncoder::decode(char* in, char* out){ 
+void MorseEncoder::decode(const char* in, char* out){ 
     int i = 0; // index over in
     int j = 0; // index over out   
     int k = 0; // index over s
     char s[10]; // current character encoding
     char c;
-    //uBit.serial.send('\n');
 
     while (in[i]!=0){
         c = in[i];
-        //uBit.serial.send(c);
         if (c == '.' || c == '-'){
             s[k] = c; k++;
         }
@@ -75,13 +71,11 @@ void MorseEncoder::decode(char* in, char* out){
             if (k!=0){
                 s[k] = 0;
                 k = 0;
-                out[j] = toChar[s]; 
-                //uBit.serial.send("out");           
+                out[j] = toChar[s];         
                 j++;
             }
             if (c == ';'){
                 out[j] = ' ';
-                //uBit.serial.send("out");
                 j++;
             }
         }

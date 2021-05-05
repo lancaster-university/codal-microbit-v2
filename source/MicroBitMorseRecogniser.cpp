@@ -1,10 +1,12 @@
 #include "MicroBitMorseRecogniser.h"
 
+extern MicroBit uBit;
 
-MicroBitMorseRecogniser::MicroBitMorseRecogniser(MicroBitAudioProcessor& audio_processor, MicroBit& uBit, uint16_t freq, uint16_t _timeUnit) 
-                                : audio_proceesor(audio_processor), uBit(uBit), frequency(freq) {
-    analysing = false;
+MicroBitMorseRecogniser::MicroBitMorseRecogniser(MicroBitAudioProcessor& audio_processor, uint16_t freq, uint16_t _timeUnit) 
+                                : audio_proceesor(audio_processor), frequency(freq) {
     audio_proceesor.connect(this);
+
+    analysing = false;
     buffer_len = 0;
     output_len = 0;
 
@@ -15,14 +17,12 @@ MicroBitMorseRecogniser::MicroBitMorseRecogniser(MicroBitAudioProcessor& audio_p
     memset(output, 0, sizeof(output));
 
     syncronised = false;
-    pauses = 0;
+    zeros = 0;
+    ones = 0;
 
     // Compensate for distorsion
     frequency -= 50;
 
-    uBit.serial.send("time unit: ") ;
-    uBit.serial.send(ManagedString((int) timeUnit)) ;
-    uBit.serial.send("\n") ;
 }
 
 MicroBitMorseRecogniser::~MicroBitMorseRecogniser(){
@@ -43,17 +43,13 @@ void MicroBitMorseRecogniser::stopAnalisying(){
     audio_proceesor.stopRecording();
 }
 
-extern MicroBit uBit;
-
 int MicroBitMorseRecogniser::pullRequest() {
-    //uBit.serial.send("RECOGNISER PULL");
     auto frames = audio_proceesor.pull();
-    //uBit.serial.send(ManagedString((int)analysing));
+
     if(!analysing) return DEVICE_OK;
 
     MicroBitAudioProcessor::AudioFrameAnalysis* buf = (MicroBitAudioProcessor::AudioFrameAnalysis* ) &frames[0];
     uint16_t size = frames.length() / sizeof(MicroBitAudioProcessor::AudioFrameAnalysis);
-    //uBit.serial.send(frames.length());
     
     for(uint16_t i = 0; i < size; i++)
         processFrame(&buf[i]);
@@ -86,116 +82,71 @@ bool MicroBitMorseRecogniser::recogniseLastMorseFrame(uint16_t to, uint16_t thre
 }
 
 void MicroBitMorseRecogniser::pushOut(char c){
-    //uBit.serial.send(c);
     if (output_len == 0 && (c == ' ' || c == ';' || c == '#')) return;
     output[output_len] = c;
     output_len++;
-    if (c == '#'){
+    if (c == '#')
         interpreter->pullRequest();
-    }
 }
 
 void MicroBitMorseRecogniser::processFrame(MicroBitAudioProcessor::AudioFrameAnalysis* frame) {
-    
-    // uBit.serial.send("\n");
-
+  
     bool detected_freq = false;
     for (uint16_t i = 0; i < frame -> size && !detected_freq; i++ )
         if(abs(frame -> buf[i] - frequency) < DETECTION_THRESHOLD) 
             detected_freq = true;
 
-    bool added = false;
-
     buffer[buffer_len] = detected_freq;
     buffer_len ++;
 
+    if(buffer_len < timeUnit) return;
 
-    //uBit.serial.send(ManagedString((int)detected_freq) );
+    uint16_t threshold = timeUnit * MORSE_FRAME_TRUE_RATE_THRESHOLD;
 
-    if(!syncronised && buffer_len > timeUnit && recogniseLastMorseFrame(buffer_len, timeUnit - 1) && 
-                                                buffer[buffer_len - timeUnit]) {
-        normalised_buffer_len = 0;
+    if(!syncronised && recogniseLastMorseFrame(buffer_len, threshold) && 
+                        buffer[buffer_len - timeUnit]) {
+        
+        zeros += (int)((0.5 + buffer_len) / timeUnit) - 1; 
+
+        if(zeros > 1 && zeros <= 4) pushOut(' ');
+        else if (zeros > 4 && zeros <= 8) pushOut(';'); 
+
         buffer_len = 0;
+        zeros = 0;
+        ones = 1;
         syncronised = true;
 
-        normalised_buffer[normalised_buffer_len] = true;
-        normalised_buffer_len ++;
-
-        added = true;
-
-        if(pauses <= 4) pushOut(' ');
-        else if (pauses <= 8) pushOut(';');
-        else pushOut('#');
-        
-        pauses = 0;
-
-        // if(normalised_buffer[normalised_buffer_len-1]) uBit.serial.send("   1\n");
-        //else  uBit.serial.send("   .\n");
+        return;
     } 
 
-    if(syncronised && buffer_len == timeUnit){
-        normalised_buffer[normalised_buffer_len] = recogniseLastMorseFrame(buffer_len);
-        normalised_buffer_len ++;
+    if(syncronised && !recogniseLastMorseFrame(buffer_len, timeUnit - threshold) && 
+                        !buffer[buffer_len - timeUnit]) {
+        ones += (int)((0.5 + buffer_len) / timeUnit) - 1;   
+
+        if(ones > 2) 
+            pushOut('-');
+        else 
+            pushOut('.');
+                         
         buffer_len = 0;
-
-        added = true;
-
-        //  if(normalised_buffer[normalised_buffer_len-1]) uBit.serial.send("   1\n");
-        //  else  uBit.serial.send("   .\n");
+        syncronised = false;
+        zeros = 1;
+        ones = 0;
+        return;
     }
 
     if(buffer_len == 2 * timeUnit) {
-        pauses ++;
-        if(pauses == 9) {
+
+        if(zeros == 9) 
             pushOut('#');
-        }
+        
         if (syncronised)
-            normalised_buffer[normalised_buffer_len ++] = recogniseLastMorseFrame(buffer_len - timeUnit);
+            ones ++;
+        else 
+            zeros ++;
+
         memcpy(buffer, &buffer[timeUnit], sizeof(bool) * timeUnit);
         buffer_len = timeUnit;
-
-        // uBit.serial.send("|");
-
-        added = true;
-    }
-
-
-    if(!syncronised || !added) return;
-
-    // end of word 
-    if(normalised_buffer_len == 6) {
-        //callback(ManagedString(";"));
-        syncronised = false;
-        normalised_buffer_len = 0;
-        return;
-    }
-
-    if (normalised_buffer_len == 1 && !normalised_buffer[0]) {
-        pauses ++;
-        if(pauses == 9) {
-            pushOut('#');
-        }
-        normalised_buffer_len = 0;
-        syncronised = false;
-    }
-
-    // Not enough data 
-    if (normalised_buffer_len < 2) return;
-
-    bool firstFrame = normalised_buffer[normalised_buffer_len - 2];
-    bool secondFrame = normalised_buffer[normalised_buffer_len - 1];
-    
-    // end of symbol
-    if(firstFrame && !secondFrame) {
-        // too short for dash => dot
-        if(normalised_buffer_len <= 2)
-            pushOut('.');
-        else 
-            pushOut('-');
-
-        pauses = 1;
-        normalised_buffer_len = 0;
-        return;
     }
 }
 

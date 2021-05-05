@@ -50,17 +50,17 @@ DEALINGS IN THE SOFTWARE.
 #if MIC_SAMPLE_DELTA == 45 
 
 #define DEFAULT_AUDIO_SAMPLES_NUMBER    512
-#define EMOJI_AUDIO_SAMPLES_NUMBER      1024
-#define MORSE_AUDIO_SAMPLES_NUMBER      512
+#define EMOJI_AUDIO_SAMPLES_NUMBER      512
+#define MORSE_AUDIO_SAMPLES_NUMBER      256
 
-#define DEFAULT_STD_THRESHOLD   300
-#define EMOJI_STD_THRESHOLD     180
-#define MORSE_STD_THRESHOLD     300
+#define DEFAULT_STD_THRESHOLD   140
+#define EMOJI_STD_THRESHOLD     80 
+#define MORSE_STD_THRESHOLD     200 /* 40000 */
 
 // If sampling at 11000 Hz the emoji detection would still work, but 
 // the morse code won't be able to produce reliable results when 
 // frequency shiting. This could be mitigated by increasing the time 
-// frame ~360ms for a dot, and increasing MORSE_AUDIO_SAMPLES_NUMBER 
+// frame to ~360ms for a dot, and increasing MORSE_AUDIO_SAMPLES_NUMBER 
 // to 512.
 #elif MIC_SAMPLE_DELTA == 91
 

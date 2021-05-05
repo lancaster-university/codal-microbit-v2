@@ -6,23 +6,24 @@
 #include "MicroBitAudioProcessor.h"
 #include "arm_math.h"
 
-#define DETECTION_THRESHOLD 150
 #define MORSE_FRAME_TRUE_RATE_THRESHOLD 0.8
-#define MAX_TIME_UNIT 500
-#define MAX_MESSAGE 500
+#define DETECTION_THRESHOLD 100
+#define MAX_TIME_UNIT       500
+#define MAX_MESSAGE         500
 
 class MicroBitMorseRecogniser : public DataSink, public DataSource
 {   
         MicroBitAudioProcessor& audio_proceesor;
         DataSink*               interpreter;
-        MicroBit&               uBit;
 
         uint16_t timeUnit;
         uint16_t frequency;
 
         bool analysing;
         bool syncronised;
-        unsigned int pauses;
+
+        uint16_t zeros;
+        uint16_t ones;
 
         uint8_t output[MAX_MESSAGE];
         bool buffer[2 * MAX_TIME_UNIT];
@@ -38,7 +39,7 @@ class MicroBitMorseRecogniser : public DataSink, public DataSource
         void pushOut(char c);
 
     public:
-        MicroBitMorseRecogniser(MicroBitAudioProcessor& processor, MicroBit& uBit, uint16_t freq, uint16_t timeUnit) ;
+        MicroBitMorseRecogniser(MicroBitAudioProcessor& processor, uint16_t freq, uint16_t timeUnit) ;
         
         ~MicroBitMorseRecogniser();
 

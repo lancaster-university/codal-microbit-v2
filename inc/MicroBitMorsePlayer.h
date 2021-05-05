@@ -15,10 +15,14 @@ class MicroBitMorsePlayer {
 
     ManagedString dotFrame;
     ManagedString dashFrame;
+    ManagedString pause1Frame;
+    ManagedString pause3Frame;
+    ManagedString pause7Frame;
+    ManagedString pause10Frame;
 
     void createFrames();
 
     public:
     MicroBitMorsePlayer(MicroBit& bit, int freq, int dur);
-    void play(char* in);
+    void play(const char* in);
 };

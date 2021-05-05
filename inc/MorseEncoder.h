@@ -26,6 +26,6 @@ class MorseEncoder {
 
     public:
     MorseEncoder();
-    void encode(char* in, char* out);
-    void decode(char* in, char* out);
+    void encode(const char* in, char* out);
+    void decode(const char* in, char* out);
 };
