@@ -1,6 +1,45 @@
 #include "MicroBitMorseRecogniser.h"
 
+/*
+ * The sound recogniser takes in data from the audio processor - in 
+ * form of AudioFrameAnalysis. It then tries to identify whether 
+ * the listening frequency was played during that frame. Based on 
+ * the last frames it sends dots ('.'), dashes ('-'), letter spaces 
+ * (' '), word spaces (';'), and end-of-transmission ('#') to the 
+ * data sink connected.
+ * 
+ * Algorithm
+ * 
+ * The recogniser first converts the AudioFrameAnalysis data in 
+ * booleans which represent whether or not the listening frequency was 
+ * being played in that frame. A timeUnit is calculated based on the 
+ * sampling frequency and the number of samples taken before analysis 
+ * by the audio processor - it represents the number of frames a dot 
+ * should take.
+ * 
+ * It has 2 values: zeros and ones which counts for how many timeUnits 
+ * the frequency wasn't being played/ was being played. The value 
+ * synchronised keeps track of the last transition - true if the last 
+ * transition was from the frequency not being played to it being played, 
+ * false otherwise. At each transition, the values of zeros or ones are 
+ * being interpreted into the right character and then reset.
+ * 
+ * All characters are being accumulated into a buffer and send together 
+ * when the end-of-transmission character ('#') is found.
+ */
 
+/*
+ * Constructor. 
+ * 
+ * Initializes the MicroBitMorseRecogniser.
+ * 
+ * @param the audio processor it should take data from
+ * 
+ * @param freq the frequency it should listen for
+ * 
+ * @param timeUnit the amount of time in ms it takes a dot
+ *                 to be transmitted
+ */
 MicroBitMorseRecogniser::MicroBitMorseRecogniser(MicroBitAudioProcessor& audio_processor, uint16_t freq, uint16_t _timeUnit) 
                                 : audio_proceesor(audio_processor), frequency(freq) {
     audio_proceesor.connect(this);
@@ -12,10 +51,9 @@ MicroBitMorseRecogniser::MicroBitMorseRecogniser(MicroBitAudioProcessor& audio_p
     timeUnit = 1.0 * MIC_SAMPLE_RATE * _timeUnit / 1000 / MORSE_AUDIO_SAMPLES_NUMBER + 0.5;
 
     memset(buffer, 0, sizeof(buffer));
-    memset(normalised_buffer, 0, sizeof(normalised_buffer));
     memset(output, 0, sizeof(output));
 
-    syncronised = false;
+    synchronised = false;
     zeros = 0;
     ones = 0;
 
@@ -24,24 +62,35 @@ MicroBitMorseRecogniser::MicroBitMorseRecogniser(MicroBitAudioProcessor& audio_p
 
 }
 
+/*
+ * Destructor.
+ *
+ * Deallocates all the memory allocated dynamically.
+ */
 MicroBitMorseRecogniser::~MicroBitMorseRecogniser(){
 }
 
-MicroBitAudioProcessor* MicroBitMorseRecogniser::getAudioProcessor(){
-    return &audio_proceesor;
-}
-
+/*
+ * Starts analysing the data that comes in.
+ */
 void MicroBitMorseRecogniser::startAnalisying(){
     analysing = true;
     audio_proceesor.startRecording();
 }
 
+/*
+ * Stops analysing the data and also stops the audio processor
+ * from receiving.
+ */
 void MicroBitMorseRecogniser::stopAnalisying(){
     analysing = false;
     buffer_len = 0;
     audio_proceesor.stopRecording();
 }
 
+/*
+ * A callback for when the data is ready.
+ */
 int MicroBitMorseRecogniser::pullRequest() {
     auto frames = audio_proceesor.pull();
 
@@ -56,11 +105,16 @@ int MicroBitMorseRecogniser::pullRequest() {
     return DEVICE_OK;
 }
 
-
+/*
+ * Allow out downstream component to register itself with us
+ */
 void MicroBitMorseRecogniser::connect(DataSink *sink){
     interpreter = sink;
 }
 
+/*
+ * Provides the next available data to the downstream caller.
+ */
 ManagedBuffer MicroBitMorseRecogniser::pull()
 {
     uint16_t len = output_len;
@@ -68,7 +122,20 @@ ManagedBuffer MicroBitMorseRecogniser::pull()
     return ManagedBuffer(((uint8_t *) (&output)), len*sizeof(uint8_t));
 }
 
-
+/*
+ * Checks if the number of ones in the last timeUnit frames up to 
+ * a given position in buffer fit in a given threshold.
+ * 
+ * @param to specifies the interval [to - timeUnit, to) which is 
+ *           analysed 
+ * 
+ * @param threshold the minimum number of ones in the interval
+ * 
+ * @return number of trues in buffer[to - timeUnit, to) >= threshold
+ * 
+ * @note if threshold is 255 thet it will use 
+ *       timeUnit * MORSE_FRAME_TRUE_RATE_THRESHOLD as the threshold
+ */
 bool MicroBitMorseRecogniser::recogniseLastMorseFrame(uint16_t to, uint16_t threshold = 255) {
     if(to < timeUnit) return false;
     if(threshold == 255) threshold = timeUnit * MORSE_FRAME_TRUE_RATE_THRESHOLD;
@@ -80,6 +147,13 @@ bool MicroBitMorseRecogniser::recogniseLastMorseFrame(uint16_t to, uint16_t thre
     return nr_true >= threshold;
 }
 
+/*
+ * Adds a character to the output buffer. If it adds the 
+ * end-of-transmission ('#') character, then it sends the buffer 
+ * to the next component in the pipeline - 'interpreter'.
+ * 
+ * @param c the character to be added to the out buffer
+ */
 void MicroBitMorseRecogniser::pushOut(char c){
     if (output_len == 0 && (c == ' ' || c == ';' || c == '#')) return;
     output[output_len] = c;
@@ -88,6 +162,11 @@ void MicroBitMorseRecogniser::pushOut(char c){
         interpreter->pullRequest();
 }
 
+/*
+ * Processes a incoming frame.
+ *
+ * @param frame the frame it should process
+ */
 void MicroBitMorseRecogniser::processFrame(MicroBitAudioProcessor::AudioFrameAnalysis* frame) {
   
     bool detected_freq = false;
@@ -102,7 +181,7 @@ void MicroBitMorseRecogniser::processFrame(MicroBitAudioProcessor::AudioFrameAna
 
     uint16_t threshold = timeUnit * MORSE_FRAME_TRUE_RATE_THRESHOLD;
 
-    if(!syncronised && recogniseLastMorseFrame(buffer_len, threshold) && 
+    if(!synchronised && recogniseLastMorseFrame(buffer_len, threshold) && 
                         buffer[buffer_len - timeUnit]) {
         
         zeros += (int)((0.5 + buffer_len) / timeUnit) - 1; 
@@ -113,12 +192,12 @@ void MicroBitMorseRecogniser::processFrame(MicroBitAudioProcessor::AudioFrameAna
         buffer_len = 0;
         zeros = 0;
         ones = 1;
-        syncronised = true;
+        synchronised = true;
 
         return;
     } 
 
-    if(syncronised && !recogniseLastMorseFrame(buffer_len, timeUnit - threshold) && 
+    if(synchronised && !recogniseLastMorseFrame(buffer_len, timeUnit - threshold) && 
                         !buffer[buffer_len - timeUnit]) {
         ones += (int)((0.5 + buffer_len) / timeUnit) - 1;   
 
@@ -128,7 +207,7 @@ void MicroBitMorseRecogniser::processFrame(MicroBitAudioProcessor::AudioFrameAna
             pushOut('.');
                          
         buffer_len = 0;
-        syncronised = false;
+        synchronised = false;
         zeros = 1;
         ones = 0;
         return;
@@ -139,7 +218,7 @@ void MicroBitMorseRecogniser::processFrame(MicroBitAudioProcessor::AudioFrameAna
         if(zeros == 9) 
             pushOut('#');
         
-        if (syncronised)
+        if (synchronised)
             ones ++;
         else 
             zeros ++;

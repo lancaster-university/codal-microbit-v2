@@ -43,7 +43,7 @@ class MicroBitSoundRecogniser : public DataSink
 {   
     private:
 
-        MicroBitAudioProcessor& audio_proceesor;    // the stream of data from the audio processor to analyse 
+        MicroBitAudioProcessor& audio_proceesor;    // the audio processor it takes data from
         
         bool analysing;                             // whether it should analyse the data or be idle
 
@@ -206,7 +206,7 @@ class MicroBitSoundRecogniser : public DataSink
         virtual int pullRequest();
         
         /*
-         * Starts analysing the data that comes in. Also sets the callback. 
+         * Starts analysing the data that comes in.
          */
         void startAnalisying();
 
