@@ -269,6 +269,22 @@ class MicroBitPowerManager : public CodalComponent
         void clearWakeUpSources();
 
         /**
+         * Specify whether next idle will deep sleep
+         */
+        void setDeepSleepOnNextIdle( bool yes);
+
+        /**
+         * Determine if next idle will deep sleep
+         */
+        bool getDeepSleepOnNextIdle();
+
+        /**
+         * Perfom idle wait or deep sleep
+         * @return DEVICE_OK if deep sleep occurred; DEVICE_INVALID_STATE for a waking idle wait.
+         */
+        int idle();
+
+        /**
          * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
          * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
          * operation.
@@ -278,8 +294,10 @@ class MicroBitPowerManager : public CodalComponent
          *
          * Wake up is triggered at the next Timer event created with the CODAL_TIMER_EVENT_FLAGS_WAKEUP flag
          * or by externally configured sources, for example, pin->awakeOnActive(true).
+         *
+         * @return DEVICE_OK if deep sleep occurred, or DEVICE_INVALID_STATE if no usable wake up source is available
          */
-        void deepSleep();
+        int deepSleep();
 
         /**
          * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
@@ -316,6 +334,8 @@ class MicroBitPowerManager : public CodalComponent
         ~MicroBitPowerManager();
 
         private:
+        
+        bool deepSleepOnNextIdle;                // next idle will deep sleep
 
         /**
          * Prepares the micro:bit to enter or leave deep sleep mode.
@@ -347,7 +367,9 @@ class MicroBitPowerManager : public CodalComponent
          * @param wakeUpTime    Time to trigger wake up. Ignored if wakeOnTime == false;
          * @param wakeUpSources Set to true to use wake up sources externally configured by, for example, pin->awakeOnActive(true)
          * @param wakeUpPin     Pin to trigger wake up. Ignored if wakeUpSources == true.
+         *
+         * @return DEVICE_OK if deep sleep occurred, or DEVICE_INVALID_STATE if no usable wake up source is available
          */
-        void deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime, bool wakeUpSources, NRF52Pin *wakeUpPin);
+        int deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime, bool wakeUpSources, NRF52Pin *wakeUpPin);
 };
 #endif

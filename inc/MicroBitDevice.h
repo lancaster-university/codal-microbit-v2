@@ -43,6 +43,11 @@ namespace codal
          */
         MicroBitDevice();
 
+       /**
+        * Perfom scheduler idle
+        */
+       virtual void idle();
+
         /**
          * Seed the pseudo random number generator using the hardware random number generator.
          *
