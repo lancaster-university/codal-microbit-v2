@@ -1,6 +1,6 @@
 
-#ifndef MICROBIT_MORSE_CODE_RECOGNISER_H
-#define MICROBIT_MORSE_CODE_RECOGNISER_H
+#ifndef MICROBIT_MORSE_RECOGNISER_H
+#define MICROBIT_MORSE_RECOGNISER_H
 
 #include "DataStream.h"
 #include "MicroBitAudioProcessor.h"
@@ -11,7 +11,7 @@
 #define MAX_TIME_UNIT 500
 #define MAX_MESSAGE 500
 
-class MicroBitMorseCodeRecogniser : public DataSink, public DataSource
+class MicroBitMorseRecogniser : public DataSink, public DataSource
 {   
         MicroBitAudioProcessor& audio_proceesor;
         DataSink*               interpreter;
@@ -46,12 +46,12 @@ class MicroBitMorseCodeRecogniser : public DataSink, public DataSource
          *
          * Initializes the recogniser.
          */
-        MicroBitMorseCodeRecogniser(MicroBitAudioProcessor& processor, uint16_t freq, uint16_t timeUnit) ;
+        MicroBitMorseRecogniser(MicroBitAudioProcessor& processor, uint16_t freq, uint16_t timeUnit) ;
         
         /*
          * Destructor.
          */
-        ~MicroBitMorseCodeRecogniser();
+        ~MicroBitMorseRecogniser();
 
         /*
          * Callback function for the upstream component to signal that their data is available.

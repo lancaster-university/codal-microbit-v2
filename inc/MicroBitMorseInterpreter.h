@@ -3,7 +3,7 @@
 
 #include "MicroBit.h"
 #include "DataStream.h"
-#include "MicroBitMorseCodeRecogniser.h"
+#include "MicroBitMorseRecogniser.h"
 #include "MorseEncoder.h"
 /*
  * This class takes morse data from a MicroBitMorseCodeRecogniser and turns it into characters.
@@ -12,7 +12,7 @@ class MicroBitMorseInterpreter: public DataSink {
     
     private:
 
-    MicroBitMorseCodeRecogniser& recogniser;
+    MicroBitMorseRecogniser& recogniser;
     MicroBit& uBit;
     MorseEncoder encoder;
     bool interpreting;
@@ -26,8 +26,8 @@ class MicroBitMorseInterpreter: public DataSink {
      * 
      * Initializes the interpreter.
      */
-    MicroBitMorseInterpreter(MicroBitMorseCodeRecogniser& rec, MicroBit& bit);
-    
+    MicroBitMorseInterpreter(MicroBitMorseRecogniser& rec, MicroBit& bit);
+
     /*
      * Callback for when the data from the source is ready.
      */
