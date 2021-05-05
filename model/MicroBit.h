@@ -87,7 +87,7 @@ DEALINGS IN THE SOFTWARE.
 
 //#include "MicroBitLightSensor.h"
 
-#define MIC_SAMPLE_DELTA 45
+#define MIC_SAMPLE_DELTA 91
 
 // Status flag values
 #define DEVICE_INITIALIZED                    0x01
