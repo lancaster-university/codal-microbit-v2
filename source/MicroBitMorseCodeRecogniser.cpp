@@ -1,8 +1,9 @@
 #include "MicroBitMorseCodeRecogniser.h"
 
+//extern MicroBit uBit;
 
-MicroBitMorseCodeRecogniser::MicroBitMorseCodeRecogniser(MicroBitAudioProcessor& audio_processor, MicroBit& uBit, uint16_t freq, uint16_t _timeUnit) 
-                                : audio_proceesor(audio_processor), uBit(uBit), frequency(freq) {
+MicroBitMorseCodeRecogniser::MicroBitMorseCodeRecogniser(MicroBitAudioProcessor& audio_processor, uint16_t freq, uint16_t _timeUnit) 
+                                : audio_proceesor(audio_processor), frequency(freq) {
     analysing = false;
     audio_proceesor.connect(this);
     buffer_len = 0;
@@ -17,9 +18,9 @@ MicroBitMorseCodeRecogniser::MicroBitMorseCodeRecogniser(MicroBitAudioProcessor&
     syncronised = false;
     pauses = 0;
 
-    uBit.serial.send("time unit: ") ;
-    uBit.serial.send(ManagedString((int) timeUnit)) ;
-    uBit.serial.send("\n") ;
+    // uBit.serial.send("time unit: ") ;
+    // uBit.serial.send(ManagedString((int) timeUnit)) ;
+    // uBit.serial.send("\n") ;
 }
 
 MicroBitMorseCodeRecogniser::~MicroBitMorseCodeRecogniser(){
@@ -29,12 +30,12 @@ MicroBitAudioProcessor* MicroBitMorseCodeRecogniser::getAudioProcessor(){
     return &audio_proceesor;
 }
 
-void MicroBitMorseCodeRecogniser::startAnalisying(){
+void MicroBitMorseCodeRecogniser::startAnalysing(){
     analysing = true;
     audio_proceesor.startRecording();
 }
 
-void MicroBitMorseCodeRecogniser::stopAnalisying(){
+void MicroBitMorseCodeRecogniser::stopAnalysing(){
     analysing = false;
     buffer_len = 0;
     audio_proceesor.stopRecording();
@@ -164,7 +165,6 @@ void MicroBitMorseCodeRecogniser::processFrame(MicroBitAudioProcessor::AudioFram
 
     // end of word 
     if(normalised_buffer_len == 6) {
-        //callback(ManagedString(";"));
         syncronised = false;
         normalised_buffer_len = 0;
         return;

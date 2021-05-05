@@ -15,7 +15,6 @@ class MicroBitMorseCodeRecogniser : public DataSink, public DataSource
 {   
         MicroBitAudioProcessor& audio_proceesor;
         DataSink*               interpreter;
-        MicroBit&               uBit;
 
         uint16_t timeUnit;
         uint16_t frequency;
@@ -35,22 +34,53 @@ class MicroBitMorseCodeRecogniser : public DataSink, public DataSource
 
         bool recogniseLastMorseFrame(uint16_t to, uint16_t threshold );
 
+        /* 
+         * Add character to the end of the output buffer.
+         * If it gets the 'end of transmission' character, it signals to the interpreter that it is done processing data.
+         */
         void pushOut(char c);
 
     public:
-        MicroBitMorseCodeRecogniser(MicroBitAudioProcessor& processor, MicroBit& uBit, uint16_t freq, uint16_t timeUnit) ;
+        /*
+         * Constructor.
+         *
+         * Initializes the recogniser.
+         */
+        MicroBitMorseCodeRecogniser(MicroBitAudioProcessor& processor, uint16_t freq, uint16_t timeUnit) ;
         
+        /*
+         * Destructor.
+         */
         ~MicroBitMorseCodeRecogniser();
 
+        /*
+         * Callback function for the upstream component to signal that their data is available.
+         */
         virtual int pullRequest();
-        
+
+        /*
+         * Returns the MicroBitAudioProcessor associated with this.
+         */
         MicroBitAudioProcessor* getAudioProcessor();
 
-        void setCallback    ();
-        void startAnalisying();
-        void stopAnalisying();
+        /*
+         * Starts analysing.
+         */
+        void startAnalysing();
+        
+        /*
+         * Stops analysing.
+         */
+        void stopAnalysing();
 
+        /*
+         * Provides the next available data to the downstream caller.
+         */
         virtual ManagedBuffer pull();
+        
+        /*
+         * Allow a downstream component to connect to this.
+         */
     	virtual void connect(DataSink *sink);
 };
 

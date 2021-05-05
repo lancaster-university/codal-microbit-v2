@@ -29,10 +29,10 @@ void MicroBitMorseInterpreter::setCallback(void (*_callback)(ManagedString)){
 void MicroBitMorseInterpreter::startInterpreting(void (*_callback)(ManagedString)){
     setCallback(_callback);
     interpreting = true;
-    recogniser.startAnalisying();
+    recogniser.startAnalysing();
 }
 
 void MicroBitMorseInterpreter::stopInterpreting(){
     interpreting = false;
-    recogniser.stopAnalisying();
+    recogniser.stopAnalysing();
 }

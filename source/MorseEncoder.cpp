@@ -1,16 +1,7 @@
 #include "MicroBit.h"
 #include "MorseEncoder.h"
 
-/*
-dot '.'
-dash '-'
-letter gap ' '
-word gap ';'
-end of transmission '#'
-*/
-
-extern MicroBit uBit;
-
+// Initialize map from characters to encodings
 std::map<char, ManagedString> MorseEncoder::toStr = {
     {'A', ".-"}, {'B', "-..."}, {'C', "-.-."}, {'D', "-.."}, {'E', "."}, {'F', "..-."}, {'G', "--."}, {'H', "...."}, {'I', ".."}, {'J', ".---"},
     {'K', "-.-"}, {'L', ".-.."}, {'M', "--"}, {'N', "-."}, {'O', "---"}, {'P', ".--."}, {'Q', "--.-"}, {'R', ".-."}, {'S', "..."}, {'T', "-"},
@@ -18,7 +9,7 @@ std::map<char, ManagedString> MorseEncoder::toStr = {
     {'4', "....-"}, {'5', "....."}, {'6', "-...."}, {'7', "--..."}, {'8', "---.."}, {'9', "----."}, {'0', "-----"}, {'&', ".-..."}};
 
 MorseEncoder::MorseEncoder() {
-
+    // Generate toChar from toStr    
     for(std::map<char, ManagedString>::iterator it = toStr.begin(); it != toStr.end(); ++it) {
         toChar[it->second] = it->first;
     }
@@ -63,11 +54,9 @@ void MorseEncoder::decode(char* in, char* out){
     int k = 0; // index over s
     char s[10]; // current character encoding
     char c;
-    //uBit.serial.send('\n');
 
     while (in[i]!=0){
         c = in[i];
-        //uBit.serial.send(c);
         if (c == '.' || c == '-'){
             s[k] = c; k++;
         }
@@ -76,12 +65,10 @@ void MorseEncoder::decode(char* in, char* out){
                 s[k] = 0;
                 k = 0;
                 out[j] = toChar[s]; 
-                //uBit.serial.send("out");           
                 j++;
             }
             if (c == ';'){
                 out[j] = ' ';
-                //uBit.serial.send("out");
                 j++;
             }
         }
