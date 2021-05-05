@@ -1,6 +1,5 @@
 #include "MicroBitMorseRecogniser.h"
 
-extern MicroBit uBit;
 
 MicroBitMorseRecogniser::MicroBitMorseRecogniser(MicroBitAudioProcessor& audio_processor, uint16_t freq, uint16_t _timeUnit) 
                                 : audio_proceesor(audio_processor), frequency(freq) {
