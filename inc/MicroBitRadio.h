@@ -63,6 +63,7 @@ namespace codal
 
 // Status Flags
 #define MICROBIT_RADIO_STATUS_INITIALISED       0x0001
+#define MICROBIT_RADIO_STATUS_DEEPSLEEP         0x0002
 
 // Default configuration values
 #define MICROBIT_RADIO_BASE_ADDRESS             0x75626974
@@ -231,6 +232,11 @@ namespace codal
          * @return MICROBIT_OK on success, or MICROBIT_NOT_SUPPORTED if the BLE stack is running.
          */
         int send(FrameBuffer *buffer);
+
+        /**
+          * Puts the component in (or out of) sleep (low power) mode.
+          */
+        virtual int setSleep(bool doSleep) override;
     };
 }
 
