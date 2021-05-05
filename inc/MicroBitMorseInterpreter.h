@@ -3,6 +3,11 @@
 #include "MicroBitMorseRecogniser.h"
 #include "MorseEncoder.h"
 
+#define DEVICE_MORSE_INTERPRETER_EVT_NEW_MESSAGE     1
+
+// It might be better for this to be in CodalComponent.
+#define DEVICE_ID_MORSE_INTERPRETER    38
+
 class MicroBitMorseInterpreter: public DataSink {
     
     private:
@@ -12,13 +17,12 @@ class MicroBitMorseInterpreter: public DataSink {
     MorseEncoder encoder;
     bool interpreting;
 
-    void (*callback)(ManagedString) = NULL;
-
-
     public:
+    ManagedString lastMessage;
+
     MicroBitMorseInterpreter(MicroBitMorseRecogniser& rec, MicroBit& bit);
     virtual int pullRequest();
-    void setCallback(void (*_callback)(ManagedString));
-    void startInterpreting(void (*_callback)(ManagedString));
+    
+    void startInterpreting();
     void stopInterpreting();
 };
