@@ -73,7 +73,7 @@ MicroBitMorseRecogniser::~MicroBitMorseRecogniser(){
 /*
  * Starts analysing the data that comes in.
  */
-void MicroBitMorseRecogniser::startAnalisying(){
+void MicroBitMorseRecogniser::startAnalysing(){
     analysing = true;
     audio_proceesor.startRecording();
 }
@@ -82,7 +82,7 @@ void MicroBitMorseRecogniser::startAnalisying(){
  * Stops analysing the data and also stops the audio processor
  * from receiving.
  */
-void MicroBitMorseRecogniser::stopAnalisying(){
+void MicroBitMorseRecogniser::stopAnalysing(){
     analysing = false;
     buffer_len = 0;
     audio_proceesor.stopRecording();
