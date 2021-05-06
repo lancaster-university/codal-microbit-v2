@@ -208,14 +208,14 @@ class MicroBitSoundRecogniser : public DataSink
         /*
          * Starts analysing the data that comes in.
          */
-        void startAnalisying();
+        void startAnalysing();
 
         
         /*
          * Stops analysing the data and also stops the audio processor
          * from receiving.
          */
-        void stopAnalisying();
+        void stopAnalysing();
 };
 
 #endif

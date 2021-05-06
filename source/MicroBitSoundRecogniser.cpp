@@ -74,7 +74,7 @@ int MicroBitSoundRecogniser::pullRequest(){
  * @TODO change it to send a message on the message bus 
  *       rather than having a callback
  */
-void MicroBitSoundRecogniser::startAnalisying(){
+void MicroBitSoundRecogniser::startAnalysing(){
     analysing = true;
     audio_proceesor.startRecording();
 }
@@ -83,7 +83,7 @@ void MicroBitSoundRecogniser::startAnalisying(){
  * Stops analysing the data and also stops the audio processor
  * from receiving.
  */
-void MicroBitSoundRecogniser::stopAnalisying(){
+void MicroBitSoundRecogniser::stopAnalysing(){
     analysing = false;
     buffer_len = 0;
     audio_proceesor.stopRecording();
