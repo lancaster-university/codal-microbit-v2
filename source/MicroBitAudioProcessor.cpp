@@ -123,10 +123,8 @@ ManagedBuffer MicroBitAudioProcessor::pull()
  * It transforms the date from time domain to frequency domain
  * using the CMSIS fft. 
  * 
- * If the mean of the magnitudes of frequencies is lower than
- * ANALYSIS_MEAN_THRESHOLD or the standard deviation (std) is
- * lower than ANALYSIS_STD_THRESHOLD then the frame is considered  
- * silence - no fundamental frequency. 
+ * If the standard deviation (std) is lower than std_threshold then t
+ * he frame is considered silent - no fundamental frequency. 
  * 
  * It then filters out the frequencies that have the magnitude lower 
  * than the mean + ANALYSIS_STD_MULT_THRESHOLD * std. This ensures 
@@ -171,7 +169,7 @@ int MicroBitAudioProcessor::pullRequest()
             uint16_t to     = min(frequencyToIndex(RECOGNITION_END_FREQ), audio_samples_number / 2);
         
             arm_rfft_fast_f32(&fft_instance, buf , fft_output, 0);
-            arm_cmplx_mag_f32(&fft_output[0], mag,  to);
+            arm_cmplx_mag_f32(&fft_output[0], mag, to);
 
             float32_t mean = 0;
             float32_t std = 0;

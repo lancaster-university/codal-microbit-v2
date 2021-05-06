@@ -17,22 +17,19 @@ int MicroBitMorseInterpreter::pullRequest() {
     char* out = new char[data.length()];
     encoder.decode(in, out);
 
-    callback(ManagedString(out));
-    
+    lastMessage = out;
+
+    Event evnt(DEVICE_ID_MORSE_INTERPRETER, DEVICE_MORSE_INTERPRETER_EVT_NEW_MESSAGE);
+
     return DEVICE_OK;
 }
 
-void MicroBitMorseInterpreter::setCallback(void (*_callback)(ManagedString)){
-    callback = _callback;
-}
-
-void MicroBitMorseInterpreter::startInterpreting(void (*_callback)(ManagedString)){
-    setCallback(_callback);
+void MicroBitMorseInterpreter::startInterpreting() {
     interpreting = true;
     recogniser.startAnalysing();
 }
 
-void MicroBitMorseInterpreter::stopInterpreting(){
+void MicroBitMorseInterpreter::stopInterpreting() {
     interpreting = false;
     recogniser.stopAnalysing();
 }

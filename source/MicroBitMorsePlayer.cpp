@@ -16,7 +16,8 @@ MicroBitMorsePlayer::MicroBitMorsePlayer(MicroBit& bit, int freq, int dur)
     createFrames();
 }
 
-void MicroBitMorsePlayer::play(char* in){
+
+void MicroBitMorsePlayer::play(const char* in){
     int i = 0;
     while (in[i]!=0) i++;
     char* out = new char[i*7];
@@ -28,27 +29,31 @@ void MicroBitMorsePlayer::play(char* in){
     while (out[i]!=0){
         switch(out[i]){
         case '#':
-            uBit.sleep(duration * 10);
+            uBit.audio.soundExpressions.play(pause10Frame);
             break;
         case ' ':
-            uBit.sleep(duration * 3);
+            uBit.audio.soundExpressions.play(pause3Frame);
             break;
         case ';':
-            uBit.sleep(duration * 7);
+            uBit.audio.soundExpressions.play(pause7Frame);
             break;
         case '.':
             uBit.audio.soundExpressions.play(dotFrame);
             // add space between dots and dashes
-            if (out[i+1] == '.' || out[i+1] == '-') uBit.sleep(duration);
+            if (out[i+1] == '.' || out[i+1] == '-') 
+                uBit.audio.soundExpressions.play(pause1Frame);
             break;
         case '-':
             uBit.audio.soundExpressions.play(dashFrame);
             // add space between dots and dashes
-            if (out[i+1] == '.' || out[i+1] == '-') uBit.sleep(duration);
+            if (out[i+1] == '.' || out[i+1] == '-') 
+                uBit.audio.soundExpressions.play(pause1Frame);
             break;
         }
         i++;
     }
+
+    delete out;
 }
 
 /* 
@@ -68,14 +73,16 @@ ManagedString fourString(int n){
 
 void MicroBitMorsePlayer::createFrames(){
     ManagedString freqString = fourString(frequency);
-    ManagedString dotDurationString = fourString(duration);
-    ManagedString dashDurationString = fourString(duration*3);
+    ManagedString oneFrameString = fourString(duration);
+    ManagedString threeFrameString = fourString(duration * 3);
+    ManagedString sevenFrameString = fourString(duration * 7);
+    ManagedString tenFrameString = fourString(duration * 10);
     ManagedString randomString = fourString(randomness);
 
 
     dotFrame = ManagedString("01023")+
                 freqString+
-                dotDurationString+
+                oneFrameString+
                 ManagedString("02440")+
                 freqString+
                 ManagedString("0888102301280002000024")+
@@ -84,10 +91,28 @@ void MicroBitMorsePlayer::createFrames(){
 
     dashFrame = ManagedString("01023")+
                 freqString+
-                dashDurationString+
+                threeFrameString+
                 ManagedString("02440")+
                 freqString+
                 ManagedString("0888102301280002000024")+
                 randomString+
                 ManagedString("000000000000000000000000");
+
+    
+    pause1Frame = ManagedString("010230000")+
+                  oneFrameString+
+                  ManagedString("02440000008881023012800020000240000000000000000000000000000");
+
+    pause3Frame = ManagedString("010230000")+
+                  threeFrameString+
+                  ManagedString("02440000008881023012800020000240000000000000000000000000000");
+
+    pause7Frame = ManagedString("010230000")+
+                  sevenFrameString+
+                  ManagedString("02440000008881023012800020000240000000000000000000000000000");
+
+    pause10Frame = ManagedString("010230000")+
+                  tenFrameString+
+                  ManagedString("02440000008881023012800020000240000000000000000000000000000");
+
 }

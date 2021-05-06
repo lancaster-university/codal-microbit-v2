@@ -1,7 +1,18 @@
 #include "MicroBit.h"
 #include "MorseEncoder.h"
 
+<<<<<<< HEAD
 // Initialize map from characters to encodings
+=======
+/*
+dot '.'
+dash '-'
+letter gap ' '
+word gap ';'
+end of transmission '#'
+*/
+
+>>>>>>> sound_recognition
 std::map<char, ManagedString> MorseEncoder::toStr = {
     {'A', ".-"}, {'B', "-..."}, {'C', "-.-."}, {'D', "-.."}, {'E', "."}, {'F', "..-."}, {'G', "--."}, {'H', "...."}, {'I', ".."}, {'J', ".---"},
     {'K', "-.-"}, {'L', ".-.."}, {'M', "--"}, {'N', "-."}, {'O', "---"}, {'P', ".--."}, {'Q', "--.-"}, {'R', ".-."}, {'S', "..."}, {'T', "-"},
@@ -15,7 +26,7 @@ MorseEncoder::MorseEncoder() {
     }
 }
 
-void MorseEncoder::encode(char* in, char* out) {
+void MorseEncoder::encode(const char* in, char* out) {
     int i = 0; // index over in
     int j = 0; // index over out
     char c;
@@ -48,7 +59,7 @@ void MorseEncoder::encode(char* in, char* out) {
     out[j] = 0;
 }
 
-void MorseEncoder::decode(char* in, char* out){ 
+void MorseEncoder::decode(const char* in, char* out){ 
     int i = 0; // index over in
     int j = 0; // index over out   
     int k = 0; // index over s
@@ -64,7 +75,11 @@ void MorseEncoder::decode(char* in, char* out){
             if (k!=0){
                 s[k] = 0;
                 k = 0;
+<<<<<<< HEAD
                 out[j] = toChar[s]; 
+=======
+                out[j] = toChar[s];         
+>>>>>>> sound_recognition
                 j++;
             }
             if (c == ';'){

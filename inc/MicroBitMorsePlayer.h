@@ -23,6 +23,10 @@ class MicroBitMorsePlayer {
 
     ManagedString dotFrame;
     ManagedString dashFrame;
+    ManagedString pause1Frame;
+    ManagedString pause3Frame;
+    ManagedString pause7Frame;
+    ManagedString pause10Frame;
 
     /*
      * Generate dotFrame and dashFrame from frequency, duration and randomness.
@@ -41,7 +45,7 @@ class MicroBitMorsePlayer {
     /*
      * Plays a char array in morse.
      */
-    void play(char* in);
+    void play(const char* in);
 };
 
 #endif

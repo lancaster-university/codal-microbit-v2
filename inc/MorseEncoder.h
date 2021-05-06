@@ -49,13 +49,13 @@ class MorseEncoder {
      * Writes encoding of in into out.
      * Out should be at least 6 times larger than in. 
      */
-    void encode(char* in, char* out);
+    void encode(const char* in, char* out);
     
     /*
      * Writes decoding of in into out.
      * Out should be the same size as in.
      */
-    void decode(char* in, char* out);
+    void decode(const char* in, char* out);
 };
 
 #endif

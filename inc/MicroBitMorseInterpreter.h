@@ -5,6 +5,12 @@
 #include "DataStream.h"
 #include "MicroBitMorseRecogniser.h"
 #include "MorseEncoder.h"
+
+#define DEVICE_MORSE_INTERPRETER_EVT_NEW_MESSAGE     1
+
+// It might be better for this to be in CodalComponent.
+#define DEVICE_ID_MORSE_INTERPRETER    38
+
 /*
  * This class takes morse data from a MicroBitMorseCodeRecogniser and turns it into characters.
  */
@@ -17,10 +23,10 @@ class MicroBitMorseInterpreter: public DataSink {
     MorseEncoder encoder;
     bool interpreting;
 
-    void (*callback)(ManagedString) = NULL;
-
-
     public:
+    
+    ManagedString lastMessage;
+    
     /* 
      * Constructor.
      * 
@@ -32,20 +38,8 @@ class MicroBitMorseInterpreter: public DataSink {
      * Callback for when the data from the source is ready.
      */
     virtual int pullRequest();
-
-    /*
-     * Set callback function that is called when the interpreter is done interpreting a string.
-     */
-    void setCallback(void (*_callback)(ManagedString));
     
-    /*
-     * Starts listening and interpreting.
-     */
-    void startInterpreting(void (*_callback)(ManagedString));
-    
-    /*
-     * Stops listening and interpreting.
-     */
+    void startInterpreting();
     void stopInterpreting();
 };
 
