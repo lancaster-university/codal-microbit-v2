@@ -369,7 +369,10 @@ void MicroBitPowerManager::clearWakeUpSources()
   */
 void MicroBitPowerManager::setDeepSleepOnNextIdle( bool yes)
 {
-  deepSleepOnNextIdle = yes;
+    if (yes)
+        status |= MICROBIT_POWER_DEEPSLEEP_ON_IDLE;
+    else
+        status &= ~MICROBIT_POWER_DEEPSLEEP_ON_IDLE;
 }
 
 /**
@@ -377,7 +380,7 @@ void MicroBitPowerManager::setDeepSleepOnNextIdle( bool yes)
   */
 bool MicroBitPowerManager::getDeepSleepOnNextIdle()
 {
-  return deepSleepOnNextIdle;
+  return (status & MICROBIT_POWER_DEEPSLEEP_ON_IDLE) != 0;
 }
 
 /**
@@ -386,10 +389,10 @@ bool MicroBitPowerManager::getDeepSleepOnNextIdle()
  */
 int MicroBitPowerManager::idle()
 {
-    if ( deepSleepOnNextIdle)
+    if ( getDeepSleepOnNextIdle())
     {
         DMESG( "idle() TRY deep sleep %u ms", (unsigned int) system_timer_current_time());
-        deepSleepOnNextIdle = false;
+        setDeepSleepOnNextIdle(false);
         if ( deepSleep() == DEVICE_OK)
         {
             DMESG( "idle() EXIT deep sleep %u ms", (unsigned int) system_timer_current_time());

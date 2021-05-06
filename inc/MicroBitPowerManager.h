@@ -136,6 +136,7 @@ typedef struct {
 //
 #define MICROBIT_USB_INTERFACE_AWAITING_RESPONSE  0x01
 #define MICROBIT_USB_INTERFACE_VERSION_LOADED     0x02
+#define MICROBIT_POWER_DEEPSLEEP_ON_IDLE          0x04
 
 //
 // Minimum deep sleep time (milliseconds)
@@ -334,9 +335,6 @@ class MicroBitPowerManager : public CodalComponent
         ~MicroBitPowerManager();
 
         private:
-        
-        bool deepSleepOnNextIdle;                // next idle will deep sleep
-
         /**
          * Prepares the micro:bit to enter or leave deep sleep mode.
          * This includes updating the status of the power LED, peripheral drivers and SENSE events on the combined IRQ line.

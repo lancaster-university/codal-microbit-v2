@@ -533,8 +533,6 @@ int MicroBitRadio::send(FrameBuffer *buffer)
 
     return DEVICE_OK;
 }
-#define MICROBIT_RADIO_STATUS_DEEPSLEEP         0x0002
-#define MICROBIT_RADIO_STATUS_DEEPSLEEP_INIT    0x0004
 
 /**
  * Puts the component in (or out of) sleep (low power) mode.
