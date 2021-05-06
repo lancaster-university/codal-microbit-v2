@@ -1,6 +1,6 @@
 
-#ifndef MICROBIT_MORSE_CODE_RECOGNISER_H
-#define MICROBIT_MORSE_CODE_RECOGNISER_H
+#ifndef MICROBIT_MORSE_RECOGNISER_H
+#define MICROBIT_MORSE_RECOGNISER_H
 
 #include "DataStream.h"
 #include "MicroBitAudioProcessor.h"
@@ -124,13 +124,13 @@ class MicroBitMorseRecogniser : public DataSink, public DataSource
         /*
          * Starts analysing the data that comes in.
          */
-        void startAnalisying();
+        void startAnalysing();
         
         /*
          * Stops analysing the data and also stops the audio processor
          * from receiving.
          */
-        void stopAnalisying();
+        void stopAnalysing();
 
         /*
          * Provides the next available data to the downstream caller.

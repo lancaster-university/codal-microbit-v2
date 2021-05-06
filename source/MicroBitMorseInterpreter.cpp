@@ -1,5 +1,20 @@
 #include "MicroBitMorseInterpreter.h"
 
+/*
+ * This class takes morse data from a MicroBitMorseCodeRecogniser and uses a MorseEncoder to decode it.
+ * It then calls an event signalling the fact that it is done processing some data.
+ * The last processed data can then be taken from lastMessage. 
+ */
+
+/* 
+ * Constructor.
+ * 
+ * Initializes the interpreter.
+ * 
+ * @param rec is the recogniser this will receive data from
+ * 
+ * @param bit is the micro:bit
+ */
 MicroBitMorseInterpreter::MicroBitMorseInterpreter(MicroBitMorseRecogniser& rec, MicroBit& bit)
                                 : recogniser(rec), uBit(bit){
     recogniser.connect(this);
@@ -7,6 +22,9 @@ MicroBitMorseInterpreter::MicroBitMorseInterpreter(MicroBitMorseRecogniser& rec,
     encoder = MorseEncoder();
 }
 
+/*
+ * Callback for when the data is ready.
+ */
 int MicroBitMorseInterpreter::pullRequest() {
 
     ManagedBuffer data = recogniser.pull();
@@ -24,12 +42,19 @@ int MicroBitMorseInterpreter::pullRequest() {
     return DEVICE_OK;
 }
 
+
+/*
+ * Starts interpreting and also starts the associated recogniser.
+ */
 void MicroBitMorseInterpreter::startInterpreting() {
     interpreting = true;
-    recogniser.startAnalisying();
+    recogniser.startAnalysing();
 }
 
+/*
+ * Stops interpreting and also stops the associated recogniser.
+ */
 void MicroBitMorseInterpreter::stopInterpreting() {
     interpreting = false;
-    recogniser.stopAnalisying();
+    recogniser.stopAnalysing();
 }
