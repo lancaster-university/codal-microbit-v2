@@ -1,18 +1,7 @@
 #include "MicroBit.h"
 #include "MorseEncoder.h"
 
-<<<<<<< HEAD
 // Initialize map from characters to encodings
-=======
-/*
-dot '.'
-dash '-'
-letter gap ' '
-word gap ';'
-end of transmission '#'
-*/
-
->>>>>>> sound_recognition
 std::map<char, ManagedString> MorseEncoder::toStr = {
     {'A', ".-"}, {'B', "-..."}, {'C', "-.-."}, {'D', "-.."}, {'E', "."}, {'F', "..-."}, {'G', "--."}, {'H', "...."}, {'I', ".."}, {'J', ".---"},
     {'K', "-.-"}, {'L', ".-.."}, {'M', "--"}, {'N', "-."}, {'O', "---"}, {'P', ".--."}, {'Q', "--.-"}, {'R', ".-."}, {'S', "..."}, {'T', "-"},
@@ -75,11 +64,7 @@ void MorseEncoder::decode(const char* in, char* out){
             if (k!=0){
                 s[k] = 0;
                 k = 0;
-<<<<<<< HEAD
-                out[j] = toChar[s]; 
-=======
                 out[j] = toChar[s];         
->>>>>>> sound_recognition
                 j++;
             }
             if (c == ';'){
