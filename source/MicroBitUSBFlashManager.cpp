@@ -26,7 +26,7 @@ DEALINGS IN THE SOFTWARE.
 
 #define KL27_FLASH_ERASE_WORKAROUND         1
 #define KL27_FLASH_BULK_WRITE_WORKAROUND    1
-#define KL27_FLASH_MAX_WRITE_LENGTH         128
+#define KL27_FLASH_MAX_WRITE_LENGTH         64
 
 static const KeyValueTableEntry usbFlashPropertyLengthData[] = {
     {MICROBIT_USB_FLASH_FILENAME_CMD, 12},
@@ -545,7 +545,6 @@ MicroBitUSBFlashManager::getFlashSize()
     return getFlashEnd();
 }
 
-
 /**
  * Performs a flash storage transaction with the interface chip.
  * @param packet The data to write to the interface chip as a request operation.
@@ -555,43 +554,66 @@ MicroBitUSBFlashManager::getFlashSize()
 ManagedBuffer MicroBitUSBFlashManager::transact(ManagedBuffer request, int responseLength)
 {
     int attempts = 0;
+    bool failed = false;
 
-    if (i2cBus.write(MICROBIT_USB_FLASH_I2C_ADDRESS, &request[0], request.length(), false) != DEVICE_OK)
-        return ManagedBuffer();
- 
-    power.awaitingPacket(true);
-    
-    target_wait_us(100);
-    
     while(attempts < MICROBIT_USB_FLASH_MAX_RETRIES)
-    {   
-
-        if(io.irq1.isActive())
+    {
+        if (i2cBus.write(MICROBIT_USB_FLASH_I2C_ADDRESS, &request[0], request.length(), false) != DEVICE_OK)
         {
-            ManagedBuffer b(responseLength);
-
-            int r = i2cBus.read(MICROBIT_USB_FLASH_I2C_ADDRESS, &b[0], responseLength, false);
-
-            if (r == MICROBIT_OK)
-            {               
-                power.awaitingPacket(false);
-                return b;
-            }
-        }
-        else
-        {
+            DMESG("TRASACT: [I2C WRITE ERROR]");
             fiber_sleep(1);
+            attempts++;
+            continue;
         }
-                  
-        attempts++;
+
+        power.awaitingPacket(true);
+
+        target_wait_us(200);
+
+        while(attempts < MICROBIT_USB_FLASH_MAX_RETRIES)
+        {
+            failed = false;
+            if(io.irq1.isActive())
+            {
+                ManagedBuffer b(responseLength);
+                int r = i2cBus.read(MICROBIT_USB_FLASH_I2C_ADDRESS, &b[0], responseLength, false);
+
+                if (r != MICROBIT_OK)
+                {
+                    DMESG("TRANSACT: [I2C READ ERROR: %d]",r);
+                    failed = true;
+                }
+
+                if (r == MICROBIT_OK && b[0] != request[0])
+                {
+                    if (b[0] == 0x00){
+                        //DMESG("TRANSACT: [DATA NOT READY: [REQUEST: %d]",request[0]);
+                    }else{
+                        DMESG("TRANSACT: UNEXPECTED RESPONSE [REQUEST: %x]", request[0]);
+                    }
+
+                    failed = true;
+                }
+
+                if (!failed)
+                {
+                    power.awaitingPacket(false);
+                    return b;
+                }
+            }
+
+            fiber_sleep(1);
+            attempts++;
+
+            if (failed)
+                break;
+        }
     }
 
-    DMESG("USB_FLASH: *** IRQ TIMEOUT ***");
+    DMESG("USB_FLASH: Transaction Failed.");
     power.awaitingPacket(false);
-
     return ManagedBuffer();
 }
-
 
 /**
  * Performs a flash storage transaction with the interface chip.
