@@ -179,9 +179,10 @@ void MicroBitMorseRecogniser::processFrame(MicroBitAudioProcessor::AudioFrameAna
 
     if(buffer_len < timeUnit) return;
 
-    uint16_t threshold = timeUnit * MORSE_FRAME_TRUE_RATE_THRESHOLD;
+    uint16_t true_threshold  = timeUnit * MORSE_FRAME_TRUE_RATE_THRESHOLD;
+    uint16_t false_threshold = timeUnit * MORSE_FRAME_FALSE_RATE_THRESHOLD;
 
-    if(!synchronised && recogniseLastMorseFrame(buffer_len, threshold) && 
+    if(!synchronised && recogniseLastMorseFrame(buffer_len, true_threshold) && 
                         buffer[buffer_len - timeUnit]) {
         
         zeros += (int)((0.5 + buffer_len) / timeUnit) - 1; 
@@ -197,7 +198,7 @@ void MicroBitMorseRecogniser::processFrame(MicroBitAudioProcessor::AudioFrameAna
         return;
     } 
 
-    if(synchronised && !recogniseLastMorseFrame(buffer_len, timeUnit - threshold) && 
+    if(synchronised && !recogniseLastMorseFrame(buffer_len, timeUnit - false_threshold) && 
                         !buffer[buffer_len - timeUnit]) {
         ones += (int)((0.5 + buffer_len) / timeUnit) - 1;   
 

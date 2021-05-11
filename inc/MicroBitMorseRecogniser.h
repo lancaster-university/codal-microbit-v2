@@ -36,6 +36,7 @@
 
 // Configuration vairables
 #define MORSE_FRAME_TRUE_RATE_THRESHOLD 0.8
+#define MORSE_FRAME_FALSE_RATE_THRESHOLD 0.6
 #define DETECTION_THRESHOLD 130
 #define MAX_TIME_UNIT       500
 #define MAX_MESSAGE         500
