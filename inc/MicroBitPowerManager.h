@@ -136,6 +136,14 @@ typedef struct {
 //
 #define MICROBIT_USB_INTERFACE_AWAITING_RESPONSE  0x01
 #define MICROBIT_USB_INTERFACE_VERSION_LOADED     0x02
+#define MICROBIT_POWER_DEEPSLEEP_WHEN_NEXT_IDLE   0x04
+
+//
+// Minimum deep sleep time (milliseconds)
+//
+#ifndef MICROBIT_POWER_MANAGER_MINIMUM_DEEP_SLEEP
+#define MICROBIT_POWER_MANAGER_MINIMUM_DEEP_SLEEP  100
+#endif
 
 /**
  * Class definition for MicroBitPowerManager.
@@ -256,6 +264,37 @@ class MicroBitPowerManager : public CodalComponent
         virtual void idleCallback() override;
 
         /**
+         * Clear configured wake-up sources
+         * Note: this doesn't clear Timer events
+         */
+        void clearWakeUpSources();
+
+        /**
+         * Specify whether next idle will deep sleep
+         */
+        void setDeepSleepWhenNextIdle( bool yes);
+
+        /**
+         * Determine if next idle will deep sleep
+         */
+        bool getDeepSleepWhenNextIdle();
+
+        /**
+         * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+         * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
+         * operation.
+         * 
+         * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+         * simply use uBit.sleep();
+         *
+         * Wake up is triggered at the next Timer event created with the CODAL_TIMER_EVENT_FLAGS_WAKEUP flag
+         * or by externally configured sources, for example, pin->awakeOnActive(true).
+         *
+         * @return DEVICE_OK if deep sleep occurred, or DEVICE_INVALID_STATE if no usable wake up source is available
+         */
+        int deepSleep();
+
+        /**
          * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
          * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
          * operation.
@@ -292,12 +331,30 @@ class MicroBitPowerManager : public CodalComponent
         private:
 
         /**
-         * Prepares the micro:bit to enter or leave deep sleep mode.
-         * This includes updating the status of the power LED, peripheral drivers and SENSE events on the combined IRQ line.
+         * Update the status of the power LED
          * 
          * @param doSleep Set to true to preapre for sleep, false to prepare to reawaken.
          */
-        void setSleepMode(bool doSleep);
+        void setPowerLED(bool doSleep);
+        
+        static volatile uint16_t timer_irq_channels;
+        static void deepSleepTimerIRQ(uint16_t chan);
 
+        /**
+         * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+         * program state is preserved. CPU will deepsleep until the next codal::Timer event or other wake up source event, before returning to normal
+         * operation.
+         * 
+         * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+         * simply use uBit.sleep();
+         *
+         * @param wakeOnTime    Set to true to wake up at time wakeUpTime
+         * @param wakeUpTime    Time to trigger wake up. Ignored if wakeOnTime == false;
+         * @param wakeUpSources Set to true to use wake up sources externally configured by, for example, pin->awakeOnActive(true)
+         * @param wakeUpPin     Pin to trigger wake up. Ignored if wakeUpSources == true.
+         *
+         * @return DEVICE_OK if deep sleep occurred, or DEVICE_INVALID_STATE if no usable wake up source is available
+         */
+        int deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime, bool wakeUpSources, NRF52Pin *wakeUpPin);
 };
 #endif
