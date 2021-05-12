@@ -428,9 +428,9 @@ namespace codal
             MicroBitIO(NRF52ADC &a, TouchSensor &s);
 
             /**
-             * Puts the component in (or out of) sleep (low power) mode.
+             * Perform functions related to deep sleep wake-up.
              */
-            virtual int setSleep(bool doSleep) override;
+            virtual int manageSleep( manageSleepReason reason, manageSleepData *data) override;
     };
 }
 
