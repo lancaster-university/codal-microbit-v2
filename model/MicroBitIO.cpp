@@ -128,10 +128,12 @@ MicroBitIO::MicroBitIO(NRF52ADC &a, TouchSensor &s) :
 int MicroBitIO::manageSleep( manageSleepReason reason, manageSleepData *data)
 {
     int name;
+    bool withWakeUps = reason == manageSleepBeginWithWakeUps || reason == manageSleepEndWithWakeUps;
 
     switch (reason)
     {
         case manageSleepBegin:
+        case manageSleepBeginWithWakeUps:
             // Record current state of pins, so we can return the configuration to the same state later.       
             for (int i = 0; i < pins; i++)
             {
@@ -163,7 +165,7 @@ int MicroBitIO::manageSleep( manageSleepReason reason, manageSleepData *data)
                     }
                     else
                     {
-                        if ( pin[i].getWakeOnActive())
+                        if ( withWakeUps && pin[i].getWakeOnActive())
                         {
                             // Ensure the requested pin into digital input mode. 
                             pin[i].getDigitalValue();
@@ -172,7 +174,7 @@ int MicroBitIO::manageSleep( manageSleepReason reason, manageSleepData *data)
                         }
                     }
 
-                    if ( !pin[i].getWakeOnActive())
+                    if ( !withWakeUps || !pin[i].getWakeOnActive())
                     {
                         pin[i].setDetect(GPIO_PIN_CNF_SENSE_Disabled);
                     }
@@ -181,6 +183,7 @@ int MicroBitIO::manageSleep( manageSleepReason reason, manageSleepData *data)
             break;
 
         case manageSleepEnd:
+        case manageSleepEndWithWakeUps:
             for (int i = 0; i < pins; i++)
             {
                 name = pin[i].name;

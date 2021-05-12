@@ -313,6 +313,28 @@ void MicroBit::onListenerRegisteredEvent(Event evt)
 */
 void MicroBit::schedulerIdle()
 {
+    if ( power.getDeepSleepWhenNextIdle())
+    {
+#if CONFIG_ENABLED( MICROBIT_BLE)
+        if ( bleManager.isConnected())
+        {
+            power.setDeepSleepWhenNextIdle(false);
+            target_wait_for_event();
+            return;
+        }
+#endif
+        if ( scheduler_waitqueue_empty() && !messageBus.hasBusyListener())
+        {
+          DMESG( "schedulerIdle() TRY deep sleep %u ms", (unsigned int) system_timer_current_time());
+          power.setDeepSleepWhenNextIdle(false);
+          if ( power.deepSleep() == DEVICE_OK)
+          {
+              DMESG( "schedulerIdle() EXIT deep sleep %u ms", (unsigned int) system_timer_current_time());
+              return;
+          }
+        }
+    }
+
     target_wait_for_event();
 }
 
