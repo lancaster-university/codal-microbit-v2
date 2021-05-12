@@ -104,6 +104,7 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_LOG_JOURNAL_ENTRY_SIZE     8
 
 #define MICROBIT_LOG_STATUS_INITIALIZED     0x0001
+#define MICROBIT_LOG_STATUS_ROW_STARTED     0x0002
 
 namespace codal
 {
@@ -112,6 +113,24 @@ namespace codal
         char        version[18];             // MICROBIT_LOG_VERSION
         char        logEnd[11];              // 32 bit HEX representation containing end address of available storage (e.g. "0x0000FFFF\n")
         char        dataStart[11];           // 32 bit HEX representation of logical start address of data file (e.g. "0x00000200\n")
+    };
+
+    class ColumnEntry
+    {
+        public:
+        ManagedString key;
+        ManagedString value;
+    };
+
+    
+    enum class TimeStampFormat
+    {
+        None = 0,
+        Milliseconds = 1,
+        Seconds = 1000,
+        Minutes = 60000,
+        Hours = 3600000,
+        Days = 86400000
     };
 
     struct JournalEntry
@@ -147,25 +166,31 @@ namespace codal
     class MicroBitLog 
     {
         private:
-        MicroBitUSBFlashManager         &flash;             // Non-volatile memory contorller to use for storage
-        FSCache                         cache;              // Write through RAM cache
-        uint32_t                        status;             // Status flags
-        FiberLock                       mutex;              // Mutual exclusion primitive to serialise APi calls
+        MicroBitUSBFlashManager         &flash;             // Non-volatile memory contorller to use for storage.
+        FSCache                         cache;              // Write through RAM cache.
+        uint32_t                        status;             // Status flags.
+        FiberLock                       mutex;              // Mutual exclusion primitive to serialise APi calls.
 
-        uint32_t                        startAddress;       // Logical address of the start of the Log file system
-        uint32_t                        journalPages;       // Number of physical pages allocated to journalling
-        uint32_t                        journalStart;       // logical address of the start of the journal section
-        uint32_t                        journalHead;        // Logical address of the last valid journal entry
-        uint32_t                        dataStart;          // Logical address of the start of the Data section
+        uint32_t                        startAddress;       // Logical address of the start of the Log file system.
+        uint32_t                        journalPages;       // Number of physical pages allocated to journalling.
+        uint32_t                        journalStart;       // logical address of the start of the journal section.
+        uint32_t                        journalHead;        // Logical address of the last valid journal entry.
+        uint32_t                        dataStart;          // Logical address of the start of the Data section.
         uint32_t                        dataEnd;            // Logical address of the end of valid data.
         uint32_t                        logEnd;             // Logical address of the end of the file system space.
+        uint32_t                        headingStart;       // Logical address of the start of the column header data. Zero if no data is present.
+        uint32_t                        headingLength;      // The length (in bytes) of the column header data.
+        uint32_t                        headingCount;       // Total number of headings in the current log.
+        bool                            headingsChanged;    // Flag to indicate if a row has been added that contains new columns.
 
-        struct MicroBitLogMetaData      metaData;           // Snapshot of the metadata held in flash storage
-        
+        struct ColumnEntry*             rowData;            // Collection of key/value pairs. Used to accumulate each data row.
+        struct MicroBitLogMetaData      metaData;           // Snapshot of the metadata held in flash storage.
+        TimeStampFormat                 timeStampFormat;    // The format of timestamp to log on each row.
+        ManagedString                   timeStampHeading;   // The title of the timestamp column, including units.
+
+        const static uint8_t            header[2048];       // static header to prepend to FS in physical storage.
+
         public:
-        const static uint8_t            header[2048];       // static header to prepend to FS in physical storage
-
-        
 
         /**
          * Constructor.
@@ -178,15 +203,19 @@ namespace codal
         ~MicroBitLog();
 
         /**
-         * Erase the current log in its entirity.
+         * Reset all data stored in persistent storage.
          */
-        void deleteLog();
+        void format();
 
         /**
-         * Remove all logged data, but maintain any previously defined key fields.
+         * Determines the format of the timestamp data to be added (if any).
+         * If requested, time stamps will be automatically added to each row of data
+         * as an integer value rounded down to the unit specified.
+         * 
+         * @param format The format of timestamp to use. 
          */
-        void clearLogData();
-
+        void setTimeStamp(TimeStampFormat format);
+         
         /**
          * Creates a new row in the log, ready to be populated by logData()
          * 
@@ -201,7 +230,7 @@ namespace codal
          * 
          * @return DEVICE_OK on success.
          */
-        int logData(char *key, char *value);
+        int logData(const char *key, const char *value);
 
         /**
          * Populates the current row with the given key/value pair.
@@ -238,9 +267,12 @@ namespace codal
         void init();
 
         /**
-         * Reset all data stored in persistent storage.
+         * Add the given heading to the list of headings in use. If the heading already exists,
+         * this method has no effect.
+         * 
+         * @param key the heading to add
          */
-        void format();
+        void addHeading(ManagedString key, ManagedString value = ManagedString::EmptyString);
 
     };
 }
