@@ -1569,4 +1569,87 @@ static void microbit_dfu_evt_handler(ble_dfu_buttonless_evt_type_t event)
 
 #endif // CONFIG_ENABLED(MICROBIT_BLE_DFU_SERVICE)
 
+
+#define MICROBIT_PANIC_NRF_BASE 70
+#define MICROBIT_PANIC_NRF_FAULT_ID_SD_ASSERT  (MICROBIT_PANIC_NRF_BASE)
+#define MICROBIT_PANIC_NRF_FAULT_ID_APP_MEMACC (MICROBIT_PANIC_NRF_BASE + 1)
+#define MICROBIT_PANIC_NRF_FAULT_ID_SDK_ASSERT (MICROBIT_PANIC_NRF_BASE + 2)
+#define MICROBIT_PANIC_NRF_FAULT_ID_SDK_ERROR  (MICROBIT_PANIC_NRF_BASE + 3)
+#define MICROBIT_PANIC_NRF_FAULT_UNKNOWN       (MICROBIT_PANIC_NRF_BASE + 4)
+
+void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
+{
+    NRF_LOG_FINAL_FLUSH();
+
+    switch (id)
+    {
+        case NRF_FAULT_ID_SD_ASSERT:
+            DMESGF("SOFTDEVICE: ASSERTION FAILED");
+            break;
+        case NRF_FAULT_ID_APP_MEMACC:
+            DMESGF("SOFTDEVICE: INVALID MEMORY ACCESS");
+            break;
+        case NRF_FAULT_ID_SDK_ASSERT:
+        {
+#ifdef DEBUG
+            assert_info_t * p_info = (assert_info_t *)info;
+            DMESGF("SDK: ASSERTION FAILED at %s:%u",
+                          p_info->p_file_name,
+                          p_info->line_num);
+#else
+            DMESGF("SDK: ASSERTION FAILED");
+#endif
+            break;
+        }
+        case NRF_FAULT_ID_SDK_ERROR:
+        {
+#ifdef DEBUG
+            error_info_t * p_info = (error_info_t *)info;
+            DMESGF("SDK: ERROR %u [%s] at %s:%u\r\nPC at: %x",
+                          p_info->err_code,
+                          nrf_strerror_get(p_info->err_code),
+                          p_info->p_file_name,
+                          p_info->line_num,
+                          pc);
+#else
+            DMESGF("SDK: ERROR");
+#endif
+            break;
+        }
+        default:
+        {
+#ifdef DEBUG
+            DMESGF("SDK: UNKNOWN FAULT at 0x%08X", pc);
+#else
+            DMESGF("SDK: UNKNOWN FAULT");
+#endif
+            break;
+        }
+    }
+
+    int panic;
+
+    switch (id)
+    {
+        case NRF_FAULT_ID_SD_ASSERT:
+            panic = MICROBIT_PANIC_NRF_FAULT_ID_SD_ASSERT;
+            break;
+        case NRF_FAULT_ID_APP_MEMACC:
+            panic = MICROBIT_PANIC_NRF_FAULT_ID_APP_MEMACC;
+            break;
+        case NRF_FAULT_ID_SDK_ASSERT:
+            panic = MICROBIT_PANIC_NRF_FAULT_ID_SDK_ASSERT;
+            break;
+        case NRF_FAULT_ID_SDK_ERROR:
+            panic = MICROBIT_PANIC_NRF_FAULT_ID_SDK_ERROR;
+            break;
+        default:
+            panic = MICROBIT_PANIC_NRF_FAULT_UNKNOWN;
+            break;
+    }
+
+    target_panic( panic);
+}
+
+
 #endif // CONFIG_ENABLED(DEVICE_BLE)
