@@ -307,6 +307,15 @@ void MicroBit::onListenerRegisteredEvent(Event evt)
     }
 }
 
+
+/**
+ * Perfom scheduler idle
+*/
+void MicroBit::schedulerIdle()
+{
+    target_wait_for_event();
+}
+
 /**
   * A periodic callback invoked by the fiber scheduler idle thread.
   * We use this for any low priority, backgrounf housekeeping.

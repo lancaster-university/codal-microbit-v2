@@ -49,6 +49,14 @@ MicroBitDevice::MicroBitDevice()
 namespace codal {
 
 /**
+  * Perfom scheduler idle
+  */
+void MicroBitDevice::schedulerIdle()
+{
+}
+
+
+/**
   * Seed the pseudo random number generator using the hardware random number generator.
   *
   * @code
@@ -457,6 +465,14 @@ extern "C"
 {
 __attribute__((weak)) int __wrap_atexit(void (*function)(void)) {
     return -1;
+}
+
+__attribute__((weak)) void target_scheduler_idle()
+{
+    if ( microbit_device_instance)
+        microbit_device_instance->schedulerIdle();
+    else
+        target_wait_for_event();
 }
 
 }

@@ -207,6 +207,11 @@ namespace codal
             void sleep(uint32_t milliseconds);
 
             /**
+             * Perfom scheduler idle
+             */
+            virtual void schedulerIdle() override;
+
+            /**
              * A periodic callback invoked by the fiber scheduler idle thread.
              * We use this for any low priority, background housekeeping.
              */
