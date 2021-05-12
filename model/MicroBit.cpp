@@ -66,7 +66,7 @@ MicroBit::MicroBit() :
     serial(io.usbTx, io.usbRx, NRF_UARTE0),
     _i2c(io.sda, io.scl),
     i2c(io.P20, io.P19),
-    power(_i2c, io),
+    power(_i2c, io, systemTimer),
     flash(_i2c, io, power),
     internalFlash(MICROBIT_STORAGE_PAGE, 1, MICROBIT_CODEPAGESIZE),
     storage(internalFlash, 0),

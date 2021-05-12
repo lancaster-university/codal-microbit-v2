@@ -150,7 +150,8 @@ class MicroBitPowerManager : public CodalComponent
         MicroBitUSBStatus       usbStatus;                          // Last known USB status
         MicroBitI2C             &i2cBus;                            // The I2C bus to use to communicate with USB interface chip
         MicroBitIO              &io;                                // Pins used by this device
-   
+        NRFLowLevelTimer        *sysTimer;                          // The system timer. 
+
         /**
          * Constructor.
          * Create a software abstraction of a power manager.
@@ -158,9 +159,12 @@ class MicroBitPowerManager : public CodalComponent
          * @param i2c the I2C bus to use to communicate with the micro:bit USB interface chip
          * @param ioPins the IO pins in use on this device.
          * @param id the unique EventModel id of this component. Defaults to: MICROBIT_ID_POWER_MANAGER
+         * @param systemTimer the system timer.
          *
          */
         MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, uint16_t id = MICROBIT_ID_POWER_MANAGER);
+
+        MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, NRFLowLevelTimer &systemTimer, uint16_t id = MICROBIT_ID_POWER_MANAGER);
 
         /**
          * Attempts to determine the power source currently in use on this micro:bit.
