@@ -70,25 +70,18 @@ MicroBitLog::MicroBitLog(MicroBitUSBFlashManager &flash, int journalPages) : fla
  */
 void MicroBitLog::init()
 {
-    int ret;
-
     // If we're already initialized, do nothing. 
     if (status & MICROBIT_LOG_STATUS_INITIALIZED)
         return;
 
     // Calculate where our metadata should start, and load the data.
     startAddress = sizeof(header) % flash.getPageSize() == 0 ? sizeof(header) : (1+(sizeof(header) / flash.getPageSize())) * flash.getPageSize();
-    DMESG("LOG_FS: LOADING METADATA [STARTADDRESS: %p]", startAddress);
 
     // Ensure data strings are terminated
-    ret = cache.read(startAddress, &metaData, sizeof(metaData));
+    cache.read(startAddress, &metaData, sizeof(metaData));
     metaData.dataStart[10] = 0;
     metaData.logEnd[10] = 0;
     metaData.version[17] = 0;
-    DMESG("   RETURNED : %d", ret);
-    DMESG("   VERSION  : %s", metaData.version);
-    DMESG("   DATASTART: %s", metaData.dataStart);
-    DMESG("   LOGEND   : %s", metaData.logEnd);
 
     // Determine if the FS looks valid.
     dataStart = strtoul(metaData.dataStart, NULL, 16);
@@ -99,7 +92,6 @@ void MicroBitLog::init()
     if(dataStart >= startAddress + 2*flash.getPageSize() && dataStart < logEnd && logEnd < flash.getFlashEnd() && memcmp(metaData.version, MICROBIT_LOG_VERSION, 17) == 0)
     {
         // We have a valid file system.
-        DMESG("LOG_FS: VALID FS FOUND");
         JournalEntry j;
         journalPages = (dataStart - startAddress) / flash.getPageSize() - 1;
         journalHead = journalStart;
@@ -186,21 +178,12 @@ void MicroBitLog::init()
             free(headers);
         }
 
-        DMESG("   JOURNAL_PAGES: %d", journalPages);
-        DMESG("   JOURNAL_HEAD : %p", journalHead);
-        DMESG("   DATA_END     : %p", dataEnd);
-        DMESG("   DATA_LENGTH  : %d", dataEnd - dataStart);
-        DMESG("   HEADING COUNT: %d", headingCount);
-        for (uint32_t i=0; i<headingCount; i++)
-            DMESG("      %s", rowData[i].key.toCharArray());
-
         // We may be full here, but this is still a valid state.
         status |= MICROBIT_LOG_STATUS_INITIALIZED;
         return;
     }
 
     // No valid file system found. Reformat the physical medium.
-    DMESG("LOG_FS: NO VALID FS FOUND.");
     format();        
 }
 
@@ -211,9 +194,6 @@ void MicroBitLog::init()
 void MicroBitLog::format()
 {
     mutex.wait();
-
-    DMESG("LOG_FS: Formatting...");
-    int ret;
 
     // Calculate where our metadata should start.
     startAddress = sizeof(header) % flash.getPageSize() == 0 ? sizeof(header) : (1+(sizeof(header) / flash.getPageSize())) * flash.getPageSize();
@@ -237,22 +217,10 @@ void MicroBitLog::format()
         rowData = NULL;
     }
 
-    DMESG("   STARTADDRESS : %p", startAddress);
-    DMESG("   JOURNAL_PAGES: %d", journalPages);
-    DMESG("   JOURNAL_START: %p", journalStart);
-    DMESG("   JOURNAL_HEAD : %p", journalHead);
-    DMESG("   DATA_START   : %p", dataStart);
-    DMESG("   DATA_END     : %p", dataEnd);
-    DMESG("   LOG_END      : %p", logEnd);
-
     // Erase all pages associated with the header, all meta data and the first page of data storage.
     cache.clear();
     for (uint32_t p = flash.getFlashStart(); p <= dataStart; p += flash.getPageSize())
-    {
-        ret = flash.erase(p);
-        if (ret != DEVICE_OK)
-            DMESG("FLASH_ERASE: [PAGE: %p] [ret: %d]", p, ret);
-    }
+        flash.erase(p);
 
     // Serialise and write header (if we have one)
     // n.b. we use flash.write() here to avoid unecessary preheating of the cache.
@@ -279,8 +247,6 @@ void MicroBitLog::format()
     config.visible = true;
     
     flash.setConfiguration(config, true);
-
-    DMESG("REMOUNTING");
     flash.remount();
 
     status |= MICROBIT_LOG_STATUS_INITIALIZED;
@@ -344,13 +310,11 @@ int MicroBitLog::beginRow()
     init();
 
     // Reset all values, ready to populate with a new row.
-    DMESGF("BEGIN ROW");
     for (uint32_t i=0; i<headingCount; i++)
         rowData[i].value = ManagedString();
 
     // indicate that we've started a new row.
     status |= MICROBIT_LOG_STATUS_ROW_STARTED;
-    DMESGF("BEGIN ROW COMPLETE");
 
     return DEVICE_OK;
 }
@@ -382,12 +346,10 @@ int MicroBitLog::logData(ManagedString key, ManagedString value)
     // Perform lazy instatiation if necessary.
     init();
 
-    DMESGF("LOG DATA START");
     // Add the given key/value pair into our cumulative row data. 
     bool added = false;
     for (uint32_t i=0; i<headingCount; i++)
     {
-        DMESGF("HEADER CHECK: %s == %s", rowData[i].key.toCharArray(), key.toCharArray());
         if(rowData[i].key == key)
         {
             rowData[i].value = value;
@@ -396,13 +358,9 @@ int MicroBitLog::logData(ManagedString key, ManagedString value)
         }
     }
 
-    DMESGF("NEW COLUMN: %s", added ? "FALSE" : "TRUE");
-
     // If the requested heading is not available, add it.
     if (!added)
         addHeading(key, value);
-
-    DMESGF ("LOG DATA END");
 
     return DEVICE_OK;
 }
@@ -418,8 +376,6 @@ int MicroBitLog::endRow()
 
     init();
 
-    DMESGF ("END ROW START");
-
     // Insert timestamp field if requested.
     if (timeStampFormat != TimeStampFormat::None)
     {
@@ -432,8 +388,6 @@ int MicroBitLog::endRow()
 
     if (headingsChanged)
     {
-        DMESGF ("NEW HEADINGS: UPDATING...");
-
         // If this is the first time we have logged any headings, place them just after the metadata block
         if (headingStart == 0)
             headingStart = startAddress + sizeof(MicroBitLogMetaData);
@@ -454,7 +408,6 @@ int MicroBitLog::endRow()
         headingStart += headingLength;
         cache.write(headingStart, h.toCharArray(), h.length());
 
-        DMESGF ("LOGGING HEADINGS: %s...", h.toCharArray());
         logString(h);
 
         headingsChanged = false;
@@ -464,7 +417,6 @@ int MicroBitLog::endRow()
     ManagedString row;
     bool empty = true;
 
-    DMESGF ("SERIALIZING TO CSV...");
     for (uint32_t i=0; i<headingCount;i++)
     {
         row = row + rowData[i].value;
@@ -478,10 +430,7 @@ int MicroBitLog::endRow()
     row = row + "\n";
 
     if (!empty)
-    {
-        DMESGF ("LOGGING DATA: %s...", row.toCharArray());
         logString(row);
-    }
 
     status &= ~MICROBIT_LOG_STATUS_ROW_STARTED;
     return DEVICE_OK;
@@ -597,7 +546,6 @@ void MicroBitLog::addHeading(ManagedString key, ManagedString value)
 
     ColumnEntry* newRowData = (ColumnEntry *) malloc(sizeof(ColumnEntry) * (headingCount+1));
 
-    DMESGF ("MIGRATING ROW DATA");
     for (uint32_t i=0; i<headingCount; i++)
     {
         new (&newRowData[i]) ColumnEntry;
@@ -610,7 +558,6 @@ void MicroBitLog::addHeading(ManagedString key, ManagedString value)
     if (rowData)
         free(rowData);
 
-    DMESGF ("ADDING HEADING %d", headingCount);
     new (&newRowData[headingCount]) ColumnEntry;
     newRowData[headingCount].key = key;
     newRowData[headingCount].value = value;
