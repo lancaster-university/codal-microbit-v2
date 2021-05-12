@@ -463,9 +463,13 @@ __attribute__((weak)) void target_panic( int statusCode)
 
 extern "C"
 {
-__attribute__((weak)) int __wrap_atexit(void (*function)(void)) {
+
+__attribute__((weak)) int __wrap_atexit(void (*function)(void))
+{
     return -1;
 }
+
+} // extern "C"
 
 __attribute__((weak)) void target_scheduler_idle()
 {
@@ -473,6 +477,4 @@ __attribute__((weak)) void target_scheduler_idle()
         microbit_device_instance->schedulerIdle();
     else
         target_wait_for_event();
-}
-
 }
