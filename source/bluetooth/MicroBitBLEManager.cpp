@@ -1059,6 +1059,45 @@ bool MicroBitBLEManager::prepareForShutdown()
 
 
 /**
+ * Puts the component in (or out of) sleep (low power) mode.
+ */
+int MicroBitBLEManager::setSleep(bool doSleep)
+{
+    static bool wasEnabled;
+
+    if (doSleep)
+    {
+        wasEnabled = !nrf_sdh_is_suspended();
+        if (wasEnabled)
+        {
+            nrf_sdh_suspend();
+            app_timer_pause();
+            NVIC_DisableIRQ(RTC1_IRQn);
+            NVIC_DisableIRQ(POWER_CLOCK_IRQn);
+            NVIC_DisableIRQ(RTC0_IRQn);
+            NVIC_DisableIRQ(SWI5_EGU5_IRQn);
+            NVIC_DisableIRQ(MWU_IRQn);
+        }
+    }
+    else
+    {
+        if (wasEnabled)
+        {
+            NVIC_DisableIRQ(POWER_CLOCK_IRQn);
+            NVIC_DisableIRQ(RTC0_IRQn);
+            NVIC_DisableIRQ(SWI5_EGU5_IRQn);
+            NVIC_DisableIRQ(MWU_IRQn);
+            NVIC_EnableIRQ(RTC1_IRQn);
+            app_timer_resume();
+            nrf_sdh_resume();
+        }
+    }
+   
+    return DEVICE_OK;
+}
+
+
+/**
 * Ensure service changed indication pending for all peers
 */
 void MicroBitBLEManager::servicesChanged()
