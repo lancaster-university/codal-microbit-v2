@@ -325,11 +325,11 @@ void MicroBit::schedulerIdle()
 #endif
         if ( scheduler_waitqueue_empty() && !messageBus.hasBusyListener())
         {
-          DMESG( "schedulerIdle() TRY deep sleep %u ms", (unsigned int) system_timer_current_time());
+          DMESG( "%u:schedulerIdle() TRY deep sleep", (unsigned int) system_timer_current_time_us());
           power.setDeepSleepWhenNextIdle(false);
           if ( power.deepSleep() == DEVICE_OK)
           {
-              DMESG( "schedulerIdle() EXIT deep sleep %u ms", (unsigned int) system_timer_current_time());
+              DMESG( "%u:schedulerIdle() EXIT deep sleep", (unsigned int) system_timer_current_time_us());
               return;
           }
         }

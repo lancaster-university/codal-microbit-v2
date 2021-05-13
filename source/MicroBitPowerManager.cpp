@@ -433,9 +433,6 @@ void MicroBitPowerManager::deepSleep(MicroBitPin &pin)
 ////////////////////////////////////////////////////////////////
 // deepSleep implementation
 
-#define deepSleepDEBUG 1  //TODO remove debug code
-
-
 volatile uint16_t MicroBitPowerManager::timer_irq_channels;
 
 void MicroBitPowerManager::deepSleepTimerIRQ(uint16_t chan)
@@ -513,21 +510,19 @@ int MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime
     sysTimer->setIRQ( deepSleepTimerIRQ);
     timer_irq_channels = 0;
 
-#ifdef deepSleepDEBUG
-    ManagedString dbg = "IRQ  ";
-    for ( int irq = Reset_IRQn; irq <= SPIM3_IRQn; irq++)
-    {
-      if ( NVIC_GetEnableIRQ( (IRQn_Type) irq))
-      {
-        dbg = dbg + ManagedString( (int) irq);
-        dbg = dbg + " ";
-      }
-    }
-    DMESG( dbg.toCharArray());
-
-    //These may be enabled: RADIO_IRQn, UARTE0_UART0_IRQn
-    //With BLE, also: POWER_CLOCK_IRQn, RTC0_IRQn, RTC1_IRQn, SWI2_EGU2_IRQn, SWI5_EGU5_IRQn, MWU_IRQn
-#endif
+//    ManagedString dbg = "IRQ  ";
+//    for ( int irq = Reset_IRQn; irq <= SPIM3_IRQn; irq++)
+//    {
+//      if ( NVIC_GetEnableIRQ( (IRQn_Type) irq))
+//      {
+//        dbg = dbg + ManagedString( (int) irq);
+//        dbg = dbg + " ";
+//      }
+//    }
+//    DMESG( dbg.toCharArray());
+//
+//    //These may be enabled: RADIO_IRQn, UARTE0_UART0_IRQn
+//    //With BLE, also: POWER_CLOCK_IRQn, RTC0_IRQn, RTC1_IRQn, SWI2_EGU2_IRQn, SWI5_EGU5_IRQn, MWU_IRQn
 
     uint32_t usPerTick   = 1;
     uint32_t ticksPerMS  = 1000;
@@ -564,11 +559,6 @@ int MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime
 
     uint64_t sleepTicks = 0;
 
-#if CONFIG_ENABLED(CODAL_TIMER_32BIT)
-    volatile CODAL_TIMESTAMP time1 = timeStart;
-    DMESG( "timeStart %d", (int) time1);
-#endif
-
     while ( true)
     {
         uint32_t remain;
@@ -576,10 +566,7 @@ int MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime
         if ( wakeOnTime)
         {
             if ( sleepTicks >= totalTicks)
-            {
-                DMESG( "deepSleep: time up");
                 break;
-            }
             uint64_t remain64 = totalTicks - sleepTicks;
             remain = remain64 > ticksMax ? ticksMax : remain64;
         }
@@ -602,10 +589,7 @@ int MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime
         sleepTicks += ticks;
 
 #if CONFIG_ENABLED(CODAL_TIMER_32BIT)
-        time1 = system_timer_current_time_us();
-        DMESG( "wake %d", (int) time1);
-#else
-        DMESG( "wake %d", (int) sleepTicks);
+        system_timer_current_time_us();
 #endif
 
         if ( timer_irq_channels == 0)
@@ -644,8 +628,6 @@ int MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime
     // Configure for running mode.
     setPowerLED(false /*doSleep*/);
     CodalComponent::manageAllSleep( wakeUpSources ? manageSleepEndWithWakeUps : manageSleepEnd, NULL);
-
-    DMESG( "deepSleep ended after %u ms", (unsigned int) ((system_timer_current_time_us() - timeEntry) / 1000));
 
     return DEVICE_OK;
 }
