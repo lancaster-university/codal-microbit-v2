@@ -364,7 +364,7 @@ void MicroBitPowerManager::idleCallback()
   */
 void MicroBitPowerManager::clearWakeUpSources()
 {
-    CodalComponent::manageSleep( manageSleepClearWakeUps, NULL);
+    CodalComponent::manageAllSleep( manageSleepClearWakeUps, NULL);
 }
 
 /**
@@ -564,6 +564,11 @@ int MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime
 
     uint64_t sleepTicks = 0;
 
+#if CONFIG_ENABLED(CODAL_TIMER_32BIT)
+    volatile CODAL_TIMESTAMP time1 = timeStart;
+    DMESG( "timeStart %d", (int) time1);
+#endif
+
     while ( true)
     {
         uint32_t remain;
@@ -596,6 +601,13 @@ int MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime
 
         sleepTicks += ticks;
 
+#if CONFIG_ENABLED(CODAL_TIMER_32BIT)
+        time1 = system_timer_current_time_us();
+        DMESG( "wake %d", (int) time1);
+#else
+        DMESG( "wake %d", (int) sleepTicks);
+#endif
+
         if ( timer_irq_channels == 0)
         {
             DMESG( "deepSleep: non-time interrupt");
@@ -620,13 +632,18 @@ int MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime
     sysTimer->setIRQ(sysTimerIRQ);
     sysTimer->timer->CC[channel] = saveCompare;
 
+#if CONFIG_ENABLED(CODAL_TIMER_32BIT)
+    system_timer_deepsleep_end( 0, 0);
+#else
     system_timer_deepsleep_end( tick1, sleepTicks * usPerTick);
+    // Events queued between the return from __WFI() and now will have incorrect times 
+#endif
 
     sysTimer->timer->INTENSET = saveIntenset;
 
     // Configure for running mode.
     setPowerLED(false /*doSleep*/);
-    CodalComponent::manageSleep( wakeUpSources ? manageSleepEndWithWakeUps : manageSleepEnd, NULL);
+    CodalComponent::manageAllSleep( wakeUpSources ? manageSleepEndWithWakeUps : manageSleepEnd, NULL);
 
     DMESG( "deepSleep ended after %u ms", (unsigned int) ((system_timer_current_time_us() - timeEntry) / 1000));
 
