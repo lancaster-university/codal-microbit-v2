@@ -28,6 +28,15 @@ DEALINGS IN THE SOFTWARE.
 
 using namespace codal;
 
+static ManagedString padString(ManagedString s, int digits)
+{
+    ManagedString zero = "0";
+    while(s.length() != digits)
+        s = zero + s;
+
+    return s;
+}
+
 static void writeNum(char *buf, uint32_t n)
 {
     int i = 0;
@@ -62,7 +71,7 @@ MicroBitLog::MicroBitLog(MicroBitUSBFlashManager &flash, int journalPages) : fla
 
     // Determine if the flash storage is already confgured as a valid log store..
     // If so, load the meta data. If not, reset it.
-    init();
+    //init();
 }
 
 /**
@@ -379,8 +388,37 @@ int MicroBitLog::endRow()
     // Insert timestamp field if requested.
     if (timeStampFormat != TimeStampFormat::None)
     {
+        // handle 32 bit overflow and fractional components of timestamp
         CODAL_TIMESTAMP t = system_timer_current_time() / (CODAL_TIMESTAMP)timeStampFormat;
-        logData(timeStampHeading, (int)t);
+        int billions = t / (CODAL_TIMESTAMP) 1000000000;
+        int units = t % (CODAL_TIMESTAMP) 1000000000;
+        int fraction = 0;
+
+        if ((int)timeStampFormat > 1)
+        {
+            fraction = units % 100;
+            units = units / 100;
+            billions = billions / 100;
+        }
+
+        ManagedString u(units);
+        ManagedString f(fraction);
+        ManagedString s;
+        f = padString(f, 2);
+
+        if (billions)
+        {
+            s = s + billions;
+            u = padString(u, 9);
+        }
+
+        s = s + u;
+
+        // Add two decimal places for anything other than milliseconds.
+        if ((int)timeStampFormat > 1)
+            s = s + "." + f;
+
+        logData(timeStampHeading, s);
     }
 
     // If new columns have been added since the last row, update persistent storage accordingly.
