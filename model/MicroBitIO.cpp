@@ -129,11 +129,14 @@ int MicroBitIO::manageSleep( manageSleepReason reason, manageSleepData *data)
 {
     int name;
     bool withWakeUps = reason == manageSleepBeginWithWakeUps || reason == manageSleepEndWithWakeUps;
+    uint32_t intenset;
 
     switch (reason)
     {
         case manageSleepBegin:
         case manageSleepBeginWithWakeUps:
+            intenset = NRF_GPIOTE->INTENSET;
+            NRF_GPIOTE->INTENCLR = NRF_GPIOTE->INTENSET;
             // Record current state of pins, so we can return the configuration to the same state later.       
             for (int i = 0; i < pins; i++)
             {
@@ -171,6 +174,7 @@ int MicroBitIO::manageSleep( manageSleepReason reason, manageSleepData *data)
                             pin[i].getDigitalValue();
                             // Enable an interrupt on the requested pin.
                             pin[i].setDetect(pin[i].getPolarity() ? GPIO_PIN_CNF_SENSE_High : GPIO_PIN_CNF_SENSE_Low);
+                            PORT->LATCH = 1 << PIN; // clear any pending latch
                         }
                     }
 
@@ -180,10 +184,14 @@ int MicroBitIO::manageSleep( manageSleepReason reason, manageSleepData *data)
                     }
                 }
             }
+            NRF_GPIOTE->EVENTS_PORT = 0;
+            NRF_GPIOTE->INTENSET = intenset;
             break;
 
         case manageSleepEnd:
         case manageSleepEndWithWakeUps:
+            intenset = NRF_GPIOTE->INTENSET;
+            NRF_GPIOTE->INTENCLR = NRF_GPIOTE->INTENSET;
             for (int i = 0; i < pins; i++)
             {
                 name = pin[i].name;
@@ -220,6 +228,7 @@ int MicroBitIO::manageSleep( manageSleepReason reason, manageSleepData *data)
                     }
                 }
             }
+            NRF_GPIOTE->INTENSET = intenset;
             break;
 
         case manageSleepCountWakeUps:
