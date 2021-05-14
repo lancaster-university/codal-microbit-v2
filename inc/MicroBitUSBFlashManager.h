@@ -45,7 +45,7 @@ DEALINGS IN THE SOFTWARE.
 //
 // General constants 
 //
-#define MICROBIT_USB_FLASH_MAX_RETRIES              4
+#define MICROBIT_USB_FLASH_MAX_RETRIES              20
 
 //
 // Command codes for the USB Interface Chip
@@ -72,7 +72,7 @@ typedef struct
 
 typedef struct
 {
-    uint16_t            blockSize;                                  // The size of a physival blovk on the disk
+    uint16_t            blockSize;                                  // The size of a physical block on the disk
     uint8_t             blockCount;                                 // The number of available blocks on the disk
 } MicroBitUSBFlashGeometry;
 
