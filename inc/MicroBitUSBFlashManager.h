@@ -45,7 +45,7 @@ DEALINGS IN THE SOFTWARE.
 //
 // General constants 
 //
-#define MICROBIT_USB_FLASH_MAX_RETRIES              4
+#define MICROBIT_USB_FLASH_MAX_RETRIES              20
 
 //
 // Command codes for the USB Interface Chip

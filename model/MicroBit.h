@@ -64,6 +64,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitPowerManager.h"
 #include "NRF52FlashManager.h"
 #include "MicroBitUSBFlashManager.h"
+#include "MicroBitLog.h"
 #include "MicroBitAudio.h"
 #include "StreamNormalizer.h"
 #include "LevelDetector.h"
@@ -94,6 +95,9 @@ DEALINGS IN THE SOFTWARE.
 
 // Flag that we have integrate face-touch as a feature
 #define MICROBIT_UBIT_FACE_TOUCH_BUTTON       1
+
+// Power on delay time (in milliseconds) applied after a hard power-on reset only.
+#define KL27_POWER_ON_DELAY                    1000
 
 /**
  * Class definition for a MicroBit device.
@@ -161,6 +165,7 @@ namespace codal
             Compass&                    compass;
             MicroBitCompassCalibrator   compassCalibrator;
             MicroBitAudio               audio;
+            MicroBitLog                 log;
 
 
             /**
