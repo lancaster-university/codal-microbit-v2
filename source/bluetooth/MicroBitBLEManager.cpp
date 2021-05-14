@@ -1570,12 +1570,11 @@ static void microbit_dfu_evt_handler(ble_dfu_buttonless_evt_type_t event)
 #endif // CONFIG_ENABLED(MICROBIT_BLE_DFU_SERVICE)
 
 
-#define MICROBIT_PANIC_NRF_BASE 70
-#define MICROBIT_PANIC_NRF_FAULT_ID_SD_ASSERT  (MICROBIT_PANIC_NRF_BASE)
-#define MICROBIT_PANIC_NRF_FAULT_ID_APP_MEMACC (MICROBIT_PANIC_NRF_BASE + 1)
-#define MICROBIT_PANIC_NRF_FAULT_ID_SDK_ASSERT (MICROBIT_PANIC_NRF_BASE + 2)
-#define MICROBIT_PANIC_NRF_FAULT_ID_SDK_ERROR  (MICROBIT_PANIC_NRF_BASE + 3)
-#define MICROBIT_PANIC_NRF_FAULT_UNKNOWN       (MICROBIT_PANIC_NRF_BASE + 4)
+#define MICROBIT_PANIC_SD_ASSERT    (DEVICE_CPU_SDK)
+#define MICROBIT_PANIC_APP_MEMACC   (DEVICE_CPU_SDK + 1)
+#define MICROBIT_PANIC_SDK_ASSERT   (DEVICE_CPU_SDK + 2)
+#define MICROBIT_PANIC_SDK_ERROR    (DEVICE_CPU_SDK + 3)
+#define MICROBIT_PANIC_SDK_UNKNOWN  (DEVICE_CPU_SDK + 4)
 
 void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 {
@@ -1632,19 +1631,19 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
     switch (id)
     {
         case NRF_FAULT_ID_SD_ASSERT:
-            panic = MICROBIT_PANIC_NRF_FAULT_ID_SD_ASSERT;
+            panic = MICROBIT_PANIC_SD_ASSERT;
             break;
         case NRF_FAULT_ID_APP_MEMACC:
-            panic = MICROBIT_PANIC_NRF_FAULT_ID_APP_MEMACC;
+            panic = MICROBIT_PANIC_APP_MEMACC;
             break;
         case NRF_FAULT_ID_SDK_ASSERT:
-            panic = MICROBIT_PANIC_NRF_FAULT_ID_SDK_ASSERT;
+            panic = MICROBIT_PANIC_SDK_ASSERT;
             break;
         case NRF_FAULT_ID_SDK_ERROR:
-            panic = MICROBIT_PANIC_NRF_FAULT_ID_SDK_ERROR;
+            panic = MICROBIT_PANIC_SDK_ERROR;
             break;
         default:
-            panic = MICROBIT_PANIC_NRF_FAULT_UNKNOWN;
+            panic = MICROBIT_PANIC_SDK_UNKNOWN;
             break;
     }
 
