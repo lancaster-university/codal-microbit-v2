@@ -136,7 +136,6 @@ typedef struct {
 //
 #define MICROBIT_USB_INTERFACE_AWAITING_RESPONSE  0x01
 #define MICROBIT_USB_INTERFACE_VERSION_LOADED     0x02
-#define MICROBIT_POWER_DEEPSLEEP_WHEN_NEXT_IDLE   0x04
 
 //
 // Minimum deep sleep time (milliseconds)
@@ -159,6 +158,7 @@ class MicroBitPowerManager : public CodalComponent
         MicroBitI2C             &i2cBus;                            // The I2C bus to use to communicate with USB interface chip
         MicroBitIO              &io;                                // Pins used by this device
         NRFLowLevelTimer        *sysTimer;                          // The system timer. 
+        FiberLock               deepSleepLock;
 
         /**
          * Constructor.
@@ -270,16 +270,6 @@ class MicroBitPowerManager : public CodalComponent
         void clearWakeUpSources();
 
         /**
-         * Specify whether next idle will deep sleep
-         */
-        void setDeepSleepWhenNextIdle( bool yes);
-
-        /**
-         * Determine if next idle will deep sleep
-         */
-        bool getDeepSleepWhenNextIdle();
-
-        /**
          * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
          * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
          * operation.
@@ -361,7 +351,29 @@ class MicroBitPowerManager : public CodalComponent
          */
         ~MicroBitPowerManager();
 
+        /**
+         * Determine if deep sleep has been requested. For library use. 
+         * @return true if deep sleep has been requested
+         */
+        bool waitingForDeepSleep();
+
+        /**
+         * Start previosly requested deep sleep. For library use. 
+         * @return DEVICE_OK if deep sleep occurred, or DEVICE_INVALID_STATE if no usable wake up source is available
+         */
+        int startDeepSleep();
+
+        /**
+         * Cancel previosly requested deep sleep. For library use.
+         */
+        void cancelDeepSleep();
+
         private:
+
+        /**
+         * Wait on the lock;
+         */
+        void deepSleepWait();
 
         /**
          * Update the status of the power LED
@@ -388,6 +400,6 @@ class MicroBitPowerManager : public CodalComponent
          *
          * @return DEVICE_OK if deep sleep occurred, or DEVICE_INVALID_STATE if no usable wake up source is available
          */
-        int deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime, bool wakeUpSources, NRF52Pin *wakeUpPin);
+        int simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime, bool wakeUpSources, NRF52Pin *wakeUpPin);
 };
 #endif

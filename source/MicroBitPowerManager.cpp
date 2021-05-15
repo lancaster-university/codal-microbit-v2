@@ -368,25 +368,6 @@ void MicroBitPowerManager::clearWakeUpSources()
 }
 
 /**
-  * Specify whether next idle will deep sleep
-  */
-void MicroBitPowerManager::setDeepSleepWhenNextIdle( bool yes)
-{
-    if (yes)
-        status |= MICROBIT_POWER_DEEPSLEEP_WHEN_NEXT_IDLE;
-    else
-        status &= ~MICROBIT_POWER_DEEPSLEEP_WHEN_NEXT_IDLE;
-}
-
-/**
-  * Determine if next idle will deep sleep
-  */
-bool MicroBitPowerManager::getDeepSleepWhenNextIdle()
-{
-  return (status & MICROBIT_POWER_DEEPSLEEP_WHEN_NEXT_IDLE) != 0;
-}
-
-/**
  * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
  * program state is preserved. CPU will deepsleep until the next codal::Timer event or other wake up source event, before returning to normal
  * operation.
@@ -396,16 +377,14 @@ bool MicroBitPowerManager::getDeepSleepWhenNextIdle()
  */
 void MicroBitPowerManager::deepSleep()
 {
-    // If the scheduler is not running, then simply perform a spin wait and exit.
+    // If the scheduler is not running, perform a simple deep sleep.
     if (!fiber_scheduler_running())
     {
         simpleDeepSleep();
         return;
     }
 
-    fiber_sleep(0);
-    setDeepSleepWhenNextIdle(true);
-    schedule();
+    deepSleepWait();
 }
 
 /**
@@ -418,17 +397,16 @@ void MicroBitPowerManager::deepSleep()
  */
 void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
 {
-    // If the scheduler is not running, then simply perform a spin wait and exit.
+    // If the scheduler is not running, perform a simple deep sleep.
     if (!fiber_scheduler_running())
     {
         simpleDeepSleep( milliSeconds);
         return;
     }
 
-    fiber_sleep(0);
     system_timer_event_after( milliSeconds, id, 0, CODAL_TIMER_EVENT_FLAGS_WAKEUP);
-    setDeepSleepWhenNextIdle(true);
-    schedule();
+
+    deepSleepWait();
 }
 
 /**
@@ -441,17 +419,21 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
  */
 void MicroBitPowerManager::deepSleep(NRF52Pin &pin)
 {
-    // If the scheduler is not running, then simply perform a spin wait and exit.
+    // If the scheduler is not running, perform a simple deep sleep.
     if (!fiber_scheduler_running())
     {
         simpleDeepSleep( pin);
         return;
     }
 
-    fiber_sleep(0);
+    bool wasWakeOnActive = pin.getWakeOnActive();
+
     pin.wakeOnActive(true);
-    setDeepSleepWhenNextIdle(true);
-    schedule();
+
+    deepSleepWait();
+
+    if ( !wasWakeOnActive)
+        pin.wakeOnActive(false);
 }
 
 /**
@@ -467,7 +449,7 @@ int MicroBitPowerManager::simpleDeepSleep()
 {
     CODAL_TIMESTAMP eventTime = 0;
     bool wakeOnTime = system_timer_deepsleep_wakeup_time( &eventTime);
-    return deepSleep( wakeOnTime, eventTime, true /*wakeUpSources*/, NULL /*wakeUpPin*/);
+    return simpleDeepSleep( wakeOnTime, eventTime, true /*wakeUpSources*/, NULL /*wakeUpPin*/);
 }
 
 /**
@@ -481,7 +463,7 @@ int MicroBitPowerManager::simpleDeepSleep()
 void MicroBitPowerManager::simpleDeepSleep(uint32_t milliSeconds)
 {
     CODAL_TIMESTAMP wakeUpTime = system_timer_current_time_us() + milliSeconds * 1000;
-    deepSleep( true /*wakeOnTime*/, wakeUpTime, false /*wakeUpSources*/, NULL /*wakeUpPin*/);
+    simpleDeepSleep( true /*wakeOnTime*/, wakeUpTime, false /*wakeUpSources*/, NULL /*wakeUpPin*/);
 }
 
 /**
@@ -494,11 +476,54 @@ void MicroBitPowerManager::simpleDeepSleep(uint32_t milliSeconds)
  */
 void MicroBitPowerManager::simpleDeepSleep(NRF52Pin &pin)
 {
-    deepSleep( false /*wakeOnTime*/, 0 /*wakeUpTime*/, false /*wakeUpSources*/, &pin /*wakeUpPin*/);
+    simpleDeepSleep( false /*wakeOnTime*/, 0 /*wakeUpTime*/, false /*wakeUpSources*/, &pin /*wakeUpPin*/);
+}
+
+////////////////////////////////////////////////////////////////
+// deepSleep control
+
+/**
+  * Determine if deep sleep has been requested. For library use. 
+  * @return true if deep sleep has been requested
+  */
+bool MicroBitPowerManager::waitingForDeepSleep()
+{
+    return deepSleepLock.getWaitCount() != 0;
+}
+
+/**
+  * Start previosly requested deep sleep
+  * @return DEVICE_OK if deep sleep occurred, or DEVICE_INVALID_STATE if no usable wake up source is available
+  */
+int MicroBitPowerManager::startDeepSleep()
+{
+    int result = simpleDeepSleep();
+    deepSleepLock.notifyAll();
+    return result;
+}
+
+/**
+  * Cancel previosly requested deep sleep
+  */
+void MicroBitPowerManager::cancelDeepSleep()
+{
+    deepSleepLock.notifyAll();
 }
 
 ////////////////////////////////////////////////////////////////
 // deepSleep implementation
+
+/**
+ * Wait on the lock;
+ */
+void MicroBitPowerManager::deepSleepWait()
+{
+    if ( deepSleepLock.getWaitCount() == 0)
+        deepSleepLock.wait();
+
+    deepSleepLock.wait();
+}
+
 
 volatile uint16_t MicroBitPowerManager::timer_irq_channels;
 
@@ -520,7 +545,7 @@ void MicroBitPowerManager::deepSleepTimerIRQ(uint16_t chan)
  * @param wakeUpSources Set to true to use external wake up sources configured by e.g. pin->setAwakeOnActive(true)
  * @param wakeUpPin     Pin to wake up. Ignored if wakeUpSources == true.
  */
-int MicroBitPowerManager::deepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime, bool wakeUpSources, NRF52Pin *wakeUpPin)
+int MicroBitPowerManager::simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime, bool wakeUpSources, NRF52Pin *wakeUpPin)
 {
     if ( sysTimer == NULL)
         return DEVICE_NOT_SUPPORTED;
