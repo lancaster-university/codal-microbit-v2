@@ -386,6 +386,49 @@ bool MicroBitPowerManager::getDeepSleepWhenNextIdle()
   return (status & MICROBIT_POWER_DEEPSLEEP_WHEN_NEXT_IDLE) != 0;
 }
 
+/**
+ * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+ * program state is preserved. CPU will deepsleep until the next codal::Timer event or other wake up source event, before returning to normal
+ * operation.
+ * 
+ * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+ * simply use uBit.sleep();
+ */
+void MicroBitPowerManager::deepSleep()
+{
+    setDeepSleepWhenNextIdle(true);
+    schedule();
+}
+
+/**
+ * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+ * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
+ * operation.
+ * 
+ * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+ * simply use uBit.sleep();
+ */
+void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
+{
+    system_timer_event_after( milliSeconds, id, 0, CODAL_TIMER_EVENT_FLAGS_WAKEUP);
+    setDeepSleepWhenNextIdle(true);
+    schedule();
+}
+
+/**
+ * Powers down the CPU nd USB interface and instructs peripherals to enter an inoperative low power state. However, all
+ * program state is preserved. CPU will deepsleep until the given pin becomes active, then return to normal
+ * operation.
+ * 
+ * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+ * simply use uBit.sleep();
+ */
+void MicroBitPowerManager::deepSleep(NRF52Pin &pin)
+{
+    pin.wakeOnActive(true);
+    setDeepSleepWhenNextIdle(true);
+    schedule();
+}
 
 /**
  * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
@@ -396,7 +439,7 @@ bool MicroBitPowerManager::getDeepSleepWhenNextIdle()
  * simply use uBit.sleep();
  * @return DEVICE_OK if deep sleep occurred, or DEVICE_INVALID_STATE if no usable wake up source is available 
  */
-int MicroBitPowerManager::deepSleep()
+int MicroBitPowerManager::simpleDeepSleep()
 {
     CODAL_TIMESTAMP eventTime = 0;
     bool wakeOnTime = system_timer_deepsleep_wakeup_time( &eventTime);
@@ -411,7 +454,7 @@ int MicroBitPowerManager::deepSleep()
  * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
  * simply use uBit.sleep();
  */
-void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
+void MicroBitPowerManager::simpleDeepSleep(uint32_t milliSeconds)
 {
     CODAL_TIMESTAMP wakeUpTime = system_timer_current_time_us() + milliSeconds * 1000;
     deepSleep( true /*wakeOnTime*/, wakeUpTime, false /*wakeUpSources*/, NULL /*wakeUpPin*/);
@@ -425,7 +468,7 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
  * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
  * simply use uBit.sleep();
  */
-void MicroBitPowerManager::deepSleep(MicroBitPin &pin)
+void MicroBitPowerManager::simpleDeepSleep(NRF52Pin &pin)
 {
     deepSleep( false /*wakeOnTime*/, 0 /*wakeUpTime*/, false /*wakeUpSources*/, &pin /*wakeUpPin*/);
 }
