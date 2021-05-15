@@ -396,6 +396,14 @@ bool MicroBitPowerManager::getDeepSleepWhenNextIdle()
  */
 void MicroBitPowerManager::deepSleep()
 {
+    // If the scheduler is not running, then simply perform a spin wait and exit.
+    if (!fiber_scheduler_running())
+    {
+        simpleDeepSleep();
+        return;
+    }
+
+    fiber_sleep(0);
     setDeepSleepWhenNextIdle(true);
     schedule();
 }
@@ -410,6 +418,14 @@ void MicroBitPowerManager::deepSleep()
  */
 void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
 {
+    // If the scheduler is not running, then simply perform a spin wait and exit.
+    if (!fiber_scheduler_running())
+    {
+        simpleDeepSleep( milliSeconds);
+        return;
+    }
+
+    fiber_sleep(0);
     system_timer_event_after( milliSeconds, id, 0, CODAL_TIMER_EVENT_FLAGS_WAKEUP);
     setDeepSleepWhenNextIdle(true);
     schedule();
@@ -425,6 +441,14 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
  */
 void MicroBitPowerManager::deepSleep(NRF52Pin &pin)
 {
+    // If the scheduler is not running, then simply perform a spin wait and exit.
+    if (!fiber_scheduler_running())
+    {
+        simpleDeepSleep( pin);
+        return;
+    }
+
+    fiber_sleep(0);
     pin.wakeOnActive(true);
     setDeepSleepWhenNextIdle(true);
     schedule();
