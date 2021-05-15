@@ -84,7 +84,8 @@ MicroBit::MicroBit() :
     accelerometer(MicroBitAccelerometer::autoDetect(_i2c)),
     compass(MicroBitCompass::autoDetect(_i2c)),
     compassCalibrator(compass, accelerometer, display, storage),
-    audio(io.P0, io.speaker)
+    audio(io.P0, io.speaker),
+    log(flash)
 {
     // Clear our status
     status = 0;
@@ -155,6 +156,10 @@ int MicroBit::init()
         return DEVICE_NOT_SUPPORTED;
 
     status |= DEVICE_INITIALIZED;
+
+    // On a hard reset, wait for the USB interface chip to come online.
+    if(NRF_POWER->RESETREAS == 0)
+        target_wait(KL27_POWER_ON_DELAY);
 
     // Bring up fiber scheduler.
     scheduler_init(messageBus);
