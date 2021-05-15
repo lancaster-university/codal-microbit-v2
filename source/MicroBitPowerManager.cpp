@@ -492,6 +492,21 @@ bool MicroBitPowerManager::waitingForDeepSleep()
 }
 
 /**
+  * Determine if the program is ready for deep sleep. For library use. 
+  * @return true if deep sleep should be entered now
+  */
+bool MicroBitPowerManager::readyForDeepSleep()
+{
+    //if ( !scheduler_waitqueue_empty())
+    //   return false;
+
+    //if ( messageBus.hasBusyListener())
+    //  return;
+
+    return true;
+}
+
+/**
   * Start previosly requested deep sleep
   * @return DEVICE_OK if deep sleep occurred, or DEVICE_INVALID_STATE if no usable wake up source is available
   */
@@ -519,7 +534,10 @@ void MicroBitPowerManager::cancelDeepSleep()
 void MicroBitPowerManager::deepSleepWait()
 {
     if ( deepSleepLock.getWaitCount() == 0)
+    {
+        // This is OK, so long as we only use notifyAll() not notify()
         deepSleepLock.wait();
+    }
 
     deepSleepLock.wait();
 }

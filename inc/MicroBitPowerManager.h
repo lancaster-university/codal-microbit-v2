@@ -358,6 +358,12 @@ class MicroBitPowerManager : public CodalComponent
         bool waitingForDeepSleep();
 
         /**
+         * Determine if the program is ready for deep sleep. For library use. 
+         * @return true if deep sleep should be entered now
+         */
+        bool readyForDeepSleep();
+
+        /**
          * Start previosly requested deep sleep. For library use. 
          * @return DEVICE_OK if deep sleep occurred, or DEVICE_INVALID_STATE if no usable wake up source is available
          */

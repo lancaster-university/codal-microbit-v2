@@ -328,7 +328,7 @@ void MicroBit::schedulerIdle()
             return;
         }
 #endif
-        if ( true) //scheduler_waitqueue_empty() && !messageBus.hasBusyListener())
+        if ( power.readyForDeepSleep())
         {
           DMESG( "%u:schedulerIdle() TRY deep sleep", (unsigned int) system_timer_current_time_us());
           if ( power.startDeepSleep() == DEVICE_OK)
