@@ -46,6 +46,7 @@ const uint8_t  MicroBitUARTService::base_uuid[ 16] =
 const uint16_t MicroBitUARTService::serviceUUID               = 0x0001;
 const uint16_t MicroBitUARTService::charUUID[ mbbs_cIdxCOUNT] = { 0x0002, 0x0003 };
 
+#define MICROBIT_UART_S_ATTRSIZE            20
 
 /**
  * Constructor for the UARTService.
@@ -64,8 +65,12 @@ MicroBitUARTService::MicroBitUARTService(BLEDevice &_ble, uint8_t rxBufferSize, 
     rxBufferSize += 1;
     txBufferSize += 1;
 
-    txBuffer = (uint8_t *)malloc(txBufferSize);
-    rxBuffer = (uint8_t *)malloc(rxBufferSize);
+    // Allocate memory for rxBuffer, rx characteristic, txBuffer, tx characteristic
+    int size = rxBufferSize + txBufferSize + 2 * MICROBIT_UART_S_ATTRSIZE;
+    rxBuffer = (uint8_t *)malloc(size);
+    txBuffer = rxBuffer + rxBufferSize + MICROBIT_UART_S_ATTRSIZE;
+    
+    memclr( rxBuffer, size);
 
     rxBufferHead = 0;
     rxBufferTail = 0;
@@ -75,6 +80,8 @@ MicroBitUARTService::MicroBitUARTService(BLEDevice &_ble, uint8_t rxBufferSize, 
     txBufferTail = 0;
     this->txBufferSize = txBufferSize;
 
+    txValueSize  = 0;
+
     waitingForEmpty = false;
 
     // Register the base UUID and create the service.
@@ -83,13 +90,13 @@ MicroBitUARTService::MicroBitUARTService(BLEDevice &_ble, uint8_t rxBufferSize, 
 
     // Create the data structures that represent each of our characteristics in Soft Device.
     CreateCharacteristic( mbbs_cIdxRX, charUUID[ mbbs_cIdxRX],
-                          rxBuffer,
-                          1, rxBufferSize,
+                          rxBuffer + rxBufferSize,
+                          0, MICROBIT_UART_S_ATTRSIZE,
                           microbit_propWRITE | microbit_propWRITE_WITHOUT);
 
     CreateCharacteristic( mbbs_cIdxTX, charUUID[ mbbs_cIdxTX],
-                          txBuffer,
-                          1, txBufferSize,
+                          txBuffer + txBufferSize,
+                          0, MICROBIT_UART_S_ATTRSIZE,
                           microbit_propINDICATE);
 }
 
@@ -99,11 +106,10 @@ MicroBitUARTService::MicroBitUARTService(BLEDevice &_ble, uint8_t rxBufferSize, 
   */
 void MicroBitUARTService::onDisconnect( const microbit_ble_evt_t *p_ble_evt)
 {
+    txValueSize = txBufferTail = txBufferHead = 0;
+
     if ( waitingForEmpty)
-    {
-        txBufferTail = txBufferHead;
         MicroBitEvent(MICROBIT_ID_NOTIFY, MICROBIT_UART_S_EVT_TX_EMPTY);
-    }
 }
 
 
@@ -114,8 +120,12 @@ void MicroBitUARTService::onConfirmation( const microbit_ble_evt_hvc_t *params)
 {
     if ( params->handle == valueHandle( mbbs_cIdxTX))
     {
-        txBufferTail = txBufferHead;
+        txBufferTail = ( (int)txBufferTail + txValueSize) % txBufferSize;
+        txValueSize = 0;
+        bool async = !waitingForEmpty;
         MicroBitEvent(MICROBIT_ID_NOTIFY, MICROBIT_UART_S_EVT_TX_EMPTY);
+        if ( async)
+            sendNext();
     }
 }
 
@@ -279,57 +289,67 @@ int MicroBitUARTService::send(const uint8_t *buf, int length, MicroBitSerialMode
     if(length < 1 || mode == SYNC_SPINWAIT)
         return MICROBIT_INVALID_PARAMETER;
 
-    bool updatesEnabled = indicateChrValueEnabled( mbbs_cIdxTX);
-
-    if( !getConnected() && !updatesEnabled)
+    if( !getConnected() || !indicateChrValueEnabled( mbbs_cIdxTX))
         return MICROBIT_NOT_SUPPORTED;
 
     int bytesWritten = 0;
 
-    while ( bytesWritten < length && getConnected() && updatesEnabled)
+    while ( getConnected() && indicateChrValueEnabled( mbbs_cIdxTX))
     {
-        for(int bufferIterator = bytesWritten; bufferIterator < length; bufferIterator++)
+        // Add new data that fits in the tx buffer
+        while ( bytesWritten < length)
         {
             int nextHead = (txBufferHead + 1) % txBufferSize;
+            if( nextHead == txBufferTail)
+                break;
 
-            if(nextHead != txBufferTail)
-            {
-                txBuffer[txBufferHead] = buf[bufferIterator];
-
-                txBufferHead = nextHead;
-
-                bytesWritten++;
-            }
+            txBuffer[ txBufferHead] = buf[ bytesWritten++];
+            txBufferHead = nextHead;
         }
-
-        int size = txBufferedSize();
-
-        uint8_t temp[size];
-
-        memclr(&temp, size);
-
-        circularCopy(txBuffer, txBufferSize, temp, txBufferTail, txBufferHead);
-
-        if(mode == SYNC_SLEEP)
+        
+        if ( mode == SYNC_SLEEP)
         {
             waitingForEmpty = true;
             fiber_wake_on_event(MICROBIT_ID_NOTIFY, MICROBIT_UART_S_EVT_TX_EMPTY);
-        }
-
-        indicateChrValue( mbbs_cIdxTX, temp, size);
-
-        if(mode == SYNC_SLEEP)
-        {
+            sendNext();
             schedule();
             waitingForEmpty = false;
+            if ( bytesWritten == length && txBufferTail == txBufferHead)
+                break;
         }
         else
+        {
+            sendNext();
             break;
-
-        updatesEnabled = indicateChrValueEnabled( mbbs_cIdxTX);
+        }
     }
 
     return bytesWritten;
+}
+
+/**
+  * An internal method that sends the next block from the tx buffer.
+  * @return true if a block is sent
+  */
+bool MicroBitUARTService::sendNext()
+{ 
+    if ( txValueSize != 0 || txBufferTail == txBufferHead)
+        return false;
+
+    if( !getConnected() || !indicateChrValueEnabled( mbbs_cIdxTX))
+        return false;
+
+    // Duplicate the next tx data into the attribute buffer
+    uint8_t *value = txBuffer + txBufferSize;
+    int txBufferNext = txBufferTail;
+    while ( txValueSize < MICROBIT_UART_S_ATTRSIZE && txBufferNext != txBufferHead)
+    {
+        value[ txValueSize++] = txBuffer[ txBufferNext];
+        txBufferNext = ( txBufferNext + 1) % txBufferSize;
+    }
+
+    indicateChrValue( mbbs_cIdxTX, value, txValueSize);
+    return true;
 }
 
 /**
