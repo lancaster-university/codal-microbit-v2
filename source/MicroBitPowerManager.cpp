@@ -359,6 +359,48 @@ void MicroBitPowerManager::idleCallback()
 }
 
 /**
+ * Update the status of the power LED
+ * 
+ * @param doSleep Set to true to preapre for sleep, false to prepare to reawaken.
+ */
+void MicroBitPowerManager::setPowerLED(bool doSleep)
+{
+    // Instruct the KL27 interface chip to update its LED status the power LED
+    ManagedBuffer sleepCommand(4);
+    sleepCommand[0] = MICROBIT_UIPM_COMMAND_WRITE_REQUEST;
+    sleepCommand[1] = MICROBIT_UIPM_PROPERTY_KL27_POWER_LED_STATE;
+    sleepCommand[2] = 1;
+    sleepCommand[3] = doSleep ? 0 : 1;
+    writeProperty(sleepCommand);
+}
+
+/**
+ * Allows a subsystem to indicate that it is actively waiting for a I2C response from the KL27
+ * (e.g. the USBFlashManager). If set, the PowerManager will defer polling of the KL27 control interface
+ * if an interrupt is asserted.
+ *
+ * @param awaiting true if a subsystem is awaiting a packet from the KL27, false otherwise.
+ */
+void MicroBitPowerManager::awaitingPacket(bool awaiting)
+{
+    if (awaiting)
+        status |= MICROBIT_USB_INTERFACE_AWAITING_RESPONSE;
+    else
+        status &= ~MICROBIT_USB_INTERFACE_AWAITING_RESPONSE;
+}
+
+/**
+ * Destructor.
+ */
+MicroBitPowerManager::~MicroBitPowerManager()
+{
+
+}
+
+////////////////////////////////////////////////////////////////
+// deepSleep
+
+/**
   * Clear configured wake-up sources
   * Note: this doesn't clear Timer events
   */
@@ -368,15 +410,22 @@ void MicroBitPowerManager::clearWakeUpSources()
 }
 
 /**
- * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
- * program state is preserved. CPU will deepsleep until the next codal::Timer event or other wake up source event, before returning to normal
- * operation.
- * 
- * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
- * simply use uBit.sleep();
- */
+  * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+  * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
+  * operation.
+  * 
+  * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+  * simply use uBit.sleep();
+  *
+  * The current fiber is blocked immediately. Sleep occurs when the scheduler is next idle.
+  *
+  * Wake up is triggered at the next Timer event created with the CODAL_TIMER_EVENT_FLAGS_WAKEUP flag
+  * or by externally configured sources, for example, pin->wakeOnActive(true).
+  */
 void MicroBitPowerManager::deepSleep()
 {
+    DMESG( "deepSleep");
+
     // If the scheduler is not running, perform a simple deep sleep.
     if (!fiber_scheduler_running())
     {
@@ -384,19 +433,30 @@ void MicroBitPowerManager::deepSleep()
         return;
     }
 
-    deepSleepWait();
+    CODAL_TIMESTAMP eventTime = 0;
+    bool wakeOnTime = system_timer_deepsleep_wakeup_time( &eventTime);
+    int can = canDeepSleep( wakeOnTime, eventTime, true /*wakeUpSources*/, NULL /*wakeUpPin*/);
+    if ( can == DEVICE_OK)
+        deepSleepWait();
 }
 
 /**
- * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
- * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
- * operation.
- * 
- * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
- * simply use uBit.sleep();
- */
+  * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+  * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
+  * operation.
+  * 
+  * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+  * simply use uBit.sleep();
+  *
+  * Wake up is triggered at the next Timer event created with the CODAL_TIMER_EVENT_FLAGS_WAKEUP flag
+  * or by externally configured sources, for example, pin->wakeOnActive(true).
+  *
+  * This is a convenienece wrapper for deepSleep() that adds a timer event to the existing wakeup sources
+  */
 void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
 {
+    DMESG( "deepSleep milliSeconds");
+
     // If the scheduler is not running, perform a simple deep sleep.
     if (!fiber_scheduler_running())
     {
@@ -404,21 +464,32 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
         return;
     }
 
-    system_timer_event_after( milliSeconds, id, 0, CODAL_TIMER_EVENT_FLAGS_WAKEUP);
-
-    deepSleepWait();
+    CODAL_TIMESTAMP eventTime = system_timer_current_time_us() + (CODAL_TIMESTAMP) 1000 * milliSeconds;
+    int can = canDeepSleep( true /*wakeOnTime*/, eventTime, true /*wakeUpSources*/, NULL /*wakeUpPin*/);
+    if ( can == DEVICE_OK)
+    {
+        system_timer_event_after( milliSeconds, id, 0, CODAL_TIMER_EVENT_FLAGS_WAKEUP);
+        deepSleepWait();
+    }
 }
 
 /**
- * Powers down the CPU nd USB interface and instructs peripherals to enter an inoperative low power state. However, all
- * program state is preserved. CPU will deepsleep until the given pin becomes active, then return to normal
- * operation.
- * 
- * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
- * simply use uBit.sleep();
- */
+  * Powers down the CPU nd USB interface and instructs peripherals to enter an inoperative low power state. However, all
+  * program state is preserved. CPU will deepsleep until the given pin becomes active, then return to normal
+  * operation.
+  * 
+  * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+  * simply use uBit.sleep();
+  *
+  * Wake up is triggered at the next Timer event created with the CODAL_TIMER_EVENT_FLAGS_WAKEUP flag
+  * or by externally configured sources, for example, pin->wakeOnActive(true).
+  *
+  * This is a convenienece wrapper for deepSleep() that adds a pin to the existing wakeup sources
+  */
 void MicroBitPowerManager::deepSleep(NRF52Pin &pin)
 {
+    DMESG( "deepSleep pin");
+
     // If the scheduler is not running, perform a simple deep sleep.
     if (!fiber_scheduler_running())
     {
@@ -430,21 +501,59 @@ void MicroBitPowerManager::deepSleep(NRF52Pin &pin)
 
     pin.wakeOnActive(true);
 
-    deepSleepWait();
+    CODAL_TIMESTAMP eventTime = 0;
+    bool wakeOnTime = system_timer_deepsleep_wakeup_time( &eventTime);
+    int can = canDeepSleep( wakeOnTime, eventTime, true /*wakeUpSources*/, NULL /*wakeUpPin*/);
+    if ( can == DEVICE_OK)
+        deepSleepWait();
 
     if ( !wasWakeOnActive)
         pin.wakeOnActive(false);
 }
 
 /**
- * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
- * program state is preserved. CPU will deepsleep until the next codal::Timer event or other wake up source event, before returning to normal
- * operation.
- * 
- * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
- * simply use uBit.sleep();
- * @return DEVICE_OK if deep sleep occurred, or DEVICE_INVALID_STATE if no usable wake up source is available 
- */
+  * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+  * program state is preserved. CPU will deepsleep until the next codal::Timer event or other wake up source event, before returning to normal
+  * operation.
+  *
+  * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+  * simply use uBit.sleep();
+  *
+  * The function returns immediately. Sleep occurs when the scheduler is next idle.
+  */
+void MicroBitPowerManager::deepSleepAsync()
+{
+    DMESG( "deepSleepAsync");
+
+    // If the scheduler is not running, perform a simple deep sleep.
+    if (!fiber_scheduler_running())
+    {
+        simpleDeepSleep();
+        return;
+    }
+
+    CODAL_TIMESTAMP eventTime = 0;
+    bool wakeOnTime = system_timer_deepsleep_wakeup_time( &eventTime);
+    int can = canDeepSleep( wakeOnTime, eventTime, true /*wakeUpSources*/, NULL /*wakeUpPin*/);
+    if ( can == DEVICE_OK)
+        prepareDeepSleep();
+}
+
+/**
+  * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+  * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
+  * operation.
+  * 
+  * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+  * simply use uBit.sleep();
+  *
+  * Sleep occurs immediately. This function returns when sleep has finished. 
+  *
+  * Wake up is triggered at the next Timer event created with the CODAL_TIMER_EVENT_FLAGS_WAKEUP flag
+  * or by externally configured sources, for example, pin->wakeOnActive(true).
+  *
+  * @return DEVICE_OK if deep sleep occurred, or DEVICE_INVALID_STATE if no usable wake up source is available
+  */
 int MicroBitPowerManager::simpleDeepSleep()
 {
     CODAL_TIMESTAMP eventTime = 0;
@@ -453,13 +562,19 @@ int MicroBitPowerManager::simpleDeepSleep()
 }
 
 /**
- * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
- * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
- * operation.
- * 
- * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
- * simply use uBit.sleep();
- */
+  * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+  * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
+  * operation.
+  *
+  * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+  * simply use uBit.sleep();
+  *
+  * Sleep occurs immediately. This function returns when sleep has finished. 
+  *
+  * Wake up is triggered after the given time period. 
+  *
+  * @param milliSeconds the duration of the sleep
+  */
 void MicroBitPowerManager::simpleDeepSleep(uint32_t milliSeconds)
 {
     CODAL_TIMESTAMP wakeUpTime = system_timer_current_time_us() + milliSeconds * 1000;
@@ -467,13 +582,19 @@ void MicroBitPowerManager::simpleDeepSleep(uint32_t milliSeconds)
 }
 
 /**
- * Powers down the CPU nd USB interface and instructs peripherals to enter an inoperative low power state. However, all
- * program state is preserved. CPU will deepsleep until the given pin becomes active, then return to normal
- * operation.
- * 
- * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
- * simply use uBit.sleep();
- */
+  * Powers down the CPU nd USB interface and instructs peripherals to enter an inoperative low power state. However, all
+  * program state is preserved. CPU will deepsleep until the given pin becomes active, then return to normal
+  * operation.
+  * 
+  * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+  * simply use uBit.sleep();
+  *
+  * Sleep occurs immediately. This function returns when sleep has finished. 
+  *
+  * Wake up is triggered by the given pin. 
+  *
+  * @param pin the pin that ends sleep
+  */
 void MicroBitPowerManager::simpleDeepSleep(NRF52Pin &pin)
 {
     simpleDeepSleep( false /*wakeOnTime*/, 0 /*wakeUpTime*/, false /*wakeUpSources*/, &pin /*wakeUpPin*/);
@@ -488,7 +609,7 @@ void MicroBitPowerManager::simpleDeepSleep(NRF52Pin &pin)
   */
 bool MicroBitPowerManager::waitingForDeepSleep()
 {
-    return deepSleepLock.getWaitCount() != 0;
+    return fiber_scheduler_deepsleep();
 }
 
 /**
@@ -497,12 +618,34 @@ bool MicroBitPowerManager::waitingForDeepSleep()
   */
 bool MicroBitPowerManager::readyForDeepSleep()
 {
-    //if ( !scheduler_waitqueue_empty())
-    //   return false;
+    if ( !scheduler_waitqueue_empty())
+    {
+       DMESG( "readyForDeepSleep NO: waitqueue");
+       return false;
+    }
 
-    //if ( messageBus.hasBusyListener())
-    //  return;
-
+    if ( EventModel::defaultEventBus)
+    {
+        int waiting = deepSleepLock.getWaitCount(); 
+        int busy = 0;
+        int idx = 0;
+        Listener *listener = EventModel::defaultEventBus->elementAt(idx);
+        while ( listener)
+        {
+            if ( listener->flags & MESSAGE_BUS_LISTENER_BUSY)
+            {
+                busy++;
+                // TODO: if deepSleep() was called on non-listener fibers this will allow sleep when listeners are busy
+                if ( busy > waiting)
+                {
+                   DMESG( "readyForDeepSleep NO: %d busy listeners with %d fibers waiting", count, waiting);
+                   return false;
+                }
+            }
+            listener = EventModel::defaultEventBus->elementAt( ++idx);
+        }
+    }
+    DMESG( "readyForDeepSleep YES");
     return true;
 }
 
@@ -512,24 +655,73 @@ bool MicroBitPowerManager::readyForDeepSleep()
   */
 int MicroBitPowerManager::startDeepSleep()
 {
+    DMESG( "startDeepSleep");
+    fiber_scheduler_set_deepsleep( false);
+    ignore();
     int result = simpleDeepSleep();
     deepSleepLock.notifyAll();
+    DMESG( "startDeepSleep EXIT");
     return result;
 }
 
 /**
-  * Cancel previosly requested deep sleep
+  * Cancel previously requested deep sleep
   */
 void MicroBitPowerManager::cancelDeepSleep()
 {
+    DMESG( "cancelDeepSleep");
     deepSleepLock.notifyAll();
+    fiber_scheduler_set_deepsleep( false);
+    ignore();
 }
 
 ////////////////////////////////////////////////////////////////
 // deepSleep implementation
 
 /**
- * Wait on the lock;
+  * Listener
+  */
+void MicroBitPowerManager::listener(Event evt)
+{
+    DMESG( "listener");
+    if ( evt.source == DEVICE_ID_NOTIFY)
+    {
+        if ( evt.value == POWER_EVT_CANCEL_DEEPSLEEP)
+            cancelDeepSleep();
+    }
+}
+
+void MicroBitPowerManager::listen()
+{
+    DMESG( "listen");
+    if (EventModel::defaultEventBus)
+        EventModel::defaultEventBus->listen(DEVICE_ID_NOTIFY, POWER_EVT_CANCEL_DEEPSLEEP, this, &MicroBitPowerManager::listener, MESSAGE_BUS_LISTENER_IMMEDIATE);
+}
+
+void MicroBitPowerManager::ignore()
+{
+    DMESG( "ignore");
+    if (EventModel::defaultEventBus)
+        EventModel::defaultEventBus->ignore(DEVICE_ID_NOTIFY, POWER_EVT_CANCEL_DEEPSLEEP, this, &MicroBitPowerManager::listener);
+}
+
+/**
+ * Prepare for deep sleep
+ */
+void MicroBitPowerManager::prepareDeepSleep()
+{
+    DMESG( "prepareDeepSleep");
+
+    if ( !fiber_scheduler_deepsleep())
+    {
+        fiber_scheduler_set_deepsleep( true);
+        listen();
+        CodalComponent::manageAllSleep( manageSleepPrepare, NULL);
+    }
+}
+
+/**
+ * Wait on the lock
  */
 void MicroBitPowerManager::deepSleepWait()
 {
@@ -539,6 +731,9 @@ void MicroBitPowerManager::deepSleepWait()
         deepSleepLock.wait();
     }
 
+    DMESG( "deepSleepWait already waiting %d", deepSleepLock.getWaitCount());
+
+    prepareDeepSleep();
     deepSleepLock.wait();
 }
 
@@ -550,23 +745,24 @@ void MicroBitPowerManager::deepSleepTimerIRQ(uint16_t chan)
     timer_irq_channels = chan;
 }
 
+
 /**
- * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
- * program state is preserved. CPU will deepsleep until the next codal::Timer event or other wake up source event, before returning to normal
- * operation.
- * 
- * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
- * simply use uBit.sleep();
+ * Check if there are suitable wake-up sources for deep sleep
  *
  * @param wakeOnTime    Set to true to wake up at time wakeUpTime
  * @param wakeUpTime    Time to wake up.
  * @param wakeUpSources Set to true to use external wake up sources configured by e.g. pin->setAwakeOnActive(true)
  * @param wakeUpPin     Pin to wake up. Ignored if wakeUpSources == true.
+ *
+ * @return DEVICE_OK if OK to sleep 
  */
-int MicroBitPowerManager::simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime, bool wakeUpSources, NRF52Pin *wakeUpPin)
+int MicroBitPowerManager::canDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime, bool wakeUpSources, NRF52Pin *wakeUpPin)
 {
     if ( sysTimer == NULL)
+    {
+        DMESG( "deepSleep: not supported");
         return DEVICE_NOT_SUPPORTED;
+    }
 
     CODAL_TIMESTAMP timeEntry = system_timer_current_time_us();
 
@@ -599,6 +795,31 @@ int MicroBitPowerManager::simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wake
             }
         }
     }
+
+    DMESG( "deepSleep: CAN");
+    return DEVICE_OK;
+}
+
+/**
+ * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+ * program state is preserved. CPU will deepsleep until the next codal::Timer event or other wake up source event, before returning to normal
+ * operation.
+ * 
+ * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+ * simply use uBit.sleep();
+ *
+ * @param wakeOnTime    Set to true to wake up at time wakeUpTime
+ * @param wakeUpTime    Time to wake up.
+ * @param wakeUpSources Set to true to use external wake up sources configured by e.g. pin->setAwakeOnActive(true)
+ * @param wakeUpPin     Pin to wake up. Ignored if wakeUpSources == true.
+ */
+int MicroBitPowerManager::simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime, bool wakeUpSources, NRF52Pin *wakeUpPin)
+{
+    CODAL_TIMESTAMP timeEntry = system_timer_current_time_us();
+
+    int can = canDeepSleep( wakeOnTime, wakeUpTime, wakeUpSources, wakeUpPin);
+    if ( can != DEVICE_OK)
+        return can;
 
     // Configure for sleep mode
 
@@ -740,43 +961,4 @@ int MicroBitPowerManager::simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wake
     CodalComponent::manageAllSleep( wakeUpSources ? manageSleepEndWithWakeUps : manageSleepEnd, NULL);
 
     return DEVICE_OK;
-}
-
-/**
- * Update the status of the power LED
- * 
- * @param doSleep Set to true to preapre for sleep, false to prepare to reawaken.
- */
-void MicroBitPowerManager::setPowerLED(bool doSleep)
-{
-    // Instruct the KL27 interface chip to update its LED status the power LED
-    ManagedBuffer sleepCommand(4);
-    sleepCommand[0] = MICROBIT_UIPM_COMMAND_WRITE_REQUEST;
-    sleepCommand[1] = MICROBIT_UIPM_PROPERTY_KL27_POWER_LED_STATE;
-    sleepCommand[2] = 1;
-    sleepCommand[3] = doSleep ? 0 : 1;
-    writeProperty(sleepCommand);
-}
-
-/**
- * Allows a subsystem to indicate that it is actively waiting for a I2C response from the KL27
- * (e.g. the USBFlashManager). If set, the PowerManager will defer polling of the KL27 control interface
- * if an interrupt is asserted.
- *
- * @param awaiting true if a subsystem is awaiting a packet from the KL27, false otherwise.
- */
-void MicroBitPowerManager::awaitingPacket(bool awaiting)
-{
-    if (awaiting)
-        status |= MICROBIT_USB_INTERFACE_AWAITING_RESPONSE;
-    else
-        status &= ~MICROBIT_USB_INTERFACE_AWAITING_RESPONSE;
-}
-
-/**
- * Destructor.
- */
-MicroBitPowerManager::~MicroBitPowerManager()
-{
-
 }

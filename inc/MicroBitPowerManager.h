@@ -264,80 +264,6 @@ class MicroBitPowerManager : public CodalComponent
         virtual void idleCallback() override;
 
         /**
-         * Clear configured wake-up sources
-         * Note: this doesn't clear Timer events
-         */
-        void clearWakeUpSources();
-
-        /**
-         * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
-         * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
-         * operation.
-         * 
-         * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
-         * simply use uBit.sleep();
-         *
-         * Wake up is triggered at the next Timer event created with the CODAL_TIMER_EVENT_FLAGS_WAKEUP flag
-         * or by externally configured sources, for example, pin->wakeOnActive(true).
-         */
-        void deepSleep();
-
-        /**
-         * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
-         * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
-         * operation.
-         * 
-         * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
-         * simply use uBit.sleep();
-         */
-        void deepSleep(uint32_t milliSeconds);
-
-        /**
-         * Powers down the CPU nd USB interface and instructs peripherals to enter an inoperative low power state. However, all
-         * program state is preserved. CPU will deepsleep until the given pin becomes active, then return to normal
-         * operation.
-         * 
-         * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
-         * simply use uBit.sleep();
-         */
-        void deepSleep(NRF52Pin &pin);
-
-        /**
-         * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
-         * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
-         * operation.
-         * 
-         * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
-         * simply use uBit.sleep();
-         *
-         * Wake up is triggered at the next Timer event created with the CODAL_TIMER_EVENT_FLAGS_WAKEUP flag
-         * or by externally configured sources, for example, pin->wakeOnActive(true).
-         *
-         * @return DEVICE_OK if deep sleep occurred, or DEVICE_INVALID_STATE if no usable wake up source is available
-         */
-        int simpleDeepSleep();
-
-        /**
-         * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
-         * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
-         * operation.
-         * 
-         * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
-         * simply use uBit.sleep();
-         */
-        void simpleDeepSleep(uint32_t milliSeconds);
-
-        /**
-         * Powers down the CPU nd USB interface and instructs peripherals to enter an inoperative low power state. However, all
-         * program state is preserved. CPU will deepsleep until the given pin becomes active, then return to normal
-         * operation.
-         * 
-         * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
-         * simply use uBit.sleep();
-         */
-        void simpleDeepSleep(NRF52Pin &pin);
-
-        /**
          * Allows a subsystem to indicate that it is actively waiting for a I2C response from the KL27
          * (e.g. the USBFlashManager). If set, the PowerManager will defer polling of the KL27 control interface
          * if an interrupt is asserted.
@@ -352,29 +278,167 @@ class MicroBitPowerManager : public CodalComponent
         ~MicroBitPowerManager();
 
         /**
-         * Determine if deep sleep has been requested. For library use. 
+         * Clear configured wake-up sources, except Timer events
+         */
+        void clearWakeUpSources();
+
+        /**
+         * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+         * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
+         * operation.
+         * 
+         * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+         * simply use uBit.sleep();
+         *
+         * The current fiber is blocked immediately.
+         * Sleep occurs when the scheduler is next idle, unless cancelled by wake up events before then.
+         *
+         * Wake up is triggered at the next Timer event created with the CODAL_TIMER_EVENT_FLAGS_WAKEUP flag
+         * or by externally configured sources, for example, pin->wakeOnActive(true).
+         */
+        void deepSleep();
+
+        /**
+         * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+         * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
+         * operation.
+         * 
+         * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+         * simply use uBit.sleep();
+         *
+         * The current fiber is blocked immediately.
+         * Sleep occurs when the scheduler is next idle, unless cancelled by wake up events before then.
+         *
+         * Wake up is triggered at the next Timer event created with the CODAL_TIMER_EVENT_FLAGS_WAKEUP flag
+         * or by externally configured sources, for example, pin->wakeOnActive(true).
+         *
+         * This is a convenienece wrapper for deepSleep() that adds a timer event to the existing wakeup sources
+         */
+        void deepSleep(uint32_t milliSeconds);
+
+        /**
+         * Powers down the CPU nd USB interface and instructs peripherals to enter an inoperative low power state. However, all
+         * program state is preserved. CPU will deepsleep until the given pin becomes active, then return to normal
+         * operation.
+         * 
+         * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+         * simply use uBit.sleep();
+         *
+         * The current fiber is blocked immediately.
+         * Sleep occurs when the scheduler is next idle, unless cancelled by wake up events before then.
+         *
+         * Wake up is triggered at the next Timer event created with the CODAL_TIMER_EVENT_FLAGS_WAKEUP flag
+         * or by externally configured sources, for example, pin->wakeOnActive(true).
+         *
+         * This is a convenienece wrapper for deepSleep() that adds a pin to the existing wakeup sources
+         */
+        void deepSleep(NRF52Pin &pin);
+
+        /**
+         * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+         * program state is preserved. CPU will deepsleep until the next codal::Timer event or other wake up source event, before returning to normal
+         * operation.
+         *
+         * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+         * simply use uBit.sleep();
+         *
+         * The function returns immediately.
+         * Sleep occurs when the scheduler is next idle, unless cancelled by wake up events before then.
+         */
+        void deepSleepAsync();
+
+        /**
+         * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+         * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
+         * operation.
+         * 
+         * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+         * simply use uBit.sleep();
+         *
+         * Sleep occurs immediately, unless no suitable wake-up sources have been configured. 
+         * This function returns when sleep has finished.
+         *
+         * Wake up is triggered at the next Timer event created with the CODAL_TIMER_EVENT_FLAGS_WAKEUP flag
+         * or by externally configured sources, for example, pin->wakeOnActive(true).
+         *
+         * @return DEVICE_OK if deep sleep occurred, or DEVICE_INVALID_STATE if no usable wake up source is available
+         */
+        int simpleDeepSleep();
+
+        /**
+         * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+         * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
+         * operation.
+         *
+         * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+         * simply use uBit.sleep();
+         *
+         * Sleep occurs immediately, unless no suitable wake-up sources have been configured. 
+         * This function returns when sleep has finished.
+         *
+         * Wake up is triggered after the given time period. 
+         *
+         * @param milliSeconds the duration of the sleep
+         */
+        void simpleDeepSleep(uint32_t milliSeconds);
+
+        /**
+         * Powers down the CPU nd USB interface and instructs peripherals to enter an inoperative low power state. However, all
+         * program state is preserved. CPU will deepsleep until the given pin becomes active, then return to normal
+         * operation.
+         * 
+         * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+         * simply use uBit.sleep();
+         *
+         * Sleep occurs immediately, unless no suitable wake-up sources have been configured. 
+         * This function returns when sleep has finished.
+         *
+         * Wake up is triggered by the given pin. 
+         *
+         * @param pin the pin that ends sleep
+         */
+        void simpleDeepSleep(NRF52Pin &pin);
+
+        /**
+         * For library use.
+         * Determine if deep sleep has been requested.  
          * @return true if deep sleep has been requested
          */
         bool waitingForDeepSleep();
 
         /**
-         * Determine if the program is ready for deep sleep. For library use. 
+         * For library use.
+         * Determine if the program is ready for deep sleep. 
          * @return true if deep sleep should be entered now
          */
         bool readyForDeepSleep();
 
         /**
-         * Start previosly requested deep sleep. For library use. 
+         * For library use.
+         * Start previosly requested deep sleep.
          * @return DEVICE_OK if deep sleep occurred, or DEVICE_INVALID_STATE if no usable wake up source is available
          */
         int startDeepSleep();
 
         /**
-         * Cancel previosly requested deep sleep. For library use.
+         * For library use.
+         * Cancel previosly requested deep sleep.
          */
         void cancelDeepSleep();
 
         private:
+
+        /**
+          * Listener
+          */
+        void listener(Event evt);
+        void listen();
+        void ignore();
+        
+        /**
+         * Prepare for deep sleep
+         */
+        void prepareDeepSleep();
 
         /**
          * Wait on the lock;
@@ -390,6 +454,18 @@ class MicroBitPowerManager : public CodalComponent
         
         static volatile uint16_t timer_irq_channels;
         static void deepSleepTimerIRQ(uint16_t chan);
+
+        /**
+         * Check if there are suitable wake-up sources for deep sleep
+         *
+         * @param wakeOnTime    Set to true to wake up at time wakeUpTime
+         * @param wakeUpTime    Time to wake up.
+         * @param wakeUpSources Set to true to use external wake up sources configured by e.g. pin->setAwakeOnActive(true)
+         * @param wakeUpPin     Pin to wake up. Ignored if wakeUpSources == true.
+         *
+         * @return DEVICE_OK if OK to sleep 
+         */
+        int canDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime, bool wakeUpSources, NRF52Pin *wakeUpPin);
 
         /**
          * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
