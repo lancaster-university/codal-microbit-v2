@@ -638,7 +638,7 @@ bool MicroBitPowerManager::readyForDeepSleep()
                 // TODO: if deepSleep() was called on non-listener fibers this will allow sleep when listeners are busy
                 if ( busy > waiting)
                 {
-                   DMESG( "readyForDeepSleep NO: %d busy listeners with %d fibers waiting", count, waiting);
+                   DMESG( "readyForDeepSleep NO: %d busy listeners with %d fibers waiting", busy, waiting);
                    return false;
                 }
             }
