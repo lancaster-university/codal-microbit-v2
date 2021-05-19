@@ -109,7 +109,8 @@ MicroBitIO::MicroBitIO(NRF52ADC &a, TouchSensor &s) :
     buttonA.setPull(PullMode::None);
     buttonB.setPull(PullMode::None);
 
-    savedStatus = ManagedBuffer(pins);
+    savedStatus = ManagedBuffer(pins + 1);
+    savedStatus[pins] = 0;
 }
 
 #ifdef NRF_P1
@@ -127,134 +128,194 @@ MicroBitIO::MicroBitIO(NRF52ADC &a, TouchSensor &s) :
  */
 int MicroBitIO::manageSleep( manageSleepReason reason, manageSleepData *data)
 {
-    int name;
-    bool withWakeUps = reason == manageSleepBeginWithWakeUps || reason == manageSleepEndWithWakeUps;
-    uint32_t intenset;
-
     switch (reason)
     {
+        case manageSleepPrepare:
+            pinsSaveStatus();
+            pinsDetect( true, true, false);
+            break;
+
         case manageSleepBegin:
+            if ( (savedStatus[pins] & IO_SAVED_STATUS_SAVED) == 0) 
+                pinsSaveStatus();
+            pinsDetect( true, false, true);
+            break;
+
         case manageSleepBeginWithWakeUps:
-            intenset = NRF_GPIOTE->INTENSET;
-            NRF_GPIOTE->INTENCLR = NRF_GPIOTE->INTENSET;
-            // Record current state of pins, so we can return the configuration to the same state later.       
-            for (int i = 0; i < pins; i++)
-            {
-                name = pin[i].name;
-                savedStatus[i] = 0;
-
-                // Disable any interrupts associated with this GPIO pin, unless it is a wake up source
-
-                if ( pin[i].isOutput())
-                {
-#if CONFIG_ENABLED(DEEP_SLEEP_GPIO_OUTPUTS)
-                    // If this pin is in GPIO output mode, record its value and set to high impedance input.
-                    // Other components are reponsible for storing/restoring the state of higher level peripherals.
-                    savedStatus[i] |= PORT->OUT & (1 << PIN) ? IO_SAVED_STATUS_OUTPUT_HI : IO_SAVED_STATUS_OUTPUT_LO;
-                    PORT->PIN_CNF[PIN] = 0x00000002;
-#endif
-                }
-                else
-                {
-                    //TODO: check if analogue/digital?
-
-                    if ((PORT->PIN_CNF[PIN] & GPIO_PIN_CNF_SENSE_Msk) == (GPIO_PIN_CNF_SENSE_Low << GPIO_PIN_CNF_SENSE_Pos))
-                    {
-                        savedStatus[i] |= IO_SAVED_STATUS_DETECT_LOW_ENABLED;
-                    }
-                    else if ((PORT->PIN_CNF[PIN] & GPIO_PIN_CNF_SENSE_Msk) == (GPIO_PIN_CNF_SENSE_High << GPIO_PIN_CNF_SENSE_Pos))
-                    {
-                        savedStatus[i] |= IO_SAVED_STATUS_DETECT_HIGH_ENABLED;
-                    }
-                    else
-                    {
-                        if ( withWakeUps && pin[i].getWakeOnActive())
-                        {
-                            // Ensure the requested pin into digital input mode. 
-                            pin[i].getDigitalValue();
-                            // Enable an interrupt on the requested pin.
-                            pin[i].setDetect(pin[i].getPolarity() ? GPIO_PIN_CNF_SENSE_High : GPIO_PIN_CNF_SENSE_Low);
-                            PORT->LATCH = 1 << PIN; // clear any pending latch
-                        }
-                    }
-
-                    if ( !withWakeUps || !pin[i].getWakeOnActive())
-                    {
-                        pin[i].setDetect(GPIO_PIN_CNF_SENSE_Disabled);
-                    }
-                }
-            }
-            NRF_GPIOTE->EVENTS_PORT = 0;
-            NRF_GPIOTE->INTENSET = intenset;
+            if ( (savedStatus[pins] & IO_SAVED_STATUS_SAVED) == 0) 
+                pinsSaveStatus();
+            pinsDetect( true, true, true);
             break;
 
         case manageSleepEnd:
         case manageSleepEndWithWakeUps:
-            intenset = NRF_GPIOTE->INTENSET;
-            NRF_GPIOTE->INTENCLR = NRF_GPIOTE->INTENSET;
-            for (int i = 0; i < pins; i++)
-            {
-                name = pin[i].name;
-
-                if ( pin[i].isOutput())
-                {
-#if CONFIG_ENABLED(DEEP_SLEEP_GPIO_OUTPUTS)
-                    // Re-enable GPIO outputs that were placed into high impedance mode.
-                    if (savedStatus[i] & IO_SAVED_STATUS_OUTPUT_HI){
-                        PORT->OUTSET = 1 << PIN;
-                        PORT->PIN_CNF[PIN] = PORT->PIN_CNF[PIN] | 1;
-                    }
-
-                    if (savedStatus[i] & IO_SAVED_STATUS_OUTPUT_LO){
-                        PORT->OUTCLR = 1 << PIN;
-                        PORT->PIN_CNF[PIN] = PORT->PIN_CNF[PIN] | 1;
-                    }
-#endif
-                }
-                else
-                {
-                    // Re-enable any interrupts associated with this GPIO pin
-                    if (savedStatus[i] & IO_SAVED_STATUS_DETECT_LOW_ENABLED)
-                    {
-                        pin[i].setDetect(GPIO_PIN_CNF_SENSE_Low);
-                    }
-                    else if (savedStatus[i] & IO_SAVED_STATUS_DETECT_HIGH_ENABLED)
-                    {
-                        pin[i].setDetect(GPIO_PIN_CNF_SENSE_High);
-                    }
-                    else
-                    {
-                        pin[i].setDetect(GPIO_PIN_CNF_SENSE_Disabled);
-                    }
-                }
-            }
-            NRF_GPIOTE->INTENSET = intenset;
+            pinsRestoreStatus();
             break;
 
         case manageSleepCountWakeUps:
-        {
             if ( data == NULL)
                 return DEVICE_INVALID_PARAMETER;
 
             for (int i = 0; i < pins; i++)
             {
                 if ( pin[i].getWakeOnActive())
-                {
                     data->count++;
-                }
             }
             break;
-        }
+
         case manageSleepClearWakeUps:
             for (int i = 0; i < pins; i++)
             {
                 if ( pin[i].getWakeOnActive())
-                {
                     pin[i].wakeOnActive(false);
-                }
             }
             break;
     }
 
     return DEVICE_OK;
+}
+
+/**
+ * Record current state of pins, so we can return the configuration to the same state later.
+ */
+void MicroBitIO::pinsSaveStatus()
+{
+    int name;
+
+    savedStatus[pins] |= IO_SAVED_STATUS_SAVED;
+
+    for (int i = 0; i < pins; i++)
+    {
+        name = pin[i].name;
+        savedStatus[i] = 0;
+
+        if ( pin[i].isOutput())
+        {
+#if CONFIG_ENABLED(DEEP_SLEEP_GPIO_OUTPUTS)
+            // If this pin is in GPIO output mode, record its value.
+            // Other components are reponsible for storing/restoring the state of higher level peripherals.
+            savedStatus[i] |= PORT->OUT & (1 << PIN) ? IO_SAVED_STATUS_OUTPUT_HI : IO_SAVED_STATUS_OUTPUT_LO;
+#endif
+        }
+        else
+        {
+            if ((PORT->PIN_CNF[PIN] & GPIO_PIN_CNF_SENSE_Msk) == (GPIO_PIN_CNF_SENSE_Low << GPIO_PIN_CNF_SENSE_Pos))
+            {
+                savedStatus[i] |= IO_SAVED_STATUS_DETECT_LOW_ENABLED;
+            }
+            else if ((PORT->PIN_CNF[PIN] & GPIO_PIN_CNF_SENSE_Msk) == (GPIO_PIN_CNF_SENSE_High << GPIO_PIN_CNF_SENSE_Pos))
+            {
+                savedStatus[i] |= IO_SAVED_STATUS_DETECT_HIGH_ENABLED;
+            }
+        }
+    }
+}
+
+/**
+ * Restore the state of pins from the saved configuration
+ */
+void MicroBitIO::pinsRestoreStatus()
+{
+    uint32_t intenset;
+
+    savedStatus[pins] &= ~IO_SAVED_STATUS_SAVED;
+
+    intenset = NRF_GPIOTE->INTENSET;
+    NRF_GPIOTE->INTENCLR = NRF_GPIOTE->INTENSET;
+
+    for (int i = 0; i < pins; i++)
+    {
+        if ( pin[i].isOutput())
+        {
+#if CONFIG_ENABLED(DEEP_SLEEP_GPIO_OUTPUTS)
+            int name = pin[i].name;
+
+            // Re-enable GPIO outputs that were placed into high impedance mode.
+            if (savedStatus[i] & IO_SAVED_STATUS_OUTPUT_HI){
+                PORT->OUTSET = 1 << PIN;
+                PORT->PIN_CNF[PIN] = PORT->PIN_CNF[PIN] | 1;
+            }
+
+            if (savedStatus[i] & IO_SAVED_STATUS_OUTPUT_LO){
+                PORT->OUTCLR = 1 << PIN;
+                PORT->PIN_CNF[PIN] = PORT->PIN_CNF[PIN] | 1;
+            }
+#endif
+        }
+        else
+        {
+            // Re-enable any interrupts associated with this GPIO pin
+            if (savedStatus[i] & IO_SAVED_STATUS_DETECT_LOW_ENABLED)
+            {
+                pin[i].setDetect(GPIO_PIN_CNF_SENSE_Low);
+            }
+            else if (savedStatus[i] & IO_SAVED_STATUS_DETECT_HIGH_ENABLED)
+            {
+                pin[i].setDetect(GPIO_PIN_CNF_SENSE_High);
+            }
+            else
+            {
+                pin[i].setDetect(GPIO_PIN_CNF_SENSE_Disabled);
+            }
+        }
+    }
+
+    NRF_GPIOTE->INTENSET = intenset;
+}
+
+/**
+ * Set the state of pins after saving the current configuration
+ */
+void MicroBitIO::pinsDetect( bool setWakeups, bool enableWakeups, bool disableOthers)
+{
+    int name;
+    uint32_t intenset = NRF_GPIOTE->INTENSET;
+    NRF_GPIOTE->INTENCLR = NRF_GPIOTE->INTENSET;
+
+    // Record current state of pins, so we can return the configuration to the same state later.       
+    for (int i = 0; i < pins; i++)
+    {
+        name = pin[i].name;
+
+        // Disable any interrupts associated with this GPIO pin, unless it is a wake up source
+
+        if ( pin[i].isOutput())
+        {
+#if CONFIG_ENABLED(DEEP_SLEEP_GPIO_OUTPUTS)
+            // If this pin is in GPIO output mode, set to high impedance input.
+            // Other components are reponsible for storing/restoring the state of higher level peripherals.
+            if ( disableOthers)
+                PORT->PIN_CNF[PIN] = 0x00000002;
+#endif
+        }
+        else if ( pin[i].isDigital())
+        {
+            if ( pin[i].getWakeOnActive())
+            {
+                if ( setWakeups)
+                {
+                    if ( enableWakeups)
+                    {
+                        int sense = (PORT->PIN_CNF[PIN] & GPIO_PIN_CNF_SENSE_Msk) >> GPIO_PIN_CNF_SENSE_Pos;
+                        if ( sense == GPIO_PIN_CNF_SENSE_Disabled)
+                        {
+                            pin[i].setDetect(pin[i].getPolarity() ? GPIO_PIN_CNF_SENSE_High : GPIO_PIN_CNF_SENSE_Low);
+                            PORT->LATCH = 1 << PIN; // clear any pending latch
+                        }
+                    }
+                    else
+                    {
+                       pin[i].setDetect( GPIO_PIN_CNF_SENSE_Disabled);
+                    }
+                }
+            }
+            else
+            {
+               if ( disableOthers)
+                   pin[i].setDetect(GPIO_PIN_CNF_SENSE_Disabled);
+            }
+        }
+    }
+    NRF_GPIOTE->EVENTS_PORT = 0;
+    NRF_GPIOTE->INTENSET = intenset;
 }

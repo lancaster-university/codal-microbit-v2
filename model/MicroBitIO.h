@@ -350,6 +350,8 @@ typedef enum {
 #define IO_SAVED_STATUS_DETECT_LOW_ENABLED      4
 #define IO_SAVED_STATUS_DETECT_HIGH_ENABLED     8
 
+#define IO_SAVED_STATUS_SAVED                   1
+
 namespace codal
 {
     /**
@@ -357,9 +359,6 @@ namespace codal
      */
     class MicroBitIO : public CodalComponent
     {
-        private:
-            ManagedBuffer     savedStatus;
-
         public:
             // Number of pins in use.
             int               pins;
@@ -431,6 +430,24 @@ namespace codal
              * Perform functions related to deep sleep wake-up.
              */
             virtual int manageSleep( manageSleepReason reason, manageSleepData *data) override;
+
+        private:
+            ManagedBuffer     savedStatus;
+
+            /**
+             * Record current state of pins, so we can return the configuration to the same state later.
+             */
+            void pinsSaveStatus();
+
+            /**
+             * Restore the state of pins from the saved configuration
+             */
+            void pinsRestoreStatus();
+
+            /**
+             * Set the state of pins after saving the current configuration
+             */
+            void pinsDetect( bool setWakeups, bool enableWakeups, bool disableOthers);
     };
 }
 
