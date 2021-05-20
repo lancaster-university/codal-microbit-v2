@@ -49,7 +49,7 @@ CREATE_KEY_VALUE_TABLE(uipmPropertyLengths, uipmPropertyLengthData);
  * @param systemTimer the system timer.
  *
  */
-MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, uint16_t id) : i2cBus(i2c), io(ioPins), sysTimer(NULL)
+MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, uint16_t id) : i2cBus(i2c), io(ioPins), sysTimer(NULL), eventValue(0)
 {
     this->id = id;
 
@@ -57,7 +57,7 @@ MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins,
     status |= DEVICE_COMPONENT_STATUS_IDLE_TICK;
 }
 
-MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, NRFLowLevelTimer &systemTimer, uint16_t id) : i2cBus(i2c), io(ioPins), sysTimer(&systemTimer)
+MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, NRFLowLevelTimer &systemTimer, uint16_t id) : i2cBus(i2c), io(ioPins), sysTimer(&systemTimer), eventValue(0)
 {
     this->id = id;
 
@@ -424,8 +424,6 @@ void MicroBitPowerManager::clearWakeUpSources()
   */
 void MicroBitPowerManager::deepSleep()
 {
-    DMESG( "deepSleep");
-
     // If the scheduler is not running, perform a simple deep sleep.
     if (!fiber_scheduler_running())
     {
@@ -448,14 +446,15 @@ void MicroBitPowerManager::deepSleep()
   * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
   * simply use uBit.sleep();
   *
-  * Wake up is triggered at the next Timer event created with the CODAL_TIMER_EVENT_FLAGS_WAKEUP flag
-  * or by externally configured sources, for example, pin->wakeOnActive(true).
+  * The current fiber is blocked immediately.
+  * Sleep occurs when the scheduler is next idle, unless cancelled by wake up events before then.
   *
-  * This is a convenienece wrapper for deepSleep() that adds a timer event to the existing wakeup sources
+  * If deep sleep is disturbed within the requested time interval, the remainder will be awake.
   */
 void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
 {
-    DMESG( "deepSleep milliSeconds");
+    CODAL_TIMESTAMP timeEntry  = system_timer_current_time_us();
+    CODAL_TIMESTAMP wakeUpTime = timeEntry + (CODAL_TIMESTAMP) 1000 * milliSeconds;
 
     // If the scheduler is not running, perform a simple deep sleep.
     if (!fiber_scheduler_running())
@@ -464,13 +463,33 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
         return;
     }
 
-    CODAL_TIMESTAMP eventTime = system_timer_current_time_us() + (CODAL_TIMESTAMP) 1000 * milliSeconds;
-    int can = canDeepSleep( true /*wakeOnTime*/, eventTime, true /*wakeUpSources*/, NULL /*wakeUpPin*/);
-    if ( can == DEVICE_OK)
+    eventValue++;
+    int result = system_timer_event_after_us( wakeUpTime - system_timer_current_time_us(), id, eventValue, CODAL_TIMER_EVENT_FLAGS_WAKEUP);
+    if ( result == DEVICE_OK)
     {
-        system_timer_event_after( milliSeconds, id, 0, CODAL_TIMER_EVENT_FLAGS_WAKEUP);
-        deepSleepWait();
+        int can = canDeepSleep( true /*wakeOnTime*/, wakeUpTime, true /*wakeUpSources*/, NULL /*wakeUpPin*/);
+        if ( can == DEVICE_OK)
+            deepSleepWait();
     }
+
+    CODAL_TIMESTAMP awake = system_timer_current_time_us();
+
+    // Timed wake-up is usually < 20ms early here, but a small sleep lasts 60ms
+    if ( wakeUpTime > awake + 30000)
+    {
+        // If another fiber triggers deep sleep
+        // the wake-up timer is still in place
+        fiber_sleep( (wakeUpTime - awake) / 1000);
+    }
+
+    system_timer_cancel_event( id, eventValue);
+
+//#if DEVICE_DMESG_BUFFER_SIZE > 0
+//    CODAL_TIMESTAMP now = system_timer_current_time_us();
+//    int64_t sleep = now - awake;
+//    int64_t late = now - wakeUpTime;
+//    DMESG( "%u:deepSleep(%u) EXIT sleep %d late %d", (unsigned int) now, (unsigned int) milliSeconds, (int) sleep, (int) late);
+//#endif
 }
 
 /**
@@ -485,8 +504,6 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
   */
 void MicroBitPowerManager::deepSleepAsync()
 {
-    DMESG( "deepSleepAsync");
-
     // If the scheduler is not running, perform a simple deep sleep.
     if (!fiber_scheduler_running())
     {
@@ -582,7 +599,7 @@ bool MicroBitPowerManager::readyForDeepSleep()
 {
     if ( !scheduler_waitqueue_empty())
     {
-       DMESG( "readyForDeepSleep NO: waitqueue");
+       //DMESG( "readyForDeepSleep NO: waitqueue");
        return false;
     }
 
@@ -600,14 +617,13 @@ bool MicroBitPowerManager::readyForDeepSleep()
                 // TODO: if deepSleep() was called on non-listener fibers this will allow sleep when listeners are busy
                 if ( busy > waiting)
                 {
-                   DMESG( "readyForDeepSleep NO: %d busy listeners with %d fibers waiting", busy, waiting);
+                   //DMESG( "readyForDeepSleep NO: %d busy listeners with %d fibers waiting", busy, waiting);
                    return false;
                 }
             }
             listener = EventModel::defaultEventBus->elementAt( ++idx);
         }
     }
-    DMESG( "readyForDeepSleep YES");
     return true;
 }
 
@@ -617,12 +633,10 @@ bool MicroBitPowerManager::readyForDeepSleep()
   */
 int MicroBitPowerManager::startDeepSleep()
 {
-    DMESG( "startDeepSleep");
     fiber_scheduler_set_deepsleep( false);
     ignore();
     int result = simpleDeepSleep();
     deepSleepLock.notifyAll();
-    DMESG( "startDeepSleep EXIT");
     return result;
 }
 
@@ -631,7 +645,6 @@ int MicroBitPowerManager::startDeepSleep()
   */
 void MicroBitPowerManager::cancelDeepSleep()
 {
-    DMESG( "cancelDeepSleep");
     deepSleepLock.notifyAll();
     fiber_scheduler_set_deepsleep( false);
     ignore();
@@ -645,7 +658,6 @@ void MicroBitPowerManager::cancelDeepSleep()
   */
 void MicroBitPowerManager::listener(Event evt)
 {
-    DMESG( "listener");
     if ( evt.source == DEVICE_ID_NOTIFY)
     {
         if ( evt.value == POWER_EVT_CANCEL_DEEPSLEEP)
@@ -655,14 +667,12 @@ void MicroBitPowerManager::listener(Event evt)
 
 void MicroBitPowerManager::listen()
 {
-    DMESG( "listen");
     if (EventModel::defaultEventBus)
         EventModel::defaultEventBus->listen(DEVICE_ID_NOTIFY, POWER_EVT_CANCEL_DEEPSLEEP, this, &MicroBitPowerManager::listener, MESSAGE_BUS_LISTENER_IMMEDIATE);
 }
 
 void MicroBitPowerManager::ignore()
 {
-    DMESG( "ignore");
     if (EventModel::defaultEventBus)
         EventModel::defaultEventBus->ignore(DEVICE_ID_NOTIFY, POWER_EVT_CANCEL_DEEPSLEEP, this, &MicroBitPowerManager::listener);
 }
@@ -672,8 +682,6 @@ void MicroBitPowerManager::ignore()
  */
 void MicroBitPowerManager::prepareDeepSleep()
 {
-    DMESG( "prepareDeepSleep");
-
     if ( !fiber_scheduler_deepsleep())
     {
         fiber_scheduler_set_deepsleep( true);
@@ -692,8 +700,6 @@ void MicroBitPowerManager::deepSleepWait()
         // This is OK, so long as we only use notifyAll() not notify()
         deepSleepLock.wait();
     }
-
-    DMESG( "deepSleepWait already waiting %d", deepSleepLock.getWaitCount());
 
     prepareDeepSleep();
     deepSleepLock.wait();
@@ -730,7 +736,7 @@ int MicroBitPowerManager::canDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpT
 
     if ( wakeOnTime)
     {
-        if ( wakeUpTime - timeEntry < MICROBIT_POWER_MANAGER_MINIMUM_DEEP_SLEEP * 1000)
+        if ( wakeUpTime < timeEntry || wakeUpTime - timeEntry < MICROBIT_POWER_MANAGER_MINIMUM_DEEP_SLEEP * 1000)
         {
             DMESG( "deepSleep: time too short");
             return DEVICE_INVALID_STATE;
@@ -758,7 +764,6 @@ int MicroBitPowerManager::canDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpT
         }
     }
 
-    DMESG( "deepSleep: CAN");
     return DEVICE_OK;
 }
 

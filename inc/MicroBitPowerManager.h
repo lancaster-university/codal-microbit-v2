@@ -309,10 +309,7 @@ class MicroBitPowerManager : public CodalComponent
          * The current fiber is blocked immediately.
          * Sleep occurs when the scheduler is next idle, unless cancelled by wake up events before then.
          *
-         * Wake up is triggered at the next Timer event created with the CODAL_TIMER_EVENT_FLAGS_WAKEUP flag
-         * or by externally configured sources, for example, pin->wakeOnActive(true).
-         *
-         * This is a convenienece wrapper for deepSleep() that adds a timer event to the existing wakeup sources
+         * If deep sleep is disturbed within the requested time interval, the remainder will be awake.
          */
         void deepSleep(uint32_t milliSeconds);
 
@@ -436,6 +433,8 @@ class MicroBitPowerManager : public CodalComponent
         
         static volatile uint16_t timer_irq_channels;
         static void deepSleepTimerIRQ(uint16_t chan);
+
+        uint16_t eventValue;
 
         /**
          * Check if there are suitable wake-up sources for deep sleep

@@ -330,12 +330,8 @@ void MicroBit::schedulerIdle()
 #endif
         if ( power.readyForDeepSleep())
         {
-          DMESG( "%u:schedulerIdle() TRY deep sleep", (unsigned int) system_timer_current_time_us());
-          if ( power.startDeepSleep() == DEVICE_OK)
-          {
-              DMESG( "%u:schedulerIdle() EXIT deep sleep", (unsigned int) system_timer_current_time_us());
-              return;
-          }
+            if ( power.startDeepSleep() == DEVICE_OK)
+                return;
         }
     }
 
