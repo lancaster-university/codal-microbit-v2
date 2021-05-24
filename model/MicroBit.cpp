@@ -41,6 +41,7 @@ static const MatrixPoint ledMatrixPositions[5*5] =
     {4,0},{4,1},{4,2},{4,3},{4,4}
 };
 
+static const uint32_t reflash_status = 0xffffffff;
 /**
   * Constructor.
   *
@@ -160,6 +161,9 @@ int MicroBit::init()
     // On a hard reset, wait for the USB interface chip to come online.
     if(NRF_POWER->RESETREAS == 0)
         target_wait(KL27_POWER_ON_DELAY);
+
+    // Determine if we have been reprogrammed. If so, follow configured policy on erasing any persistent user data.
+    eraseUserStorage();
 
     // Bring up fiber scheduler.
     scheduler_init(messageBus);
@@ -324,6 +328,34 @@ void MicroBit::idleCallback()
     codal_dmesg_flush();
 #endif
 #endif
+}
+
+/**
+ * Determines if any persistent storage needs to be erased following the reprogramming
+ * of the micro:bit.
+ *
+ * @param forceErase Force an erase of user data, even if we have not detected a reflash event.
+ */
+void MicroBit::eraseUserStorage(bool forceErase)
+{
+    uint32_t zero = 0;
+    uint32_t reset_value;
+    NRF52FlashManager f(0, 128, 4096);
+
+    f.read(&reset_value, (uint32_t) &reflash_status, 1);
+
+    // If there is no indication of a reflash event, there's nothing to do.
+    if (!(reset_value || forceErase))
+        return;
+
+    // Clear our flag if we have been reflashed
+    if (reset_value)
+        f.write((uint32_t) &reflash_status, &zero, 1);
+
+    // Determine if our flash contains a recognised file system. If so, invalidate it.
+    DMESGF("INVALIDATING LOG");
+    log.invalidate();
+    DMESGF("DONE");
 }
 
 void microbit_dmesg_flush()

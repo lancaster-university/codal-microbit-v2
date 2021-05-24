@@ -83,22 +83,7 @@ void MicroBitLog::init()
     if (status & MICROBIT_LOG_STATUS_INITIALIZED)
         return;
 
-    // Calculate where our metadata should start, and load the data.
-    startAddress = sizeof(header) % flash.getPageSize() == 0 ? sizeof(header) : (1+(sizeof(header) / flash.getPageSize())) * flash.getPageSize();
-
-    // Ensure data strings are terminated
-    cache.read(startAddress, &metaData, sizeof(metaData));
-    metaData.dataStart[10] = 0;
-    metaData.logEnd[10] = 0;
-    metaData.version[17] = 0;
-
-    // Determine if the FS looks valid.
-    dataStart = strtoul(metaData.dataStart, NULL, 16);
-    logEnd = strtoul(metaData.logEnd, NULL, 16);
-    journalStart = startAddress + flash.getPageSize();
-
-    // Perform some basic validation checks. Load in the state of the file system if things look OK.
-    if(dataStart >= startAddress + 2*flash.getPageSize() && dataStart < logEnd && logEnd < flash.getFlashEnd() && memcmp(metaData.version, MICROBIT_LOG_VERSION, 17) == 0)
+    if (isPresent())
     {
         // We have a valid file system.
         JournalEntry j;
@@ -193,14 +178,14 @@ void MicroBitLog::init()
     }
 
     // No valid file system found. Reformat the physical medium.
-    format();        
+    clear();
 }
 
 
 /**
  * Reset all data stored in persistent storage.
  */
-void MicroBitLog::format()
+void MicroBitLog::clear(bool fullErase)
 {
     mutex.wait();
 
@@ -228,7 +213,7 @@ void MicroBitLog::format()
 
     // Erase all pages associated with the header, all meta data and the first page of data storage.
     cache.clear();
-    for (uint32_t p = flash.getFlashStart(); p <= dataStart; p += flash.getPageSize())
+    for (uint32_t p = flash.getFlashStart(); p <= (fullErase ? dataEnd : dataStart); p += flash.getPageSize())
         flash.erase(p);
 
     // Serialise and write header (if we have one)
@@ -355,6 +340,9 @@ int MicroBitLog::logData(ManagedString key, ManagedString value)
     // Perform lazy instatiation if necessary.
     init();
 
+    cleanBuffer((uint8_t *)key.toCharArray(), key.length());
+    cleanBuffer((uint8_t *)value.toCharArray(), value.length());
+
     // Add the given key/value pair into our cumulative row data. 
     bool added = false;
     for (uint32_t i=0; i<headingCount; i++)
@@ -475,6 +463,29 @@ int MicroBitLog::endRow()
 }
 
 /**
+ * Clean the given buffer of invalid LogFS symbols ("-->" and optionally ",\t\n")
+ *
+ * @param s the data to clean
+ * @param len the number of characters to clean
+ * @param removeSeperators if set to false, only "-->" symbols are erased, otherwise ",\t\n" characters are also removed.
+ */
+void MicroBitLog::cleanBuffer(uint8_t *s, int len, bool removeSeparators)
+{
+    for (int i=0; i<len; i++)
+    {
+        if (i+2 < len && s[i] == '-' && s[i+1] == '-' && s[i+2] == '>')
+        {
+            s[i] = CONFIG_MICROBIT_LOG_INVALID_CHAR_VALUE;
+            s[i+1] = CONFIG_MICROBIT_LOG_INVALID_CHAR_VALUE;
+            s[i+2] = CONFIG_MICROBIT_LOG_INVALID_CHAR_VALUE;
+        }
+
+        if (s[i] == '\t' || (removeSeparators && (s[i] == ',' || s[i] == '\n')))
+            s[i] = CONFIG_MICROBIT_LOG_INVALID_CHAR_VALUE;
+    }
+}
+
+/**
  * Inject the given row into the log as text, ignoring key/value pairs.
  * @param s the string to inject.
  */
@@ -487,8 +498,7 @@ int MicroBitLog::logString(const char *s)
     uint32_t l = strlen(s);
     uint8_t *data = (uint8_t *)s;
 
-    //DMESG("LOG_FS: Logging data");
-    //DMESG("   [LENGTH: %d] [DATA: %s]", l, s);
+    cleanBuffer(data, l, false);
 
     while (l > 0 && dataEnd < logEnd)
     {
@@ -603,6 +613,55 @@ void MicroBitLog::addHeading(ManagedString key, ManagedString value)
 
     rowData = newRowData;
     headingsChanged = true;
+}
+
+/**
+ * Marks an existing Log as invalid. The log will be cleared with the default settings the next time
+ * a user attempts to use it. If no valid log is present, this method has no effect.
+ */
+void MicroBitLog::invalidate()
+{
+    DMESGF("LOG_FS: INVALIDATING");
+    if (isPresent())
+    {
+        MicroBitLogMetaData m;
+        memclr(&m, sizeof(MicroBitLogMetaData));
+        flash.write(startAddress, (uint32_t *) &m, sizeof(MicroBitLogMetaData)/4);
+    }
+
+    status &= ~MICROBIT_LOG_STATUS_INITIALIZED; 
+}
+
+/**
+ * Determines if a MicroMitLogFS header is present.
+ *
+ * @return true if a MICROBIT_LOG_VERSION string is present at the expected location, false otherwise.
+ */
+bool MicroBitLog::isPresent()
+{
+    // Fast path if we;re already initialized.
+    if (status & MICROBIT_LOG_STATUS_INITIALIZED)
+        return true;
+
+    // Calculate where our metadata should start, and load the data.
+    startAddress = sizeof(header) % flash.getPageSize() == 0 ? sizeof(header) : (1+(sizeof(header) / flash.getPageSize())) * flash.getPageSize();
+
+    // Read the metadata area from flash memory.
+    // n.b. we do this using a direct read (rather than via the cache) to avoid preheating the cache with potentially useless data.
+    flash.read((uint32_t *)&metaData, startAddress, sizeof(metaData)/4);
+
+    // Ensure data strings are terminated
+    metaData.dataStart[10] = 0;
+    metaData.logEnd[10] = 0;
+    metaData.version[17] = 0;
+
+    // Determine if the FS looks valid.
+    dataStart = strtoul(metaData.dataStart, NULL, 16);
+    logEnd = strtoul(metaData.logEnd, NULL, 16);
+    journalStart = startAddress + flash.getPageSize();
+
+    // Perform some basic validation checks. Load in the state of the file system if things look OK.
+    return (dataStart >= startAddress + 2*flash.getPageSize() && dataStart < logEnd && logEnd < flash.getFlashEnd() && memcmp(metaData.version, MICROBIT_LOG_VERSION, 17) == 0);
 }
 
 /**

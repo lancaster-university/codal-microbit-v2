@@ -227,6 +227,13 @@ namespace codal
             //TODO: handle overflow case.
             unsigned long systemTime();
 
+            /**
+             * Determines if any persistent storage needs to be erased following the reprogramming
+             * of the micro:bit.
+             *
+             * @param forceErase Force an erase of user data, even if we have not detected a reflash event.
+             */
+            void eraseUserStorage(bool forceErase = false);
     };
 
 
