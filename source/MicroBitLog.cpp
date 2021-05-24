@@ -53,7 +53,7 @@ static void writeNum(char *buf, uint32_t n)
 /**
  * Constructor.
  */
-MicroBitLog::MicroBitLog(MicroBitUSBFlashManager &flash, int journalPages) : flash(flash), cache(flash, 256, 4)
+MicroBitLog::MicroBitLog(MicroBitUSBFlashManager &flash, int journalPages) : flash(flash), cache(flash, CONFIG_MICROBIT_LOG_CACHE_BLOCK_SIZE, 4)
 {
     this->journalPages = journalPages;
     this->status = 0;
@@ -112,6 +112,17 @@ void MicroBitLog::init()
             }
 
             journalEntryAddress += MICROBIT_LOG_JOURNAL_ENTRY_SIZE;
+        }
+
+        // Walk the page indicated by dataEnd, and increment until an unused byte (0xFF) is found.
+        uint8_t d = 0;
+        while(dataEnd < logEnd)
+        {
+            cache.read(dataEnd, &d, 1);
+            if (d == 0xFF)
+                break;
+
+            dataEnd++;
         }
 
         // Determine if we have any column headers defined
@@ -495,6 +506,7 @@ int MicroBitLog::logString(const char *s)
     
     init();
 
+    uint32_t oldDataEnd = dataEnd;
     uint32_t l = strlen(s);
     uint8_t *data = (uint8_t *)s;
 
@@ -525,10 +537,11 @@ int MicroBitLog::logString(const char *s)
         l -= lengthToWrite;
     }
 
-    // Write a new entry into the log journal if we succesfully added any data.
-    if (data != (uint8_t *)s)
+    // Write a new entry into the log journal if we crossed a cache block boundary
+    if ((dataEnd / CONFIG_MICROBIT_LOG_CACHE_BLOCK_SIZE) != (oldDataEnd / CONFIG_MICROBIT_LOG_CACHE_BLOCK_SIZE))
     {
         uint32_t oldJournalHead = journalHead;
+        oldDataEnd = dataEnd;
 
         // Record that we've moved on the journal log by one entry
         journalHead += MICROBIT_LOG_JOURNAL_ENTRY_SIZE;
@@ -551,7 +564,7 @@ int MicroBitLog::logString(const char *s)
 
         // Write journal entry
         JournalEntry je;
-        writeNum(je.length, dataEnd-dataStart);
+        writeNum(je.length, ((dataEnd-dataStart) / CONFIG_MICROBIT_LOG_CACHE_BLOCK_SIZE) * CONFIG_MICROBIT_LOG_CACHE_BLOCK_SIZE);
         cache.write(journalHead, &je, MICROBIT_LOG_JOURNAL_ENTRY_SIZE);
 
         // Invalidate the old one
