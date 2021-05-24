@@ -207,7 +207,7 @@ void MicroBitLog::clear(bool fullErase)
     journalHead = journalStart;
     dataStart = journalStart + journalPages*flash.getPageSize();
     dataEnd = dataStart;
-    logEnd = flash.getFlashEnd() - flash.getPageSize();
+    logEnd = flash.getFlashEnd() - flash.getPageSize() - sizeof(uint32_t);
     status &= ~MICROBIT_LOG_STATUS_ROW_STARTED;
     
     // Remove any cached state around column headings
