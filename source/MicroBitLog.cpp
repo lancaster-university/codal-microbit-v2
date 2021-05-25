@@ -318,6 +318,10 @@ int MicroBitLog::beginRow()
 {
     init();
 
+    // If beginRow is called during an open transaction, implicity perform an endRow before proceeding.
+    if (status & MICROBIT_LOG_STATUS_ROW_STARTED)
+        endRow();
+
     // Reset all values, ready to populate with a new row.
     for (uint32_t i=0; i<headingCount; i++)
         rowData[i].value = ManagedString();
@@ -349,11 +353,12 @@ int MicroBitLog::logData(const char *key, const char *value)
  */
 int MicroBitLog::logData(ManagedString key, ManagedString value)
 {
-    if (!(status & MICROBIT_LOG_STATUS_ROW_STARTED))
-        return DEVICE_INVALID_STATE;
-
     // Perform lazy instatiation if necessary.
     init();
+
+    // If logData is called before explicitly beginning a row, do so implicitly.
+    if (!(status & MICROBIT_LOG_STATUS_ROW_STARTED))
+        beginRow();
 
     cleanBuffer((uint8_t *)key.toCharArray(), key.length());
     cleanBuffer((uint8_t *)value.toCharArray(), value.length());
