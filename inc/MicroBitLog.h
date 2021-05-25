@@ -213,11 +213,18 @@ namespace codal
         ~MicroBitLog();
 
         /**
-         * Determines if a MicroMitLogFS header is present.
+         * Determines if a MicroBitLogFS header is present.
          *
          * @return true if a MICROBIT_LOG_VERSION string is present at the expected location, false otherwise.
          */
         bool isPresent();
+
+        /**
+         * Determines if this log is full
+         *
+         * @return true if the log is full, false otherwise.
+         */
+        bool isFull();
 
         /**
          * Clears the current log, including any previously defined keys.

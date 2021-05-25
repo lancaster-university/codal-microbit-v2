@@ -479,6 +479,10 @@ int MicroBitLog::endRow()
         logString(row);
 
     status &= ~MICROBIT_LOG_STATUS_ROW_STARTED;
+
+    if (status & MICROBIT_LOG_STATUS_FULL)
+        return DEVICE_NO_RESOURCES;
+
     return DEVICE_OK;
 }
 
@@ -699,6 +703,16 @@ bool MicroBitLog::isPresent()
 
     // Perform some basic validation checks. Load in the state of the file system if things look OK.
     return (dataStart >= startAddress + 2*flash.getPageSize() && dataStart < logEnd && logEnd < flash.getFlashEnd() && memcmp(metaData.version, MICROBIT_LOG_VERSION, 17) == 0);
+}
+
+/**
+ * Determines if this log is full
+ *
+ * @return true if the log is full, false otherwise.
+ */
+bool MicroBitLog::isFull()
+{
+    return (status & MICROBIT_LOG_STATUS_FULL);
 }
 
 /**
