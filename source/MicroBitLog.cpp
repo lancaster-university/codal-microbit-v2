@@ -208,7 +208,7 @@ void MicroBitLog::clear(bool fullErase)
     dataStart = journalStart + journalPages*flash.getPageSize();
     dataEnd = dataStart;
     logEnd = flash.getFlashEnd() - flash.getPageSize() - sizeof(uint32_t);
-    status &= ~MICROBIT_LOG_STATUS_ROW_STARTED;
+    status = 0;
     
     // Remove any cached state around column headings
     headingsChanged = false;
@@ -221,6 +221,10 @@ void MicroBitLog::clear(bool fullErase)
         free(rowData);
         rowData = NULL;
     }
+
+    // Erase block associated with the FULL indicator. We don't perform a pag eerase here to reduce flash wear.
+    uint32_t zero = 0x00000000;
+    flash.write(logEnd, &zero, 1);
 
     // Erase all pages associated with the header, all meta data and the first page of data storage.
     cache.clear();
@@ -510,9 +514,21 @@ int MicroBitLog::logString(const char *s)
     uint32_t l = strlen(s);
     uint8_t *data = (uint8_t *)s;
 
+    // If we can't write a whole line of data, then treat the log as full.
+    if (l > logEnd - dataEnd)
+    {
+        if (!(status & MICROBIT_LOG_STATUS_FULL))
+        {
+            cache.write(logEnd+1, "FUL", 3);
+            status |= MICROBIT_LOG_STATUS_FULL;
+        }
+        mutex.notify();
+        return DEVICE_NO_RESOURCES;
+    }
+
     cleanBuffer(data, l, false);
 
-    while (l > 0 && dataEnd < logEnd)
+    while (l > 0)
     {
         uint32_t spaceOnPage = flash.getPageSize() - (dataEnd % flash.getPageSize());
         //DMESG("SPACE_ON_PAGE: %d", spaceOnPage);
@@ -639,7 +655,10 @@ void MicroBitLog::invalidate()
     {
         MicroBitLogMetaData m;
         memclr(&m, sizeof(MicroBitLogMetaData));
+
+        // Erase the LogFS metadata and trailing FULL indicator.
         flash.write(startAddress, (uint32_t *) &m, sizeof(MicroBitLogMetaData)/4);
+        flash.write(logEnd, (uint32_t *) &m, 1);
     }
 
     status &= ~MICROBIT_LOG_STATUS_INITIALIZED; 
