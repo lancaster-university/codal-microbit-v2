@@ -99,6 +99,13 @@ DEALINGS IN THE SOFTWARE.
 // Power on delay time (in milliseconds) applied after a hard power-on reset only.
 #define KL27_POWER_ON_DELAY                    1000
 
+// Defines default behaviour of any stored user data when the micro:bit is reflashed.
+// 0: No action is taken
+// 1: Data is invalidated (any may be hard erased, as per policy of the respective file system used)
+#ifndef CONFIG_MICROBIT_ERASE_USER_DATA_ON_REFLASH
+#define CONFIG_MICROBIT_ERASE_USER_DATA_ON_REFLASH    1
+#endif
+
 /**
  * Class definition for a MicroBit device.
  *

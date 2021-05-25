@@ -353,9 +353,9 @@ void MicroBit::eraseUserStorage(bool forceErase)
         f.write((uint32_t) &reflash_status, &zero, 1);
 
     // Determine if our flash contains a recognised file system. If so, invalidate it.
-    DMESGF("INVALIDATING LOG");
+#if (CONFIG_MICROBIT_ERASE_USER_DATA_ON_REFLASH == 1)
     log.invalidate();
-    DMESGF("DONE");
+#endif
 }
 
 void microbit_dmesg_flush()

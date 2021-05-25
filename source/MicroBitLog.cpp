@@ -677,9 +677,12 @@ void MicroBitLog::addHeading(ManagedString key, ManagedString value)
  */
 void MicroBitLog::invalidate()
 {
-    DMESGF("LOG_FS: INVALIDATING");
     if (isPresent())
     {
+
+#if (CONFIG_MICROBIT_LOG_FULL_ERASE_BY_DEFAULT)
+        clear();
+#endif
         MicroBitLogMetaData m;
         memclr(&m, sizeof(MicroBitLogMetaData));
 
