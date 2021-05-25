@@ -228,7 +228,7 @@ void MicroBitLog::clear(bool fullErase)
 
     // Erase all pages associated with the header, all meta data and the first page of data storage.
     cache.clear();
-    for (uint32_t p = flash.getFlashStart(); p <= (fullErase ? dataEnd : dataStart); p += flash.getPageSize())
+    for (uint32_t p = flash.getFlashStart(); p <= (fullErase ? logEnd : dataStart); p += flash.getPageSize())
         flash.erase(p);
 
     // Serialise and write header (if we have one)
@@ -360,8 +360,14 @@ int MicroBitLog::logData(ManagedString key, ManagedString value)
     if (!(status & MICROBIT_LOG_STATUS_ROW_STARTED))
         beginRow();
 
-    cleanBuffer((uint8_t *)key.toCharArray(), key.length());
-    cleanBuffer((uint8_t *)value.toCharArray(), value.length());
+    ManagedString k = cleanBuffer(key.toCharArray(), key.length());
+    ManagedString v = cleanBuffer(value.toCharArray(), value.length());
+
+    if (k.length())
+        key = k;
+
+    if (v.length())
+        value = v;
 
     // Add the given key/value pair into our cumulative row data. 
     bool added = false;
@@ -492,21 +498,31 @@ int MicroBitLog::endRow()
  * @param s the data to clean
  * @param len the number of characters to clean
  * @param removeSeperators if set to false, only "-->" symbols are erased, otherwise ",\t\n" characters are also removed.
+ * @return a cleaned version of the string supplied, if any changes are necessary. Otherwise, an empty string is returned.
  */
-void MicroBitLog::cleanBuffer(uint8_t *s, int len, bool removeSeparators)
+ManagedString MicroBitLog::cleanBuffer(const char *s, int len, bool removeSeparators)
 {
+    ManagedString out;
+
     for (int i=0; i<len; i++)
     {
         if (i+2 < len && s[i] == '-' && s[i+1] == '-' && s[i+2] == '>')
         {
-            s[i] = CONFIG_MICROBIT_LOG_INVALID_CHAR_VALUE;
-            s[i+1] = CONFIG_MICROBIT_LOG_INVALID_CHAR_VALUE;
-            s[i+2] = CONFIG_MICROBIT_LOG_INVALID_CHAR_VALUE;
+            if (out.length() == 0)
+                out = ManagedString(s, len);
+            *(char *)(out.toCharArray()+i) = CONFIG_MICROBIT_LOG_INVALID_CHAR_VALUE;
+            *(char *)(out.toCharArray()+i+1) = CONFIG_MICROBIT_LOG_INVALID_CHAR_VALUE;
+            *(char *)(out.toCharArray()+i+2) = CONFIG_MICROBIT_LOG_INVALID_CHAR_VALUE;
         }
 
         if (s[i] == '\t' || (removeSeparators && (s[i] == ',' || s[i] == '\n')))
-            s[i] = CONFIG_MICROBIT_LOG_INVALID_CHAR_VALUE;
+        {
+            if (out.length() == 0)
+                out = ManagedString(s, len);
+            *(char *)(out.toCharArray()+i) = CONFIG_MICROBIT_LOG_INVALID_CHAR_VALUE;
+        }
     }
+    return out;
 }
 
 /**
@@ -521,7 +537,7 @@ int MicroBitLog::logString(const char *s)
 
     uint32_t oldDataEnd = dataEnd;
     uint32_t l = strlen(s);
-    uint8_t *data = (uint8_t *)s;
+    const char *data = s;
 
     // If we can't write a whole line of data, then treat the log as full.
     if (l > logEnd - dataEnd)
@@ -535,7 +551,9 @@ int MicroBitLog::logString(const char *s)
         return DEVICE_NO_RESOURCES;
     }
 
-    cleanBuffer(data, l, false);
+    ManagedString cleaned = cleanBuffer(data, l, false);
+    if (cleaned.length())
+        data = cleaned.toCharArray();
 
     while (l > 0)
     {
