@@ -329,6 +329,21 @@ class MicroBitPowerManager : public CodalComponent
         void deepSleepAsync();
 
         /**
+         * If deep sleep has been requested the current fibre will be blocked immediately.
+         *
+         * Sleep occurs when the scheduler is next idle, unless cancelled by wake up events before then.
+         *
+         * Wake up is triggered at the next Timer event created with the CODAL_TIMER_EVENT_FLAGS_WAKEUP flag
+         * or by externally configured sources, for example, pin->wakeOnActive(true).
+         */
+        void deepSleepYield();
+
+        /**
+         * Mark the current fibre as suitable to allow deep sleep whenever it blocks.
+         */
+        void deepSleepYieldAsync( bool yield);
+
+        /**
          * For library use.
          * Determine if deep sleep has been requested.  
          * @return true if deep sleep has been requested

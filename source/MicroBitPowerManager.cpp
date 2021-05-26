@@ -524,6 +524,31 @@ void MicroBitPowerManager::deepSleepAsync()
         prepareDeepSleep();
 }
 
+/**
+  * If deep sleep has been requested the current fibre will be blocked immediately.
+  *
+  * Sleep occurs when the scheduler is next idle, unless cancelled by wake up events before then.
+  *
+  * Wake up is triggered at the next Timer event created with the CODAL_TIMER_EVENT_FLAGS_WAKEUP flag
+  * or by externally configured sources, for example, pin->wakeOnActive(true).
+  */
+void MicroBitPowerManager::deepSleepYield()
+{
+    if (!fiber_scheduler_running())
+        return;
+
+    if ( fiber_scheduler_get_deepsleep_pending())
+        deepSleepWait();
+}
+
+/**
+  * Mark the current fibre as suitable to allow deep sleep whenever it blocks.
+  */
+void MicroBitPowerManager::deepSleepYieldAsync( bool yield)
+{
+    fiber_set_deepsleep_yield( yield);
+}
+
 ////////////////////////////////////////////////////////////////
 // deepSleep control
 
@@ -533,7 +558,7 @@ void MicroBitPowerManager::deepSleepAsync()
   */
 bool MicroBitPowerManager::waitingForDeepSleep()
 {
-    return fiber_scheduler_deepsleep();
+    return fiber_scheduler_get_deepsleep_pending();
 }
 
 /**
@@ -542,34 +567,7 @@ bool MicroBitPowerManager::waitingForDeepSleep()
   */
 bool MicroBitPowerManager::readyForDeepSleep()
 {
-    if ( !scheduler_waitqueue_empty())
-    {
-       //DMESG( "readyForDeepSleep NO: waitqueue");
-       return false;
-    }
-
-    if ( EventModel::defaultEventBus)
-    {
-        int waiting = deepSleepLock.getWaitCount(); 
-        int busy = 0;
-        int idx = 0;
-        Listener *listener = EventModel::defaultEventBus->elementAt(idx);
-        while ( listener)
-        {
-            if ( listener->flags & MESSAGE_BUS_LISTENER_BUSY)
-            {
-                busy++;
-                // TODO: if deepSleep() was called on non-listener fibers this will allow sleep when listeners are busy
-                if ( busy > waiting)
-                {
-                   //DMESG( "readyForDeepSleep NO: %d busy listeners with %d fibers waiting", busy, waiting);
-                   return false;
-                }
-            }
-            listener = EventModel::defaultEventBus->elementAt( ++idx);
-        }
-    }
-    return true;
+    return fiber_scheduler_deepsleep_ready();
 }
 
 /**
@@ -578,7 +576,7 @@ bool MicroBitPowerManager::readyForDeepSleep()
   */
 int MicroBitPowerManager::startDeepSleep()
 {
-    fiber_scheduler_set_deepsleep( false);
+    fiber_scheduler_set_deepsleep_pending( false);
     ignore();
     int result = simpleDeepSleep();
     deepSleepLock.notifyAll();
@@ -591,7 +589,7 @@ int MicroBitPowerManager::startDeepSleep()
 void MicroBitPowerManager::cancelDeepSleep()
 {
     deepSleepLock.notifyAll();
-    fiber_scheduler_set_deepsleep( false);
+    fiber_scheduler_set_deepsleep_pending( false);
     ignore();
 }
 
@@ -627,9 +625,9 @@ void MicroBitPowerManager::ignore()
  */
 void MicroBitPowerManager::prepareDeepSleep()
 {
-    if ( !fiber_scheduler_deepsleep())
+    if ( !fiber_scheduler_get_deepsleep_pending())
     {
-        fiber_scheduler_set_deepsleep( true);
+        fiber_scheduler_set_deepsleep_pending( true);
         listen();
         CodalComponent::manageAllSleep( manageSleepPrepare, NULL);
     }
