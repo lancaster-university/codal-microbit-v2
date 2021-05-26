@@ -542,11 +542,13 @@ void MicroBitPowerManager::deepSleepYield()
 }
 
 /**
-  * Mark the current fibre as suitable to allow deep sleep whenever it blocks.
+  * Mark the current fibre as suitable to allow deep sleep when it blocks.
+  * @param flags a combination of DEVICE_FIBER_FLAG_DEEPSLEEP_WAIT | DEVICE_FIBER_FLAG_DEEPSLEEP_SLEEP
+  * or DEVICE_FIBER_FLAG_DEEPSLEEP_ANY or zero 
   */
-void MicroBitPowerManager::deepSleepYieldAsync( bool yield)
+void MicroBitPowerManager::deepSleepYieldAsync( int flags)
 {
-    fiber_set_deepsleep_yield( yield);
+    fiber_set_deepsleep_yield( flags);
 }
 
 ////////////////////////////////////////////////////////////////
