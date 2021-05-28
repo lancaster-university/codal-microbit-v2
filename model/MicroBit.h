@@ -70,6 +70,7 @@ DEALINGS IN THE SOFTWARE.
 #include "LevelDetector.h"
 #include "LevelDetectorSPL.h"
 #include "PulseIn.h"
+#include "neopixel.h"
 
 #include "MESEvents.h"
 
