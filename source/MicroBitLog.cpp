@@ -548,6 +548,7 @@ int MicroBitLog::logString(const char *s)
             status |= MICROBIT_LOG_STATUS_FULL;
         }
         mutex.notify();
+        Event(MICROBIT_ID_LOG, MICROBIT_LOG_EVT_LOG_FULL);
         return DEVICE_NO_RESOURCES;
     }
 
@@ -622,8 +623,9 @@ int MicroBitLog::logString(const char *s)
     // Return NO_RESOURCES if we ran out of FLASH space.
     if (l == 0)
         return DEVICE_OK;
-    else
-        return DEVICE_NO_RESOURCES;
+
+    Event(MICROBIT_ID_LOG, MICROBIT_LOG_EVT_LOG_FULL);
+    return DEVICE_NO_RESOURCES;
 }
 
 /**
