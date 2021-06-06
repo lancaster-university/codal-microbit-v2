@@ -1,0 +1,42 @@
+/**
+ * Data logging support file for "online" mode.
+ * This content is managed in https://github.com/lancaster-university/codal-microbit-v2/
+ */
+body {
+  font-family: "Helvetica Now", Helvetica, Arial, sans-serif;
+}
+a {
+  color: rgba(108, 75, 193, 1);
+}
+button {
+  border-radius: 23px;
+  min-height: 46px;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+  padding: 0 16px;
+
+  /* Secondary buttons */
+  color: #000;
+  border: 2px solid #000;
+  background: #fff;
+}
+/* Primary button */
+button:first-of-type {
+  border: none;
+  background: #000;
+  color: #fff;
+}
+tr:hover {
+  background-color: #ddd;
+}
+header {
+  padding-top: 1em;
+  padding-bottom: 0.5em;
+}
+footer {
+  margin-top: 1em;
+}
+tr:nth-child(even) {
+  background: #f2f2f2;
+}
