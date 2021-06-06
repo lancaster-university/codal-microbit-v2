@@ -119,6 +119,8 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_LOG_STATUS_ROW_STARTED     0x0002
 #define MICROBIT_LOG_STATUS_FULL            0x0004
 
+#define MICROBIT_LOG_EVT_LOG_FULL           1
+
 namespace codal
 {
     struct MicroBitLogMetaData

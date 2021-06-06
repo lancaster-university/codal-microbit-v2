@@ -1,7 +1,146 @@
-<html id = "htm"><head><style>html,body{margin:1em;font-family:sans-serif}table{border-collapse:collapse;width:50%}td,th{border:1px solid #ddd;padding:8px}tr:nth-child(even){background-color:#f2f2f2}tr:hover{background-color:#ddd}th{padding-top:12px;padding-bottom:12px;text-align:left;background-color:#4caf50;color:white}</style></head>
-<H2>micro:bit Data Log</H2><body id = "bod"><button onclick='download_file("microbit.csv")' id="dload">Download</button><button onclick='navigator.clipboard.writeText(logData.replace(/\,/gi, "\t"))'>Copy</button><button onclick='alert("Please unplug your micro:bit, then plug it back in and re-open this file")'>Update Data</button><button onclick='alert("Your code on the micro:bit must clear the log using the \"format drive\" command")'>Clear log</button><table id="data-view"></table>
-<script>var logData;function start(){let stuff=document.getElementById("htm");let raw=(stuff.outerHTML).split("<!--FS_START")[2];if(raw.substring(0,17)=="UBIT_LOG_FS_V_001"){let l=0;let logEnd=parseInt(raw.substring(18,29),16);let dataStart=parseInt(raw.substring(29,40),16)-2048;let journal=1024;let dataEnd=0;while(journal!=dataStart){let r=parseInt(raw.substring(journal,journal+8),16);if(r==r){dataEnd=dataStart+r;break}journal+=8}logData=raw.substring(dataStart,dataEnd)}let table=document.getElementById("data-view");let rows=logData.split("\n");for(let i=0;i<rows.length;i++){let cells=rows[i].split(",");if(cells.length>1){let row=table.insertRow(-1);for(let j=0;j<cells.length;j++){let cell=row.insertCell(-1);cell.innerHTML=cells[j]}}}}function download_file(a){var b=new Blob([logData],{type:"text/plain"});var c=document.createElement('a');c.download=a;c.href=window.URL.createObjectURL(b);c.click();c.remove()}var stuff=document.getElementById("bod");stuff.onload=start;</script>
-                                                                                                   
-                                                                                                   
-        
-<!--FS_START
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      /* Horizontal stack */
+      .bb {
+        display: flex;
+      }
+      .bb > * + * {
+        margin-left: 10px;
+      }
+      /* Button further styled by dl.css using p and s classes */
+      button {
+        display: block;
+      }
+      body {
+        font-family: sans-serif;
+        margin: 1em;
+      }
+      table {
+        border-collapse: collapse;
+        width: 50%;
+        margin-top: 1em;
+        text-align: right;
+      }
+      tr:first-child {
+        font-weight: bold;
+      }
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        min-width: 8ch;
+      }
+      iframe {
+        display: none;
+      }
+    </style>
+    <link rel="stylesheet" href="https://microbit.org/dl/1/dl.css" />
+    <script>
+      // These help significantly to save bytes.
+      let w = window;
+      let d = document;
+      let l = w.location;
+      let n = null;
+      let csv = "";
+      let tag = document.createElement.bind(document);
+      // Allow external JS to override these actions if we managed to load it.
+      // This script block is first so external JS can override individual functions.
+      w.dl = {
+        download: function () {
+          let a = tag("a");
+          a.download = "microbit.csv";
+          a.href = URL.createObjectURL(new Blob([csv], { type: "text/plain" }));
+          a.click();
+          a.remove();
+        },
+        copy: function () {
+          navigator.clipboard.writeText(csv.replace(/\,/g, "\t"));
+        },
+        update: alert.bind(
+          n,
+          "Unplug your micro:bit, then plug it back in and wait"
+        ),
+        clear: alert.bind(
+          n,
+          "The log is cleared when you reflash your micro:bit"
+        ),
+        load: function () {
+          // Find the CSV text in the file system
+          let p = d.querySelector("#w");
+          let raw = d.documentElement.outerHTML.split("FS_START")[2];
+          // See MicroBitLog.h/cpp for the format.
+          if (/^UBIT_LOG_FS_V_001/.test(raw)) {
+            let dataStart = parseInt(raw.substr(29, 10), 16) - 2048;
+            let dataSize = 0;
+            while (raw.charCodeAt(dataStart + dataSize) != 0xfffd) {
+              dataSize++;
+            }
+            csv = raw.substr(dataStart, dataSize);
+
+            // Hash the content and reload if it changes using an iframe to check for a different hash
+            let hash = 0;
+            for (let i = 0; i < raw.length; ++i) {
+              hash = 31 * hash + raw.charCodeAt(i);
+              hash |= 0;
+            }
+            let other = l.href.split("?")[1];
+            if (other !== undefined) {
+              // We're the iframe. Check the hash from the URL and request the parent reload if it differs.
+              if (other != hash) {
+                parent.postMessage("diff", "*");
+              }
+            } else {
+              // We're the parent so add content.
+
+              // Full log indicator
+              // We also plan to add a "Log 65% full" indicator here in online mode.
+              let logEnd = parseInt(raw.substr(18, 10), 16);
+              if (raw.substr(logEnd - 2048 + 1, 3) === "FUL") {
+                p.appendChild(tag("p")).innerText = "LOG FULL";
+              }
+
+              let table = p.appendChild(tag("table"));
+              csv.split("\n").forEach(function (r) {
+                let tr = table.insertRow();
+                r &&
+                  r.split(",").forEach(function (c) {
+                    tr.insertCell().innerText = c;
+                  });
+              });
+
+              // Wait for reload messages and continually reload our iframe.
+              w.onmessage = function (e) {
+                if (e.data == "diff") {
+                  // MAYBE: Skip this if the tab is not visible.
+                  l.reload();
+                }
+              };
+              // We assume that 5s is long enough to load a file from disk.
+              // We can't afford the bytes to have onload/onerror handlers.
+              let iframe;
+              setInterval(function () {
+                iframe && iframe.remove();
+                iframe = p.appendChild(tag("iframe"));
+                iframe.src = l.href + "?" + hash;
+              }, 5_000);
+            }
+          }
+        },
+      };
+    </script>
+    <script src="https://microbit.org/dl/1/dl.js"></script>
+    <title>micro:bit data log</title>
+  </head>
+  <body onload="dl.load()">
+    <div id="w">
+      <h1>micro:bit data log</h1>
+      <div class="bb">
+        <button onclick="dl.download()">Download</button>
+        <button onclick="dl.copy()">Copy</button>
+        <button onclick="dl.update()">Update data&mldr;</button>
+        <button onclick="dl.clear()">Clear log&mldr;</button>
+      </div>
+    </div>
+  </body>
+</html>
