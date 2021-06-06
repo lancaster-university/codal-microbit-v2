@@ -32,7 +32,7 @@ DEALINGS IN THE SOFTWARE.
 #if CONFIG_ENABLED(DEVICE_BLE)
 
 #include "MicroBitPartialFlashingService.h"
-#include "MicroBitDevice.h"
+#include "MicroBit.h"
 
 #include "nrf_sdm.h"
 #include "nrf_dfu_types.h"
@@ -414,6 +414,10 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
       // the micro:bit
 
       storage.remove("flashIncomplete");
+
+      // Clear any persistent data that the user may have stored
+      if (microbit_device_instance)
+        ((MicroBit *)microbit_device_instance)->eraseUserStorage(true);
 
       microbit_reset();
       break;

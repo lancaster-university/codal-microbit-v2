@@ -1,0 +1,15 @@
+{
+  "name": "codal-microbit-v2-logfs",
+  "version": "0.1.0",
+  "description": "Build tooling for HTML resource",
+  "main": "index.js",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node build.js test"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "html-minifier": "^4.0.0"
+  }
+}

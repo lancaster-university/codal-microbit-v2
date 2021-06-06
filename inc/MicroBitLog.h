@@ -97,7 +97,19 @@ DEALINGS IN THE SOFTWARE.
 #include "ManagedString.h"
 
 #ifndef CONFIG_MICROBIT_LOG_JOURNAL_PAGES
-#define CONFIG_MICROBIT_LOG_JOURNAL_PAGES   2
+#define CONFIG_MICROBIT_LOG_JOURNAL_PAGES       4
+#endif
+
+#ifndef CONFIG_MICROBIT_LOG_CACHE_BLOCK_SIZE
+#define CONFIG_MICROBIT_LOG_CACHE_BLOCK_SIZE    256
+#endif
+
+#ifndef CONFIG_MICROBIT_LOG_FULL_ERASE_BY_DEFAULT
+#define CONFIG_MICROBIT_LOG_FULL_ERASE_BY_DEFAULT    false
+#endif
+
+#ifndef CONFIG_MICROBIT_LOG_INVALID_CHAR_VALUE
+#define CONFIG_MICROBIT_LOG_INVALID_CHAR_VALUE  '_'
 #endif
 
 #define MICROBIT_LOG_VERSION                "UBIT_LOG_FS_V_001\n"           // MUST be 18 characters.
@@ -105,6 +117,9 @@ DEALINGS IN THE SOFTWARE.
 
 #define MICROBIT_LOG_STATUS_INITIALIZED     0x0001
 #define MICROBIT_LOG_STATUS_ROW_STARTED     0x0002
+#define MICROBIT_LOG_STATUS_FULL            0x0004
+
+#define MICROBIT_LOG_EVT_LOG_FULL           1
 
 namespace codal
 {
@@ -203,9 +218,36 @@ namespace codal
         ~MicroBitLog();
 
         /**
-         * Reset all data stored in persistent storage.
+         * Determines if a MicroBitLogFS header is present.
+         *
+         * @return true if a MICROBIT_LOG_VERSION string is present at the expected location, false otherwise.
          */
-        void format();
+        bool isPresent();
+
+        /**
+         * Determines if this log is full
+         *
+         * @return true if the log is full, false otherwise.
+         */
+        bool isFull();
+
+        /**
+         * Clears the current log, including any previously defined keys.
+         * By default a "fast format" approach is typically adopted, where only the FS metadata is reset. Any previously
+         * stored user data will not be visible, but could still be extracted using forensic techniques.
+         * A full erase option is is supported that elimates all trace of user data, but this is not recommended
+         * unless strictly necessary as it will take a long time to complete and promotes excessive flash wear.
+         *
+         * @param fullErase if set to true, all data will be hard erased from storage.
+         */
+        void clear(bool fullErase = CONFIG_MICROBIT_LOG_FULL_ERASE_BY_DEFAULT);
+
+        /**
+         * Marks an existing Log as invalid. The log will be cleared with the default settings the next time
+         * a user attempts to use it. If no valid log is present, this method has no effect.
+         */
+        void invalidate();
+
 
         /**
          * Determines the format of the timestamp data to be added (if any).
@@ -274,6 +316,15 @@ namespace codal
          */
         void addHeading(ManagedString key, ManagedString value = ManagedString::EmptyString);
 
+        /**
+         * Clean the given buffer of invalid LogFS symbols ("-->" and optionally ",\t\n")
+         *
+         * @param s the data to clean
+         * @param len the number of characters to clean
+         * @param removeSeperators if set to false, only "-->" symbols are erased, otherwise ",\t\n" characters are also removed.
+         * @return a cleaned version of the string supplied, if any changes are necessary. Otherwise, an empty string is returned.
+         */
+        ManagedString cleanBuffer(const char *s, int len, bool removeSeparators = true);
     };
 }
 
