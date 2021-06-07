@@ -45,7 +45,7 @@ namespace codal
         private:
         bool speakerEnabled;                    // State of on board speaker
         bool pinEnabled;                        // State of on auxiliary output pin
-        NRF52Pin &pin;                          // Auxiliary pin to route audio to
+        NRF52Pin *pin;                          // Auxiliary pin to route audio to
         NRF52Pin &speaker;                      // Primary pin for onboard speaker
         SoundEmojiSynthesizer synth;            // Synthesizer used bfor SoundExpressions
         MixerChannel *soundExpressionChannel;   // Mixer channel associated with sound expression audio
