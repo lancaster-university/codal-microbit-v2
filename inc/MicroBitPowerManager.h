@@ -159,6 +159,7 @@ class MicroBitPowerManager : public CodalComponent
         MicroBitIO              &io;                                // Pins used by this device
         NRFLowLevelTimer        *sysTimer;                          // The system timer. 
         FiberLock               deepSleepLock;
+        int                     powerDownDisableCount;
 
         /**
          * Constructor.
@@ -291,7 +292,7 @@ class MicroBitPowerManager : public CodalComponent
          * simply use uBit.sleep();
          *
          * The current fiber is blocked immediately.
-         * Sleep occurs when the scheduler is next idle, unless cancelled by wake up events before then.
+         * Power down occurs when the scheduler is next idle, unless cancelled by wake up events before then.
          *
          * Wake up is triggered at the next Timer event created with the CODAL_TIMER_EVENT_FLAGS_WAKEUP flag
          * or by externally configured sources, for example, pin->wakeOnActive(true).
@@ -307,7 +308,7 @@ class MicroBitPowerManager : public CodalComponent
          * simply use uBit.sleep();
          *
          * The current fiber is blocked immediately.
-         * Sleep occurs when the scheduler is next idle, unless cancelled by wake up events before then.
+         * Power down occurs when the scheduler is next idle, unless cancelled by wake up events before then.
          *
          * If deep sleep is disturbed within the requested time interval, the remainder will be awake.
          *
@@ -324,43 +325,26 @@ class MicroBitPowerManager : public CodalComponent
          * simply use uBit.sleep();
          *
          * The function returns immediately.
-         * Sleep occurs when the scheduler is next idle, unless cancelled by wake up events before then.
+         * Power down occurs when the scheduler is next idle, unless cancelled by wake up events before then.
          */
         void deepSleepAsync();
 
         /**
-         * Enable deepSleep for the current fibre when it blocks in fiber_wait.
+         * Enable power down during deepSleep
          * The default is enabled.
          */
-        void deepSleepEnableInWait();
+        void powerDownEnable();
 
         /**
-         * Disable deepSleep for the current fibre when it blocks in fiber_wait.
+         * Disable power down during deepSleep
          * The default is enabled.
         */
-        void deepSleepDisableInWait();
+        void powerDownDisable();
 
         /**
-         * Enable deepSleep for the current fibre when it blocks in fiber_sleep.
-         * The default is enabled.
-         */
-        void deepSleepEnableInSleep();
-
-        /**
-         * Disable deepSleep for the current fibre when it blocks in fiber_sleep.
-         * The default is enabled.
-         */
-        void deepSleepDisableInSleep();
-
-        /**
-          * Determine if deep sleep is enabled for the current fibre if it blocks in fiber_wait.
+          * Determine if power down during deepSleep is enabled
         */
-        bool deepSleepIsEnabledInWait();
-
-        /**
-          * Determine if deep sleep is enabled for the current fibre if it blocks in fiber_sleep.
-          */
-        bool deepSleepIsEnabledInSleep();
+        bool powerDownIsEnabled();
 
         /**
          * For library use.

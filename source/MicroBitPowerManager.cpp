@@ -49,7 +49,12 @@ CREATE_KEY_VALUE_TABLE(uipmPropertyLengths, uipmPropertyLengthData);
  * @param systemTimer the system timer.
  *
  */
-MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, uint16_t id) : i2cBus(i2c), io(ioPins), sysTimer(NULL), eventValue(0)
+MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, uint16_t id) :
+    i2cBus(i2c), 
+    io(ioPins),
+    sysTimer(NULL), 
+    powerDownDisableCount(0),
+    eventValue(0)
 {
     this->id = id;
 
@@ -57,7 +62,12 @@ MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins,
     status |= DEVICE_COMPONENT_STATUS_IDLE_TICK;
 }
 
-MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, NRFLowLevelTimer &systemTimer, uint16_t id) : i2cBus(i2c), io(ioPins), sysTimer(&systemTimer), eventValue(0)
+MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, NRFLowLevelTimer &systemTimer, uint16_t id) :
+    i2cBus(i2c),
+    io(ioPins),
+    sysTimer(&systemTimer), 
+    powerDownDisableCount(0),
+    eventValue(0)
 {
     this->id = id;
 
@@ -481,22 +491,17 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
         {
             // If another fiber triggers deep sleep
             // the wake-up timer is still in place
-            // Ensure we don't block deepSleep
-            int flags = fiber_get_deepsleep_block();
-            fiber_set_deepsleep_block( 0);
             fiber_sleep( (wakeUpTime - awake) / 1000);
-            fiber_set_deepsleep_block( flags);
         }
 
         system_timer_cancel_event( id, eventValue);
     }
     else
     {
-        // Block deepSleep
-        int flags = fiber_get_deepsleep_block();
-        fiber_set_deepsleep_block( DEVICE_FIBER_FLAG_NO_DEEPSLEEP_ALL);
+        // Block power down
+        powerDownDisable();
         fiber_sleep( milliSeconds);
-        fiber_set_deepsleep_block( flags);
+        powerDownEnable();
     }
 }
 
@@ -528,55 +533,29 @@ void MicroBitPowerManager::deepSleepAsync()
 
 
 /**
-  * Enable deepSleep for the current fibre if it blocks in fiber_wait.
+  * Enable power down during deepSleep
   * The default is enabled.
   */
-void MicroBitPowerManager::deepSleepEnableInWait()
+void MicroBitPowerManager::powerDownEnable()
 {
-    fiber_set_deepsleep_block( fiber_get_deepsleep_block() & ~DEVICE_FIBER_FLAG_NO_DEEPSLEEP_WAIT);
+    powerDownDisableCount--;
 }
 
 /**
-  * Disable deepSleep for the current fibre if it blocks in fiber_wait.
+  * Disable power down during deepSleep
   * The default is enabled.
 */
-void MicroBitPowerManager::deepSleepDisableInWait()
+void MicroBitPowerManager::powerDownDisable()
 {
-    fiber_set_deepsleep_block( fiber_get_deepsleep_block() | DEVICE_FIBER_FLAG_NO_DEEPSLEEP_WAIT);
+    powerDownDisableCount++;
 }
 
 /**
-  * Enable deepSleep for the current fibre if it blocks in fiber_sleep.
-  * The default is enabled.
-  */
-void MicroBitPowerManager::deepSleepEnableInSleep()
-{
-    fiber_set_deepsleep_block( fiber_get_deepsleep_block() & ~DEVICE_FIBER_FLAG_NO_DEEPSLEEP_SLEEP);
-}
-
-/**
-  * Disable deepSleep for the current fibre if it blocks in fiber_sleep.
-  * The default is enabled.
-  */
-void MicroBitPowerManager::deepSleepDisableInSleep()
-{
-    fiber_set_deepsleep_block( fiber_get_deepsleep_block() | DEVICE_FIBER_FLAG_NO_DEEPSLEEP_SLEEP);
-}
-
-/**
-  * Determine if deep sleep is enabled for the current fibre if it blocks in fiber_wait.
+  * Determine if power down during deepSleep is enabled
 */
-bool MicroBitPowerManager::deepSleepIsEnabledInWait()
+bool MicroBitPowerManager::powerDownIsEnabled()
 {
-    return ( fiber_get_deepsleep_block() & DEVICE_FIBER_FLAG_NO_DEEPSLEEP_WAIT) == 0;
-}
-
-/**
-  * Determine if deep sleep is enabled for the current fibre if it blocks in fiber_sleep.
-  */
-bool MicroBitPowerManager::deepSleepIsEnabledInSleep()
-{
-    return ( fiber_get_deepsleep_block() & DEVICE_FIBER_FLAG_NO_DEEPSLEEP_SLEEP) == 0;
+    return powerDownDisableCount <= 0;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -597,7 +576,7 @@ bool MicroBitPowerManager::waitingForDeepSleep()
   */
 bool MicroBitPowerManager::readyForDeepSleep()
 {
-    return fiber_scheduler_deepsleep_ready();
+    return powerDownIsEnabled();
 }
 
 /**
