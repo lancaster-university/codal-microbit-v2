@@ -481,7 +481,11 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
         {
             // If another fiber triggers deep sleep
             // the wake-up timer is still in place
+            // Override yield flags, so we don't block deepSleep
+            int flags = fiber_get_deepsleep_yield();
+            deepSleepYieldAsync();
             fiber_sleep( (wakeUpTime - awake) / 1000);
+            deepSleepYieldAsync(flags);
         }
 
         system_timer_cancel_event( id, eventValue);
