@@ -329,21 +329,38 @@ class MicroBitPowerManager : public CodalComponent
         void deepSleepAsync();
 
         /**
-         * If deep sleep has been requested the current fibre will be blocked immediately.
-         *
-         * Sleep occurs when the scheduler is next idle, unless cancelled by wake up events before then.
-         *
-         * Wake up is triggered at the next Timer event created with the CODAL_TIMER_EVENT_FLAGS_WAKEUP flag
-         * or by externally configured sources, for example, pin->wakeOnActive(true).
+         * Enable deepSleep for the current fibre when it blocks in fiber_wait.
+         * The default is enabled.
          */
-        void deepSleepYield();
+        void deepSleepEnableInWait();
 
         /**
-         * Mark the current fibre as suitable to allow deep sleep when it blocks.
-         * @param flags a combination of DEVICE_FIBER_FLAG_DEEPSLEEP_WAIT | DEVICE_FIBER_FLAG_DEEPSLEEP_SLEEP
-         * or DEVICE_FIBER_FLAG_DEEPSLEEP_ANY or zero 
+         * Disable deepSleep for the current fibre when it blocks in fiber_wait.
+         * The default is enabled.
+        */
+        void deepSleepDisableInWait();
+
+        /**
+         * Enable deepSleep for the current fibre when it blocks in fiber_sleep.
+         * The default is enabled.
          */
-        void deepSleepYieldAsync( int flags = DEVICE_FIBER_FLAG_DEEPSLEEP_ANY);
+        void deepSleepEnableInSleep();
+
+        /**
+         * Disable deepSleep for the current fibre when it blocks in fiber_sleep.
+         * The default is enabled.
+         */
+        void deepSleepDisableInSleep();
+
+        /**
+          * Determine if deep sleep is enabled for the current fibre if it blocks in fiber_wait.
+        */
+        bool deepSleepIsEnabledInWait();
+
+        /**
+          * Determine if deep sleep is enabled for the current fibre if it blocks in fiber_sleep.
+          */
+        bool deepSleepIsEnabledInSleep();
 
         /**
          * For library use.

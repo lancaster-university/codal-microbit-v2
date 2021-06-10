@@ -481,18 +481,22 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
         {
             // If another fiber triggers deep sleep
             // the wake-up timer is still in place
-            // Override yield flags, so we don't block deepSleep
-            int flags = fiber_get_deepsleep_yield();
-            deepSleepYieldAsync();
+            // Ensure we don't block deepSleep
+            int flags = fiber_get_deepsleep_block();
+            fiber_set_deepsleep_block( 0);
             fiber_sleep( (wakeUpTime - awake) / 1000);
-            deepSleepYieldAsync(flags);
+            fiber_set_deepsleep_block( flags);
         }
 
         system_timer_cancel_event( id, eventValue);
     }
     else
     {
+        // Block deepSleep
+        int flags = fiber_get_deepsleep_block();
+        fiber_set_deepsleep_block( DEVICE_FIBER_FLAG_NO_DEEPSLEEP_ALL);
         fiber_sleep( milliSeconds);
+        fiber_set_deepsleep_block( flags);
     }
 }
 
@@ -522,31 +526,57 @@ void MicroBitPowerManager::deepSleepAsync()
         prepareDeepSleep();
 }
 
-/**
-  * If deep sleep has been requested the current fibre will be blocked immediately.
-  *
-  * Sleep occurs when the scheduler is next idle, unless cancelled by wake up events before then.
-  *
-  * Wake up is triggered at the next Timer event created with the CODAL_TIMER_EVENT_FLAGS_WAKEUP flag
-  * or by externally configured sources, for example, pin->wakeOnActive(true).
-  */
-void MicroBitPowerManager::deepSleepYield()
-{
-    if (!fiber_scheduler_running())
-        return;
 
-    if ( fiber_scheduler_get_deepsleep_pending())
-        deepSleepWait();
+/**
+  * Enable deepSleep for the current fibre if it blocks in fiber_wait.
+  * The default is enabled.
+  */
+void MicroBitPowerManager::deepSleepEnableInWait()
+{
+    fiber_set_deepsleep_block( fiber_get_deepsleep_block() & ~DEVICE_FIBER_FLAG_NO_DEEPSLEEP_WAIT);
 }
 
 /**
-  * Mark the current fibre as suitable to allow deep sleep when it blocks.
-  * @param flags a combination of DEVICE_FIBER_FLAG_DEEPSLEEP_WAIT | DEVICE_FIBER_FLAG_DEEPSLEEP_SLEEP
-  * or DEVICE_FIBER_FLAG_DEEPSLEEP_ANY or zero 
-  */
-void MicroBitPowerManager::deepSleepYieldAsync( int flags)
+  * Disable deepSleep for the current fibre if it blocks in fiber_wait.
+  * The default is enabled.
+*/
+void MicroBitPowerManager::deepSleepDisableInWait()
 {
-    fiber_set_deepsleep_yield( flags);
+    fiber_set_deepsleep_block( fiber_get_deepsleep_block() | DEVICE_FIBER_FLAG_NO_DEEPSLEEP_WAIT);
+}
+
+/**
+  * Enable deepSleep for the current fibre if it blocks in fiber_sleep.
+  * The default is enabled.
+  */
+void MicroBitPowerManager::deepSleepEnableInSleep()
+{
+    fiber_set_deepsleep_block( fiber_get_deepsleep_block() & ~DEVICE_FIBER_FLAG_NO_DEEPSLEEP_SLEEP);
+}
+
+/**
+  * Disable deepSleep for the current fibre if it blocks in fiber_sleep.
+  * The default is enabled.
+  */
+void MicroBitPowerManager::deepSleepDisableInSleep()
+{
+    fiber_set_deepsleep_block( fiber_get_deepsleep_block() & ~DEVICE_FIBER_FLAG_NO_DEEPSLEEP_SLEEP);
+}
+
+/**
+  * Determine if deep sleep is enabled for the current fibre if it blocks in fiber_wait.
+*/
+bool MicroBitPowerManager::deepSleepIsEnabledInWait()
+{
+    return ( fiber_get_deepsleep_block() & DEVICE_FIBER_FLAG_NO_DEEPSLEEP_WAIT) == 0;
+}
+
+/**
+  * Determine if deep sleep is enabled for the current fibre if it blocks in fiber_sleep.
+  */
+bool MicroBitPowerManager::deepSleepIsEnabledInSleep()
+{
+    return ( fiber_get_deepsleep_block() & DEVICE_FIBER_FLAG_NO_DEEPSLEEP_SLEEP) == 0;
 }
 
 ////////////////////////////////////////////////////////////////
