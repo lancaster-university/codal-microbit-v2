@@ -560,7 +560,7 @@ void MicroBitPowerManager::deepSleepEnableInSleep()
   */
 void MicroBitPowerManager::deepSleepDisableInSleep()
 {
-    fiber_set_deepsleep_block( fiber_get_deepsleep_block() & ~DEVICE_FIBER_FLAG_NO_DEEPSLEEP_SLEEP);
+    fiber_set_deepsleep_block( fiber_get_deepsleep_block() | DEVICE_FIBER_FLAG_NO_DEEPSLEEP_SLEEP);
 }
 
 /**
