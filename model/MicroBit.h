@@ -64,11 +64,13 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitPowerManager.h"
 #include "NRF52FlashManager.h"
 #include "MicroBitUSBFlashManager.h"
+#include "MicroBitLog.h"
 #include "MicroBitAudio.h"
 #include "StreamNormalizer.h"
 #include "LevelDetector.h"
 #include "LevelDetectorSPL.h"
 #include "PulseIn.h"
+#include "neopixel.h"
 
 #include "MESEvents.h"
 
@@ -94,6 +96,16 @@ DEALINGS IN THE SOFTWARE.
 
 // Flag that we have integrate face-touch as a feature
 #define MICROBIT_UBIT_FACE_TOUCH_BUTTON       1
+
+// Power on delay time (in milliseconds) applied after a hard power-on reset only.
+#define KL27_POWER_ON_DELAY                    1000
+
+// Defines default behaviour of any stored user data when the micro:bit is reflashed.
+// 0: No action is taken
+// 1: Data is invalidated (any may be hard erased, as per policy of the respective file system used)
+#ifndef CONFIG_MICROBIT_ERASE_USER_DATA_ON_REFLASH
+#define CONFIG_MICROBIT_ERASE_USER_DATA_ON_REFLASH    1
+#endif
 
 /**
  * Class definition for a MicroBit device.
@@ -161,6 +173,7 @@ namespace codal
             Compass&                    compass;
             MicroBitCompassCalibrator   compassCalibrator;
             MicroBitAudio               audio;
+            MicroBitLog                 log;
 
 
             /**
@@ -222,6 +235,13 @@ namespace codal
             //TODO: handle overflow case.
             unsigned long systemTime();
 
+            /**
+             * Determines if any persistent storage needs to be erased following the reprogramming
+             * of the micro:bit.
+             *
+             * @param forceErase Force an erase of user data, even if we have not detected a reflash event.
+             */
+            void eraseUserStorage(bool forceErase = false);
     };
 
 

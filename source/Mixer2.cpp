@@ -47,6 +47,7 @@ Mixer2::Mixer2(float sampleRate, int sampleRange, int format)
     this->volume = 1.0f;
     this->orMask = 0;
     this->silenceLevel = 0.0f;
+    this->silent = true;
 
     // Attempt to configure output format to requested value
     this->setFormat(format);
@@ -191,6 +192,12 @@ ManagedBuffer Mixer2::pull()
     {
         for (int i=0; i<CONFIG_MIXER_BUFFER_SIZE/bytesPerSampleOut; i++)
             mix[i] = silenceLevel;
+    }
+
+    if ( this->silent != silence)
+    {
+        this->silent = silence;
+        Event(DEVICE_ID_MIXER, this->silent ? DEVICE_MIXER_EVT_SILENCE : DEVICE_MIXER_EVT_SOUND);
     }
 
     // Scale and pack to our output format
@@ -361,4 +368,14 @@ int Mixer2::setSilenceLevel(float level)
 
     silenceLevel = level - 512.0f;
     return DEVICE_OK;
+}
+
+/**
+  * Determines if the mixer is silent
+  * @return true if the mixer is silent 
+  */
+
+bool Mixer2::isSilent()
+{
+  return silent;
 }

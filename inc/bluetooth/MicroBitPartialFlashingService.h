@@ -88,6 +88,12 @@ class MicroBitPartialFlashingService : public MicroBitBLEService
       */
     void flashData(uint8_t *data);
 
+
+    /**
+     * Set bootloader to no validation
+     */
+    void noValidation();
+
     // Ensure packets are in order
     uint8_t packetCount = 0;
     uint8_t blockPacketCount = 0;

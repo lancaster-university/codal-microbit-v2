@@ -367,6 +367,8 @@ typedef codal::BitmapFont MicroBitFont;
 #define MICROBIT_ID_MBED_TIMEOUT                                42
 #define MICROBIT_ID_MBED_TICKER                                 43
 
+#define MICROBIT_ID_LOG                                         44
+
 #define MICROBIT_MAXIMUM_HEAPS                                  DEVICE_MAXIMUM_HEAPS
 #define MICROBIT_NESTED_HEAP_SIZE                               0
 #define MICROBIT_PANIC_HEAP_FULL                                DEVICE_PANIC_HEAP_FULL

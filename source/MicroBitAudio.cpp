@@ -42,7 +42,7 @@ MicroBitAudio* MicroBitAudio::instance = NULL;
 MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NRF52Pin &microphone, NRF52Pin &runmic):
     speakerEnabled(true),
     pinEnabled(true),
-    pin(pin), 
+    pin(&pin), 
     speaker(speaker),
     synth(DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_0),
     soundExpressionChannel(NULL),
@@ -200,7 +200,7 @@ void MicroBitAudio::setPin(NRF52Pin &pin)
     bool wasEnabled = pinEnabled;
 
     setPinEnabled(false);
-    this->pin = pin;
+    this->pin = &pin;
     setPinEnabled(wasEnabled);
 }
 
@@ -215,9 +215,9 @@ void MicroBitAudio::setPinEnabled(bool on)
     if (pwm)
     {
         if (on)
-            pwm->connectPin(pin, 0);
+            pwm->connectPin(*pin, 0);
         else
-            pwm->disconnectPin(pin);
+            pwm->disconnectPin(*pin);
     }
 }
 
@@ -240,6 +240,6 @@ MicroBitAudio::~MicroBitAudio()
     if (pwm)
     {
         pwm->disconnectPin(speaker);
-        pwm->disconnectPin(pin);
+        pwm->disconnectPin(*pin);
     }
 }

@@ -38,7 +38,9 @@ DEALINGS IN THE SOFTWARE.
 
 #include "sdk_config.h"
 #include "app_util.h"
+#include "crc32.h"
 
+#define MAX_STRING_LENGTH 100
 
 /**
   * Default constructor.
@@ -47,23 +49,7 @@ DEALINGS IN THE SOFTWARE.
   */
 MicroBitMemoryMap::MicroBitMemoryMap()
 {
-      // Assumes PXT Built program
-      // SD
-      pushRegion(Region(0x00, 0x00, MICROBIT_APP_REGION_START, 0x00));  // Soft Device
-
-      // DAL
-      pushRegion(Region(0x01, MICROBIT_APP_REGION_START, FLASH_PROGRAM_END, 0x00)); // micro:bit Device Abstractation Layer
-
-      // PXT
-      // PXT will be on the start of the next page
-      // padding to next page = PAGE_SIZE - (FLASH_PROGRAM_END % PAGE_SIZE);
-      // Assume 
-      pushRegion(Region(0x02,
-                        FLASH_PROGRAM_END + (PAGE_SIZE - ( FLASH_PROGRAM_END % PAGE_SIZE)),
-                        MICROBIT_APP_REGION_END,
-                        0x00)); // micro:bit PXT
-
-      // Find Hashes if PXT Built Program
+      // Find Hashes
       findHashes();
 
 }
@@ -124,19 +110,108 @@ void MicroBitMemoryMap::findHashes()
     uint32_t rem = add % PAGE_SIZE;
     if ( rem) add += PAGE_SIZE - rem;
     int step = PAGE_SIZE / sizeof( uint32_t);
-    uint32_t *nxt = ( uint32_t *)DEFAULT_SCRATCH_PAGE;
+    uint32_t *nxt = ( uint32_t *)MICROBIT_DEFAULT_SCRATCH_PAGE;
+    
+
     for( uint32_t *magicAddress = (uint32_t *) add; magicAddress < nxt; magicAddress += step)
     {
-        // Check for 16 bytes of Magic
-        if (   magicAddress[0] == 0x923b8e70
+        // Avoid storing magic in flash
+        volatile uint32_t m1 = 0x6DC4718F;
+
+        // Check for PXT magic
+        if (   magicAddress[0] == ~m1
             && magicAddress[1] == 0x41A815C6
             && magicAddress[2] == 0xC96698C4
             && magicAddress[3] == 0x9751EE75) {
+
+                // SD
+                pushRegion(Region(REGION_SD, 0x00, MICROBIT_APP_REGION_START, 0x00));  // Soft Device
+
+                // DAL
+                pushRegion(Region(REGION_CODAL, MICROBIT_APP_REGION_START, FLASH_PROGRAM_END, 0x00)); // micro:bit Device Abstractation Layer
+
+                // PXT
+                // PXT will be on the start of the next page
+                // padding to next page = PAGE_SIZE - (FLASH_PROGRAM_END % PAGE_SIZE);
+                // Assume 
+                pushRegion(Region(REGION_MAKECODE,
+                        FLASH_PROGRAM_END + (PAGE_SIZE - ( FLASH_PROGRAM_END % PAGE_SIZE)),
+                        MICROBIT_APP_REGION_END,
+                        0x00)); // micro:bit PXT
+
+
                 // If the magic has been found use the hashes follow
                 memcpy( memoryMapStore.memoryMap[1].hash, magicAddress + 4, 8);
                 memcpy( memoryMapStore.memoryMap[2].hash, magicAddress + 6, 8);
                 memoryMapStore.memoryMap[2].startAddress = (uint32_t)magicAddress;
                 return;
         }
+       
+        // Check for Python magic 
+        if (   *(magicAddress - (sizeof(magicAddress))) == 0x597F30FE
+            && *(magicAddress - (sizeof(magicAddress)/4))   == 0xC1B1D79D
+           ) {
+            // Found uPy Magic
+            DMESG("FOUND UPY_MAGIC");
+            uint8_t nRegions = (*(magicAddress - (sizeof(magicAddress)/2)));
+            
+            // Iterate through regions
+            for(int i = 0; i < nRegions; i++) {
+               processRecord(magicAddress - ((2 + i) * sizeof(magicAddress))); 
+            }
+
+        }
     }
+}
+
+
+/*
+ * Function to process record from uPy build
+ * @return MICROBIT_OK success, MICROBIT_INVALID_PARAM if the region.id is too great
+ */
+int MicroBitMemoryMap::processRecord(uint32_t *address) {
+
+    MicroPythonLayoutRecord record;
+    memcpy(&record, address, sizeof(record));
+   
+    // Check for valid record id  
+    if(record.id > NUMBER_OF_REGIONS) return MICROBIT_INVALID_PARAMETER;
+
+    uint32_t start = record.reg_page * MICROBIT_CODEPAGESIZE;
+    uint32_t length = record.reg_len;
+
+    DMESG("Python Layout Record. Record: %d Hash Type: %d Start: %x Length: %x Hash: %x %x"
+                    , record.id
+                    , record.ht
+                    , start
+                    , length
+                    , record.hash_data[1]
+                    , record.hash_data[0]);
+
+    uint32_t hash[2]; 
+    if(record.ht == HASH_TYPE_POINTER) {
+        // Points to a string
+        // Take string and generate 8 byte hash
+        uint8_t * string = (uint8_t *) record.hash_data[0];
+        int n   = 0;
+        while(n < MAX_STRING_LENGTH && *(string + n) != '\0') {
+            n++;
+        }
+
+        hash[0] = crc32_compute(string, n, NULL);
+        hash[1] = 0;
+    
+        DMESG("Hash from version string: %x", hash[0]);
+    } else {
+        memcpy(&hash, record.hash_data, 8);
+    }
+    
+    // Copy to memory map
+    uint8_t index = record.id - 1;
+    memcpy(memoryMapStore.memoryMap[index].hash, &hash, 8);
+    memoryMapStore.memoryMap[index].regionId = record.id;
+    memoryMapStore.memoryMap[index].startAddress = (uint32_t)start;
+    memoryMapStore.memoryMap[index].endAddress = (uint32_t)(start + length);
+    
+    return MICROBIT_OK;
 }
