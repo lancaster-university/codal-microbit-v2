@@ -66,7 +66,8 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
 
     //Initilise stream normalizer
     if (processor == NULL)
-        processor = new StreamNormalizer(mic->output, 1.0f, true, DATASTREAM_FORMAT_UNKNOWN, 10);
+        //0.2f in preperation for recording, 8 bit for frequency recogntion
+        processor = new StreamNormalizer(mic->output, 0.2f, true, DATASTREAM_FORMAT_8BIT_SIGNED, 10);
 
     //Initilise stream splitter
     if (splitter == NULL)
