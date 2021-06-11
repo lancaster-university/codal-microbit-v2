@@ -54,6 +54,7 @@ MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins,
     io(ioPins),
     sysTimer(NULL), 
     powerDownDisableCount(0),
+    powerUpTime(0),
     eventValue(0)
 {
     this->id = id;
@@ -67,6 +68,7 @@ MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins,
     io(ioPins),
     sysTimer(&systemTimer), 
     powerDownDisableCount(0),
+    powerUpTime(0),
     eventValue(0)
 {
     this->id = id;
@@ -576,6 +578,9 @@ bool MicroBitPowerManager::waitingForDeepSleep()
   */
 bool MicroBitPowerManager::readyForDeepSleep()
 {
+    if ( system_timer_current_time() - powerUpTime < MICROBIT_POWER_MANAGER_MINIMUM_POWERUP)
+        return false;
+
     return powerDownIsEnabled();
 }
 
@@ -870,6 +875,8 @@ int MicroBitPowerManager::simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wake
     // Configure for running mode.
     setPowerLED(false /*doSleep*/);
     CodalComponent::manageAllSleep( wakeUpSources ? manageSleepEndWithWakeUps : manageSleepEnd, NULL);
+
+    powerUpTime = system_timer_current_time();
 
     //DMESGF( "deepSleep end");
 

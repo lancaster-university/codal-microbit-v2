@@ -144,6 +144,13 @@ typedef struct {
 #define MICROBIT_POWER_MANAGER_MINIMUM_DEEP_SLEEP  100
 #endif
 
+//
+// Minimum time between power up and power down (milliseconds)
+//
+#ifndef MICROBIT_POWER_MANAGER_MINIMUM_POWERUP
+#define MICROBIT_POWER_MANAGER_MINIMUM_POWERUP  500
+#endif
+
 /**
  * Class definition for MicroBitPowerManager.
  */
@@ -158,8 +165,6 @@ class MicroBitPowerManager : public CodalComponent
         MicroBitI2C             &i2cBus;                            // The I2C bus to use to communicate with USB interface chip
         MicroBitIO              &io;                                // Pins used by this device
         NRFLowLevelTimer        *sysTimer;                          // The system timer. 
-        FiberLock               deepSleepLock;
-        int                     powerDownDisableCount;
 
         /**
          * Constructor.
@@ -402,7 +407,10 @@ class MicroBitPowerManager : public CodalComponent
         static volatile uint16_t timer_irq_channels;
         static void deepSleepTimerIRQ(uint16_t chan);
 
-        uint16_t eventValue;
+        FiberLock               deepSleepLock;
+        int                     powerDownDisableCount;
+        CODAL_TIMESTAMP         powerUpTime;
+        uint16_t                eventValue;
 
         /**
          * Check if there are suitable wake-up sources for deep sleep
