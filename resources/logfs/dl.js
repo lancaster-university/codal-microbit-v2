@@ -22,10 +22,9 @@
       copy: function () {
         base.copy();
         let button = window.event.currentTarget;
-        let original = button.innerText;
         button.innerText = "Copied";
         setTimeout(function () {
-          button.innerText = original;
+          button.innerText = "Copy";
         }, 1_000);
       },
       load: function () {
