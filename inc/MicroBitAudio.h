@@ -45,6 +45,7 @@ namespace codal
         public:
         static MicroBitAudio    *instance;      // Primary instance of MicroBitAudio, on demand activated.
         Mixer2                  mixer;          // Multi channel audio mixer
+        NRF52ADCChannel *mic;                   // Microphone ADC Channel from uBit.IO
         StreamNormalizer        *processor;     // Stream Normaliser instance
         StreamSplitter          *splitter;      // Stream Splitter instance
         LevelDetector           *level;         // Level Detector instance
@@ -59,7 +60,6 @@ namespace codal
         MixerChannel *soundExpressionChannel;   // Mixer channel associated with sound expression audio
         NRF52PWM *pwm;                          // PWM driver used for sound generation (mixer output)
         NRF52ADC &adc;                          // ADC from MicroBitConstructor
-        NRF52ADCChannel *mic;                   // Microphone ADC Channel from uBit.IO
         NRF52Pin &microphone;                   // Microphone pin passed from MicroBit constructor
         NRF52Pin &runmic;                       // Runmic pin passed from MicroBit constructor
 
@@ -97,6 +97,11 @@ namespace codal
           * Dectivate Mic
           */
         void deactivateMic();
+
+        /**
+          * Dectivate level detector SPL
+          */
+        void deactivateLevelSPL();
 
         /**
          * post-constructor initialisation method

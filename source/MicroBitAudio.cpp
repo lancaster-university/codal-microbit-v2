@@ -116,6 +116,13 @@ void MicroBitAudio::deactivateMic(){
 }
 
 /**
+ * Dectivate Mic and Input Channel
+ */
+void MicroBitAudio::deactivateLevelSPL(){
+    levelSPL->disable();
+}
+
+/**
  * post-constructor initialisation method
  */
 int MicroBitAudio::enable()
