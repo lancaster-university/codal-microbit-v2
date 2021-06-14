@@ -449,12 +449,12 @@ void MicroBitPowerManager::deepSleep()
   *
   * If deep sleep is disturbed within the requested time interval, the remainder will be awake.
   *
-  * @param milliSeconds The period of time to sleep, in milliseconds (minimum MICROBIT_POWER_MANAGER_MINIMUM_DEEP_SLEEP).
+  * @param milliSeconds The period of time to sleep, in milliseconds (minimum CONFIG_MINIMUM_DEEP_SLEEP_TIME).
   */
 void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
 {
-    if ( milliSeconds < MICROBIT_POWER_MANAGER_MINIMUM_DEEP_SLEEP)
-        milliSeconds = MICROBIT_POWER_MANAGER_MINIMUM_DEEP_SLEEP;
+    if ( milliSeconds < CONFIG_MINIMUM_DEEP_SLEEP_TIME)
+        milliSeconds = CONFIG_MINIMUM_DEEP_SLEEP_TIME;
 
     CODAL_TIMESTAMP timeEntry  = system_timer_current_time_us();
     CODAL_TIMESTAMP wakeUpTime = timeEntry + (CODAL_TIMESTAMP) 1000 * milliSeconds;
@@ -564,7 +564,7 @@ bool MicroBitPowerManager::waitingForDeepSleep()
   */
 bool MicroBitPowerManager::readyForDeepSleep()
 {
-    if ( system_timer_current_time() - powerUpTime < MICROBIT_POWER_MANAGER_MINIMUM_POWERUP)
+    if ( system_timer_current_time() - powerUpTime < CONFIG_MINIMUM_POWER_ON_TIME)
         return false;
 
     return powerDownIsEnabled();
@@ -678,7 +678,7 @@ int MicroBitPowerManager::canDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpT
 
     if ( wakeOnTime)
     {
-        if ( wakeUpTime < timeEntry || wakeUpTime - timeEntry < MICROBIT_POWER_MANAGER_MINIMUM_DEEP_SLEEP * 1000)
+        if ( wakeUpTime < timeEntry || wakeUpTime - timeEntry < CONFIG_MINIMUM_DEEP_SLEEP_TIME * 1000)
         {
             return DEVICE_INVALID_STATE;
         }

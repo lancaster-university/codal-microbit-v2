@@ -140,8 +140,8 @@ typedef struct {
 //
 // Minimum deep sleep time (milliseconds)
 //
-#ifndef MICROBIT_POWER_MANAGER_MINIMUM_DEEP_SLEEP
-#define MICROBIT_POWER_MANAGER_MINIMUM_DEEP_SLEEP  100
+#ifndef CONFIG_MINIMUM_DEEP_SLEEP_TIME
+#define CONFIG_MINIMUM_DEEP_SLEEP_TIME  100
 #endif
 
 //
@@ -315,7 +315,7 @@ class MicroBitPowerManager : public CodalComponent
          *
          * If deep sleep is disturbed within the requested time interval, the remainder will be awake.
          *
-         * @param milliSeconds The period of time to sleep, in milliseconds (minimum MICROBIT_POWER_MANAGER_MINIMUM_DEEP_SLEEP).
+         * @param milliSeconds The period of time to sleep, in milliseconds (minimum CONFIG_MINIMUM_DEEP_SLEEP_TIME).
          */
         void deepSleep(uint32_t milliSeconds);
 
