@@ -828,7 +828,7 @@ int MicroBitPowerManager::simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wake
         // or an asynchronous event from the KL27 interface chip.
         __WFI();
 
-        tick1 = sysTimer->captureCounterPreservingIRQ();
+        tick1 = sysTimer->captureCounter();
 
         uint32_t ticks = tick1 - tick0;
         tick0 = tick1;
