@@ -126,33 +126,33 @@ MicroBitIO::MicroBitIO(NRF52ADC &a, TouchSensor &s) :
 /**
  * Perform functions related to deep sleep.
  */
-int MicroBitIO::manageSleep( manageSleepReason reason, manageSleepData *data)
+int MicroBitIO::deepSleepCallback( deepSleepCallbackReason reason, deepSleepCallbackData *data)
 {
     switch (reason)
     {
-        case manageSleepPrepare:
+        case deepSleepCallbackPrepare:
             pinsSaveStatus();
             pinsDetect( true, true, false);
             break;
 
-        case manageSleepBegin:
+        case deepSleepCallbackBegin:
             if ( (savedStatus[pins] & IO_SAVED_STATUS_SAVED) == 0) 
                 pinsSaveStatus();
             pinsDetect( true, false, true);
             break;
 
-        case manageSleepBeginWithWakeUps:
+        case deepSleepCallbackBeginWithWakeUps:
             if ( (savedStatus[pins] & IO_SAVED_STATUS_SAVED) == 0) 
                 pinsSaveStatus();
             pinsDetect( true, true, true);
             break;
 
-        case manageSleepEnd:
-        case manageSleepEndWithWakeUps:
+        case deepSleepCallbackEnd:
+        case deepSleepCallbackEndWithWakeUps:
             pinsRestoreStatus();
             break;
 
-        case manageSleepCountWakeUps:
+        case deepSleepCallbackCountWakeUps:
             if ( data == NULL)
                 return DEVICE_INVALID_PARAMETER;
 
@@ -163,7 +163,7 @@ int MicroBitIO::manageSleep( manageSleepReason reason, manageSleepData *data)
             }
             break;
 
-        case manageSleepClearWakeUps:
+        case deepSleepCallbackClearWakeUps:
             for (int i = 0; i < pins; i++)
             {
                 if ( pin[i].isWakeOnActive())

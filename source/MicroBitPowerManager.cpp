@@ -273,7 +273,7 @@ void MicroBitPowerManager::off()
     setPowerLED( true /*doSleep*/);
 
     // Update peripheral drivers
-    CodalComponent::manageAllSleep( manageSleepBegin, NULL);
+    CodalComponent::deepSleepAll( deepSleepCallbackBegin, NULL);
 
     // Instruct the KL27 interface chip to go into deep sleep.
     ManagedBuffer sleepCommand(4);
@@ -404,7 +404,7 @@ MicroBitPowerManager::~MicroBitPowerManager()
   */
 void MicroBitPowerManager::clearWakeUpSources()
 {
-    CodalComponent::manageAllSleep( manageSleepClearWakeUps, NULL);
+    CodalComponent::deepSleepAll( deepSleepCallbackClearWakeUps, NULL);
 }
 
 /**
@@ -629,7 +629,7 @@ void MicroBitPowerManager::prepareDeepSleep()
     {
         fiber_scheduler_set_deepsleep_pending( true);
         listen();
-        CodalComponent::manageAllSleep( manageSleepPrepare, NULL);
+        CodalComponent::deepSleepAll( deepSleepCallbackPrepare, NULL);
     }
 }
 
@@ -687,8 +687,8 @@ int MicroBitPowerManager::canDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpT
     {
         if ( wakeUpSources)
         {
-            manageSleepData data;
-            CodalComponent::manageAllSleep( manageSleepCountWakeUps, &data);
+            deepSleepCallbackData data;
+            CodalComponent::deepSleepAll( deepSleepCallbackCountWakeUps, &data);
             if ( data.count == 0)
             {
                 return DEVICE_INVALID_STATE;
@@ -738,7 +738,7 @@ int MicroBitPowerManager::simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wake
     setPowerLED( true /*doSleep*/);
 
     // Update peripheral drivers
-    CodalComponent::manageAllSleep( wakeUpSources ? manageSleepBeginWithWakeUps : manageSleepBegin, NULL);
+    CodalComponent::deepSleepAll( wakeUpSources ? deepSleepCallbackBeginWithWakeUps : deepSleepCallbackBegin, NULL);
 
     CODAL_TIMESTAMP tickStart;
     CODAL_TIMESTAMP timeStart = system_timer_deepsleep_begin( tickStart);
@@ -853,7 +853,7 @@ int MicroBitPowerManager::simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wake
     sysTimer->timer->INTENSET = saveIntenset;
 
     // Configure for running mode.
-    CodalComponent::manageAllSleep( wakeUpSources ? manageSleepEndWithWakeUps : manageSleepEnd, NULL);
+    CodalComponent::deepSleepAll( wakeUpSources ? deepSleepCallbackEndWithWakeUps : deepSleepCallbackEnd, NULL);
 
     setPowerLED(false /*doSleep*/);
 

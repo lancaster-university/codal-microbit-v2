@@ -429,7 +429,7 @@ namespace codal
             /**
              * Perform functions related to deep sleep wake-up.
              */
-            virtual int manageSleep( manageSleepReason reason, manageSleepData *data) override;
+            virtual int deepSleepCallback( deepSleepCallbackReason reason, deepSleepCallbackData *data) override;
 
         private:
             ManagedBuffer     savedStatus;
