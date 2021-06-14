@@ -751,7 +751,7 @@ int MicroBitPowerManager::simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wake
     if ( can != DEVICE_OK)
         return can;
 
-    //DMESGF( "deepSleep begin");
+    //DMESG( "%u:deepSleep begin", (unsigned int) system_timer_current_time());
 
     // Configure for sleep mode
     setPowerLED( true /*doSleep*/);
@@ -828,7 +828,7 @@ int MicroBitPowerManager::simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wake
         // or an asynchronous event from the KL27 interface chip.
         __WFI();
 
-        tick1 = sysTimer->captureCounter();
+        tick1 = sysTimer->captureCounterPreservingIRQ();
 
         uint32_t ticks = tick1 - tick0;
         tick0 = tick1;
@@ -878,7 +878,7 @@ int MicroBitPowerManager::simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wake
 
     powerUpTime = system_timer_current_time();
 
-    //DMESGF( "deepSleep end");
+    //DMESGF( "%u:deepSleep end", (unsigned int) powerUpTime);
 
     return DEVICE_OK;
 }
