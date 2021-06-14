@@ -49,20 +49,6 @@ CREATE_KEY_VALUE_TABLE(uipmPropertyLengths, uipmPropertyLengthData);
  * @param systemTimer the system timer.
  *
  */
-MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, uint16_t id) :
-    i2cBus(i2c), 
-    io(ioPins),
-    sysTimer(NULL), 
-    powerDownDisableCount(0),
-    powerUpTime(0),
-    eventValue(0)
-{
-    this->id = id;
-
-    // Indicate we'd like to receive periodic callbacks both in idle and interrupt context.
-    status |= DEVICE_COMPONENT_STATUS_IDLE_TICK;
-}
-
 MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins, NRFLowLevelTimer &systemTimer, uint16_t id) :
     i2cBus(i2c),
     io(ioPins),
@@ -694,7 +680,6 @@ int MicroBitPowerManager::canDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpT
     {
         if ( wakeUpTime < timeEntry || wakeUpTime - timeEntry < MICROBIT_POWER_MANAGER_MINIMUM_DEEP_SLEEP * 1000)
         {
-            //DMESG( "deepSleep: time too short");
             return DEVICE_INVALID_STATE;
         }
     }
@@ -706,7 +691,6 @@ int MicroBitPowerManager::canDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpT
             CodalComponent::manageAllSleep( manageSleepCountWakeUps, &data);
             if ( data.count == 0)
             {
-                //DMESG( "deepSleep: no wake up sources");
                 return DEVICE_INVALID_STATE;
             }
         }
@@ -714,7 +698,6 @@ int MicroBitPowerManager::canDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpT
         {
             if ( wakeUpPin == NULL)
             {
-                //DMESG( "deepSleep: no wake up pin");
                 return DEVICE_INVALID_STATE;
             }
         }
@@ -750,8 +733,6 @@ int MicroBitPowerManager::simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wake
     int can = canDeepSleep( wakeOnTime, wakeUpTime, wakeUpSources, wakeUpPin);
     if ( can != DEVICE_OK)
         return can;
-
-    //DMESG( "%u:deepSleep begin", (unsigned int) system_timer_current_time_us());
 
     // Configure for sleep mode
     setPowerLED( true /*doSleep*/);
@@ -841,14 +822,11 @@ int MicroBitPowerManager::simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wake
 
         if ( timer_irq_channels == 0)
         {
-            //DMESG( "deepSleep: non-time interrupt");
             break; // It must be another interrupt
         }
 
         timer_irq_channels = 0;
     }
-    
-    //DMESG( "%u:deepSleep wake", (unsigned int) system_timer_current_time_us());
 
     // Disable DETECT events 
     io.irq1.setDetect(GPIO_PIN_CNF_SENSE_Disabled);
@@ -880,8 +858,6 @@ int MicroBitPowerManager::simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wake
     setPowerLED(false /*doSleep*/);
 
     powerUpTime = system_timer_current_time();
-
-    //DMESGF( "%u:deepSleep end", (unsigned int) system_timer_current_time_us());
 
     return DEVICE_OK;
 }
