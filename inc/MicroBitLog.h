@@ -325,8 +325,10 @@ namespace codal
          * this method has no effect.
          * 
          * @param key the heading to add
+         * @param value the initial value to add, or ManagedString::EmptyString
+         * @param head true to add the given field at the front of the list, false to add at the end.
          */
-        void addHeading(ManagedString key, ManagedString value = ManagedString::EmptyString);
+        void addHeading(ManagedString key, ManagedString value, bool head = false);
 
         /**
          * Clean the given buffer of invalid LogFS symbols ("-->" and optionally ",\t\n")

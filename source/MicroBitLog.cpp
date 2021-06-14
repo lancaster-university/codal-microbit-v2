@@ -256,6 +256,9 @@ void MicroBitLog::clear(bool fullErase)
 
     status |= MICROBIT_LOG_STATUS_INITIALIZED;
 
+    // Refresh timestamp settings, to inject the timestamp field into the key value pairs.
+    setTimeStamp(this->timeStampFormat);
+
     mutex.notify();
 }
 
@@ -302,7 +305,8 @@ void MicroBitLog::setTimeStamp(TimeStampFormat format)
     timeStampHeading = "Time (" + units + ")";
 
     // Attempt to add the column, if it does not already exist.
-    addHeading(timeStampHeading);
+    // Add at the front, unless data has already been written.
+    addHeading(timeStampHeading, ManagedString::EmptyString, dataStart == dataEnd);
 }
 
 /**
@@ -408,8 +412,21 @@ int MicroBitLog::endRow()
 
     init();
 
+    // Special case the condition where no values are present.
+    // We suppress injecting a pointless timestamp in these cases.
+    bool validData = false;
+
+    for (uint32_t i=0; i<headingCount; i++)
+    {
+        if(rowData[i].value != ManagedString::EmptyString)
+        {
+            validData = true;
+            break;
+        }
+    }
+
     // Insert timestamp field if requested.
-    if (timeStampFormat != TimeStampFormat::None)
+    if (validData && timeStampFormat != TimeStampFormat::None)
     {
         // handle 32 bit overflow and fractional components of timestamp
         CODAL_TIMESTAMP t = system_timer_current_time() / (CODAL_TIMESTAMP)timeStampFormat;
@@ -655,21 +672,25 @@ int MicroBitLog::logString(ManagedString s)
  * Add the given heading to the list of headings in use. If the heading already exists,
  * this method has no effect.
  * 
- * @param heading the heading to add
+ * @param key the heading to add
+ * @param value the initial value to add, or ManagedString::EmptyString
+ * @param head true to add the given field at the front of the list, false to add at the end.
  */
-void MicroBitLog::addHeading(ManagedString key, ManagedString value)
+void MicroBitLog::addHeading(ManagedString key, ManagedString value, bool head)
 {
     for (uint32_t i=0; i<headingCount; i++)
         if (rowData[i].key == key)
             return;
 
     ColumnEntry* newRowData = (ColumnEntry *) malloc(sizeof(ColumnEntry) * (headingCount+1));
+    int columnShift = head ? 1 : 0;
+    int newColumn = head ? 0 : headingCount;
 
     for (uint32_t i=0; i<headingCount; i++)
     {
-        new (&newRowData[i]) ColumnEntry;
-        newRowData[i].key = rowData[i].key;
-        newRowData[i].value = rowData[i].value;
+        new (&newRowData[i+columnShift]) ColumnEntry;
+        newRowData[i+columnShift].key = rowData[i].key;
+        newRowData[i+columnShift].value = rowData[i].value;
         rowData[i].key = ManagedString::EmptyString;
         rowData[i].value = ManagedString::EmptyString;
     }   
@@ -677,9 +698,9 @@ void MicroBitLog::addHeading(ManagedString key, ManagedString value)
     if (rowData)
         free(rowData);
 
-    new (&newRowData[headingCount]) ColumnEntry;
-    newRowData[headingCount].key = key;
-    newRowData[headingCount].value = value;
+    new (&newRowData[newColumn]) ColumnEntry;
+    newRowData[newColumn].key = key;
+    newRowData[newColumn].value = value;
     headingCount++;
 
     rowData = newRowData;
