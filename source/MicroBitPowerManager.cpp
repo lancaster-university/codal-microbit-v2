@@ -444,7 +444,7 @@ void MicroBitPowerManager::deepSleep()
     }
 
     CODAL_TIMESTAMP eventTime = 0;
-    bool wakeOnTime = system_timer_deepsleep_wakeup_time( &eventTime);
+    bool wakeOnTime = system_timer_deepsleep_wakeup_time( eventTime);
     int can = canDeepSleep( wakeOnTime, eventTime, true /*wakeUpSources*/, NULL /*wakeUpPin*/);
     if ( can == DEVICE_OK)
         deepSleepWait();
@@ -527,7 +527,7 @@ void MicroBitPowerManager::deepSleepAsync()
     }
 
     CODAL_TIMESTAMP eventTime = 0;
-    bool wakeOnTime = system_timer_deepsleep_wakeup_time( &eventTime);
+    bool wakeOnTime = system_timer_deepsleep_wakeup_time( eventTime);
     int can = canDeepSleep( wakeOnTime, eventTime, true /*wakeUpSources*/, NULL /*wakeUpPin*/);
     if ( can == DEVICE_OK)
         prepareDeepSleep();
@@ -731,7 +731,7 @@ int MicroBitPowerManager::canDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpT
 int MicroBitPowerManager::simpleDeepSleep()
 {
     CODAL_TIMESTAMP eventTime = 0;
-    bool wakeOnTime = system_timer_deepsleep_wakeup_time( &eventTime);
+    bool wakeOnTime = system_timer_deepsleep_wakeup_time( eventTime);
     return simpleDeepSleep( wakeOnTime, eventTime, true /*wakeUpSources*/, NULL /*wakeUpPin*/);
 }
 
@@ -751,7 +751,7 @@ int MicroBitPowerManager::simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wake
     if ( can != DEVICE_OK)
         return can;
 
-    //DMESG( "%u:deepSleep begin", (unsigned int) system_timer_current_time());
+    //DMESG( "%u:deepSleep begin", (unsigned int) system_timer_current_time_us());
 
     // Configure for sleep mode
     setPowerLED( true /*doSleep*/);
@@ -760,7 +760,7 @@ int MicroBitPowerManager::simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wake
     CodalComponent::manageAllSleep( wakeUpSources ? manageSleepBeginWithWakeUps : manageSleepBegin, NULL);
 
     CODAL_TIMESTAMP tickStart;
-    CODAL_TIMESTAMP timeStart = system_timer_deepsleep_begin( &tickStart);
+    CODAL_TIMESTAMP timeStart = system_timer_deepsleep_begin( tickStart);
 
     int      channel      = 2;      //System timer uses period = 0, event = 1 and capture = 3
     uint32_t saveCompare  = sysTimer->timer->CC[channel];
@@ -847,6 +847,8 @@ int MicroBitPowerManager::simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wake
 
         timer_irq_channels = 0;
     }
+    
+    //DMESG( "%u:deepSleep wake", (unsigned int) system_timer_current_time_us());
 
     // Disable DETECT events 
     io.irq1.setDetect(GPIO_PIN_CNF_SENSE_Disabled);
@@ -873,12 +875,13 @@ int MicroBitPowerManager::simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wake
     sysTimer->timer->INTENSET = saveIntenset;
 
     // Configure for running mode.
-    setPowerLED(false /*doSleep*/);
     CodalComponent::manageAllSleep( wakeUpSources ? manageSleepEndWithWakeUps : manageSleepEnd, NULL);
+
+    setPowerLED(false /*doSleep*/);
 
     powerUpTime = system_timer_current_time();
 
-    //DMESGF( "%u:deepSleep end", (unsigned int) powerUpTime);
+    //DMESGF( "%u:deepSleep end", (unsigned int) system_timer_current_time_us());
 
     return DEVICE_OK;
 }
