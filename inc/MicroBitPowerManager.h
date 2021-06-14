@@ -282,11 +282,6 @@ class MicroBitPowerManager : public CodalComponent
         ~MicroBitPowerManager();
 
         /**
-         * Clear configured wake-up sources, except Timer events
-         */
-        void clearWakeUpSources();
-
-        /**
          * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
          * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
          * operation.

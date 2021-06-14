@@ -399,15 +399,6 @@ MicroBitPowerManager::~MicroBitPowerManager()
 // deepSleep
 
 /**
-  * Clear configured wake-up sources
-  * Note: this doesn't clear Timer events
-  */
-void MicroBitPowerManager::clearWakeUpSources()
-{
-    CodalComponent::deepSleepAll( deepSleepCallbackClearWakeUps, NULL);
-}
-
-/**
   * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
   * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
   * operation.
