@@ -158,7 +158,7 @@ int MicroBitIO::manageSleep( manageSleepReason reason, manageSleepData *data)
 
             for (int i = 0; i < pins; i++)
             {
-                if ( pin[i].getWakeOnActive())
+                if ( pin[i].isWakeOnActive())
                     data->count++;
             }
             break;
@@ -166,7 +166,7 @@ int MicroBitIO::manageSleep( manageSleepReason reason, manageSleepData *data)
         case manageSleepClearWakeUps:
             for (int i = 0; i < pins; i++)
             {
-                if ( pin[i].getWakeOnActive())
+                if ( pin[i].isWakeOnActive())
                     pin[i].wakeOnActive(false);
             }
             break;
@@ -290,7 +290,7 @@ void MicroBitIO::pinsDetect( bool setWakeups, bool enableWakeups, bool disableOt
         }
         else if ( pin[i].isDigital())
         {
-            if ( pin[i].getWakeOnActive())
+            if ( pin[i].isWakeOnActive())
             {
                 if ( setWakeups)
                 {
