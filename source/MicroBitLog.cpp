@@ -53,7 +53,7 @@ static void writeNum(char *buf, uint32_t n)
 /**
  * Constructor.
  */
-MicroBitLog::MicroBitLog(MicroBitUSBFlashManager &flash, int journalPages) : flash(flash), cache(flash, CONFIG_MICROBIT_LOG_CACHE_BLOCK_SIZE, 4)
+MicroBitLog::MicroBitLog(MicroBitUSBFlashManager &flash, NRF52Serial &serial, int journalPages) : flash(flash), serial(serial), cache(flash, CONFIG_MICROBIT_LOG_CACHE_BLOCK_SIZE, 4)
 {
     this->journalPages = journalPages;
     this->status = 0;
@@ -68,10 +68,6 @@ MicroBitLog::MicroBitLog(MicroBitUSBFlashManager &flash, int journalPages) : fla
     this->headingsChanged = false;
     this->rowData = NULL;
     this->timeStampFormat = TimeStampFormat::None;
-
-    // Determine if the flash storage is already confgured as a valid log store..
-    // If so, load the meta data. If not, reset it.
-    //init();
 }
 
 /**
@@ -208,7 +204,7 @@ void MicroBitLog::clear(bool fullErase)
     dataStart = journalStart + journalPages*flash.getPageSize();
     dataEnd = dataStart;
     logEnd = flash.getFlashEnd() - flash.getPageSize() - sizeof(uint32_t);
-    status = 0;
+    status &= MICROBIT_LOG_STATUS_SERIAL_MIRROR;
     
     // Remove any cached state around column headings
     headingsChanged = false;
@@ -260,6 +256,9 @@ void MicroBitLog::clear(bool fullErase)
 
     status |= MICROBIT_LOG_STATUS_INITIALIZED;
 
+    // Refresh timestamp settings, to inject the timestamp field into the key value pairs.
+    setTimeStamp(this->timeStampFormat);
+
     mutex.notify();
 }
 
@@ -306,7 +305,21 @@ void MicroBitLog::setTimeStamp(TimeStampFormat format)
     timeStampHeading = "Time (" + units + ")";
 
     // Attempt to add the column, if it does not already exist.
-    addHeading(timeStampHeading);
+    // Add at the front, unless data has already been written.
+    addHeading(timeStampHeading, ManagedString::EmptyString, dataStart == dataEnd);
+}
+
+/**
+ * Defines if data logging should also be streamed over the serial port.
+ *
+ * @param enable True to enable serial port streaming, false to disable.
+ */
+void MicroBitLog::setSerialMirroring(bool enable)
+{
+    if (enable)
+        status |= MICROBIT_LOG_STATUS_SERIAL_MIRROR;
+    else
+        status &= ~MICROBIT_LOG_STATUS_SERIAL_MIRROR;
 }
 
 /**
@@ -399,8 +412,21 @@ int MicroBitLog::endRow()
 
     init();
 
+    // Special case the condition where no values are present.
+    // We suppress injecting a pointless timestamp in these cases.
+    bool validData = false;
+
+    for (uint32_t i=0; i<headingCount; i++)
+    {
+        if(rowData[i].value != ManagedString::EmptyString)
+        {
+            validData = true;
+            break;
+        }
+    }
+
     // Insert timestamp field if requested.
-    if (timeStampFormat != TimeStampFormat::None)
+    if (validData && timeStampFormat != TimeStampFormat::None)
     {
         // handle 32 bit overflow and fractional components of timestamp
         CODAL_TIMESTAMP t = system_timer_current_time() / (CODAL_TIMESTAMP)timeStampFormat;
@@ -556,6 +582,10 @@ int MicroBitLog::logString(const char *s)
     if (cleaned.length())
         data = cleaned.toCharArray();
 
+    // If requested, log the data over the serial port
+    if (status & MICROBIT_LOG_STATUS_SERIAL_MIRROR && l > 0)
+        serial.send((uint8_t *)data, l);
+
     while (l > 0)
     {
         uint32_t spaceOnPage = flash.getPageSize() - (dataEnd % flash.getPageSize());
@@ -642,21 +672,25 @@ int MicroBitLog::logString(ManagedString s)
  * Add the given heading to the list of headings in use. If the heading already exists,
  * this method has no effect.
  * 
- * @param heading the heading to add
+ * @param key the heading to add
+ * @param value the initial value to add, or ManagedString::EmptyString
+ * @param head true to add the given field at the front of the list, false to add at the end.
  */
-void MicroBitLog::addHeading(ManagedString key, ManagedString value)
+void MicroBitLog::addHeading(ManagedString key, ManagedString value, bool head)
 {
     for (uint32_t i=0; i<headingCount; i++)
         if (rowData[i].key == key)
             return;
 
     ColumnEntry* newRowData = (ColumnEntry *) malloc(sizeof(ColumnEntry) * (headingCount+1));
+    int columnShift = head ? 1 : 0;
+    int newColumn = head ? 0 : headingCount;
 
     for (uint32_t i=0; i<headingCount; i++)
     {
-        new (&newRowData[i]) ColumnEntry;
-        newRowData[i].key = rowData[i].key;
-        newRowData[i].value = rowData[i].value;
+        new (&newRowData[i+columnShift]) ColumnEntry;
+        newRowData[i+columnShift].key = rowData[i].key;
+        newRowData[i+columnShift].value = rowData[i].value;
         rowData[i].key = ManagedString::EmptyString;
         rowData[i].value = ManagedString::EmptyString;
     }   
@@ -664,9 +698,9 @@ void MicroBitLog::addHeading(ManagedString key, ManagedString value)
     if (rowData)
         free(rowData);
 
-    new (&newRowData[headingCount]) ColumnEntry;
-    newRowData[headingCount].key = key;
-    newRowData[headingCount].value = value;
+    new (&newRowData[newColumn]) ColumnEntry;
+    newRowData[newColumn].key = key;
+    newRowData[newColumn].value = value;
     headingCount++;
 
     rowData = newRowData;
