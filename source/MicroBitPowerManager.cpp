@@ -439,49 +439,51 @@ void MicroBitPowerManager::deepSleep()
   * Sleep occurs when the scheduler is next idle, unless cancelled by wake up events before then.
   *
   * If deep sleep is disturbed within the requested time interval, the remainder will be awake.
+  * 
+  * If the requested time interval is less than CONFIG_MINIMUM_DEEP_SLEEP_TIME, or a wake-up timer
+  * cannot be allocated, the sleep will be a simple uBit.sleep() without powering down.
   *
   * @param milliSeconds The period of time to sleep, in milliseconds (minimum CONFIG_MINIMUM_DEEP_SLEEP_TIME).
   */
 void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
 {
-    if ( milliSeconds < CONFIG_MINIMUM_DEEP_SLEEP_TIME)
-        milliSeconds = CONFIG_MINIMUM_DEEP_SLEEP_TIME;
-
-    CODAL_TIMESTAMP timeEntry  = system_timer_current_time_us();
-    CODAL_TIMESTAMP wakeUpTime = timeEntry + (CODAL_TIMESTAMP) 1000 * milliSeconds;
-
-    // If the scheduler is not running, perform a simple deep sleep.
-    if (!fiber_scheduler_running())
+    if ( milliSeconds > CONFIG_MINIMUM_DEEP_SLEEP_TIME)
     {
-        simpleDeepSleep( true /*wakeOnTime*/, wakeUpTime, true /*wakeUpSources*/, NULL /*wakeUpPin*/);
-        return;
-    }
+        CODAL_TIMESTAMP timeEntry  = system_timer_current_time_us();
+        CODAL_TIMESTAMP wakeUpTime = timeEntry + (CODAL_TIMESTAMP) 1000 * milliSeconds;
 
-    eventValue++;
-    int result = system_timer_event_after( milliSeconds, id, eventValue, CODAL_TIMER_EVENT_FLAGS_WAKEUP);
-    if ( result == DEVICE_OK)
-    {
-        deepSleepWait();
-
-        CODAL_TIMESTAMP awake = system_timer_current_time_us();
-
-        // Timed wake-up is usually < 20ms early here
-        if ( wakeUpTime > awake + 1000)
+        // If the scheduler is not running, perform a simple deep sleep.
+        if (!fiber_scheduler_running())
         {
-            // If another fiber triggers deep sleep
-            // the wake-up timer is still in place
-            fiber_sleep( (wakeUpTime - awake) / 1000);
+            simpleDeepSleep( true /*wakeOnTime*/, wakeUpTime, true /*wakeUpSources*/, NULL /*wakeUpPin*/);
+            return;
         }
 
-        system_timer_cancel_event( id, eventValue);
+        eventValue++;
+        int result = system_timer_event_after( milliSeconds, id, eventValue, CODAL_TIMER_EVENT_FLAGS_WAKEUP);
+        if ( result == DEVICE_OK)
+        {
+            deepSleepWait();
+
+            CODAL_TIMESTAMP awake = system_timer_current_time_us();
+
+            // Timed wake-up is usually < 20ms early here
+            if ( wakeUpTime > awake + 1000)
+            {
+                // If another fiber triggers deep sleep
+                // the wake-up timer is still in place
+                fiber_sleep( (wakeUpTime - awake) / 1000);
+            }
+
+            system_timer_cancel_event( id, eventValue);
+            return;
+        }
     }
-    else
-    {
-        // Block power down
-        powerDownDisable();
-        fiber_sleep( milliSeconds);
-        powerDownEnable();
-    }
+
+    // Block power down
+    powerDownDisable();
+    fiber_sleep( milliSeconds);
+    powerDownEnable();
 }
 
 /**

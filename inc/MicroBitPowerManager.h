@@ -147,8 +147,8 @@ typedef struct {
 //
 // Minimum time between power up and power down (milliseconds)
 //
-#ifndef MICROBIT_POWER_MANAGER_MINIMUM_POWERUP
-#define MICROBIT_POWER_MANAGER_MINIMUM_POWERUP  500
+#ifndef CONFIG_MINIMUM_POWER_ON_TIME
+#define CONFIG_MINIMUM_POWER_ON_TIME  500
 #endif
 
 /**
@@ -298,20 +298,23 @@ class MicroBitPowerManager : public CodalComponent
         void deepSleep();
 
         /**
-         * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
-         * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
-         * operation.
-         * 
-         * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
-         * simply use uBit.sleep();
-         *
-         * The current fiber is blocked immediately.
-         * Power down occurs when the scheduler is next idle, unless cancelled by wake up events before then.
-         *
-         * If deep sleep is disturbed within the requested time interval, the remainder will be awake.
-         *
-         * @param milliSeconds The period of time to sleep, in milliseconds (minimum CONFIG_MINIMUM_DEEP_SLEEP_TIME).
-         */
+          * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+          * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
+          * operation.
+          * 
+          * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+          * simply use uBit.sleep();
+          *
+          * The current fiber is blocked immediately.
+          * Sleep occurs when the scheduler is next idle, unless cancelled by wake up events before then.
+          *
+          * If deep sleep is disturbed within the requested time interval, the remainder will be awake.
+          * 
+          * If the requested time interval is less than CONFIG_MINIMUM_DEEP_SLEEP_TIME, or a wake-up timer
+          * cannot be allocated, the sleep will be a simple uBit.sleep() without powering down.
+          *
+          * @param milliSeconds The period of time to sleep, in milliseconds.
+          */
         void deepSleep(uint32_t milliSeconds);
 
         /**
