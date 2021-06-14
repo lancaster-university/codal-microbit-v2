@@ -1580,23 +1580,24 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 {
     NRF_LOG_FINAL_FLUSH();
 
+#if (DEVICE_DMESG_BUFFER_SIZE > 0)
     switch (id)
     {
         case NRF_FAULT_ID_SD_ASSERT:
-            DMESGF("SOFTDEVICE: ASSERTION FAILED");
+            DMESG("SOFTDEVICE: ASSERTION FAILED");
             break;
         case NRF_FAULT_ID_APP_MEMACC:
-            DMESGF("SOFTDEVICE: INVALID MEMORY ACCESS");
+            DMESG("SOFTDEVICE: INVALID MEMORY ACCESS");
             break;
         case NRF_FAULT_ID_SDK_ASSERT:
         {
 #ifdef DEBUG
             assert_info_t * p_info = (assert_info_t *)info;
-            DMESGF("SDK: ASSERTION FAILED at %s:%u",
+            DMESG("SDK: ASSERTION FAILED at %s:%u",
                           p_info->p_file_name,
                           p_info->line_num);
 #else
-            DMESGF("SDK: ASSERTION FAILED");
+            DMESG("SDK: ASSERTION FAILED");
 #endif
             break;
         }
@@ -1604,27 +1605,30 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
         {
 #ifdef DEBUG
             error_info_t * p_info = (error_info_t *)info;
-            DMESGF("SDK: ERROR %u [%s] at %s:%u\r\nPC at: %x",
+            DMESG("SDK: ERROR %u [%s] at %s:%u\r\nPC at: %x",
                           p_info->err_code,
                           nrf_strerror_get(p_info->err_code),
                           p_info->p_file_name,
                           p_info->line_num,
                           pc);
 #else
-            DMESGF("SDK: ERROR");
+            DMESG("SDK: ERROR");
 #endif
             break;
         }
         default:
         {
 #ifdef DEBUG
-            DMESGF("SDK: UNKNOWN FAULT at 0x%08X", pc);
+            DMESG("SDK: UNKNOWN FAULT at 0x%08X", pc);
 #else
-            DMESGF("SDK: UNKNOWN FAULT");
+            DMESG("SDK: UNKNOWN FAULT");
 #endif
             break;
         }
     }
+
+    //DMESGF(""); // Uncomment to flush these DMESGs before the panic
+#endif // (DEVICE_DMESG_BUFFER_SIZE > 0)
 
     int panic;
 
