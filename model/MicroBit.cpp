@@ -86,7 +86,7 @@ MicroBit::MicroBit() :
     compass(MicroBitCompass::autoDetect(_i2c)),
     compassCalibrator(compass, accelerometer, display, storage),
     audio(io.P0, io.speaker),
-    log(flash)
+    log(flash, serial)
 {
     // Clear our status
     status = 0;

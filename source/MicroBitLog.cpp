@@ -53,7 +53,7 @@ static void writeNum(char *buf, uint32_t n)
 /**
  * Constructor.
  */
-MicroBitLog::MicroBitLog(MicroBitUSBFlashManager &flash, int journalPages) : flash(flash), cache(flash, CONFIG_MICROBIT_LOG_CACHE_BLOCK_SIZE, 4)
+MicroBitLog::MicroBitLog(MicroBitUSBFlashManager &flash, NRF52Serial &serial, int journalPages) : flash(flash), serial(serial), cache(flash, CONFIG_MICROBIT_LOG_CACHE_BLOCK_SIZE, 4)
 {
     this->journalPages = journalPages;
     this->status = 0;
@@ -68,10 +68,6 @@ MicroBitLog::MicroBitLog(MicroBitUSBFlashManager &flash, int journalPages) : fla
     this->headingsChanged = false;
     this->rowData = NULL;
     this->timeStampFormat = TimeStampFormat::None;
-
-    // Determine if the flash storage is already confgured as a valid log store..
-    // If so, load the meta data. If not, reset it.
-    //init();
 }
 
 /**
@@ -208,7 +204,7 @@ void MicroBitLog::clear(bool fullErase)
     dataStart = journalStart + journalPages*flash.getPageSize();
     dataEnd = dataStart;
     logEnd = flash.getFlashEnd() - flash.getPageSize() - sizeof(uint32_t);
-    status = 0;
+    status &= MICROBIT_LOG_STATUS_SERIAL_MIRROR;
     
     // Remove any cached state around column headings
     headingsChanged = false;
@@ -307,6 +303,19 @@ void MicroBitLog::setTimeStamp(TimeStampFormat format)
 
     // Attempt to add the column, if it does not already exist.
     addHeading(timeStampHeading);
+}
+
+/**
+ * Defines if data logging should also be streamed over the serial port.
+ *
+ * @param enable True to enable serial port streaming, false to disable.
+ */
+void MicroBitLog::setSerialMirroring(bool enable)
+{
+    if (enable)
+        status |= MICROBIT_LOG_STATUS_SERIAL_MIRROR;
+    else
+        status &= ~MICROBIT_LOG_STATUS_SERIAL_MIRROR;
 }
 
 /**
@@ -555,6 +564,10 @@ int MicroBitLog::logString(const char *s)
     ManagedString cleaned = cleanBuffer(data, l, false);
     if (cleaned.length())
         data = cleaned.toCharArray();
+
+    // If requested, log the data over the serial port
+    if (status & MICROBIT_LOG_STATUS_SERIAL_MIRROR && l > 0)
+        serial.send((uint8_t *)data, l);
 
     while (l > 0)
     {
