@@ -67,7 +67,7 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
     //Initilise stream normalizer
     if (processor == NULL)
         //0.2f in preperation for recording, 8 bit for frequency recogntion
-        processor = new StreamNormalizer(mic->output, 0.2f, true, DATASTREAM_FORMAT_8BIT_SIGNED, 10);
+        processor = new StreamNormalizer(mic->output, 0.01f, true, DATASTREAM_FORMAT_8BIT_SIGNED, 10);
 
     //Initilise stream splitter
     if (splitter == NULL)
@@ -119,7 +119,15 @@ void MicroBitAudio::deactivateMic(){
  * Dectivate Mic and Input Channel
  */
 void MicroBitAudio::deactivateLevelSPL(){
-    levelSPL->disable();
+    //levelSPL->disable();
+}
+
+/**
+  * Set normaliser gain
+  */
+void MicroBitAudio::setMicrophoneGain(int gain){
+    processor->setGain(gain/100);
+
 }
 
 /**

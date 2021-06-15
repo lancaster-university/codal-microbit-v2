@@ -318,6 +318,6 @@ using namespace codal;
     : microphone(uBit.audio.mic) \
     , level(* uBit.audio.levelSPL)
 
-#define MIC_ENABLE uBit.audio.deactivateLevelSPL(); //uBit.io.runmic.setDigitalValue(1); uBit.io.runmic.setHighDrive(true); microphone->setGain(7,0)
+#define MIC_ENABLE //uBit.audio.deactivateLevelSPL(); //uBit.io.runmic.setDigitalValue(1); uBit.io.runmic.setHighDrive(true); microphone->setGain(7,0)
 
 #endif

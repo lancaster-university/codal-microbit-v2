@@ -35,6 +35,7 @@ DEALINGS IN THE SOFTWARE.
 #include "LevelDetector.h"
 #include "LevelDetectorSPL.h"
 
+#define CONFIG_DEFAULT_MICROPHONE_GAIN 0.1f
 namespace codal
 {
     /**
@@ -102,6 +103,12 @@ namespace codal
           * Dectivate level detector SPL
           */
         void deactivateLevelSPL();
+
+        /**
+          * Set normaliser gain
+          * @param gain value to set the microphone gain to
+          */
+        void setMicrophoneGain(int gain = 1);
 
         /**
          * post-constructor initialisation method
