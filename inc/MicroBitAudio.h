@@ -31,6 +31,9 @@ DEALINGS IN THE SOFTWARE.
 #include "Mixer2.h"
 #include "SoundOutputPin.h"
 
+// Status Flags
+#define MICROBIT_AUDIO_STATUS_DEEPSLEEP       0x0001
+
 namespace codal
 {
     /**
@@ -117,6 +120,11 @@ namespace codal
          * @return true if enabled, false otherwise.
          */
         bool isPinEnabled();
+
+        /**
+          * Puts the component in (or out of) sleep (low power) mode.
+          */
+        virtual int setSleep(bool doSleep) override;
     };
 }
 

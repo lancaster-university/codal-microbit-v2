@@ -277,6 +277,11 @@ class MicroBitBLEManager : public CodalComponent
     bool prepareForShutdown();
 
     /**
+      * Puts the component in (or out of) sleep (low power) mode.
+      */
+    virtual int setSleep(bool doSleep) override;
+
+    /**
     * Ensure service changed indication pending for all peers
     */
     void servicesChanged();

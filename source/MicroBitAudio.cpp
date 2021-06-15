@@ -188,3 +188,33 @@ MicroBitAudio::~MicroBitAudio()
         pwm->disconnectPin(*pin);
     }
 }
+
+
+/**
+ * Puts the component in (or out of) sleep (low power) mode.
+ */
+int MicroBitAudio::setSleep(bool doSleep)
+{
+    if (doSleep)
+    {
+      if (pwm)
+      {
+          status |= MICROBIT_AUDIO_STATUS_DEEPSLEEP;
+          pwm->disconnectPin(speaker);
+          pwm->disconnectPin(pin);
+          pwm->disable();
+          delete pwm;
+          pwm = NULL;
+      }
+    }
+    else
+    {
+      if ( status & MICROBIT_AUDIO_STATUS_DEEPSLEEP)
+      { 
+          status &= ~MICROBIT_AUDIO_STATUS_DEEPSLEEP;
+          enable();
+      }
+    }
+   
+    return DEVICE_OK;
+}
