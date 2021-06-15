@@ -201,7 +201,7 @@ int MicroBitAudio::setSleep(bool doSleep)
       {
           status |= MICROBIT_AUDIO_STATUS_DEEPSLEEP;
           pwm->disconnectPin(speaker);
-          pwm->disconnectPin(pin);
+          pwm->disconnectPin(*pin);
           pwm->disable();
           delete pwm;
           pwm = NULL;
