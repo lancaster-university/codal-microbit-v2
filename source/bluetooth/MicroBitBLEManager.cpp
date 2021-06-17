@@ -1059,6 +1059,45 @@ bool MicroBitBLEManager::prepareForShutdown()
 
 
 /**
+ * Puts the component in (or out of) sleep (low power) mode.
+ */
+int MicroBitBLEManager::setSleep(bool doSleep)
+{
+    static bool wasEnabled;
+
+    if (doSleep)
+    {
+        wasEnabled = !nrf_sdh_is_suspended();
+        if (wasEnabled)
+        {
+            nrf_sdh_suspend();
+            app_timer_pause();
+            NVIC_DisableIRQ(RTC1_IRQn);
+            NVIC_DisableIRQ(POWER_CLOCK_IRQn);
+            NVIC_DisableIRQ(RTC0_IRQn);
+            NVIC_DisableIRQ(SWI5_EGU5_IRQn);
+            NVIC_DisableIRQ(MWU_IRQn);
+        }
+    }
+    else
+    {
+        if (wasEnabled)
+        {
+            NVIC_DisableIRQ(POWER_CLOCK_IRQn);
+            NVIC_DisableIRQ(RTC0_IRQn);
+            NVIC_DisableIRQ(SWI5_EGU5_IRQn);
+            NVIC_DisableIRQ(MWU_IRQn);
+            NVIC_EnableIRQ(RTC1_IRQn);
+            app_timer_resume();
+            nrf_sdh_resume();
+        }
+    }
+   
+    return DEVICE_OK;
+}
+
+
+/**
 * Ensure service changed indication pending for all peers
 */
 void MicroBitBLEManager::servicesChanged()
@@ -1529,5 +1568,91 @@ static void microbit_dfu_evt_handler(ble_dfu_buttonless_evt_type_t event)
 }
 
 #endif // CONFIG_ENABLED(MICROBIT_BLE_DFU_SERVICE)
+
+
+#define MICROBIT_PANIC_SD_ASSERT    (DEVICE_CPU_SDK)
+#define MICROBIT_PANIC_APP_MEMACC   (DEVICE_CPU_SDK + 1)
+#define MICROBIT_PANIC_SDK_ASSERT   (DEVICE_CPU_SDK + 2)
+#define MICROBIT_PANIC_SDK_ERROR    (DEVICE_CPU_SDK + 3)
+#define MICROBIT_PANIC_SDK_UNKNOWN  (DEVICE_CPU_SDK + 4)
+
+void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
+{
+    NRF_LOG_FINAL_FLUSH();
+
+#if (DEVICE_DMESG_BUFFER_SIZE > 0)
+    switch (id)
+    {
+        case NRF_FAULT_ID_SD_ASSERT:
+            DMESG("SOFTDEVICE: ASSERTION FAILED");
+            break;
+        case NRF_FAULT_ID_APP_MEMACC:
+            DMESG("SOFTDEVICE: INVALID MEMORY ACCESS");
+            break;
+        case NRF_FAULT_ID_SDK_ASSERT:
+        {
+#ifdef DEBUG
+            assert_info_t * p_info = (assert_info_t *)info;
+            DMESG("SDK: ASSERTION FAILED at %s:%u",
+                          p_info->p_file_name,
+                          p_info->line_num);
+#else
+            DMESG("SDK: ASSERTION FAILED");
+#endif
+            break;
+        }
+        case NRF_FAULT_ID_SDK_ERROR:
+        {
+#ifdef DEBUG
+            error_info_t * p_info = (error_info_t *)info;
+            DMESG("SDK: ERROR %u [%s] at %s:%u\r\nPC at: %x",
+                          p_info->err_code,
+                          nrf_strerror_get(p_info->err_code),
+                          p_info->p_file_name,
+                          p_info->line_num,
+                          pc);
+#else
+            DMESG("SDK: ERROR");
+#endif
+            break;
+        }
+        default:
+        {
+#ifdef DEBUG
+            DMESG("SDK: UNKNOWN FAULT at 0x%08X", pc);
+#else
+            DMESG("SDK: UNKNOWN FAULT");
+#endif
+            break;
+        }
+    }
+
+    //DMESGF(""); // Uncomment to flush these DMESGs before the panic
+#endif // (DEVICE_DMESG_BUFFER_SIZE > 0)
+
+    int panic;
+
+    switch (id)
+    {
+        case NRF_FAULT_ID_SD_ASSERT:
+            panic = MICROBIT_PANIC_SD_ASSERT;
+            break;
+        case NRF_FAULT_ID_APP_MEMACC:
+            panic = MICROBIT_PANIC_APP_MEMACC;
+            break;
+        case NRF_FAULT_ID_SDK_ASSERT:
+            panic = MICROBIT_PANIC_SDK_ASSERT;
+            break;
+        case NRF_FAULT_ID_SDK_ERROR:
+            panic = MICROBIT_PANIC_SDK_ERROR;
+            break;
+        default:
+            panic = MICROBIT_PANIC_SDK_UNKNOWN;
+            break;
+    }
+
+    target_panic( panic);
+}
+
 
 #endif // CONFIG_ENABLED(DEVICE_BLE)

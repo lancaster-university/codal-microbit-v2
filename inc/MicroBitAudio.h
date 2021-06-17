@@ -35,7 +35,10 @@ DEALINGS IN THE SOFTWARE.
 #include "LevelDetector.h"
 #include "LevelDetectorSPL.h"
 
+// Status Flags
+#define MICROBIT_AUDIO_STATUS_DEEPSLEEP       0x0001
 #define CONFIG_DEFAULT_MICROPHONE_GAIN 0.1f
+
 namespace codal
 {
     /**
@@ -157,6 +160,11 @@ namespace codal
          * @return true if enabled, false otherwise.
          */
         bool isPinEnabled();
+
+        /**
+          * Puts the component in (or out of) sleep (low power) mode.
+          */
+        virtual int setSleep(bool doSleep) override;
     };
 }
 

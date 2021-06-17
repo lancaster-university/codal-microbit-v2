@@ -68,7 +68,7 @@ MicroBit::MicroBit() :
     serial(io.usbTx, io.usbRx, NRF_UARTE0),
     _i2c(io.sda, io.scl),
     i2c(io.P20, io.P19),
-    power(_i2c, io),
+    power(_i2c, io, systemTimer),
     flash(_i2c, io, power),
     internalFlash(MICROBIT_STORAGE_PAGE, 1, MICROBIT_CODEPAGESIZE),
     storage(internalFlash, 0),
@@ -87,8 +87,7 @@ MicroBit::MicroBit() :
     compass(MicroBitCompass::autoDetect(_i2c)),
     compassCalibrator(compass, accelerometer, display, storage),
     audio(io.P0, io.speaker, adc, io.microphone, io.runmic),
-    log(flash)
-
+    log(flash, serial)
 {
     // Clear our status
     status = 0;
@@ -328,6 +327,32 @@ void MicroBit::onListenerRegisteredEvent(Event evt)
             audio.levelSPL->getValue();
             break;
     }
+}
+
+
+/**
+ * Perfom scheduler idle
+*/
+void MicroBit::schedulerIdle()
+{
+    if ( power.waitingForDeepSleep())
+    {
+#if CONFIG_ENABLED( MICROBIT_BLE)
+        if ( bleManager.isConnected())
+        {
+            power.cancelDeepSleep();
+            target_wait_for_event();
+            return;
+        }
+#endif
+        if ( power.readyForDeepSleep())
+        {
+            if ( power.startDeepSleep() == DEVICE_OK)
+                return;
+        }
+    }
+
+    target_wait_for_event();
 }
 
 /**

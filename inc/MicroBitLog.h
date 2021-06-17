@@ -94,6 +94,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitUSBFlashManager.h"
 #include "FSCache.h"
+#include "NRF52Serial.h"
 #include "ManagedString.h"
 
 #ifndef CONFIG_MICROBIT_LOG_JOURNAL_PAGES
@@ -118,6 +119,8 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_LOG_STATUS_INITIALIZED     0x0001
 #define MICROBIT_LOG_STATUS_ROW_STARTED     0x0002
 #define MICROBIT_LOG_STATUS_FULL            0x0004
+#define MICROBIT_LOG_STATUS_SERIAL_MIRROR   0x0008
+
 
 #define MICROBIT_LOG_EVT_LOG_FULL           1
 
@@ -182,6 +185,7 @@ namespace codal
     {
         private:
         MicroBitUSBFlashManager         &flash;             // Non-volatile memory contorller to use for storage.
+        NRF52Serial                     &serial;            // Reference to serial port used for data mirroring.
         FSCache                         cache;              // Write through RAM cache.
         uint32_t                        status;             // Status flags.
         FiberLock                       mutex;              // Mutual exclusion primitive to serialise APi calls.
@@ -210,7 +214,7 @@ namespace codal
         /**
          * Constructor.
          */
-        MicroBitLog(MicroBitUSBFlashManager &flash, int journalPages = CONFIG_MICROBIT_LOG_JOURNAL_PAGES);
+        MicroBitLog(MicroBitUSBFlashManager &flash, NRF52Serial &serial, int journalPages = CONFIG_MICROBIT_LOG_JOURNAL_PAGES);
 
         /**
          * Destructor.
@@ -258,6 +262,14 @@ namespace codal
          */
         void setTimeStamp(TimeStampFormat format);
          
+        /**
+         * Defines if data logging should also be streamed over the serial port.
+         *
+         * @param enable True to enable serial port streaming, false to disable.
+         */
+        void setSerialMirroring(bool enable);
+
+
         /**
          * Creates a new row in the log, ready to be populated by logData()
          * 
@@ -313,8 +325,10 @@ namespace codal
          * this method has no effect.
          * 
          * @param key the heading to add
+         * @param value the initial value to add, or ManagedString::EmptyString
+         * @param head true to add the given field at the front of the list, false to add at the end.
          */
-        void addHeading(ManagedString key, ManagedString value = ManagedString::EmptyString);
+        void addHeading(ManagedString key, ManagedString value, bool head = false);
 
         /**
          * Clean the given buffer of invalid LogFS symbols ("-->" and optionally ",\t\n")
