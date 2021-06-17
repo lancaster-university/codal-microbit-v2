@@ -30,13 +30,28 @@ button:first-of-type {
 tr:hover {
   background-color: #ddd;
 }
-header {
-  padding-top: 1em;
-  padding-bottom: 0.5em;
-}
 footer {
   margin-top: 1em;
 }
 tr:nth-child(even) {
   background: #f2f2f2;
+}
+header {
+  /* Undo generic spacing as we need to be flush with edges */
+  margin-left: -1em;
+  margin-right: -1em;
+  margin-top: -1em;
+}
+.header-strip {
+  height: 10px;
+  background-image: linear-gradient(90deg,#00c800,#3eb6fd);;
+}
+.header-contents {
+  height: 62px;
+  background-color: #262626;
+}
+.header-contents svg {
+  width: 167px;
+  height: 40px;
+  padding: 10px 15px;
 }

@@ -63,7 +63,6 @@ int MicroBitAudio::enable()
 {
     if (pwm == NULL)
     {
-
         pwm = new NRF52PWM(NRF_PWM1, mixer, 44100);
         pwm->setDecoderMode(PWM_DECODER_LOAD_Common);
 
@@ -74,7 +73,8 @@ int MicroBitAudio::enable()
         setSpeakerEnabled(speakerEnabled);
         setPinEnabled(pinEnabled);
 
-        soundExpressionChannel = mixer.addChannel(synth);
+        if ( soundExpressionChannel == NULL)
+            soundExpressionChannel = mixer.addChannel(synth);
     }
 
     return DEVICE_OK;
@@ -200,9 +200,10 @@ int MicroBitAudio::setSleep(bool doSleep)
       if (pwm)
       {
           status |= MICROBIT_AUDIO_STATUS_DEEPSLEEP;
+          NVIC_DisableIRQ(PWM1_IRQn);
+          pwm->disable();
           pwm->disconnectPin(speaker);
           pwm->disconnectPin(*pin);
-          pwm->disable();
           delete pwm;
           pwm = NULL;
       }
