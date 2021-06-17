@@ -9,6 +9,7 @@
         "CAPTOUCH_DEFAULT_CALIBRATION": 3500, 
         "CODAL_DEBUG": "CODAL_DEBUG_DISABLED", 
         "CODAL_PROVIDE_PRINTF": 1, 
+        "CODAL_TIMER_32BIT": 1, 
         "CODAL_TIMESTAMP": "uint64_t", 
         "CONFIG_GPIO_AS_PINRESET": 1, 
         "CONFIG_NFCT_PINS_AS_GPIOS": 1, 
@@ -50,13 +51,13 @@
     "generate_hex": true, 
     "libraries": [
         {
-            "branch": "1076c9a4388809a4e2c262d62b0064108066ab19", 
+            "branch": "111fc68a06a6d0b05c3e8551890dc11f014c1dc9", 
             "name": "codal-core", 
             "type": "git", 
             "url": "https://github.com/lancaster-university/codal-core"
         }, 
         {
-            "branch": "31a06cf34da0d5bc3e5e82c3245bfb8e320fcb09", 
+            "branch": "3bb82f2f1692f8b08b0ee424f0cb60224028d6a8", 
             "name": "codal-nrf52", 
             "type": "git", 
             "url": "https://github.com/lancaster-university/codal-nrf52"
@@ -71,6 +72,6 @@
     "linker_flags": "-Wl,--no-wchar-size-warning -Wl,--gc-sections -Wl,--wrap,atexit -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -Wl,--start-group -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys -Wl,--end-group", 
     "post_process": "", 
     "processor": "NRF52833", 
-    "snapshot_version": "v0.2.28", 
+    "snapshot_version": "v0.2.29", 
     "toolchain": "ARM_GCC"
 }
