@@ -183,11 +183,39 @@ void MicroBitLog::init()
         status |= MICROBIT_LOG_STATUS_INITIALIZED;
         return;
     }
+    else
+    {
+        // No valid file system found. Reformat the physical medium.
+        clear(false);
+    }
 
-    // No valid file system found. Reformat the physical medium.
-    clear();
+    // Ensure the data file is visible to end users.
+    setVisibility(true);
 }
 
+/**
+ * Sets the visibility of the MY_DATA.HTM file on the MICROBIT drive.
+ * Only updates the persistent state of this visibility if it has changed.
+ *
+ * @param visible true to make the file visible, false otherwise.
+ */
+void MicroBitLog::setVisibility(bool visible)
+{
+    MicroBitUSBFlashConfig config, currentConfig;
+
+    config.fileName = "MY_DATA.HTM";
+    config.fileSize = flash.getFlashEnd() - flash.getFlashStart() - flash.getPageSize();
+    config.visible = visible;
+    currentConfig = flash.getConfiguration();
+
+    // If the current configuration matches the required configuration, then there's nothing to do.
+    if (config.fileName == currentConfig.fileName && config.fileSize == currentConfig.fileSize && config.visible == currentConfig.visible)
+        return;
+
+    // Otherwise update the configuration and remount the drive to ensure the user view is up to date.
+    flash.setConfiguration(config, true);
+    flash.remount();
+}
 
 /**
  * Reset all data stored in persistent storage.
@@ -246,13 +274,8 @@ void MicroBitLog::clear(bool fullErase)
     cache.write(journalHead, &je, MICROBIT_LOG_JOURNAL_ENTRY_SIZE);
 
     // Update physical file size and visibility information.
-    MicroBitUSBFlashConfig config;
-    config.fileName = "MY_DATA.HTM";
-    config.fileSize = flash.getFlashEnd() - flash.getFlashStart() - flash.getPageSize();
-    config.visible = true;
-    
-    flash.setConfiguration(config, true);
-    flash.remount();
+    // If we're doing a full erase, remove the file from view.
+    setVisibility(!fullErase);
 
     status |= MICROBIT_LOG_STATUS_INITIALIZED;
 
@@ -564,6 +587,11 @@ int MicroBitLog::logString(const char *s)
     uint32_t oldDataEnd = dataEnd;
     uint32_t l = strlen(s);
     const char *data = s;
+
+    // If this is the first log entry written, ensure that the file visibility is activated.
+    // (it may have been disabled following a full erase)
+    if (dataStart == dataEnd)
+        setVisibility(true);
 
     // If we can't write a whole line of data, then treat the log as full.
     if (l > logEnd - dataEnd)

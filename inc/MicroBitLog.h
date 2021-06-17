@@ -236,6 +236,14 @@ namespace codal
         bool isFull();
 
         /**
+         * Sets the visibility of the MY_DATA.HTM file on the MICROBIT drive.
+         * Only updates the persistent state of this visibility if it has changed.
+         *
+         * @param visible true to make the file visible, false otherwise.
+         */
+        void setVisibility(bool visible);
+
+        /**
          * Clears the current log, including any previously defined keys.
          * By default a "fast format" approach is typically adopted, where only the FS metadata is reset. Any previously
          * stored user data will not be visible, but could still be extracted using forensic techniques.
