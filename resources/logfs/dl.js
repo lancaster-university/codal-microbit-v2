@@ -41,6 +41,12 @@
           "This table shows data logged from your micro:bit. <a href='https://microbit.org/get-started/user-guide/data-logging/'>Learn about the data logging feature</a>.";
         wrapper.appendChild(info);
 
+        let offlineNotice = document.querySelector("#v");
+        // Not present in early versions of the HTML.
+        if (offlineNotice) {
+          offlineNotice.remove();
+        }
+
         base.load();
       },
     };
