@@ -46,13 +46,19 @@ if (result.length !== limit) {
 }
 
 if (process.argv[2] === "test") {
-  const trailer = fs.readFileSync("sample-trailer.txt");
+  const trailers = fs
+    .readdirSync(".")
+    .filter((f) => /^sample-.+\.txt$/.test(f));
   // Enable local testing of included CSS/JS. Do it after byte count.
   result = result.replace(/https:\/\/microbit.org\/dl\/\d\//g, "./");
-  fs.writeFileSync(
-    "test.html",
-    Buffer.concat([Buffer.from(result, { encoding: "utf-8" }), trailer])
-  );
+  for (const trailerName of trailers) {
+    const trailer = fs.readFileSync(trailerName);
+    const htmlName = trailerName.replace(/\.txt$/, ".html");
+    fs.writeFileSync(
+      htmlName,
+      Buffer.concat([Buffer.from(result, { encoding: "utf-8" }), trailer])
+    );
+  }
 } else {
   const cppFile = "../../source/MicroBitLog.cpp";
   const cppContents = fs.readFileSync(cppFile, {
