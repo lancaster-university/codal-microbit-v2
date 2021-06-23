@@ -52,6 +52,9 @@ footer {
 #abort-row {
   color: red;
 }
+#browser-warning {
+  color: red;
+}
 header {
   /* Undo generic spacing as we need to be flush with edges */
   margin-left: -1em;
