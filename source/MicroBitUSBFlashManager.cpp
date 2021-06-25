@@ -553,16 +553,19 @@ MicroBitUSBFlashManager::getFlashSize()
  */
 ManagedBuffer MicroBitUSBFlashManager::transact(ManagedBuffer request, int responseLength)
 {
-    int attempts = 0;
+    int tx_attempts = 0;
+    int rx_attempts = 0;
     bool failed = false;
 
-    while(attempts < MICROBIT_USB_FLASH_MAX_RETRIES)
+    while(tx_attempts < MICROBIT_USB_FLASH_MAX_TX_RETRIES)
     {
+        rx_attempts = 0;
+        tx_attempts++;
+
         if (i2cBus.write(MICROBIT_USB_FLASH_I2C_ADDRESS, &request[0], request.length(), false) != DEVICE_OK)
         {
             DMESG("TRASACT: [I2C WRITE ERROR]");
             fiber_sleep(1);
-            attempts++;
             continue;
         }
 
@@ -570,9 +573,11 @@ ManagedBuffer MicroBitUSBFlashManager::transact(ManagedBuffer request, int respo
 
         target_wait_us(200);
 
-        while(attempts < MICROBIT_USB_FLASH_MAX_RETRIES)
+        while(rx_attempts < MICROBIT_USB_FLASH_MAX_RX_RETRIES)
         {
             failed = false;
+            rx_attempts++;
+
             if(io.irq1.isActive())
             {
                 ManagedBuffer b(responseLength);
@@ -603,7 +608,6 @@ ManagedBuffer MicroBitUSBFlashManager::transact(ManagedBuffer request, int respo
             }
 
             fiber_sleep(1);
-            attempts++;
 
             if (failed)
                 break;
