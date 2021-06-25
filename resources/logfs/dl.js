@@ -1,8 +1,19 @@
 /**
  * Data logging support file for "online" mode.
  * This content is managed in https://github.com/lancaster-university/codal-microbit-v2/
+ *
+ * This code should compile on IE11 and run sufficiently to show the table and the IE11
+ * support notice.
  */
-class UserGraphError extends Error {}
+
+function UserGraphError(message) {
+  let instance = new Error(message);
+  Object.setPrototypeOf(instance, Object.getPrototypeOf(this));
+  if (Error.captureStackTrace) {
+    Error.captureStackTrace(instance, UserGraphError);
+  }
+  return instance;
+}
 
 (function () {
   let isParentPage = !location.href.split("?")[1];
@@ -27,10 +38,20 @@ class UserGraphError extends Error {}
         button.innerText = "Copied";
         setTimeout(function () {
           button.innerText = "Copy";
-        }, 1_000);
+        }, 1000);
       },
       load: function () {
         let wrapper = document.querySelector("#w");
+        let isIE = Boolean(document.documentMode);
+        if (isIE) {
+          const browserWarning = wrapper.appendChild(
+            document.createElement("p")
+          );
+          browserWarning.id = "browser-warning";
+          browserWarning.innerText =
+            "Internet Explorer (IE) is not supported. Please use Google Chrome, Microsoft Edge, Mozilla Firefox or Safari.";
+        }
+
         let header = document.body.insertBefore(
           document.createElement("header"),
           wrapper
@@ -50,15 +71,17 @@ class UserGraphError extends Error {}
 
         window.dl.resetGraph();
 
-        graphButton.onclick = window.dl.graph;
-        let graphLib = document.createElement("script");
-        window.dl.graphLibPromise = new Promise(function (resolve, reject) {
-          graphLib.onload = resolve;
-          graphLib.onerror = reject;
-        });
-        graphLib.src =
-          "https://microbit.org/dl/libs/plotly/plotly-scatter-6291fec6d1543144ba90.js";
-        document.head.appendChild(graphLib);
+        if (window.Promise) {
+          graphButton.onclick = window.dl.graph;
+          let graphLib = document.createElement("script");
+          window.dl.graphLibPromise = new Promise(function (resolve, reject) {
+            graphLib.onload = resolve;
+            graphLib.onerror = reject;
+          });
+          graphLib.src =
+            "https://microbit.org/dl/libs/plotly/plotly-scatter-6291fec6d1543144ba90.js";
+          document.head.appendChild(graphLib);
+        }
 
         base.load();
       },
@@ -90,9 +113,9 @@ class UserGraphError extends Error {}
             throw new UserGraphError("No data to graph.");
           }
           const rows = table.rows;
-          const headings = [].slice
-            .call(table.rows[0].cells)
-            .map((r) => r.innerText);
+          const headings = [].slice.call(table.rows[0].cells).map(function (r) {
+            return r.innerText;
+          });
           if (headings.length < 2) {
             throw new UserGraphError(
               "The visual preview requires two or more columns. Timestamps must be enabled."
@@ -104,7 +127,9 @@ class UserGraphError extends Error {}
             );
           }
           let x = [];
-          let ys = headings.slice(1).map((_) => []);
+          let ys = headings.slice(1).map(function () {
+            return [];
+          });
           let abortRow;
           outer: for (let r = 1; r < rows.length; ++r) {
             let cells = rows[r].cells;
@@ -277,7 +302,10 @@ class UserGraphError extends Error {}
           });
         }
 
-        window.dl.graphLibPromise.then(toggleGraph);
+        // Not on IE11.
+        if (window.dl.graphLibPromise) {
+          window.dl.graphLibPromise.then(toggleGraph);
+        }
       },
     };
     Object.keys(overrides).forEach(function (k) {
