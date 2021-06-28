@@ -83,6 +83,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitIOPinService.h"
 #include "MicroBitTemperatureService.h"
 #include "MicroBitUARTService.h"
+#include "MicroBitPartialFlashingService.h"
 #endif
 
 #include "MicroBitStorage.h"

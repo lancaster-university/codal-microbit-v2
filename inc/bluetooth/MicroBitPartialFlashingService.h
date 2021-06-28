@@ -69,6 +69,16 @@ class MicroBitPartialFlashingService : public MicroBitBLEService
     MicroBitPartialFlashingService( BLEDevice &_ble, EventModel &_messageBus, MicroBitStorage &_storage);
 
     /**
+     * Set bootloader setting to default
+     */
+    static void setDefaultBootloaderSettings();
+
+    /**
+     * Ensure CRC validation settings are correct.
+     */
+    static void validateBootloaderSettings();
+
+    /**
       * Callback. Invoked when any of our attributes are written via BLE.
       */
     void onDataWritten(const microbit_ble_evt_write_t *params);
@@ -87,12 +97,6 @@ class MicroBitPartialFlashingService : public MicroBitBLEService
       * Process a Partial Flashing data packet
       */
     void flashData(uint8_t *data);
-
-
-    /**
-     * Set bootloader to no validation
-     */
-    void noValidation();
 
     // Ensure packets are in order
     uint8_t packetCount = 0;
@@ -121,7 +125,6 @@ class MicroBitPartialFlashingService : public MicroBitBLEService
     MicroBitBLEChar      chars[ mbbs_cIdxCOUNT];
 
     public:
-    
     int              characteristicCount()          { return mbbs_cIdxCOUNT; };
     MicroBitBLEChar *characteristicPtr( int idx)    { return &chars[ idx]; };
 };

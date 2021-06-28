@@ -162,6 +162,12 @@ int MicroBit::init()
     if(NRF_POWER->RESETREAS == 0)
         target_wait(KL27_POWER_ON_DELAY);
 
+#if CONFIG_ENABLED(DEVICE_BLE)
+    // Ensure BLE bootloader settings are up to date.
+    // n.b. this only performs a write operation if the settings stored in FLASH are out of date.
+    MicroBitPartialFlashingService::validateBootloaderSettings();
+#endif
+
     // Determine if we have been reprogrammed. If so, follow configured policy on erasing any persistent user data.
     eraseUserStorage();
 
