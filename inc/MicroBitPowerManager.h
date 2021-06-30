@@ -151,6 +151,13 @@ typedef struct {
 #define CONFIG_MINIMUM_POWER_ON_TIME  500
 #endif
 
+//
+// Flag to indicate whether or not to perform a zero byte write operation to the KL27 before each transaction
+//
+#ifndef KL27_I2C_DEEPSLEEP_ERRATA
+#define KL27_I2C_DEEPSLEEP_ERRATA                   1
+#endif
+
 /**
  * Class definition for MicroBitPowerManager.
  */
