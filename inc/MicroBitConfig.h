@@ -246,6 +246,13 @@ extern uint32_t __data_end__;
 #define MICROBIT_BLE_DEVICE_INFORMATION_SERVICE 1
 #endif
 
+// Enable/Disable Nordic Firmware style BLE based UART implimentation.
+// The default codal implimentation reverses the TX/RX ids  
+// Set to '1' to enable
+#ifndef MICROBIT_BLE_NORDIC_STYLE_UART
+#define MICROBIT_BLE_NORDIC_STYLE_UART 0
+#endif 
+
 // Versioning options.
 // We use semantic versioning (http://semver.org/) to identify differnet versions of the micro:bit runtime.
 // Where possible we use yotta (an ARM mbed build tool) to help us track versions.
