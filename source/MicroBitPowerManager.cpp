@@ -147,8 +147,12 @@ uint32_t MicroBitPowerManager::getPowerConsumption()
  */
 void MicroBitPowerManager::nop()
 {
-    i2cBus.write(MICROBIT_UIPM_I2C_ADDRESS, (uint8_t *)UIPM_I2C_NOP, 3, false);
-    target_wait(10);
+#if CONFIG_ENABLED(KL27_I2C_DEEPSLEEP_ERRATA)
+    // Perform a throw away zero byte write operation to the interface chip.
+    // KL27 based implementations need this to wake from deep sleep.
+    uint8_t unused;
+    i2cBus.write(MICROBIT_UIPM_I2C_ADDRESS, &unused, 0, false);
+#endif
 }
 
 /**

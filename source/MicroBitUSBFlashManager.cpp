@@ -557,6 +557,8 @@ ManagedBuffer MicroBitUSBFlashManager::transact(ManagedBuffer request, int respo
     int rx_attempts = 0;
     bool failed = false;
 
+    power.nop();
+
     while(tx_attempts < MICROBIT_USB_FLASH_MAX_TX_RETRIES)
     {
         rx_attempts = 0;

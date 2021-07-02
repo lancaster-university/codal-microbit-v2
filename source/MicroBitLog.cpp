@@ -66,6 +66,7 @@ MicroBitLog::MicroBitLog(MicroBitUSBFlashManager &flash, NRF52Serial &serial, in
     this->headingCount = 0;
     this->logEnd = 0;
     this->headingsChanged = false;
+    this->timeStampChanged = false;
     this->rowData = NULL;
     this->timeStampFormat = TimeStampFormat::None;
 }
@@ -236,6 +237,7 @@ void MicroBitLog::clear(bool fullErase)
     
     // Remove any cached state around column headings
     headingsChanged = false;
+    timeStampChanged = false;
     headingStart = 0;
     headingCount = 0;
     headingLength = 0;
@@ -295,14 +297,18 @@ void MicroBitLog::clear(bool fullErase)
 void MicroBitLog::setTimeStamp(TimeStampFormat format)
 {
     init();
-    this->timeStampFormat = format;
+
+    // Optimize out null operations.
+    if (timeStampFormat == format && timeStampFormat == TimeStampFormat::None)
+        return;
 
     // If we do not have a timestamp column associated with the requested time unit, create one.
     ManagedString units;
 
     switch (format) {
+
     case TimeStampFormat::None:
-        return;
+        break;
 
     case TimeStampFormat::Milliseconds:
         units = "milliseconds";
@@ -327,9 +333,30 @@ void MicroBitLog::setTimeStamp(TimeStampFormat format)
 
     timeStampHeading = "Time (" + units + ")";
 
-    // Attempt to add the column, if it does not already exist.
-    // Add at the front, unless data has already been written.
-    addHeading(timeStampHeading, ManagedString::EmptyString, dataStart == dataEnd);
+    // Special case for selecting timestamp headings before the first data is logged.
+    // Here, we permit rewriting of Timestamp columns to promote simplicity.
+    if (dataStart == dataEnd && headingCount > 0)
+    {
+        // If this timestamp has already been added. If so, nothing to do.
+        if (rowData[0].key == timeStampHeading)
+            return;
+
+        // If we've already defined a timestamp heading, remove that timestamp from the list of headings.
+        if (this->timeStampFormat != TimeStampFormat::None)
+        {
+            // Remove the Timestamp column from the list of headings.
+            for (uint32_t i=1; i<headingCount; i++)
+                rowData[i-1].key = rowData[i].key;
+
+            headingCount--;
+        }
+    }
+
+    // Update our record of the latest timestamp format that we are using.
+    this->timeStampFormat = format;
+
+    // Indicate that we should update column headers the next time a row is logged.
+    this->timeStampChanged = true;
 }
 
 /**
@@ -435,6 +462,15 @@ int MicroBitLog::endRow()
 
     init();
 
+    // Add the timestamp column, if we need one and it does not already exist.
+    // Add at the front, unless data has already been written.
+    if (timeStampChanged)
+    {
+        timeStampChanged = false;
+        if (timeStampFormat != TimeStampFormat::None)
+            addHeading(timeStampHeading, ManagedString::EmptyString, dataStart == dataEnd);
+    }
+
     // Special case the condition where no values are present.
     // We suppress injecting a pointless timestamp in these cases.
     bool validData = false;
@@ -508,6 +544,7 @@ int MicroBitLog::endRow()
         cache.write(headingStart, &zero[0], headingLength);
         headingStart += headingLength;
         cache.write(headingStart, h.toCharArray(), h.length());
+        headingLength = h.length();
 
         logString(h);
 

@@ -201,6 +201,7 @@ namespace codal
         uint32_t                        headingLength;      // The length (in bytes) of the column header data.
         uint32_t                        headingCount;       // Total number of headings in the current log.
         bool                            headingsChanged;    // Flag to indicate if a row has been added that contains new columns.
+        bool                            timeStampChanged;   // Flag to indicate if a timestamp format has changed.
 
         struct ColumnEntry*             rowData;            // Collection of key/value pairs. Used to accumulate each data row.
         struct MicroBitLogMetaData      metaData;           // Snapshot of the metadata held in flash storage.
