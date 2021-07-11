@@ -80,7 +80,7 @@ void MicroBitLog::init()
     if (status & MICROBIT_LOG_STATUS_INITIALIZED)
         return;
 
-    if (isPresent())
+    if (_isPresent())
     {
         // We have a valid file system.
         JournalEntry j;
@@ -187,11 +187,11 @@ void MicroBitLog::init()
     else
     {
         // No valid file system found. Reformat the physical medium.
-        clear(false);
+        _clear(false);
     }
 
     // Ensure the data file is visible to end users.
-    setVisibility(true);
+    _setVisibility(true);
 }
 
 /**
@@ -201,6 +201,19 @@ void MicroBitLog::init()
  * @param visible true to make the file visible, false otherwise.
  */
 void MicroBitLog::setVisibility(bool visible)
+{
+    mutex.wait();
+    _setVisibility(visible);
+    mutex.notify();
+}
+
+/**
+ * Sets the visibility of the MY_DATA.HTM file on the MICROBIT drive.
+ * Only updates the persistent state of this visibility if it has changed.
+ *
+ * @param visible true to make the file visible, false otherwise.
+ */
+void MicroBitLog::_setVisibility(bool visible)
 {
     MicroBitUSBFlashConfig config, currentConfig;
 
@@ -224,7 +237,15 @@ void MicroBitLog::setVisibility(bool visible)
 void MicroBitLog::clear(bool fullErase)
 {
     mutex.wait();
+    _clear(fullErase);
+    mutex.notify();
+}
 
+/**
+ * Reset all data stored in persistent storage.
+ */
+void MicroBitLog::_clear(bool fullErase)
+{
     // Calculate where our metadata should start.
     startAddress = sizeof(header) % flash.getPageSize() == 0 ? sizeof(header) : (1+(sizeof(header) / flash.getPageSize())) * flash.getPageSize();
     journalPages = CONFIG_MICROBIT_LOG_JOURNAL_PAGES;
@@ -277,14 +298,12 @@ void MicroBitLog::clear(bool fullErase)
 
     // Update physical file size and visibility information.
     // If we're doing a full erase, remove the file from view.
-    setVisibility(!fullErase);
+    _setVisibility(!fullErase);
 
     status |= MICROBIT_LOG_STATUS_INITIALIZED;
 
     // Refresh timestamp settings, to inject the timestamp field into the key value pairs.
-    setTimeStamp(this->timeStampFormat);
-
-    mutex.notify();
+    _setTimeStamp(this->timeStampFormat);
 }
 
 /**
@@ -295,6 +314,20 @@ void MicroBitLog::clear(bool fullErase)
  * @param format The format of timestamp to use. 
  */
 void MicroBitLog::setTimeStamp(TimeStampFormat format)
+{
+    mutex.wait();
+    _setTimeStamp(format);
+    mutex.notify();
+}
+
+/**
+ * Determines the format of the timestamp data to be added (if any).
+ * If requested, time stamps will be automatically added to each row of data
+ * as an integer value rounded down to the unit specified.
+ * 
+ * @param format The format of timestamp to use. 
+ */
+void MicroBitLog::_setTimeStamp(TimeStampFormat format)
 {
     init();
 
@@ -379,11 +412,28 @@ void MicroBitLog::setSerialMirroring(bool enable)
  */
 int MicroBitLog::beginRow()
 {
+    int r;
+
+    mutex.wait();
+    r = _beginRow();
+    mutex.notify();
+
+    return r;
+}
+
+
+/**
+ * Creates a new row in the log, ready to be populated by logData()
+ * 
+ * @return DEVICE_OK on success.
+ */
+int MicroBitLog::_beginRow()
+{
     init();
 
     // If beginRow is called during an open transaction, implicity perform an endRow before proceeding.
     if (status & MICROBIT_LOG_STATUS_ROW_STARTED)
-        endRow();
+        _endRow();
 
     // Reset all values, ready to populate with a new row.
     for (uint32_t i=0; i<headingCount; i++)
@@ -416,12 +466,30 @@ int MicroBitLog::logData(const char *key, const char *value)
  */
 int MicroBitLog::logData(ManagedString key, ManagedString value)
 {
+    int r;
+
+    mutex.wait();
+    r = _logData(key, value);
+    mutex.notify();
+
+    return r;
+}
+
+/**
+ * Populates the current row with the given key/value pair.
+ * @param key the name of the key column) to set.
+ * @param value the value to insert 
+ *
+ * @return DEVICE_OK on success.
+ */
+int MicroBitLog::_logData(ManagedString key, ManagedString value)
+{
     // Perform lazy instatiation if necessary.
     init();
 
     // If logData is called before explicitly beginning a row, do so implicitly.
     if (!(status & MICROBIT_LOG_STATUS_ROW_STARTED))
-        beginRow();
+        _beginRow();
 
     ManagedString k = cleanBuffer(key.toCharArray(), key.length());
     ManagedString v = cleanBuffer(value.toCharArray(), value.length());
@@ -456,6 +524,21 @@ int MicroBitLog::logData(ManagedString key, ManagedString value)
  * @return DEVICE_OK on success.
  */
 int MicroBitLog::endRow()
+{
+    int r;
+
+    mutex.wait();
+    r = _endRow();
+    mutex.notify();
+
+    return r;
+}
+
+/**
+ * Complete a row in the log, and pushes to persistent storage.
+ * @return DEVICE_OK on success.
+ */
+int MicroBitLog::_endRow()
 {
     if (!(status & MICROBIT_LOG_STATUS_ROW_STARTED))
         return DEVICE_INVALID_STATE;
@@ -517,7 +600,7 @@ int MicroBitLog::endRow()
         if ((int)timeStampFormat > 1)
             s = s + "." + f;
 
-        logData(timeStampHeading, s);
+        _logData(timeStampHeading, s);
     }
 
     // If new columns have been added since the last row, update persistent storage accordingly.
@@ -546,7 +629,7 @@ int MicroBitLog::endRow()
         cache.write(headingStart, h.toCharArray(), h.length());
         headingLength = h.length();
 
-        logString(h);
+        _logString(h);
 
         headingsChanged = false;
     }
@@ -568,7 +651,7 @@ int MicroBitLog::endRow()
     row = row + "\n";
 
     if (!empty)
-        logString(row);
+        _logString(row);
 
     status &= ~MICROBIT_LOG_STATUS_ROW_STARTED;
 
@@ -617,8 +700,21 @@ ManagedString MicroBitLog::cleanBuffer(const char *s, int len, bool removeSepara
  */
 int MicroBitLog::logString(const char *s)
 {
+    int r;
+
     mutex.wait();
-    
+    r = _logString(s);
+    mutex.notify();
+
+    return r;
+}
+
+/**
+ * Inject the given row into the log as text, ignoring key/value pairs.
+ * @param s the string to inject.
+ */
+int MicroBitLog::_logString(const char *s)
+{  
     init();
 
     uint32_t oldDataEnd = dataEnd;
@@ -628,7 +724,7 @@ int MicroBitLog::logString(const char *s)
     // If this is the first log entry written, ensure that the file visibility is activated.
     // (it may have been disabled following a full erase)
     if (dataStart == dataEnd)
-        setVisibility(true);
+        _setVisibility(true);
 
     // If we can't write a whole line of data, then treat the log as full.
     if (l > logEnd - dataEnd)
@@ -638,7 +734,7 @@ int MicroBitLog::logString(const char *s)
             cache.write(logEnd+1, "FUL", 3);
             status |= MICROBIT_LOG_STATUS_FULL;
         }
-        mutex.notify();
+
         Event(MICROBIT_ID_LOG, MICROBIT_LOG_EVT_LOG_FULL);
         return DEVICE_NO_RESOURCES;
     }
@@ -713,8 +809,6 @@ int MicroBitLog::logString(const char *s)
         cache.write(oldJournalHead, &empty, MICROBIT_LOG_JOURNAL_ENTRY_SIZE);
     }
 
-    mutex.notify();
-
     // Return NO_RESOURCES if we ran out of FLASH space.
     if (l == 0)
         return DEVICE_OK;
@@ -729,8 +823,22 @@ int MicroBitLog::logString(const char *s)
  */
 int MicroBitLog::logString(ManagedString s)
 {
-    logString(s.toCharArray());
-    return DEVICE_OK;
+    int r;
+
+    mutex.wait();
+    r = _logString(s);
+    mutex.notify();
+
+    return r;
+}
+
+/**
+ * Inject the given row into the log as text, ignoring key/value pairs.
+ * @param s the string to inject.
+ */
+int MicroBitLog::_logString(ManagedString s)
+{
+    return _logString(s.toCharArray());
 }
 
 /**
@@ -778,11 +886,23 @@ void MicroBitLog::addHeading(ManagedString key, ManagedString value, bool head)
  */
 void MicroBitLog::invalidate()
 {
-    if (isPresent())
+    mutex.wait();
+    _invalidate();
+    mutex.notify();
+}
+
+
+/**
+ * Marks an existing Log as invalid. The log will be cleared with the default settings the next time
+ * a user attempts to use it. If no valid log is present, this method has no effect.
+ */
+void MicroBitLog::_invalidate()
+{
+    if (_isPresent())
     {
 
 #if (CONFIG_MICROBIT_LOG_FULL_ERASE_BY_DEFAULT)
-        clear();
+        _clear();
 #endif
         MicroBitLogMetaData m;
         memclr(&m, sizeof(MicroBitLogMetaData));
@@ -801,6 +921,21 @@ void MicroBitLog::invalidate()
  * @return true if a MICROBIT_LOG_VERSION string is present at the expected location, false otherwise.
  */
 bool MicroBitLog::isPresent()
+{
+    bool r;
+    mutex.wait();
+    r = _isPresent();
+    mutex.notify();
+
+    return r;
+}
+
+/**
+ * Determines if a MicroMitLogFS header is present.
+ *
+ * @return true if a MICROBIT_LOG_VERSION string is present at the expected location, false otherwise.
+ */
+bool MicroBitLog::_isPresent()
 {
     // Fast path if we;re already initialized.
     if (status & MICROBIT_LOG_STATUS_INITIALIZED)
