@@ -265,6 +265,7 @@ class MicroBitUSBFlashManager : public CodalComponent, public NVMController
          * @return a buffer containing the response to the request, or a zero length buffer on failure.
          */
         ManagedBuffer transact(ManagedBuffer request, int responseLength);
+        ManagedBuffer _transact(ManagedBuffer request, int responseLength);
 
         /**
          * Performs a flash storage transaction with the interface chip.

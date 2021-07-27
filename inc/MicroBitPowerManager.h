@@ -45,7 +45,7 @@ DEALINGS IN THE SOFTWARE.
 //
 #define MICROBIT_UIPM_MAX_BUFFER_SIZE               8
 #define MICROBIT_UIPM_MAX_RETRIES                   5
-#define MICROBIT_USB_INTERFACE_IRQ_THRESHOLD        3
+#define MICROBIT_USB_INTERFACE_IRQ_THRESHOLD        30
 
 //
 // Command codes for the USB Interface Chip

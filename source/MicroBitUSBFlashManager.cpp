@@ -553,66 +553,77 @@ MicroBitUSBFlashManager::getFlashSize()
  */
 ManagedBuffer MicroBitUSBFlashManager::transact(ManagedBuffer request, int responseLength)
 {
-    int tx_attempts = 0;
-    int rx_attempts = 0;
-    bool failed = false;
+    ManagedBuffer nop_request(1);
+    nop_request[0] = MICROBIT_USB_FLASH_VISIBILITY_CMD;
 
     power.nop();
+    _transact(nop_request, usbFlashPropertyLength.get(MICROBIT_USB_FLASH_VISIBILITY_CMD));
+    return _transact(request, responseLength);
+}
+
+/**
+ * Performs a flash storage transaction with the interface chip.
+ * @param packet The data to write to the interface chip as a request operation.
+ * @param responseLength The length of the expected reponse packet.
+ * @return a buffer containing the response to the request, or a zero length buffer on failure.
+ */
+ManagedBuffer MicroBitUSBFlashManager::_transact(ManagedBuffer request, int responseLength)
+{
+    int tx_attempts = 0;
+    int rx_attempts = 0;
+    ManagedBuffer b(max(responseLength, 3));
 
     while(tx_attempts < MICROBIT_USB_FLASH_MAX_TX_RETRIES)
     {
         rx_attempts = 0;
         tx_attempts++;
 
+        power.awaitingPacket(true);
+
         if (i2cBus.write(MICROBIT_USB_FLASH_I2C_ADDRESS, &request[0], request.length(), false) != DEVICE_OK)
         {
-            DMESG("TRASACT: [I2C WRITE ERROR]");
+            DMESG("TRANSACT: [I2C WRITE ERROR]");
             fiber_sleep(1);
             continue;
         }
-
-        power.awaitingPacket(true);
 
         target_wait_us(200);
 
         while(rx_attempts < MICROBIT_USB_FLASH_MAX_RX_RETRIES)
         {
-            failed = false;
             rx_attempts++;
 
             if(io.irq1.isActive())
             {
-                ManagedBuffer b(responseLength);
-                int r = i2cBus.read(MICROBIT_USB_FLASH_I2C_ADDRESS, &b[0], responseLength, false);
+                int r = i2cBus.read(MICROBIT_USB_FLASH_I2C_ADDRESS, &b[0], b.length(), false);
 
-                if (r != MICROBIT_OK)
+                if (r == MICROBIT_OK)
+                {
+                    if (b[0] == request[0])
+                    {
+                        // We have a valid response. Consume it, and we're done.
+                        power.awaitingPacket(false);
+                        b.truncate(responseLength);
+                        return b;
+                    }
+                    else
+                    {
+                        // We have a negative response. If it's not a FAIL case, treat this as "NOT READY"
+                        // reset RX timeout, as the peripheral is active on our transaction.
+                        if (b[0] == 0x00 || (b[0] == 0x20 && (b[1] == request[0] || b[1] == 0x00)))
+                            rx_attempts = 0;
+                        else
+                            break;
+                    }
+                }
+                else
                 {
                     DMESG("TRANSACT: [I2C READ ERROR: %d]",r);
-                    failed = true;
-                }
-
-                if (r == MICROBIT_OK && b[0] != request[0])
-                {
-                    if (b[0] == 0x00){
-                        //DMESG("TRANSACT: [DATA NOT READY: [REQUEST: %d]",request[0]);
-                    }else{
-                        DMESG("TRANSACT: UNEXPECTED RESPONSE [REQUEST: %x]", request[0]);
-                    }
-
-                    failed = true;
-                }
-
-                if (!failed)
-                {
-                    power.awaitingPacket(false);
-                    return b;
+                    break;
                 }
             }
 
             fiber_sleep(1);
-
-            if (failed)
-                break;
         }
     }
 
