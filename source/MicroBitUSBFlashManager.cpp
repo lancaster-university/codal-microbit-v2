@@ -24,10 +24,6 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitUSBFlashManager.h"
 
-#define KL27_FLASH_ERASE_WORKAROUND         1
-#define KL27_FLASH_BULK_WRITE_WORKAROUND    1
-#define KL27_FLASH_MAX_WRITE_LENGTH         64
-
 static const KeyValueTableEntry usbFlashPropertyLengthData[] = {
     {MICROBIT_USB_FLASH_FILENAME_CMD, 12},
     {MICROBIT_USB_FLASH_FILESIZE_CMD, 5},
@@ -52,6 +48,7 @@ CREATE_KEY_VALUE_TABLE(usbFlashPropertyLength, usbFlashPropertyLengthData);
 MicroBitUSBFlashManager::MicroBitUSBFlashManager(MicroBitI2C &i2c, MicroBitIO &ioPins, MicroBitPowerManager &powerManager, uint16_t id) : i2cBus(i2c), io(ioPins), power(powerManager)
 {
     this->id = id;
+    this->maxWriteLength = 64;
 }
 
 /**
@@ -203,7 +200,22 @@ MicroBitUSBFlashGeometry MicroBitUSBFlashManager::getGeometry()
         else
             valid = false;
 
-        // Esnure we don't cache invalid state.
+        // Optimize behaviour for the interface chip version in use.
+        MicroBitVersion v = power.getVersion();
+        switch(v.daplink)
+        {
+            case 255:
+                // Apply workarounds for V2.00 KL27 release
+                maxWriteLength = 64;
+                status |= (MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY | MICROBIT_USB_FLASH_USE_NULL_TRANSACTION);
+                break;
+
+            default:
+                maxWriteLength = 1024;
+                status &= ~(MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY | MICROBIT_USB_FLASH_USE_NULL_TRANSACTION);
+        }
+
+        // Ensure we don't cache invalid state.
         if (valid)
             status |= MICROBIT_USB_FLASH_GEOMETRY_LOADED;
     }
@@ -313,9 +325,7 @@ int MicroBitUSBFlashManager::write(uint32_t address, uint32_t *data, uint32_t le
 
     ManagedBuffer response;
 
-#ifdef KL27_FLASH_BULK_WRITE_WORKAROUND
-
-    ManagedBuffer request(min(KL27_FLASH_MAX_WRITE_LENGTH, length) + 8);
+    ManagedBuffer request(min(maxWriteLength, length) + 8);
     request.fill(0xFF);
 
     uint32_t p = address;
@@ -325,9 +335,7 @@ int MicroBitUSBFlashManager::write(uint32_t address, uint32_t *data, uint32_t le
 
     while (p < end)
     {
-        segmentLength = min(KL27_FLASH_MAX_WRITE_LENGTH, length-bytesWritten);
-
-        //DMESGF("WRITING FRAG: [ADDRESS: %p] [LENGTH: %d bytes]", p, segmentLength);
+        segmentLength = min(maxWriteLength, length-bytesWritten);
         
         uint32_t *ptr = (uint32_t *) &request[0];
         *ptr++ = htonl( p | (MICROBIT_USB_FLASH_WRITE_CMD << 24));
@@ -338,34 +346,11 @@ int MicroBitUSBFlashManager::write(uint32_t address, uint32_t *data, uint32_t le
         response = transact(request, 9);
 
         if (response.length() == 0)
-        {
-            DMESGF("  ERROR");
             return DEVICE_I2C_ERROR;
-        }
-
-        //DMESGF("  RESPONSE: %d", response[0]);
 
         bytesWritten += segmentLength;
         p+= segmentLength;
     }
-
-#else
-
-    // Ensure any padding bytes to 0xFF
-    ManagedBuffer request(length + 8);
-    request.fill(0xFF);
-
-    // Add header and user data
-    uint32_t *p = (uint32_t *) &request[0];
-    *p++ = htonl(((uint32_t) address) | (MICROBIT_USB_FLASH_WRITE_CMD << 24));
-    *p++ = htonl(writeLength);
-    memcpy((uint8_t *)p) + data, length);
-
-    response = transact(request, 9);
-
-    if (response.length() == 0)
-        return DEVICE_I2C_ERROR;
-#endif
 
     return DEVICE_OK;
 }
@@ -434,43 +419,35 @@ int MicroBitUSBFlashManager::erase(uint32_t address, uint32_t length)
             restoreBuffer2 = read(address + length, restoreLength2/sizeof(uint32_t));
     }
 
-#ifdef KL27_FLASH_ERASE_WORKAROUND
-    for (uint32_t page = eraseStart; page <= eraseEnd; page += geometry.blockSize)
+    if (status & MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY)
+    {
+        for (uint32_t page = eraseStart; page <= eraseEnd; page += geometry.blockSize)
+        {
+            uint32_t *p = (uint32_t *) &request[0];
+            *p++ = htonl(page | (MICROBIT_USB_FLASH_ERASE_CMD << 24));
+            *p++ = htonl(page);
+
+            response = transact(request, 1);
+            if (response.length() == 0)
+            {
+                DMESG("ERROR ERASING");
+                return DEVICE_I2C_ERROR;
+            }
+        }
+    }
+    else
     {
         uint32_t *p = (uint32_t *) &request[0];
-        *p++ = htonl(page | (MICROBIT_USB_FLASH_ERASE_CMD << 24));
-        *p++ = htonl(page);
+        *p++ = htonl(eraseStart | (MICROBIT_USB_FLASH_ERASE_CMD << 24));
+        *p++ = htonl(eraseEnd);
 
-        //fiber_sleep(1);
         response = transact(request, 1);
         if (response.length() == 0)
         {
             DMESG("ERROR ERASING");
             return DEVICE_I2C_ERROR;
         }
-
-        //if (response[0] != 0)
-        //    DMESGF("ERASE RESPONSE [PAGE: %p] [RESPONSE: %d/%d]", page, response[0], response.length());
     }
-
-#else
-    // Workaround until block erasing supported.
-    uint32_t *p = (uint32_t *) &request[0];
-    *p++ = htonl(eraseStart | (MICROBIT_USB_FLASH_ERASE_CMD << 24));
-    *p++ = htonl(eraseEnd);
-
-    DMESG("ERASING: [start: %d] [end: %d]", eraseStart, eraseEnd);
-    for (int i=0; i<request.length();i++)
-        DMESG("%x ", request[i]);
-
-    response = transact(request, 1);
-
-    if (response.length() == 0)
-    {
-        DMESG("ERROR ERASING");
-        return DEVICE_I2C_ERROR;
-    }
-#endif
 
     // Restore any saved data if necessary
     if (restoreBuffer1.length() > 0)
@@ -553,11 +530,15 @@ MicroBitUSBFlashManager::getFlashSize()
  */
 ManagedBuffer MicroBitUSBFlashManager::transact(ManagedBuffer request, int responseLength)
 {
-    ManagedBuffer nop_request(1);
-    nop_request[0] = MICROBIT_USB_FLASH_VISIBILITY_CMD;
-
     power.nop();
-    _transact(nop_request, usbFlashPropertyLength.get(MICROBIT_USB_FLASH_VISIBILITY_CMD));
+
+    if (status & MICROBIT_USB_FLASH_USE_NULL_TRANSACTION)
+    {
+        ManagedBuffer nop_request(1);
+        nop_request[0] = MICROBIT_USB_FLASH_VISIBILITY_CMD;
+        _transact(nop_request, usbFlashPropertyLength.get(MICROBIT_USB_FLASH_VISIBILITY_CMD));
+    }
+
     return _transact(request, responseLength);
 }
 

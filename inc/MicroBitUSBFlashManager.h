@@ -89,6 +89,8 @@ typedef struct
 #define MICROBIT_USB_FLASH_AWAITING_RESPONSE        0x01
 #define MICROBIT_USB_FLASH_GEOMETRY_LOADED          0x02
 #define MICROBIT_USB_FLASH_CONFIG_LOADED            0x04
+#define MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY   0x08
+#define MICROBIT_USB_FLASH_USE_NULL_TRANSACTION     0x10
 
 
 /**
@@ -102,6 +104,7 @@ class MicroBitUSBFlashManager : public CodalComponent, public NVMController
         MicroBitPowerManager        &power;                             // Reference to power manager instance
         MicroBitUSBFlashConfig      config;                             // Current configuration of the USB File interface
         MicroBitUSBFlashGeometry    geometry;                           // Current geomtry of the USB File interface
+        int                         maxWriteLength;                     // The maximum number of bytes that can be written in a single transaction.
 
     public:
         /**
