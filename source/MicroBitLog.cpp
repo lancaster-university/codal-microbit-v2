@@ -745,7 +745,10 @@ int MicroBitLog::_logString(const char *s)
 
     // If requested, log the data over the serial port
     if (status & MICROBIT_LOG_STATUS_SERIAL_MIRROR && l > 0)
-        serial.send((uint8_t *)data, l);
+    {
+        serial.send((uint8_t *)data, l-1);
+        serial.send((uint8_t *)"\r\n", 2);
+    }
 
     while (l > 0)
     {
