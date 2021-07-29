@@ -329,6 +329,22 @@ namespace codal
          */
         void init();
 
+        /*
+         * Private APIs methods.
+         * These methods enable the functionality of the public APIs, but assume mutual exclusion has already been acquired.
+         */
+        bool _isPresent();
+        void _setVisibility(bool visible);
+        void _clear(bool fullErase = CONFIG_MICROBIT_LOG_FULL_ERASE_BY_DEFAULT);
+        void _invalidate();
+        void _setTimeStamp(TimeStampFormat format);
+        int _beginRow();
+        int _endRow();
+        int _logData(ManagedString key, ManagedString value);
+        int _logString(const char *s);
+        int _logString(ManagedString s);
+
+
         /**
          * Add the given heading to the list of headings in use. If the heading already exists,
          * this method has no effect.
