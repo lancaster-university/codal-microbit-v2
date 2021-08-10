@@ -360,7 +360,7 @@ void MicroBitLog::_setTimeStamp(TimeStampFormat format)
         break;
 
     case TimeStampFormat::Days:
-        units = "hours";
+        units = "days";
         break;
     }
 
