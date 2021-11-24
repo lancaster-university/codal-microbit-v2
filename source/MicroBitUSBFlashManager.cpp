@@ -49,6 +49,9 @@ MicroBitUSBFlashManager::MicroBitUSBFlashManager(MicroBitI2C &i2c, MicroBitIO &i
 {
     this->id = id;
     this->maxWriteLength = 64;
+
+    // Be pessimistic about the interface chip in use, until we obtain version information.
+    status = (MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY | MICROBIT_USB_FLASH_USE_NULL_TRANSACTION);
 }
 
 /**
@@ -201,18 +204,36 @@ MicroBitUSBFlashGeometry MicroBitUSBFlashManager::getGeometry()
             valid = false;
 
         // Optimize behaviour for the interface chip version in use.
-        MicroBitVersion v = power.getVersion();
-        switch(v.daplink)
+        if (valid)
         {
-            case 255:
-                // Apply workarounds for V2.00 KL27 release
-                maxWriteLength = 64;
-                status |= (MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY | MICROBIT_USB_FLASH_USE_NULL_TRANSACTION);
-                break;
+            MicroBitVersion v = power.getVersion();
+            switch(v.i2c)
+            {
+                case 1:
+                    // Apply workarounds for V2.00 KL27 release.
+                    maxWriteLength = 64;
+                    status |= (MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY | MICROBIT_USB_FLASH_USE_NULL_TRANSACTION);
+                    break;
 
-            default:
-                maxWriteLength = 1024;
-                status &= ~(MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY | MICROBIT_USB_FLASH_USE_NULL_TRANSACTION);
+                case 2:
+                    // Assume fixes released from V2.2 onwards.
+
+                    // TODO: Determine if writelength can be increased in this revision.
+                    maxWriteLength = 64;
+
+                    // TODO: Determine if multiple page erase is supported in this revision.
+                    status |= MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY;
+
+                    // TODO: Remove this in favour of MICROBIT_USB_FLASH_BUSY_FLAG_SUPPORTED once merged.
+                    status |= MICROBIT_USB_FLASH_USE_NULL_TRANSACTION;
+                    break;
+
+                default:
+                    maxWriteLength = 64;
+                    status &= ~MICROBIT_USB_FLASH_USE_NULL_TRANSACTION;
+                    status |= MICROBIT_USB_FLASH_BUSY_FLAG_SUPPORTED;
+                    //status &= ~MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY
+            }
         }
 
         // Ensure we don't cache invalid state.
@@ -535,7 +556,7 @@ ManagedBuffer MicroBitUSBFlashManager::transact(ManagedBuffer request, int respo
     if (status & MICROBIT_USB_FLASH_USE_NULL_TRANSACTION)
     {
         ManagedBuffer nop_request(1);
-        nop_request[0] = MICROBIT_USB_FLASH_VISIBILITY_CMD;
+        nop_request[0] = request[0] == MICROBIT_USB_FLASH_VISIBILITY_CMD ? MICROBIT_USB_FLASH_DISK_SIZE_CMD : MICROBIT_USB_FLASH_VISIBILITY_CMD;
         _transact(nop_request, usbFlashPropertyLength.get(MICROBIT_USB_FLASH_VISIBILITY_CMD));
     }
 
@@ -552,6 +573,7 @@ ManagedBuffer MicroBitUSBFlashManager::_transact(ManagedBuffer request, int resp
 {
     int tx_attempts = 0;
     int rx_attempts = 0;
+
     ManagedBuffer b(max(responseLength, 3));
 
     while(tx_attempts < MICROBIT_USB_FLASH_MAX_TX_RETRIES)
@@ -576,6 +598,7 @@ ManagedBuffer MicroBitUSBFlashManager::_transact(ManagedBuffer request, int resp
 
             if(io.irq1.isActive())
             {
+                b.fill(0);
                 int r = i2cBus.read(MICROBIT_USB_FLASH_I2C_ADDRESS, &b[0], b.length(), false);
 
                 if (r == MICROBIT_OK)
@@ -591,10 +614,25 @@ ManagedBuffer MicroBitUSBFlashManager::_transact(ManagedBuffer request, int resp
                     {
                         // We have a negative response. If it's not a FAIL case, treat this as "NOT READY"
                         // reset RX timeout, as the peripheral is active on our transaction.
-                        if (b[0] == 0x00 || (b[0] == 0x20 && (b[1] == request[0] || b[1] == 0x00)))
+                        // some revisions report busy status explicitly, others do not and we must infer...
+                        bool busy = (status & MICROBIT_USB_FLASH_BUSY_FLAG_SUPPORTED) ? b[0] == 0x20 && b[1] == 0x39 : b[0] == 0x00 || (b[0] == 0x20 && (b[1] == request[0] || b[1] == 0x00));
+
+                        if (busy)
+                        {
+                            DMESG("TRANSACT: [BUSY: LEN: %d]", responseLength);
+                            for (int i=0; i<responseLength; i++)
+                                DMESGN("%d ", b[i]);
+                            DMESGN("\n");
                             rx_attempts = 0;
+                        }
                         else
+                        {
+                            DMESG("TRANSACT: [UNEXPECTED RESPONSE: LEN: %d]", responseLength);
+                            for (int i=0; i<responseLength; i++)
+                                DMESGN("%d ", b[i]);
+                            DMESGN("\n");
                             break;
+                        }
                     }
                 }
                 else
