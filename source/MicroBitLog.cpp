@@ -53,9 +53,9 @@ static void writeNum(char *buf, uint32_t n)
 /**
  * Constructor.
  */
-MicroBitLog::MicroBitLog(MicroBitUSBFlashManager &flash, NRF52Serial &serial, int journalPages) : flash(flash), serial(serial), cache(flash, CONFIG_MICROBIT_LOG_CACHE_BLOCK_SIZE, 4)
+MicroBitLog::MicroBitLog(MicroBitUSBFlashManager &flash, NRF52Serial &serial) : flash(flash), serial(serial), cache(flash, CONFIG_MICROBIT_LOG_CACHE_BLOCK_SIZE, 4)
 {
-    this->journalPages = journalPages;
+    this->journalPages = 0;
     this->status = 0;
     this->journalHead = 0;
     this->startAddress = 0;
@@ -84,7 +84,7 @@ void MicroBitLog::init()
     {
         // We have a valid file system.
         JournalEntry j;
-        journalPages = (dataStart - startAddress) / flash.getPageSize() - 1;
+        journalPages = (dataStart - journalStart) / flash.getPageSize();
         journalHead = journalStart;
         dataEnd = dataStart;
 
@@ -247,11 +247,11 @@ void MicroBitLog::clear(bool fullErase)
 void MicroBitLog::_clear(bool fullErase)
 {
     // Calculate where our metadata should start.
-    startAddress = sizeof(header) % flash.getPageSize() == 0 ? sizeof(header) : (1+(sizeof(header) / flash.getPageSize())) * flash.getPageSize();
-    journalPages = CONFIG_MICROBIT_LOG_JOURNAL_PAGES;
-    journalStart = startAddress + flash.getPageSize();
+    startAddress = sizeof(header);
+    journalPages = CONFIG_MICROBIT_LOG_JOURNAL_SIZE / flash.getPageSize();
+    journalStart = startAddress + CONFIG_MICROBIT_LOG_METADATA_SIZE;
     journalHead = journalStart;
-    dataStart = journalStart + journalPages*flash.getPageSize();
+    dataStart = journalStart + CONFIG_MICROBIT_LOG_JOURNAL_SIZE;
     dataEnd = dataStart;
     logEnd = flash.getFlashEnd() - flash.getPageSize() - sizeof(uint32_t);
     status &= MICROBIT_LOG_STATUS_SERIAL_MIRROR;
@@ -945,7 +945,7 @@ bool MicroBitLog::_isPresent()
         return true;
 
     // Calculate where our metadata should start, and load the data.
-    startAddress = sizeof(header) % flash.getPageSize() == 0 ? sizeof(header) : (1+(sizeof(header) / flash.getPageSize())) * flash.getPageSize();
+    startAddress = sizeof(header);
 
     // Read the metadata area from flash memory.
     // n.b. we do this using a direct read (rather than via the cache) to avoid preheating the cache with potentially useless data.
@@ -959,10 +959,10 @@ bool MicroBitLog::_isPresent()
     // Determine if the FS looks valid.
     dataStart = strtoul(metaData.dataStart, NULL, 16);
     logEnd = strtoul(metaData.logEnd, NULL, 16);
-    journalStart = startAddress + flash.getPageSize();
+    journalStart = startAddress + CONFIG_MICROBIT_LOG_METADATA_SIZE;
 
     // Perform some basic validation checks. Load in the state of the file system if things look OK.
-    return (dataStart >= startAddress + 2*flash.getPageSize() && dataStart < logEnd && logEnd < flash.getFlashEnd() && memcmp(metaData.version, MICROBIT_LOG_VERSION, 17) == 0);
+    return (dataStart >= journalStart + flash.getPageSize() && dataStart < logEnd && logEnd < flash.getFlashEnd() && memcmp(metaData.version, MICROBIT_LOG_VERSION, 17) == 0);
 }
 
 /**

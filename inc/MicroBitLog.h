@@ -97,9 +97,14 @@ DEALINGS IN THE SOFTWARE.
 #include "NRF52Serial.h"
 #include "ManagedString.h"
 
-#ifndef CONFIG_MICROBIT_LOG_JOURNAL_PAGES
-#define CONFIG_MICROBIT_LOG_JOURNAL_PAGES       4
+#ifndef CONFIG_MICROBIT_LOG_METADATA_SIZE
+#define CONFIG_MICROBIT_LOG_METADATA_SIZE      2048
 #endif
+
+#ifndef CONFIG_MICROBIT_LOG_JOURNAL_SIZE
+#define CONFIG_MICROBIT_LOG_JOURNAL_SIZE       4096
+#endif
+
 
 #ifndef CONFIG_MICROBIT_LOG_CACHE_BLOCK_SIZE
 #define CONFIG_MICROBIT_LOG_CACHE_BLOCK_SIZE    256
@@ -215,7 +220,7 @@ namespace codal
         /**
          * Constructor.
          */
-        MicroBitLog(MicroBitUSBFlashManager &flash, NRF52Serial &serial, int journalPages = CONFIG_MICROBIT_LOG_JOURNAL_PAGES);
+        MicroBitLog(MicroBitUSBFlashManager &flash, NRF52Serial &serial);
 
         /**
          * Destructor.
