@@ -218,7 +218,7 @@ void MicroBitLog::_setVisibility(bool visible)
     MicroBitUSBFlashConfig config, currentConfig;
 
     config.fileName = "MY_DATA.HTM";
-    config.fileSize = flash.getFlashEnd() - flash.getFlashStart() - flash.getPageSize();
+    config.fileSize = flash.getFlashEnd() - flash.getFlashStart();
     config.visible = visible;
     currentConfig = flash.getConfiguration();
 
@@ -253,7 +253,7 @@ void MicroBitLog::_clear(bool fullErase)
     journalHead = journalStart;
     dataStart = journalStart + CONFIG_MICROBIT_LOG_JOURNAL_SIZE;
     dataEnd = dataStart;
-    logEnd = flash.getFlashEnd() - flash.getPageSize() - sizeof(uint32_t);
+    logEnd = flash.getFlashEnd() - sizeof(uint32_t);
     status &= MICROBIT_LOG_STATUS_SERIAL_MIRROR;
     
     // Remove any cached state around column headings

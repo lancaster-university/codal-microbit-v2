@@ -53,6 +53,11 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_USB_FLASH_MAX_RX_RETRIES           100
 #endif
 
+#ifndef MICROBIT_USB_FLASH_MAX_FLASH_STORAGE
+#define MICROBIT_USB_FLASH_MAX_FLASH_STORAGE        0x1F000
+#endif
+
+
 //
 // Command codes for the USB Interface Chip
 //

@@ -122,7 +122,7 @@ int MicroBitUSBFlashManager::setConfiguration(MicroBitUSBFlashConfig config, boo
     getGeometry();
 
     // If the requested file is too long/short, we can't proceed.
-    if (config.fileSize <= 0 || config.fileSize >= geometry.blockSize*geometry.blockCount)
+    if (config.fileSize <= 0 || config.fileSize > geometry.blockSize*geometry.blockCount)
         return MICROBIT_INVALID_PARAMETER;
 
     // Validate filename as fixed length 8.3 format, as required by USB interface chip.
@@ -206,6 +206,10 @@ MicroBitUSBFlashGeometry MicroBitUSBFlashManager::getGeometry()
         // Optimize behaviour for the interface chip version in use.
         if (valid)
         {
+            // Apply FLASH storage limiting policy to align V2.0 and V2.2 device capabilities.
+            if (geometry.blockCount * geometry.blockSize > MICROBIT_USB_FLASH_MAX_FLASH_STORAGE)
+                geometry.blockCount = MICROBIT_USB_FLASH_MAX_FLASH_STORAGE / geometry.blockSize;
+
             MicroBitVersion v = power.getVersion();
             switch(v.i2c)
             {
@@ -619,10 +623,10 @@ ManagedBuffer MicroBitUSBFlashManager::_transact(ManagedBuffer request, int resp
 
                         if (busy)
                         {
-                            DMESG("TRANSACT: [BUSY: LEN: %d]", responseLength);
-                            for (int i=0; i<responseLength; i++)
-                                DMESGN("%d ", b[i]);
-                            DMESGN("\n");
+                            //DMESG("TRANSACT: [BUSY: LEN: %d]", responseLength);
+                            //for (int i=0; i<responseLength; i++)
+                            //    DMESGN("%d ", b[i]);
+                            //DMESGN("\n");
                             rx_attempts = 0;
                         }
                         else
