@@ -631,31 +631,9 @@ ManagedBuffer MicroBitUSBFlashManager::_transact(ManagedBuffer request, int resp
                         bool busy = (status & MICROBIT_USB_FLASH_BUSY_FLAG_SUPPORTED) ? b[0] == 0x20 && b[1] == 0x39 : b[0] == 0x00 || (b[0] == 0x20 && (b[1] == request[0] || b[1] == 0x00));
 
                         if (busy)
-                        {
-                            if (request[0] == MICROBIT_USB_FLASH_ERASE_CMD)
-                            {
-                                DMESG("TRANSACT: BUSY: [OP: %d][LEN: %d]", request[0], responseLength);
-                                DMESG("REQUEST:");
-                                for (int i=0; i<request.length(); i++)
-                                    DMESGN("%x ", request[i]);
-                                DMESGN("\n");
-
-                                DMESG("RESPONSE:");
-                                for (int i=0; i<responseLength; i++)
-                                    DMESGN("%x ", b[i]);
-                                DMESGN("\n");
-
-                            }
                             rx_attempts = 0;
-                        }
                         else
-                        {
-                            DMESG("TRANSACT: [UNEXPECTED RESPONSE: LEN: %d]", responseLength);
-                            for (int i=0; i<responseLength; i++)
-                                DMESGN("%d ", b[i]);
-                            DMESGN("\n");
                             break;
-                        }
                     }
                 }
                 else
@@ -667,9 +645,6 @@ ManagedBuffer MicroBitUSBFlashManager::_transact(ManagedBuffer request, int resp
 
             fiber_sleep(1);
         }
-
-        if (tx_attempts > 1)
-            DMESG("TRANSACT: RTX [CMD: %d] [RTX: %d/%d]", request[0], tx_attempts, MICROBIT_USB_FLASH_MAX_TX_RETRIES);
     }
 
     DMESG("USB_FLASH: Transaction Failed.");
