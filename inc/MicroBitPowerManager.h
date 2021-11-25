@@ -118,6 +118,12 @@ typedef enum {
 //
 // USB interface and device version information
 //
+
+// board versions:
+// V2.0 (KL27 I/F):      0x9904
+// V2.2 (NRF52833 I/F):  0x9905
+// V2.2 (NRF52820 I/F):  0x9906
+
 typedef struct {
     uint16_t        i2c;
     uint16_t        daplink;

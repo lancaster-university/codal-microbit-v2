@@ -238,6 +238,10 @@ MicroBitUSBFlashGeometry MicroBitUSBFlashManager::getGeometry()
                     status |= MICROBIT_USB_FLASH_BUSY_FLAG_SUPPORTED;
                     //status &= ~MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY
             }
+
+            // If we have a V2.2 NRF52 based DAPLink revision, apply an additional 100ms delay following a FLASH_ERASE command.
+            if (v.board == 0x9905 || v.board == 0x9906)
+                status |= MICROBIT_USB_FLASH_100MS_AFTER_ERASE;
         }
 
         // Ensure we don't cache invalid state.
@@ -594,7 +598,12 @@ ManagedBuffer MicroBitUSBFlashManager::_transact(ManagedBuffer request, int resp
             continue;
         }
 
-        target_wait_us(200);
+        // if we have an erase request, ensure sufficient time is left to process it before checking for a response.
+        // (DAPLink workaround)
+        if (request[0] == MICROBIT_USB_FLASH_ERASE_CMD)
+            fiber_sleep(status & MICROBIT_USB_FLASH_100MS_AFTER_ERASE ? 100 : 20);
+        else
+            fiber_sleep(1);
 
         while(rx_attempts < MICROBIT_USB_FLASH_MAX_RX_RETRIES)
         {
@@ -623,10 +632,20 @@ ManagedBuffer MicroBitUSBFlashManager::_transact(ManagedBuffer request, int resp
 
                         if (busy)
                         {
-                            //DMESG("TRANSACT: [BUSY: LEN: %d]", responseLength);
-                            //for (int i=0; i<responseLength; i++)
-                            //    DMESGN("%d ", b[i]);
-                            //DMESGN("\n");
+                            if (request[0] == MICROBIT_USB_FLASH_ERASE_CMD)
+                            {
+                                DMESG("TRANSACT: BUSY: [OP: %d][LEN: %d]", request[0], responseLength);
+                                DMESG("REQUEST:");
+                                for (int i=0; i<request.length(); i++)
+                                    DMESGN("%x ", request[i]);
+                                DMESGN("\n");
+
+                                DMESG("RESPONSE:");
+                                for (int i=0; i<responseLength; i++)
+                                    DMESGN("%x ", b[i]);
+                                DMESGN("\n");
+
+                            }
                             rx_attempts = 0;
                         }
                         else
@@ -648,6 +667,9 @@ ManagedBuffer MicroBitUSBFlashManager::_transact(ManagedBuffer request, int resp
 
             fiber_sleep(1);
         }
+
+        if (tx_attempts > 1)
+            DMESG("TRANSACT: RTX [CMD: %d] [RTX: %d/%d]", request[0], tx_attempts, MICROBIT_USB_FLASH_MAX_TX_RETRIES);
     }
 
     DMESG("USB_FLASH: Transaction Failed.");
