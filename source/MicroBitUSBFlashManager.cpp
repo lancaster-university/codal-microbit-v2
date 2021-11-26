@@ -214,29 +214,18 @@ MicroBitUSBFlashGeometry MicroBitUSBFlashManager::getGeometry()
             switch(v.i2c)
             {
                 case 1:
-                    // Apply workarounds for V2.00 KL27 release.
+                    // Apply workarounds for V2.00 KL27 release, and V2.2 NRF528xx rev1 release.
                     maxWriteLength = 64;
                     status |= (MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY | MICROBIT_USB_FLASH_USE_NULL_TRANSACTION);
                     break;
 
                 case 2:
-                    // Assume fixes released from V2.2 onwards.
-
-                    // TODO: Determine if writelength can be increased in this revision.
-                    maxWriteLength = 64;
-
-                    // TODO: Determine if multiple page erase is supported in this revision.
-                    status |= MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY;
-
-                    // TODO: Remove this in favour of MICROBIT_USB_FLASH_BUSY_FLAG_SUPPORTED once merged.
-                    status |= MICROBIT_USB_FLASH_USE_NULL_TRANSACTION;
-                    break;
-
                 default:
+                    // Apply/disable workarounds for KL27/NRF528xx rev2 release.
                     maxWriteLength = 64;
                     status &= ~MICROBIT_USB_FLASH_USE_NULL_TRANSACTION;
                     status |= MICROBIT_USB_FLASH_BUSY_FLAG_SUPPORTED;
-                    //status &= ~MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY
+                    status |= MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY;
             }
 
             // If we have a V2.2 NRF52 based DAPLink revision, apply an additional 100ms delay following a FLASH_ERASE command.
