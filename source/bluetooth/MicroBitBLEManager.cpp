@@ -690,7 +690,17 @@ void MicroBitBLEManager::onDisconnect()
 }
 
 
-    
+
+/**
+ * Determine if Bluetooth is connected
+ * @return true if connected 
+ */
+bool MicroBitBLEManager::getConnected()
+{
+    return ble_conn_state_peripheral_conn_count() > 0;
+}
+
+
 #if CONFIG_ENABLED(MICROBIT_BLE_EDDYSTONE_URL)
 /**
   * Set the content of Eddystone URL frames
