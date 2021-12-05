@@ -1082,34 +1082,38 @@ bool MicroBitBLEManager::prepareForShutdown()
  */
 int MicroBitBLEManager::setSleep(bool doSleep)
 {
-    static bool wasEnabled;
+    static uint8_t wasEnabled;
 
     if (doSleep)
     {
-        wasEnabled = !nrf_sdh_is_suspended();
-        if (wasEnabled)
-        {
-            nrf_sdh_suspend();
-            app_timer_pause();
-            NVIC_DisableIRQ(RTC1_IRQn);
-            NVIC_DisableIRQ(POWER_CLOCK_IRQn);
-            NVIC_DisableIRQ(RTC0_IRQn);
-            NVIC_DisableIRQ(SWI5_EGU5_IRQn);
-            NVIC_DisableIRQ(MWU_IRQn);
-        }
+        app_timer_pause();
+
+        wasEnabled = 0;
+        wasEnabled |= !nrf_sdh_is_suspended()               ? 1  : 0;
+        wasEnabled |= NVIC_GetEnableIRQ(RTC1_IRQn)          ? 2  : 0;
+        wasEnabled |= NVIC_GetEnableIRQ(MWU_IRQn)           ? 4  : 0;
+        wasEnabled |= NVIC_GetEnableIRQ(SWI5_EGU5_IRQn)     ? 8  : 0;
+        wasEnabled |= NVIC_GetEnableIRQ(POWER_CLOCK_IRQn)   ? 16 : 0;
+        wasEnabled |= NVIC_GetEnableIRQ(RTC0_IRQn)          ? 32 : 0;
+        wasEnabled |= NRF_SUCCESS == MICROBIT_BLE_ECHK( sd_ble_gap_adv_stop( m_adv_handle)) ? 64 : 0;
+
+        if ( wasEnabled & 1)    nrf_sdh_suspend();
+        if ( wasEnabled & 2)    NVIC_DisableIRQ(RTC1_IRQn);
+        if ( wasEnabled & 4)    NVIC_DisableIRQ(MWU_IRQn);
+        if ( wasEnabled & 8)    NVIC_DisableIRQ(SWI5_EGU5_IRQn);
+        if ( wasEnabled & 16)   NVIC_DisableIRQ(POWER_CLOCK_IRQn);
+        if ( wasEnabled & 32)   NVIC_DisableIRQ(RTC0_IRQn);
     }
     else
     {
-        if (wasEnabled)
-        {
-            NVIC_DisableIRQ(POWER_CLOCK_IRQn);
-            NVIC_DisableIRQ(RTC0_IRQn);
-            NVIC_DisableIRQ(SWI5_EGU5_IRQn);
-            NVIC_DisableIRQ(MWU_IRQn);
-            NVIC_EnableIRQ(RTC1_IRQn);
-            app_timer_resume();
-            nrf_sdh_resume();
-        }
+        if (wasEnabled & 32)    NVIC_EnableIRQ(RTC0_IRQn);
+        if (wasEnabled & 16)    NVIC_EnableIRQ(POWER_CLOCK_IRQn);
+        if (wasEnabled & 8)     NVIC_EnableIRQ(SWI5_EGU5_IRQn);
+        if (wasEnabled & 4)     NVIC_EnableIRQ(MWU_IRQn);
+        if (wasEnabled & 2)     NVIC_EnableIRQ(RTC1_IRQn);
+        if (wasEnabled & 1)     nrf_sdh_resume();
+        if (wasEnabled & 64)    advertise();
+        app_timer_resume();
     }
    
     return DEVICE_OK;
