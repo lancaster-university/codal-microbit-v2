@@ -1087,22 +1087,21 @@ int MicroBitBLEManager::setSleep(bool doSleep)
     if (doSleep)
     {
         app_timer_pause();
-
         wasEnabled = 0;
-        wasEnabled |= !nrf_sdh_is_suspended()               ? 1  : 0;
-        wasEnabled |= NVIC_GetEnableIRQ(RTC1_IRQn)          ? 2  : 0;
-        wasEnabled |= NVIC_GetEnableIRQ(MWU_IRQn)           ? 4  : 0;
-        wasEnabled |= NVIC_GetEnableIRQ(SWI5_EGU5_IRQn)     ? 8  : 0;
-        wasEnabled |= NVIC_GetEnableIRQ(POWER_CLOCK_IRQn)   ? 16 : 0;
-        wasEnabled |= NVIC_GetEnableIRQ(RTC0_IRQn)          ? 32 : 0;
-        wasEnabled |= NRF_SUCCESS == MICROBIT_BLE_ECHK( sd_ble_gap_adv_stop( m_adv_handle)) ? 64 : 0;
+        if (!nrf_sdh_is_suspended())                wasEnabled |= 1;
+        if (NVIC_GetEnableIRQ(RTC1_IRQn))           wasEnabled |= 2;
+        if (NVIC_GetEnableIRQ(MWU_IRQn))            wasEnabled |= 4;
+        if (NVIC_GetEnableIRQ(SWI5_EGU5_IRQn))      wasEnabled |= 8;
+        if (NVIC_GetEnableIRQ(POWER_CLOCK_IRQn))    wasEnabled |= 16;
+        if (NVIC_GetEnableIRQ(RTC0_IRQn))           wasEnabled |= 32;
+        if (NRF_SUCCESS == MICROBIT_BLE_ECHK( sd_ble_gap_adv_stop( m_adv_handle))) wasEnabled |= 64;
 
-        if ( wasEnabled & 1)    nrf_sdh_suspend();
-        if ( wasEnabled & 2)    NVIC_DisableIRQ(RTC1_IRQn);
-        if ( wasEnabled & 4)    NVIC_DisableIRQ(MWU_IRQn);
-        if ( wasEnabled & 8)    NVIC_DisableIRQ(SWI5_EGU5_IRQn);
-        if ( wasEnabled & 16)   NVIC_DisableIRQ(POWER_CLOCK_IRQn);
-        if ( wasEnabled & 32)   NVIC_DisableIRQ(RTC0_IRQn);
+        if (wasEnabled & 1)    nrf_sdh_suspend();
+        if (wasEnabled & 2)    NVIC_DisableIRQ(RTC1_IRQn);
+        if (wasEnabled & 4)    NVIC_DisableIRQ(MWU_IRQn);
+        if (wasEnabled & 8)    NVIC_DisableIRQ(SWI5_EGU5_IRQn);
+        if (wasEnabled & 16)   NVIC_DisableIRQ(POWER_CLOCK_IRQn);
+        if (wasEnabled & 32)   NVIC_DisableIRQ(RTC0_IRQn);
     }
     else
     {
