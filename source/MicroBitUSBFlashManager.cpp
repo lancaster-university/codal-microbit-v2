@@ -152,7 +152,7 @@ int MicroBitUSBFlashManager::setConfiguration(MicroBitUSBFlashConfig config, boo
 
     // Write out each of the parameters in turn.
     transact(fname, 12);
-    transact(fsize, 2);
+    transact(fsize, 5);
     transact(fvisible, 2);
 
     if (persist)
