@@ -44,7 +44,7 @@ DEALINGS IN THE SOFTWARE.
 // General constants 
 //
 #define MICROBIT_UIPM_MAX_BUFFER_SIZE               8
-#define MICROBIT_UIPM_MAX_RETRIES                   5
+#define MICROBIT_UIPM_MAX_RETRIES                   10
 #define MICROBIT_USB_INTERFACE_IRQ_THRESHOLD        30
 
 //
