@@ -123,7 +123,7 @@ class MicroBitBLEManager : public CodalComponent
       * bleManager.init(uBit.getName(), uBit.getSerial(), uBit.messageBus, true);
       * @endcode
       */
-    void init(ManagedString deviceName, ManagedString serialNumber, EventModel &messageBus, MicroBitStorage &keyValuestorage, bool enableBonding);
+    void init(ManagedString deviceName, ManagedString serialNumber, EventModel &messageBus, MicroBitStorage &keyValuestorage, bool enableBonding, uint16_t board = 0x9904);
     
     /**
      * Change the output power level of the transmitter to the given value.

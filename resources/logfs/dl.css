@@ -9,6 +9,7 @@ a {
   color: rgba(108, 75, 193, 1);
 }
 button {
+  cursor: pointer;
   border-radius: 23px;
   min-height: 46px;
   font-weight: 700;
@@ -27,14 +28,32 @@ button:first-of-type {
   background: #000;
   color: #fff;
 }
+tr:nth-child(even) {
+  background: #f2f2f2;
+}
 tr:hover {
   background-color: #ddd;
 }
 footer {
   margin-top: 1em;
 }
-tr:nth-child(even) {
-  background: #f2f2f2;
+#info {
+  max-width: 48em;
+  line-height: 1.3;
+}
+#graph-warning {
+  max-width: 48em;
+  color: red;
+  text-align: left;
+}
+#graph-warning a {
+  color: red;
+}
+#abort-row {
+  color: red;
+}
+#browser-warning {
+  color: red;
 }
 header {
   /* Undo generic spacing as we need to be flush with edges */
@@ -44,7 +63,7 @@ header {
 }
 .header-strip {
   height: 10px;
-  background-image: linear-gradient(90deg,#00c800,#3eb6fd);;
+  background-image: linear-gradient(90deg, #00c800, #3eb6fd);
 }
 .header-contents {
   height: 62px;
@@ -54,4 +73,7 @@ header {
   width: 167px;
   height: 40px;
   padding: 10px 15px;
+}
+#v {
+  display: none;
 }

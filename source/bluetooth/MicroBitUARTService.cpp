@@ -44,7 +44,22 @@ const uint8_t  MicroBitUARTService::base_uuid[ 16] =
 { 0x6e, 0x40, 0x00, 0x00, 0xb5, 0xa3, 0xf3, 0x93, 0xe0, 0xa9, 0xe5, 0x0e, 0x24, 0xdc, 0xca, 0x9e };
 
 const uint16_t MicroBitUARTService::serviceUUID               = 0x0001;
+
+// The TX/RX characteristics for the Nordic UART services (NUS) have two common
+// implementations. The codal code is the same, the only difference is how the characterists
+// and their services are advertised.
+//
+// Enable the MICROBIT_BLE_NORDIC_STYLE_UART setting to build microbit projects for applications that
+// connect to generic NUS devices
+// https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/include/bluetooth/services/nus.html
+//
+// Leave the setting undefined (or 0) for standard dal or codal microbit builds
+
+#if CONFIG_ENABLED(MICROBIT_BLE_NORDIC_STYLE_UART)
+const uint16_t MicroBitUARTService::charUUID[ mbbs_cIdxCOUNT] = { 0x0003, 0x0002 };
+#else
 const uint16_t MicroBitUARTService::charUUID[ mbbs_cIdxCOUNT] = { 0x0002, 0x0003 };
+#endif 
 
 #define MICROBIT_UART_S_ATTRSIZE            20
 

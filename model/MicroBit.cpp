@@ -163,6 +163,12 @@ int MicroBit::init()
     if(NRF_POWER->RESETREAS == 0)
         target_wait(KL27_POWER_ON_DELAY);
 
+#if CONFIG_ENABLED(DEVICE_BLE)
+    // Ensure BLE bootloader settings are up to date.
+    // n.b. this only performs a write operation if the settings stored in FLASH are out of date.
+    MicroBitPartialFlashingService::validateBootloaderSettings();
+#endif
+
     // Determine if we have been reprogrammed. If so, follow configured policy on erasing any persistent user data.
     eraseUserStorage();
 
@@ -208,6 +214,10 @@ int MicroBit::init()
     NVIC_SetPriority(UARTE0_UART0_IRQn, 2);   // Serial port
     NVIC_SetPriority(GPIOTE_IRQn, 2);         // Pin interrupt events
 
+#if CONFIG_ENABLED(DEVICE_BLE) && ( CONFIG_ENABLED(MICROBIT_BLE_PAIRING_MODE) || CONFIG_ENABLED(MICROBIT_BLE_ENABLED))
+    MicroBitVersion version = power.getVersion();
+#endif
+
 #if CONFIG_ENABLED(DEVICE_BLE) && CONFIG_ENABLED(MICROBIT_BLE_PAIRING_MODE)
     int i=0;
     // Test if we need to enter BLE pairing mode
@@ -238,7 +248,7 @@ int MicroBit::init()
             delete flashIncomplete;
 
             // Start the BLE stack, if it isn't already running.
-            bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, storage, true);
+            bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, storage, true, version.board);
             
             // Enter pairing mode, using the LED matrix for any necessary pairing operations
             bleManager.pairingMode(display, buttonA);
@@ -248,7 +258,7 @@ int MicroBit::init()
 
 #if CONFIG_ENABLED(DEVICE_BLE) && CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
     // Start the BLE stack, if it isn't already running.
-    bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, storage, false);
+    bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, storage, false, version.board);
 #endif
 
     // Deschedule for a little while, just to allow for any components that finialise initialisation

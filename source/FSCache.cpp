@@ -138,7 +138,6 @@ int FSCache::write(uint32_t address, const void *data, int len)
 			if ((b1 ^ b2) & b2)
 			{
 				DMESG("FS_CACHE: ILLEGAL WRITE OPERAITON ATTEMPTED [ADDRESS: %p] [LENGTH: %d]\n", address, len);
-				debug(c);
 				return DEVICE_NOT_SUPPORTED;
 			}
 		}

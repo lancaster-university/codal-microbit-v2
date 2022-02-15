@@ -60,7 +60,8 @@ MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins,
     this->id = id;
 
     // Indicate we'd like to receive periodic callbacks both in idle and interrupt context.
-    status |= DEVICE_COMPONENT_STATUS_IDLE_TICK;
+    // Also, be pessimistic about the interface chip in use, until we obtain version information.
+    status |= (DEVICE_COMPONENT_STATUS_IDLE_TICK | MICROBIT_USB_INTERFACE_ALWAYS_NOP);
 }
 
 /**
@@ -104,7 +105,19 @@ MicroBitVersion MicroBitPowerManager::getVersion()
         memcpy(&version.daplink, &b[3], 2);
 
         // Version data in non-volatile, so cache it for later.
-        //status |= MICROBIT_USB_INTERFACE_VERSION_LOADED;
+        status |= MICROBIT_USB_INTERFACE_VERSION_LOADED;
+
+        // Optimise our behaviour for the version of interface chip in use.
+        switch(version.board)
+        {
+            // V2.00 KL27
+            case 39172:
+                status |= MICROBIT_USB_INTERFACE_ALWAYS_NOP;
+                break;
+
+            default:
+                status &= ~MICROBIT_USB_INTERFACE_ALWAYS_NOP;
+        }
     }
 
     return version;
@@ -141,14 +154,19 @@ uint32_t MicroBitPowerManager::getPowerConsumption()
 }
 
 /**
- * Perform a NULL opertion I2C transcation wit the interface chip.
+ * Perform a NULL opertion I2C transaction with the interface chip if needed.
  * This is used to awken the KL27 interface chip from light sleep, 
  * as a work around for silicon errata in the KL27.
  */
 void MicroBitPowerManager::nop()
 {
-    i2cBus.write(MICROBIT_UIPM_I2C_ADDRESS, (uint8_t *)UIPM_I2C_NOP, 3, false);
-    target_wait(10);
+    // Perform a throw away zero byte write operation to the interface chip if needed.
+    // KL27 based implementations need this to wake from deep sleep.
+    if (status & MICROBIT_USB_INTERFACE_ALWAYS_NOP)
+    {
+        uint8_t unused;
+        i2cBus.write(MICROBIT_UIPM_I2C_ADDRESS, &unused, 0, false);
+    }
 }
 
 /**

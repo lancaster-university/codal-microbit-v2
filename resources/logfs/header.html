@@ -19,7 +19,6 @@
       }
       table {
         border-collapse: collapse;
-        width: 50%;
         margin-top: 1em;
         text-align: right;
       }
@@ -35,7 +34,7 @@
         display: none;
       }
     </style>
-    <link rel="stylesheet" href="https://microbit.org/dl/1/dl.css" />
+    <link rel="stylesheet" href="https://microbit.org/dl/2/dl.css" />
     <script>
       // These help significantly to save bytes.
       let w = window;
@@ -129,7 +128,7 @@
         },
       };
     </script>
-    <script src="https://microbit.org/dl/1/dl.js"></script>
+    <script src="https://microbit.org/dl/2/dl.js"></script>
     <title>micro:bit data log</title>
   </head>
   <body onload="dl.load()">
@@ -141,6 +140,7 @@
         <button onclick="dl.update()">Update data&mldr;</button>
         <button onclick="dl.clear()">Clear log&mldr;</button>
       </div>
+      <p id="v">Offline: no visual preview</p>
     </div>
   </body>
 </html>

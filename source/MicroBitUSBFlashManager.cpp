@@ -24,10 +24,6 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitUSBFlashManager.h"
 
-#define KL27_FLASH_ERASE_WORKAROUND         1
-#define KL27_FLASH_BULK_WRITE_WORKAROUND    1
-#define KL27_FLASH_MAX_WRITE_LENGTH         64
-
 static const KeyValueTableEntry usbFlashPropertyLengthData[] = {
     {MICROBIT_USB_FLASH_FILENAME_CMD, 12},
     {MICROBIT_USB_FLASH_FILESIZE_CMD, 5},
@@ -52,6 +48,7 @@ CREATE_KEY_VALUE_TABLE(usbFlashPropertyLength, usbFlashPropertyLengthData);
 MicroBitUSBFlashManager::MicroBitUSBFlashManager(MicroBitI2C &i2c, MicroBitIO &ioPins, MicroBitPowerManager &powerManager, uint16_t id) : i2cBus(i2c), io(ioPins), power(powerManager)
 {
     this->id = id;
+    this->maxWriteLength = 64;
 }
 
 /**
@@ -203,7 +200,22 @@ MicroBitUSBFlashGeometry MicroBitUSBFlashManager::getGeometry()
         else
             valid = false;
 
-        // Esnure we don't cache invalid state.
+        // Optimize behaviour for the interface chip version in use.
+        MicroBitVersion v = power.getVersion();
+        switch(v.daplink)
+        {
+            case 255:
+                // Apply workarounds for V2.00 KL27 release
+                maxWriteLength = 64;
+                status |= (MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY | MICROBIT_USB_FLASH_USE_NULL_TRANSACTION);
+                break;
+
+            default:
+                maxWriteLength = 1024;
+                status &= ~(MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY | MICROBIT_USB_FLASH_USE_NULL_TRANSACTION);
+        }
+
+        // Ensure we don't cache invalid state.
         if (valid)
             status |= MICROBIT_USB_FLASH_GEOMETRY_LOADED;
     }
@@ -313,9 +325,7 @@ int MicroBitUSBFlashManager::write(uint32_t address, uint32_t *data, uint32_t le
 
     ManagedBuffer response;
 
-#ifdef KL27_FLASH_BULK_WRITE_WORKAROUND
-
-    ManagedBuffer request(min(KL27_FLASH_MAX_WRITE_LENGTH, length) + 8);
+    ManagedBuffer request(min(maxWriteLength, length) + 8);
     request.fill(0xFF);
 
     uint32_t p = address;
@@ -325,9 +335,7 @@ int MicroBitUSBFlashManager::write(uint32_t address, uint32_t *data, uint32_t le
 
     while (p < end)
     {
-        segmentLength = min(KL27_FLASH_MAX_WRITE_LENGTH, length-bytesWritten);
-
-        //DMESGF("WRITING FRAG: [ADDRESS: %p] [LENGTH: %d bytes]", p, segmentLength);
+        segmentLength = min(maxWriteLength, length-bytesWritten);
         
         uint32_t *ptr = (uint32_t *) &request[0];
         *ptr++ = htonl( p | (MICROBIT_USB_FLASH_WRITE_CMD << 24));
@@ -338,34 +346,11 @@ int MicroBitUSBFlashManager::write(uint32_t address, uint32_t *data, uint32_t le
         response = transact(request, 9);
 
         if (response.length() == 0)
-        {
-            DMESGF("  ERROR");
             return DEVICE_I2C_ERROR;
-        }
-
-        //DMESGF("  RESPONSE: %d", response[0]);
 
         bytesWritten += segmentLength;
         p+= segmentLength;
     }
-
-#else
-
-    // Ensure any padding bytes to 0xFF
-    ManagedBuffer request(length + 8);
-    request.fill(0xFF);
-
-    // Add header and user data
-    uint32_t *p = (uint32_t *) &request[0];
-    *p++ = htonl(((uint32_t) address) | (MICROBIT_USB_FLASH_WRITE_CMD << 24));
-    *p++ = htonl(writeLength);
-    memcpy((uint8_t *)p) + data, length);
-
-    response = transact(request, 9);
-
-    if (response.length() == 0)
-        return DEVICE_I2C_ERROR;
-#endif
 
     return DEVICE_OK;
 }
@@ -434,43 +419,35 @@ int MicroBitUSBFlashManager::erase(uint32_t address, uint32_t length)
             restoreBuffer2 = read(address + length, restoreLength2/sizeof(uint32_t));
     }
 
-#ifdef KL27_FLASH_ERASE_WORKAROUND
-    for (uint32_t page = eraseStart; page <= eraseEnd; page += geometry.blockSize)
+    if (status & MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY)
+    {
+        for (uint32_t page = eraseStart; page <= eraseEnd; page += geometry.blockSize)
+        {
+            uint32_t *p = (uint32_t *) &request[0];
+            *p++ = htonl(page | (MICROBIT_USB_FLASH_ERASE_CMD << 24));
+            *p++ = htonl(page);
+
+            response = transact(request, 1);
+            if (response.length() == 0)
+            {
+                DMESG("ERROR ERASING");
+                return DEVICE_I2C_ERROR;
+            }
+        }
+    }
+    else
     {
         uint32_t *p = (uint32_t *) &request[0];
-        *p++ = htonl(page | (MICROBIT_USB_FLASH_ERASE_CMD << 24));
-        *p++ = htonl(page);
+        *p++ = htonl(eraseStart | (MICROBIT_USB_FLASH_ERASE_CMD << 24));
+        *p++ = htonl(eraseEnd);
 
-        //fiber_sleep(1);
         response = transact(request, 1);
         if (response.length() == 0)
         {
             DMESG("ERROR ERASING");
             return DEVICE_I2C_ERROR;
         }
-
-        //if (response[0] != 0)
-        //    DMESGF("ERASE RESPONSE [PAGE: %p] [RESPONSE: %d/%d]", page, response[0], response.length());
     }
-
-#else
-    // Workaround until block erasing supported.
-    uint32_t *p = (uint32_t *) &request[0];
-    *p++ = htonl(eraseStart | (MICROBIT_USB_FLASH_ERASE_CMD << 24));
-    *p++ = htonl(eraseEnd);
-
-    DMESG("ERASING: [start: %d] [end: %d]", eraseStart, eraseEnd);
-    for (int i=0; i<request.length();i++)
-        DMESG("%x ", request[i]);
-
-    response = transact(request, 1);
-
-    if (response.length() == 0)
-    {
-        DMESG("ERROR ERASING");
-        return DEVICE_I2C_ERROR;
-    }
-#endif
 
     // Restore any saved data if necessary
     if (restoreBuffer1.length() > 0)
@@ -553,60 +530,81 @@ MicroBitUSBFlashManager::getFlashSize()
  */
 ManagedBuffer MicroBitUSBFlashManager::transact(ManagedBuffer request, int responseLength)
 {
-    int attempts = 0;
-    bool failed = false;
+    power.nop();
 
-    while(attempts < MICROBIT_USB_FLASH_MAX_RETRIES)
+    if (status & MICROBIT_USB_FLASH_USE_NULL_TRANSACTION)
     {
-        if (i2cBus.write(MICROBIT_USB_FLASH_I2C_ADDRESS, &request[0], request.length(), false) != DEVICE_OK)
-        {
-            DMESG("TRASACT: [I2C WRITE ERROR]");
-            fiber_sleep(1);
-            attempts++;
-            continue;
-        }
+        ManagedBuffer nop_request(1);
+        nop_request[0] = MICROBIT_USB_FLASH_VISIBILITY_CMD;
+        _transact(nop_request, usbFlashPropertyLength.get(MICROBIT_USB_FLASH_VISIBILITY_CMD));
+    }
+
+    return _transact(request, responseLength);
+}
+
+/**
+ * Performs a flash storage transaction with the interface chip.
+ * @param packet The data to write to the interface chip as a request operation.
+ * @param responseLength The length of the expected reponse packet.
+ * @return a buffer containing the response to the request, or a zero length buffer on failure.
+ */
+ManagedBuffer MicroBitUSBFlashManager::_transact(ManagedBuffer request, int responseLength)
+{
+    int tx_attempts = 0;
+    int rx_attempts = 0;
+    ManagedBuffer b(max(responseLength, 3));
+
+    while(tx_attempts < MICROBIT_USB_FLASH_MAX_TX_RETRIES)
+    {
+        rx_attempts = 0;
+        tx_attempts++;
 
         power.awaitingPacket(true);
 
+        if (i2cBus.write(MICROBIT_USB_FLASH_I2C_ADDRESS, &request[0], request.length(), false) != DEVICE_OK)
+        {
+            DMESG("TRANSACT: [I2C WRITE ERROR]");
+            fiber_sleep(1);
+            continue;
+        }
+
         target_wait_us(200);
 
-        while(attempts < MICROBIT_USB_FLASH_MAX_RETRIES)
+        while(rx_attempts < MICROBIT_USB_FLASH_MAX_RX_RETRIES)
         {
-            failed = false;
+            rx_attempts++;
+
             if(io.irq1.isActive())
             {
-                ManagedBuffer b(responseLength);
-                int r = i2cBus.read(MICROBIT_USB_FLASH_I2C_ADDRESS, &b[0], responseLength, false);
+                int r = i2cBus.read(MICROBIT_USB_FLASH_I2C_ADDRESS, &b[0], b.length(), false);
 
-                if (r != MICROBIT_OK)
+                if (r == MICROBIT_OK)
+                {
+                    if (b[0] == request[0])
+                    {
+                        // We have a valid response. Consume it, and we're done.
+                        power.awaitingPacket(false);
+                        b.truncate(responseLength);
+                        return b;
+                    }
+                    else
+                    {
+                        // We have a negative response. If it's not a FAIL case, treat this as "NOT READY"
+                        // reset RX timeout, as the peripheral is active on our transaction.
+                        if (b[0] == 0x00 || (b[0] == 0x20 && (b[1] == request[0] || b[1] == 0x00)))
+                            rx_attempts = 0;
+                        else
+                            break;
+                    }
+                }
+                else
                 {
                     DMESG("TRANSACT: [I2C READ ERROR: %d]",r);
-                    failed = true;
-                }
-
-                if (r == MICROBIT_OK && b[0] != request[0])
-                {
-                    if (b[0] == 0x00){
-                        //DMESG("TRANSACT: [DATA NOT READY: [REQUEST: %d]",request[0]);
-                    }else{
-                        DMESG("TRANSACT: UNEXPECTED RESPONSE [REQUEST: %x]", request[0]);
-                    }
-
-                    failed = true;
-                }
-
-                if (!failed)
-                {
-                    power.awaitingPacket(false);
-                    return b;
+                    break;
                 }
             }
 
             fiber_sleep(1);
-            attempts++;
-
-            if (failed)
-                break;
         }
     }
 

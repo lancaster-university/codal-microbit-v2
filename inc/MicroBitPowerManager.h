@@ -45,7 +45,7 @@ DEALINGS IN THE SOFTWARE.
 //
 #define MICROBIT_UIPM_MAX_BUFFER_SIZE               8
 #define MICROBIT_UIPM_MAX_RETRIES                   5
-#define MICROBIT_USB_INTERFACE_IRQ_THRESHOLD        3
+#define MICROBIT_USB_INTERFACE_IRQ_THRESHOLD        30
 
 //
 // Command codes for the USB Interface Chip
@@ -136,6 +136,7 @@ typedef struct {
 //
 #define MICROBIT_USB_INTERFACE_AWAITING_RESPONSE  0x01
 #define MICROBIT_USB_INTERFACE_VERSION_LOADED     0x02
+#define MICROBIT_USB_INTERFACE_ALWAYS_NOP         0x04
 
 //
 // Minimum deep sleep time (milliseconds)
@@ -150,6 +151,7 @@ typedef struct {
 #ifndef CONFIG_MINIMUM_POWER_ON_TIME
 #define CONFIG_MINIMUM_POWER_ON_TIME  500
 #endif
+
 
 /**
  * Class definition for MicroBitPowerManager.
