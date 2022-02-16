@@ -336,6 +336,20 @@ void MicroBitPowerManager::idleCallback()
     // Reset our counter, and see if the USB interface chip has any data ready for us.
     activeCount  = 0;
 
+    readInterfaceRequest();
+}
+
+/**
+ * Service any IRQ requests raised by the USB interface chip.
+ */
+void MicroBitPowerManager::readInterfaceRequest()
+{
+    // Do nothing if there is a transaction in progress.
+    if (status & MICROBIT_USB_INTERFACE_AWAITING_RESPONSE || !io.irq1.isActive())
+    {
+        return;
+    }
+
     // Determine if the KL27 is trying to indicate an event
     ManagedBuffer response;
     response = recvUIPMPacket();

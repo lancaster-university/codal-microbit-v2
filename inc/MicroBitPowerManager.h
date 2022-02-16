@@ -270,6 +270,11 @@ class MicroBitPowerManager : public CodalComponent
         void off();
 
         /**
+         * Service any IRQ requests raised by the USB interface chip.
+         */
+        void readInterfaceRequest();
+
+        /**
          * A periodic callback invoked by the fiber scheduler idle thread.
          * Service any IRQ requests raised by the USB interface chip.
          */
