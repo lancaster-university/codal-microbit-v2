@@ -171,7 +171,10 @@ int MicroBit::init()
     // Determine if we have been reprogrammed. If so, follow configured policy on erasing any persistent user data.
     eraseUserStorage();
 
-    // Bring up fiber scheduler.
+    // Force at least one check for if we're being told to sleep by DAPLink.
+    power.idleCallback();
+
+    // Otherwise just bring up the fiber scheduler.
     scheduler_init(messageBus);
 
     for(int i = 0; i < DEVICE_COMPONENT_COUNT; i++)

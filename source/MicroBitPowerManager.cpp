@@ -318,7 +318,8 @@ void MicroBitPowerManager::off()
  */
 void MicroBitPowerManager::idleCallback()
 {
-    static int activeCount = 0;
+    // Start at our trigger value, so that the first call actually checks for data (required for standby/sleep modes)
+    static int activeCount = MICROBIT_USB_INTERFACE_IRQ_THRESHOLD;
 
     // Do nothing if there is a transaction in progress.
     if (status & MICROBIT_USB_INTERFACE_AWAITING_RESPONSE || !io.irq1.isActive())
