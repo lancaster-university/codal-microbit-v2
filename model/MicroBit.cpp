@@ -41,6 +41,7 @@ static const MatrixPoint ledMatrixPositions[5*5] =
     {4,0},{4,1},{4,2},{4,3},{4,4}
 };
 
+static const uint32_t reflash_status = 0xffffffff;
 /**
   * Constructor.
   *
@@ -49,11 +50,8 @@ static const MatrixPoint ledMatrixPositions[5*5] =
   */
 MicroBit::MicroBit() :
 
-    storage(),
-
 #if CONFIG_ENABLED(DEVICE_BLE)
-    // Initialize buttonless SVCI bootloader interface before interrupts are enabled
-    bleManager( storage),
+    bleManager(),
     ble( &bleManager),
 #endif
 
@@ -69,7 +67,10 @@ MicroBit::MicroBit() :
     serial(io.usbTx, io.usbRx, NRF_UARTE0),
     _i2c(io.sda, io.scl),
     i2c(io.P20, io.P19),
-    // RED
+    power(_i2c, io, systemTimer),
+    flash(_i2c, io, power),
+    internalFlash(MICROBIT_STORAGE_PAGE, 1, MICROBIT_CODEPAGESIZE),
+    storage(internalFlash, 0),
     ledRowPins{&io.row1, &io.row2, &io.row3, &io.row4, &io.row5},
     ledColPins{&io.col1, &io.col2, &io.col3, &io.col4, &io.col5},
 
@@ -83,10 +84,9 @@ MicroBit::MicroBit() :
     thermometer(),
     accelerometer(MicroBitAccelerometer::autoDetect(_i2c)),
     compass(MicroBitCompass::autoDetect(_i2c)),
-    compassCalibrator(compass, accelerometer, display),
-    power(_i2c, io),
-    flash(_i2c, io, power),
-    audio(io.P0, io.speaker)
+    compassCalibrator(compass, accelerometer, display, storage),
+    audio(io.P0, io.speaker),
+    log(flash, serial)
 {
     // Clear our status
     status = 0;
@@ -158,6 +158,19 @@ int MicroBit::init()
 
     status |= DEVICE_INITIALIZED;
 
+    // On a hard reset, wait for the USB interface chip to come online.
+    if(NRF_POWER->RESETREAS == 0)
+        target_wait(KL27_POWER_ON_DELAY);
+
+#if CONFIG_ENABLED(DEVICE_BLE)
+    // Ensure BLE bootloader settings are up to date.
+    // n.b. this only performs a write operation if the settings stored in FLASH are out of date.
+    MicroBitPartialFlashingService::validateBootloaderSettings();
+#endif
+
+    // Determine if we have been reprogrammed. If so, follow configured policy on erasing any persistent user data.
+    eraseUserStorage();
+
     // Bring up fiber scheduler.
     scheduler_init(messageBus);
 
@@ -174,6 +187,7 @@ int MicroBit::init()
     // We do this to enable initialisation of those services only when they're used,
     // which saves processor time, memeory and battery life.
     messageBus.listen(DEVICE_ID_MESSAGE_BUS_LISTENER, DEVICE_EVT_ANY, this, &MicroBit::onListenerRegisteredEvent);
+    messageBus.listen(DEVICE_ID_MESSAGE_BUS_LISTENER, ID_PIN_P0, this, &MicroBit::onP0ListenerRegisteredEvent, MESSAGE_BUS_LISTENER_IMMEDIATE);
 
 #if CONFIG_ENABLED(DMESG_SERIAL_DEBUG)
 #if DEVICE_DMESG_BUFFER_SIZE > 0
@@ -183,20 +197,25 @@ int MicroBit::init()
     status |= DEVICE_COMPONENT_STATUS_IDLE_TICK;
 
     // Set IRQ priorities for peripherals we use.
-    // Note that low values have highest priority, and only 2, 3, 5, 6 and 7 are available with SoftDevice enabled.
+    // Note that low values have highest priority, and only 2, 3, 4, 5 and 7 are available with SoftDevice enabled.
 
     NVIC_SetPriority(TIMER1_IRQn, 7);         // System timer (general purpose)
     NVIC_SetPriority(TIMER2_IRQn, 5);         // ADC timer.
-    NVIC_SetPriority(TIMER3_IRQn, 2);         // Cap touch.
-    NVIC_SetPriority(TIMER4_IRQn, 2);         // Display and Light Sensing.
+    NVIC_SetPriority(TIMER3_IRQn, 3);         // Cap touch.
+    NVIC_SetPriority(TIMER4_IRQn, 3);         // Display and Light Sensing.
 
-    NVIC_SetPriority(SAADC_IRQn, 3);          // Analogue to Digital Converter (microphone etc)
-    NVIC_SetPriority(PWM0_IRQn, 3);           // General Purpose PWM on edge connector (servo, square wave sounds)
-    NVIC_SetPriority(PWM1_IRQn, 2);           // PCM audio on speaker (high definition sound)
-    NVIC_SetPriority(PWM2_IRQn, 2);           // Waveform Generation (neopixel)
+    NVIC_SetPriority(SAADC_IRQn, 5);          // Analogue to Digital Converter (microphone etc)
+    NVIC_SetPriority(PWM0_IRQn, 5);           // General Purpose PWM on edge connector (servo, square wave sounds)
+    NVIC_SetPriority(PWM1_IRQn, 4);           // PCM audio on speaker (high definition sound)
+    NVIC_SetPriority(PWM2_IRQn, 3);           // Waveform Generation (neopixel)
 
-    NVIC_SetPriority(RADIO_IRQn, 3);          // Packet radio
+    NVIC_SetPriority(RADIO_IRQn, 4);          // Packet radio
     NVIC_SetPriority(UARTE0_UART0_IRQn, 2);   // Serial port
+    NVIC_SetPriority(GPIOTE_IRQn, 2);         // Pin interrupt events
+
+#if CONFIG_ENABLED(DEVICE_BLE) && ( CONFIG_ENABLED(MICROBIT_BLE_PAIRING_MODE) || CONFIG_ENABLED(MICROBIT_BLE_ENABLED))
+    MicroBitVersion version = power.getVersion();
+#endif
 
 #if CONFIG_ENABLED(DEVICE_BLE) && CONFIG_ENABLED(MICROBIT_BLE_PAIRING_MODE)
     int i=0;
@@ -228,7 +247,7 @@ int MicroBit::init()
             delete flashIncomplete;
 
             // Start the BLE stack, if it isn't already running.
-            bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, true);
+            bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, storage, true, version.board);
             
             // Enter pairing mode, using the LED matrix for any necessary pairing operations
             bleManager.pairingMode(display, buttonA);
@@ -238,7 +257,7 @@ int MicroBit::init()
 
 #if CONFIG_ENABLED(DEVICE_BLE) && CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
     // Start the BLE stack, if it isn't already running.
-    bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, false);
+    bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, storage, false, version.board);
 #endif
 
     // Deschedule for a little while, just to allow for any components that finialise initialisation
@@ -248,6 +267,14 @@ int MicroBit::init()
     sleep(10);
 
     return DEVICE_OK;
+}
+
+/**
+  * A callback listener to disable default audio streaming to P0 if an event handler is registered on that pin.
+  */
+void MicroBit::onP0ListenerRegisteredEvent(Event evt)
+{
+    audio.setPinEnabled(false);
 }
 
 /**
@@ -299,6 +326,32 @@ void MicroBit::onListenerRegisteredEvent(Event evt)
     }
 }
 
+
+/**
+ * Perfom scheduler idle
+*/
+void MicroBit::schedulerIdle()
+{
+    if ( power.waitingForDeepSleep())
+    {
+#if CONFIG_ENABLED( MICROBIT_BLE)
+        if ( bleManager.isConnected())
+        {
+            power.cancelDeepSleep();
+            target_wait_for_event();
+            return;
+        }
+#endif
+        if ( power.readyForDeepSleep())
+        {
+            if ( power.startDeepSleep() == DEVICE_OK)
+                return;
+        }
+    }
+
+    target_wait_for_event();
+}
+
 /**
   * A periodic callback invoked by the fiber scheduler idle thread.
   * We use this for any low priority, backgrounf housekeeping.
@@ -310,6 +363,34 @@ void MicroBit::idleCallback()
 #if DEVICE_DMESG_BUFFER_SIZE > 0
     codal_dmesg_flush();
 #endif
+#endif
+}
+
+/**
+ * Determines if any persistent storage needs to be erased following the reprogramming
+ * of the micro:bit.
+ *
+ * @param forceErase Force an erase of user data, even if we have not detected a reflash event.
+ */
+void MicroBit::eraseUserStorage(bool forceErase)
+{
+    uint32_t zero = 0;
+    uint32_t reset_value;
+    NRF52FlashManager f(0, 128, 4096);
+
+    f.read(&reset_value, (uint32_t) &reflash_status, 1);
+
+    // If there is no indication of a reflash event, there's nothing to do.
+    if (!(reset_value || forceErase))
+        return;
+
+    // Clear our flag if we have been reflashed
+    if (reset_value)
+        f.write((uint32_t) &reflash_status, &zero, 1);
+
+    // Determine if our flash contains a recognised file system. If so, invalidate it.
+#if (CONFIG_MICROBIT_ERASE_USER_DATA_ON_REFLASH == 1)
+    log.invalidate();
 #endif
 }
 

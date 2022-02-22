@@ -49,6 +49,14 @@ MicroBitDevice::MicroBitDevice()
 namespace codal {
 
 /**
+  * Perfom scheduler idle
+  */
+void MicroBitDevice::schedulerIdle()
+{
+}
+
+
+/**
   * Seed the pseudo random number generator using the hardware random number generator.
   *
   * @code
@@ -333,14 +341,14 @@ static inline void microbit_LEDMap_configure()
 
 // Constants for microbit_panic
 
-// length of message: face, E, code digit, code digit, code digit
+// length of message: face, code digit, code digit, code digit
 #ifndef microbit_panic_MSGLEN
-#define microbit_panic_MSGLEN         5
+#define microbit_panic_MSGLEN         4
 #endif
 
 // position of first code digit
 #ifndef microbit_panic_MSG1STDIGIT
-#define microbit_panic_MSG1STDIGIT    2
+#define microbit_panic_MSG1STDIGIT    1
 #endif
 
 // divisor for first digit
@@ -355,12 +363,12 @@ static inline void microbit_LEDMap_configure()
 
 // Number of burn passes for each character
 #ifndef microbit_panic_SCANS
-#define microbit_panic_SCANS         40
+#define microbit_panic_SCANS         48    //1000 ~ 25s
 #endif
 
 // Passes left clear for repeated character
 #ifndef microbit_panic_CLEARSCANS
-#define microbit_panic_CLEARSCANS    3
+#define microbit_panic_CLEARSCANS    8    //1000 ~ 25s
 #endif
 
 // Delay cycles for each row
@@ -381,7 +389,6 @@ void microbit_panic_timeout(int iterations)
 void microbit_panic( int statusCode)
 {
     const microbit_LEDMapStr &mm = microbit_LEDMap;
-    uint8_t chr0 = 255;
     uint8_t chr;
     
     target_disable_irq();
@@ -391,12 +398,15 @@ void microbit_panic( int statusCode)
     
     microbit_LEDMap_configure();
     
+    for ( int row = 0; row < mm.rows; row++)
+      microbit_LEDMap_rowOff( row);
+    
     for ( int repeat = 0; panic_timeout == 0 || repeat < panic_timeout; repeat++)
     {
-        for ( int msgIdx = 0; msgIdx < microbit_panic_MSGLEN; msgIdx++, chr0 = chr)
+        for ( int msgIdx = 0; msgIdx < microbit_panic_MSGLEN; msgIdx++)
         {
             // find the the current character and its font bytes
-            chr = msgIdx ? 0x45 : 0;
+            chr = 0;
             if ( msgIdx >= microbit_panic_MSG1STDIGIT)
             {
                 // calculate divisor for this digit: 100s, 10s or units
@@ -410,7 +420,7 @@ void microbit_panic( int statusCode)
             for ( int scan = 0; scan < microbit_panic_SCANS; scan++)
             {
                 int rowOnCycles = microbit_panic_ROWDELAY;
-                if ( chr == chr0 && scan < microbit_panic_CLEARSCANS)   // blank display for repeated characters
+                if ( scan >= microbit_panic_SCANS - microbit_panic_CLEARSCANS)   // blank display between characters
                     rowOnCycles = 0;
                 else if ( repeat >= 5)                                  // dim display after 5 repetitions
                     rowOnCycles = rowOnCycles / 10;
@@ -453,8 +463,18 @@ __attribute__((weak)) void target_panic( int statusCode)
 
 extern "C"
 {
-__attribute__((weak)) int __wrap_atexit(void (*function)(void)) {
+
+__attribute__((weak)) int __wrap_atexit(void (*function)(void))
+{
     return -1;
 }
 
+} // extern "C"
+
+__attribute__((weak)) void target_scheduler_idle()
+{
+    if ( microbit_device_instance)
+        microbit_device_instance->schedulerIdle();
+    else
+        target_wait_for_event();
 }

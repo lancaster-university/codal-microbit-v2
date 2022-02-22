@@ -32,7 +32,7 @@ DEALINGS IN THE SOFTWARE.
 #if CONFIG_ENABLED(DEVICE_BLE)
 
 #include "MicroBitPartialFlashingService.h"
-#include "MicroBitDevice.h"
+#include "MicroBit.h"
 
 #include "nrf_sdm.h"
 #include "nrf_dfu_types.h"
@@ -46,19 +46,22 @@ const uint8_t  MicroBitPartialFlashingService::base_uuid[ 16] =
 const uint16_t MicroBitPartialFlashingService::serviceUUID               = 0xd91d;
 const uint16_t MicroBitPartialFlashingService::charUUID[ mbbs_cIdxCOUNT] = { 0x3b10 };
 
+uint32_t micropython_fs_start = 0x00;
+uint32_t micropython_fs_end   = 0x00;
 
 /**
-  * Constructor.
-  * Create a representation of the PartialFlashService
-  * @param _ble The instance of a BLE device that we're running on.
-  * @param _messageBus The instance of a EventModel that we're running on.
-  */
-MicroBitPartialFlashingService::MicroBitPartialFlashingService( BLEDevice &_ble, EventModel &_messageBus) :
-    messageBus(_messageBus)
+     * Constructor.
+     * Create a representation of the Partial Flash Service
+     * @param _ble The instance of a BLE device that we're running on.
+     * @param _messageBus An instance of a MessageBus to interface with.
+     * @param _storage A persistent storage manager to use to hold non-volatile state.
+     */
+MicroBitPartialFlashingService::MicroBitPartialFlashingService( BLEDevice &_ble, EventModel &_messageBus, MicroBitStorage &_storage) :
+    messageBus(_messageBus), storage(_storage)
 {
     // Set up partial flashing characteristic
     memclr( characteristicValue, sizeof( characteristicValue));
-
+    
     // Register the base UUID and create the service.
     RegisterBaseUUID( base_uuid);
     CreateService( serviceUUID);
@@ -89,6 +92,16 @@ void MicroBitPartialFlashingService::onDataWritten(const microbit_ble_evt_write_
         {
           // Create instance of Memory Map to return info
           MicroBitMemoryMap memoryMap;
+
+          // Get and set MicroPython FS start/end
+          // Region with id 3 is MicroPython FS
+          if(micropython_fs_end == 0x00 && 
+             memoryMap.memoryMapStore.memoryMap[2].startAddress != 0x00 &&
+             memoryMap.memoryMapStore.memoryMap[2].regionId == REGION_PYTHON 
+             ) {
+            micropython_fs_start = memoryMap.memoryMapStore.memoryMap[2].startAddress;
+            micropython_fs_end   = memoryMap.memoryMapStore.memoryMap[2].endAddress;
+          }
 
           uint8_t buffer[18];
           // Response:
@@ -268,6 +281,64 @@ void MicroBitPartialFlashingService::flashData(uint8_t *data)
 
 }
 
+/**
+ * Ensure CRC validation settings are correct.
+ */
+void MicroBitPartialFlashingService::validateBootloaderSettings()
+{
+  nrf_dfu_settings_t *settings = (nrf_dfu_settings_t *) MICROBIT_BOOTLOADER_SETTINGS;
+
+  if (settings->boot_validation_app.type != NO_VALIDATION)
+    setDefaultBootloaderSettings();
+}
+
+/*
+ * Set bootloader to no validation
+ */
+void MicroBitPartialFlashingService::setDefaultBootloaderSettings()
+{
+    MicroBitFlash flash;
+
+    // make bootloader settings page
+    nrf_dfu_settings_t settings;
+    memset( &settings, 0, sizeof( nrf_dfu_settings_t));
+
+    // make NO_VALIDATION settings
+    settings.settings_version = 2;
+    settings.bank_0.bank_code = NRF_DFU_BANK_VALID_APP;
+    settings.boot_validation_app.type = NO_VALIDATION;
+
+    // make VALIDATE_CRC settings - calculate app size and CRC
+    //settings.boot_validation_app.type = VALIDATE_CRC;
+    //settings.bank_0.image_size = offset + 16 * sizeof( uint32_t) - MICROBIT_APP_REGION_START;
+    //settings.bank_0.image_crc  = crc32_compute( (uint8_t*) MICROBIT_APP_REGION_START, settings.bank_0.image_size, NULL);
+    //memcpy(settings.boot_validation_app.bytes, &settings.bank_0.image_crc, sizeof(uint32_t));
+
+    // calculate settings page CRCs
+    settings.crc = crc32_compute( (const uint8_t *)&settings.settings_version,
+                                  offsetof(nrf_dfu_settings_t, init_command) - offsetof(nrf_dfu_settings_t, settings_version),
+                                  NULL);
+
+    settings.boot_validation_crc = crc32_compute( (const uint8_t *)&settings.boot_validation_softdevice, 3 * sizeof(boot_validation_t), NULL);
+
+    uint32_t settingsSizeInWords = ( sizeof( nrf_dfu_settings_t) + sizeof(uint32_t) - 1) / sizeof(uint32_t);
+
+    // save settings to flash settings page if different
+    uint32_t *pSettings = (uint32_t *) MICROBIT_BOOTLOADER_SETTINGS;
+    if ( memcmp( pSettings, &settings, sizeof( nrf_dfu_settings_t)))
+    {
+      flash.erase_page( pSettings);
+      flash.flash_burn( pSettings, (uint32_t *)&settings, settingsSizeInWords);
+    }
+
+    // save settings to flash settings backup page if different
+    uint32_t *pBackup   = (uint32_t *) MICROBIT_MBR_PARAMS;
+    if ( memcmp( pBackup, &settings, sizeof( nrf_dfu_settings_t)))
+    {
+      flash.erase_page( pBackup);
+      flash.flash_burn( pBackup, (uint32_t *)&settings, settingsSizeInWords);
+    }
+}
 
 /**
   * Write Event
@@ -286,19 +357,43 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
        * Set flashIncomplete flag if not already set to boot into BLE mode
        * upon a failed flash.
        */
-       MicroBitStorage storage;
+       
        KeyValuePair* flashIncomplete = storage.get("flashIncomplete");
        if(flashIncomplete == NULL){
+
          uint8_t flashIncompleteVal = 0x01;
          storage.put("flashIncomplete", &flashIncompleteVal, sizeof(flashIncompleteVal));
+            
+         // Check if FS exists
+         if(micropython_fs_end != 0x00) {
+            for(uint32_t *page = (uint32_t *)micropython_fs_start; page < (uint32_t *)(micropython_fs_end); page += (MICROBIT_CODEPAGESIZE / sizeof(uint32_t))) {
+                // Check if page needs erasing
+                for(uint32_t i = 0; i < 1024; i++) {
+                    if(*(page + i) != 0xFFFFFFFF) {
+                        DMESG( "Erase page at %x", page);
+                        flash.erase_page(page);
+                        break; // If page has been erased we can skip the remaining bytes
+                    }
+                }
+            }
+         }
+
        }
        delete flashIncomplete;
 
       uint32_t *flashPointer   = (uint32_t *)(offset);
 
-      // If the pointer is on a page boundary erase the page
-      if(!((uint32_t)flashPointer % MICROBIT_CODEPAGESIZE))
-          flash.erase_page(flashPointer);
+      // If the pointer is on a page boundary check if it needs erasing
+      if(!((uint32_t)flashPointer % MICROBIT_CODEPAGESIZE)) {
+          // Check words
+          for(uint32_t i = 0; i < (MICROBIT_CODEPAGESIZE / sizeof(uint32_t)); i++) {
+            if(*(flashPointer + i) != 0xFFFFFFFF) {
+                flash.erase_page(flashPointer);
+                break; // If page has been erased we can skip the remaining bytes
+            }
+          }
+
+      }
 
       // Create a pointer to the data block
       uint32_t *blockPointer;
@@ -322,71 +417,19 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
       blockPointer = block;
       flash.flash_burn(flashPointer, blockPointer, 16);
 
-      // Search for and remove embedded source magic (if it exists!)
-      // Move to next page
-      flashPointer = flashPointer + MICROBIT_CODEPAGESIZE;
+      // Set no validation
+      setDefaultBootloaderSettings();
 
-      // Iterate through until reaching the scratch page
-      while(flashPointer < (uint32_t *)DEFAULT_SCRATCH_PAGE)
-      {
-        // Check for embedded source magic
-        if(*flashPointer == 0x41140EF && *(uint32_t *)(flashPointer + 0x1) == 0xB82FA2BB)
-        {
-          MICROBIT_DEBUG_DMESG( "Embedded Source Found @ %x", (unsigned int) flashPointer);
-          // Embedded Source Found!
-          uint8_t blank = 0x00;
-          flash.flash_write(flashPointer, &blank, sizeof(blank));
-        }
-
-        // Next 16 byte alignment
-        flashPointer = flashPointer + 0x2;
-      }
-
-      // make bootloader settings page
-      nrf_dfu_settings_t settings;
-      memset( &settings, 0, sizeof( nrf_dfu_settings_t));
-        
-      // make NO_VALIDATION settings
-      settings.settings_version = 2;
-      settings.bank_0.bank_code = NRF_DFU_BANK_VALID_APP;
-      settings.boot_validation_app.type = NO_VALIDATION;
-
-      // make VALIDATE_CRC settings - calculate app size and CRC
-      settings.boot_validation_app.type = VALIDATE_CRC;
-      settings.bank_0.image_size = offset + 16 * sizeof( uint32_t) - MICROBIT_APP_REGION_START;
-      settings.bank_0.image_crc  = crc32_compute( (uint8_t*) MICROBIT_APP_REGION_START, settings.bank_0.image_size, NULL);
-      memcpy(settings.boot_validation_app.bytes, &settings.bank_0.image_crc, sizeof(uint32_t));
-
-      // calculate settings page CRCs
-      settings.crc = crc32_compute( (const uint8_t *)&settings.settings_version,
-                                    offsetof(nrf_dfu_settings_t, init_command) - offsetof(nrf_dfu_settings_t, settings_version),
-                                    NULL);
-
-      settings.boot_validation_crc = crc32_compute( (const uint8_t *)&settings.boot_validation_softdevice, 3 * sizeof(boot_validation_t), NULL);
-
-      uint32_t settingsSizeInWords = ( sizeof( nrf_dfu_settings_t) + sizeof(uint32_t) - 1) / sizeof(uint32_t);
-        
-      // save settings to flash settings page if different
-      uint32_t *pSettings = (uint32_t *) MICROBIT_BOOTLOADER_SETTINGS;
-      if ( memcmp( pSettings, &settings, sizeof( nrf_dfu_settings_t)))
-      {
-        flash.erase_page( pSettings);
-        flash.flash_burn( pSettings, (uint32_t *)&settings, settingsSizeInWords);
-      }
-        
-      // save settings to flash settings backup page if different
-      uint32_t *pBackup   = (uint32_t *) MICROBIT_MBR_PARAMS;
-      if ( memcmp( pBackup, &settings, sizeof( nrf_dfu_settings_t)))
-      {
-        flash.erase_page( pBackup);
-        flash.flash_burn( pBackup, (uint32_t *)&settings, settingsSizeInWords);
-      }
-        
       MICROBIT_DEBUG_DMESG( "rebooting");
       // Once the final packet has been written remove the BLE mode flag and reset
       // the micro:bit
-      MicroBitStorage storage;
+
       storage.remove("flashIncomplete");
+
+      // Clear any persistent data that the user may have stored
+      if (microbit_device_instance)
+        ((MicroBit *)microbit_device_instance)->eraseUserStorage(true);
+
       microbit_reset();
       break;
     }

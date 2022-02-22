@@ -111,10 +111,12 @@ DEALINGS IN THE SOFTWARE.
 
 const char *MICROBIT_BLE_MANUFACTURER = NULL;
 const char *MICROBIT_BLE_MODEL = "BBC micro:bit";
+const char *MICROBIT_BLE_VERSION[2] = { "2.0", "2.X" };
 const char *MICROBIT_BLE_HARDWARE_VERSION = NULL;
 const char *MICROBIT_BLE_FIRMWARE_VERSION = MICROBIT_DAL_VERSION;
 const char *MICROBIT_BLE_SOFTWARE_VERSION = NULL;
-const int8_t MICROBIT_BLE_POWER_LEVEL[] = { -20, -16, -12, -8, -4, 0, 4, 8};
+
+const int8_t MICROBIT_BLE_POWER_LEVEL[] = { -40, -20, -16, -12, -8, -4, 0, 4};
 
 /*
  * Many of the interfaces we need to use only support callbacks to plain C functions, rather than C++ methods.
@@ -220,21 +222,26 @@ MicroBitBLEManager *MicroBitBLEManager::getInstance()
   * @param deviceName The name used when advertising
   * @param serialNumber The serial number exposed by the device information service
   * @param messageBus An instance of an EventModel, used during pairing.
+  * @param keyValuestorage An instance of a MicroBitStorage key/value pair storage class to use to hold bonding metadata
   * @param enableBonding If true, the security manager enabled bonding.
   *
   * @code
   * bleManager.init(uBit.getName(), uBit.getSerial(), uBit.messageBus, true);
   * @endcode
   */
-void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNumber, EventModel &messageBus, bool enableBonding)
+void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNumber, EventModel &messageBus, MicroBitStorage &keyValueStorage, bool enableBonding, uint16_t board)
 {
     if ( this->status & DEVICE_COMPONENT_RUNNING)
       return;
 
     MICROBIT_DEBUG_DMESG( "MicroBitBLEManager::init");
     
+    MICROBIT_DEBUG_DMESG( "NRF_SDH_BLE_VS_UUID_COUNT = %d", (int) NRF_SDH_BLE_VS_UUID_COUNT);
+    MICROBIT_DEBUG_DMESG( "NRF_SDH_BLE_GATTS_ATTR_TAB_SIZE = %x", (int) NRF_SDH_BLE_GATTS_ATTR_TAB_SIZE);
+
     pairingTime = 0;
     shutdownTime = 0;
+    storage = &keyValueStorage;
 
 #if NRF_LOG_ENABLED
     MICROBIT_BLE_ECHK( NRF_LOG_INIT(NULL));
@@ -424,15 +431,23 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
 
 #if CONFIG_ENABLED(MICROBIT_BLE_PARTIAL_FLASHING)
     MICROBIT_DEBUG_DMESG( "PARTIAL_FLASHING");
-    new MicroBitPartialFlashingService( *this, messageBus);
+    new MicroBitPartialFlashingService( *this, messageBus, *storage);
 #endif
 
 #if CONFIG_ENABLED(MICROBIT_BLE_DEVICE_INFORMATION_SERVICE)
     MICROBIT_DEBUG_DMESG( "DEVICE_INFORMATION_SERVICE");
     
-    ManagedString modelVersion("V2.0");  // TODO use a calculated version
+    int versionIdx = 0;
+    switch ( board)
+    {
+      case 0x9903:
+      case 0x9904:  break;
+      default:      versionIdx = 1; break;
+    }
+
+    ManagedString modelVersion( MICROBIT_BLE_VERSION[versionIdx]);
     ManagedString disName( MICROBIT_BLE_MODEL);
-    disName = disName + " " + modelVersion;
+    disName = disName + " V" + modelVersion;
 
     ble_dis_init_t disi;
     memset( &disi, 0, sizeof(disi));
@@ -474,7 +489,7 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
     cp_init.next_conn_params_update_delay  = APP_TIMER_TICKS(30000);    // 30 seconds
     cp_init.max_conn_params_update_count   = 3;
     cp_init.start_on_notify_cccd_handle    = BLE_GATT_HANDLE_INVALID;
-    cp_init.disconnect_on_fail             = true;
+    cp_init.disconnect_on_fail             = false;
     MICROBIT_BLE_ECHK( ble_conn_params_init(&cp_init));
 
     setAdvertiseOnDisconnect( true);
@@ -783,7 +798,7 @@ int MicroBitBLEManager::advertiseEddystoneUid(const char* uid_namespace, const c
  * bleManager.pairingMode(uBit.display, uBit.buttonA);
  * @endcode
  */
-void MicroBitBLEManager::pairingMode(MicroBitDisplay &display, MicroBitButton &authorisationButton)
+void MicroBitBLEManager::pairingMode(MicroBitDisplay &display, Button &authorisationButton)
 {
     MICROBIT_DEBUG_DMESG( "pairingMode");
     
@@ -1049,6 +1064,45 @@ bool MicroBitBLEManager::prepareForShutdown()
     }
     
     return shutdownOK;
+}
+
+
+/**
+ * Puts the component in (or out of) sleep (low power) mode.
+ */
+int MicroBitBLEManager::setSleep(bool doSleep)
+{
+    static bool wasEnabled;
+
+    if (doSleep)
+    {
+        wasEnabled = !nrf_sdh_is_suspended();
+        if (wasEnabled)
+        {
+            nrf_sdh_suspend();
+            app_timer_pause();
+            NVIC_DisableIRQ(RTC1_IRQn);
+            NVIC_DisableIRQ(POWER_CLOCK_IRQn);
+            NVIC_DisableIRQ(RTC0_IRQn);
+            NVIC_DisableIRQ(SWI5_EGU5_IRQn);
+            NVIC_DisableIRQ(MWU_IRQn);
+        }
+    }
+    else
+    {
+        if (wasEnabled)
+        {
+            NVIC_DisableIRQ(POWER_CLOCK_IRQn);
+            NVIC_DisableIRQ(RTC0_IRQn);
+            NVIC_DisableIRQ(SWI5_EGU5_IRQn);
+            NVIC_DisableIRQ(MWU_IRQn);
+            NVIC_EnableIRQ(RTC1_IRQn);
+            app_timer_resume();
+            nrf_sdh_resume();
+        }
+    }
+   
+    return DEVICE_OK;
 }
 
 
@@ -1523,5 +1577,91 @@ static void microbit_dfu_evt_handler(ble_dfu_buttonless_evt_type_t event)
 }
 
 #endif // CONFIG_ENABLED(MICROBIT_BLE_DFU_SERVICE)
+
+
+#define MICROBIT_PANIC_SD_ASSERT    (DEVICE_CPU_SDK)
+#define MICROBIT_PANIC_APP_MEMACC   (DEVICE_CPU_SDK + 1)
+#define MICROBIT_PANIC_SDK_ASSERT   (DEVICE_CPU_SDK + 2)
+#define MICROBIT_PANIC_SDK_ERROR    (DEVICE_CPU_SDK + 3)
+#define MICROBIT_PANIC_SDK_UNKNOWN  (DEVICE_CPU_SDK + 4)
+
+void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
+{
+    NRF_LOG_FINAL_FLUSH();
+
+#if (DEVICE_DMESG_BUFFER_SIZE > 0)
+    switch (id)
+    {
+        case NRF_FAULT_ID_SD_ASSERT:
+            DMESG("SOFTDEVICE: ASSERTION FAILED");
+            break;
+        case NRF_FAULT_ID_APP_MEMACC:
+            DMESG("SOFTDEVICE: INVALID MEMORY ACCESS");
+            break;
+        case NRF_FAULT_ID_SDK_ASSERT:
+        {
+#ifdef DEBUG
+            assert_info_t * p_info = (assert_info_t *)info;
+            DMESG("SDK: ASSERTION FAILED at %s:%u",
+                          p_info->p_file_name,
+                          p_info->line_num);
+#else
+            DMESG("SDK: ASSERTION FAILED");
+#endif
+            break;
+        }
+        case NRF_FAULT_ID_SDK_ERROR:
+        {
+#ifdef DEBUG
+            error_info_t * p_info = (error_info_t *)info;
+            DMESG("SDK: ERROR %u [%s] at %s:%u\r\nPC at: %x",
+                          p_info->err_code,
+                          nrf_strerror_get(p_info->err_code),
+                          p_info->p_file_name,
+                          p_info->line_num,
+                          pc);
+#else
+            DMESG("SDK: ERROR");
+#endif
+            break;
+        }
+        default:
+        {
+#ifdef DEBUG
+            DMESG("SDK: UNKNOWN FAULT at 0x%08X", pc);
+#else
+            DMESG("SDK: UNKNOWN FAULT");
+#endif
+            break;
+        }
+    }
+
+    //DMESGF(""); // Uncomment to flush these DMESGs before the panic
+#endif // (DEVICE_DMESG_BUFFER_SIZE > 0)
+
+    int panic;
+
+    switch (id)
+    {
+        case NRF_FAULT_ID_SD_ASSERT:
+            panic = MICROBIT_PANIC_SD_ASSERT;
+            break;
+        case NRF_FAULT_ID_APP_MEMACC:
+            panic = MICROBIT_PANIC_APP_MEMACC;
+            break;
+        case NRF_FAULT_ID_SDK_ASSERT:
+            panic = MICROBIT_PANIC_SDK_ASSERT;
+            break;
+        case NRF_FAULT_ID_SDK_ERROR:
+            panic = MICROBIT_PANIC_SDK_ERROR;
+            break;
+        default:
+            panic = MICROBIT_PANIC_SDK_UNKNOWN;
+            break;
+    }
+
+    target_panic( panic);
+}
+
 
 #endif // CONFIG_ENABLED(DEVICE_BLE)

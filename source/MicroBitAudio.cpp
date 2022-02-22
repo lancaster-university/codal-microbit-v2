@@ -33,12 +33,15 @@ DEALINGS IN THE SOFTWARE.
 
 using namespace codal;
 
+MicroBitAudio* MicroBitAudio::instance = NULL;
+
 /**
   * Default Constructor.
   */
 MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker):
-    speakerEnabled(false),
-    pin(pin), 
+    speakerEnabled(true),
+    pinEnabled(true),
+    pin(&pin), 
     speaker(speaker),
     synth(DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_0),
     soundExpressionChannel(NULL),
@@ -46,25 +49,44 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker):
     soundExpressions(synth),
     virtualOutputPin(mixer)
 {
+    // If we are the first instance created, schedule it for on demand activation
+    if (MicroBitAudio::instance == NULL)
+        MicroBitAudio::instance = this;
+
+    synth.allowEmptyBuffers(true);
 }
 
 /**
  * post-constructor initialisation method
  */
-int MicroBitAudio::init()
+int MicroBitAudio::enable()
 {
-    pwm = new NRF52PWM(NRF_PWM1, mixer, 44100);
-    pwm->setDecoderMode(PWM_DECODER_LOAD_Common);
-    pwm->connectPin(pin, 0);
+    if (pwm == NULL)
+    {
+        pwm = new NRF52PWM(NRF_PWM1, mixer, 44100);
+        pwm->setDecoderMode(PWM_DECODER_LOAD_Common);
 
-    mixer.setSampleRange(pwm->getSampleRange());
-    mixer.setOrMask(0x8000);
-    
-    setSpeakerEnabled(true);
+        mixer.setSampleRate(44100);
+        mixer.setSampleRange(pwm->getSampleRange());
+        mixer.setOrMask(0x8000);
 
-    soundExpressionChannel = mixer.addChannel(synth);
+        setSpeakerEnabled(speakerEnabled);
+        setPinEnabled(pinEnabled);
+
+        if ( soundExpressionChannel == NULL)
+            soundExpressionChannel = mixer.addChannel(synth);
+    }
 
     return DEVICE_OK;
+}
+
+/**
+ * Demand request from a component to enable the default instance of this audio pipeline
+ */
+void MicroBitAudio::requestActivation()
+{
+    if (MicroBitAudio::instance)
+        MicroBitAudio::instance->enable();
 }
 
 /**
@@ -104,7 +126,6 @@ void MicroBitAudio::setSpeakerEnabled(bool on) {
         else
             pwm->disconnectPin(speaker);
     }
-    
 }
 
 /**
@@ -113,6 +134,45 @@ void MicroBitAudio::setSpeakerEnabled(bool on) {
  */
 bool MicroBitAudio::isSpeakerEnabled() {
     return speakerEnabled;
+}
+
+/**
+ * Define which pin on the edge connector is used for audio.
+ * @param pin The pin to use for auxiliary audio.
+ */
+void MicroBitAudio::setPin(NRF52Pin &pin)
+{
+    bool wasEnabled = pinEnabled;
+
+    setPinEnabled(false);
+    this->pin = &pin;
+    setPinEnabled(wasEnabled);
+}
+
+/**
+ * Define if audio is enabled on the edge connector pin.
+ * @param on New value.
+ */
+void MicroBitAudio::setPinEnabled(bool on)
+{
+    pinEnabled = on;
+
+    if (pwm)
+    {
+        if (on)
+            pwm->connectPin(*pin, 0);
+        else
+            pwm->disconnectPin(*pin);
+    }
+}
+
+/**
+ * Query whether the audio is enabled on the edge connector.
+ * @return true if enabled, false otherwise.
+ */
+bool MicroBitAudio::isPinEnabled()
+{
+    return this->pinEnabled;
 }
 
 /**
@@ -125,6 +185,37 @@ MicroBitAudio::~MicroBitAudio()
     if (pwm)
     {
         pwm->disconnectPin(speaker);
-        pwm->disconnectPin(pin);
+        pwm->disconnectPin(*pin);
     }
+}
+
+
+/**
+ * Puts the component in (or out of) sleep (low power) mode.
+ */
+int MicroBitAudio::setSleep(bool doSleep)
+{
+    if (doSleep)
+    {
+      if (pwm)
+      {
+          status |= MICROBIT_AUDIO_STATUS_DEEPSLEEP;
+          NVIC_DisableIRQ(PWM1_IRQn);
+          pwm->disable();
+          pwm->disconnectPin(speaker);
+          pwm->disconnectPin(*pin);
+          delete pwm;
+          pwm = NULL;
+      }
+    }
+    else
+    {
+      if ( status & MICROBIT_AUDIO_STATUS_DEEPSLEEP)
+      { 
+          status &= ~MICROBIT_AUDIO_STATUS_DEEPSLEEP;
+          enable();
+      }
+    }
+   
+    return DEVICE_OK;
 }

@@ -148,6 +148,10 @@ void NRF52LEDMatrix::enable()
     for (int row = 0; row < matrixMap.rows; row++)
         matrixMap.rowPins[row]->getDigitalValue(PullMode::None);
 
+    // Ensure column drive pins are disabled, and have no pull resistors configured
+    for (int col = 0; col < matrixMap.columns; col++)
+        matrixMap.columnPins[col]->getDigitalValue(PullMode::None);
+
     timer.enable();
     timer.enableIRQ();
 
@@ -183,6 +187,8 @@ void NRF52LEDMatrix::disable()
     for (int row = 0; row < matrixMap.rows; row++)
          matrixMap.rowPins[row]->getDigitalValue();
 
+    status &= ~NRF52_LEDMATRIX_STATUS_LIGHTREADY;
+
     enabled = false;
 }
 
@@ -204,7 +210,8 @@ void NRF52LEDMatrix::render()
     {
         // We just completed a light sense strobe. Record the light level sensed.
         lightLevel = 255 - ((255 * timer.timer->CC[1]) / (timerPeriod * NRF52_LED_MATRIX_LIGHTSENSE_STROBES));
-        
+        status |= NRF52_LEDMATRIX_STATUS_LIGHTREADY;
+
         // Restore the hardware configuration into LED drive mode.
         status |= NRF52_LEDMATRIX_STATUS_RESET;
         setDisplayMode(mode);
@@ -318,10 +325,20 @@ NRF52LEDMatrix::readLightLevel()
 {
     // Auto-enable light sensing if it is currently disabled
     if (mode == DisplayMode::DISPLAY_MODE_BLACK_AND_WHITE)
+    {
         setDisplayMode(DisplayMode::DISPLAY_MODE_BLACK_AND_WHITE_LIGHT_SENSE);
+        status &= ~NRF52_LEDMATRIX_STATUS_LIGHTREADY;
+    }
 
     if (mode == DisplayMode::DISPLAY_MODE_GREYSCALE)
+    {
         setDisplayMode(DisplayMode::DISPLAY_MODE_GREYSCALE_LIGHT_SENSE);
+        status &= ~NRF52_LEDMATRIX_STATUS_LIGHTREADY;
+    }
+
+    // if we've just enabled light sensing, ensure we have a valid reading before returning.
+    if ( ( status & NRF52_LEDMATRIX_STATUS_LIGHTREADY) == 0)
+        fiber_sleep(1500.0f/((float)NRF52_LED_MATRIX_FREQUENCY));
 
     return lightLevel;
 }

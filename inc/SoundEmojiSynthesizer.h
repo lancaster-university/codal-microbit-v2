@@ -38,7 +38,10 @@ DEALINGS IN THE SOFTWARE.
 //
 // Status flags
 //
-#define EMOJI_SYNTHESIZER_STATUS_ACTIVE       0x01
+#define EMOJI_SYNTHESIZER_STATUS_ACTIVE                         0x01
+#define EMOJI_SYNTHESIZER_STATUS_OUTPUT_SILENCE_AS_EMPTY        0x02
+#define EMOJI_SYNTHESIZER_STATUS_STOPPING                       0x04
+
 
 #define DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_0 3010
 #define DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_1 3011
@@ -126,7 +129,6 @@ namespace codal
         int                     samplesWritten;         // The number of samples written from the current sound effect block.
         float                   position;               // Position within the tonePrint.
         float                   samplesPerStep[EMOJI_SYNTHESIZER_TONE_EFFECTS];     // The number of samples to render per step for each effect.
-
         /**
           * Default Constructor.
           * Creates an empty DataStream.
@@ -161,8 +163,9 @@ namespace codal
 
         /**
          * Schedules the next sound effect as defined in the effectBuffer, if available.
+         * @return true if we've just completed a buffer of effects, false otherwise.
          */
-        void nextSoundEffect();
+        bool nextSoundEffect();
 
         /**
         * Schedules playout of the given sound effect.
@@ -170,6 +173,11 @@ namespace codal
         * @return DEVICE_OK on success, or DEVICE_INVALID_PARAMETER
         */
         int play(ManagedBuffer sound);
+
+        /**
+        * Stops play of the current buffer of SoundEffects and discards it.
+        */
+        void stop();
 
         /**
         * Define the size of the audio buffer to hold. The larger the buffer, the lower the CPU overhead, but the longer the delay.
@@ -212,6 +220,14 @@ namespace codal
          * @return DEVICE_OK on success.
          */
         int setOrMask(uint16_t mask);
+
+        /**
+         * Define how silence is treated on this components output.
+         * 
+         * @param mode if set to true, this component will return empty buffers when there is no data to send.
+         * Otherwise, a full buffer containing silence will be genersated.
+         */
+        void allowEmptyBuffers(bool mode);
 
 
         private:

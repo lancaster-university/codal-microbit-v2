@@ -40,10 +40,14 @@ DEALINGS IN THE SOFTWARE.
 #include "codal-core/inc/drivers/LEDMatrix.h"
 #include "codal-core/inc/drivers/AnimatedDisplay.h"
 #include "codal-core/inc/driver-models/I2C.h"
+#include "codal-core/inc/drivers/KeyValueStorage.h"
+
 #include "MicroBitIO.h"
 #include "NRF52Pin.h"
 #include "NRF52I2C.h"
 #include "NRF52SPI.h"
+#include "NRF52Serial.h"
+#include "MicroBitI2C.h"
 
 //
 // Historic mbed types
@@ -60,14 +64,14 @@ typedef enum {
 // MicroBit types
 //
 typedef codal::NRF52Pin MicroBitPin;
-typedef codal::NRF52I2C MicroBitI2C;
 typedef codal::Event MicroBitEvent;
 typedef codal::Listener MicroBitListener;
 typedef codal::Image MicroBitImage;
-typedef codal::Button MicroBitButton;
 typedef codal::SerialMode MicroBitSerialMode;
 typedef codal::CodalComponent MicroBitComponent;
 typedef codal::EventLaunchMode MicroBitEventLaunchMode;
+typedef codal::KeyValueStorage MicroBitStorage;
+typedef codal::BitmapFont MicroBitFont;
 
 //
 // MICROBIT specific error codes
@@ -357,6 +361,13 @@ typedef codal::EventLaunchMode MicroBitEventLaunchMode;
 #define MICROBIT_ID_USB_FLASH_MANAGER                           38
 
 #define MICROBIT_ID_VIRTUAL_SPEAKER_PIN                         39
+
+#define MICROBIT_ID_MBED_INTERRUPT_IN                           40 
+#define MICROBIT_ID_MBED_PWM                                    41
+#define MICROBIT_ID_MBED_TIMEOUT                                42
+#define MICROBIT_ID_MBED_TICKER                                 43
+
+#define MICROBIT_ID_LOG                                         44
 
 #define MICROBIT_MAXIMUM_HEAPS                                  DEVICE_MAXIMUM_HEAPS
 #define MICROBIT_NESTED_HEAP_SIZE                               0

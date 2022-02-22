@@ -63,9 +63,20 @@ class MicroBitPartialFlashingService : public MicroBitBLEService
       * Constructor.
       * Create a representation of the Partial Flash Service
       * @param _ble The instance of a BLE device that we're running on.
-      * @param _memoryMap An instance of MicroBiteMemoryMap to interface with.
+      * @param _messageBus An instance of a MessageBus to interface with.
+      * @param _storage A persistent storage manager to use to hold non-volatile state.
       */
-    MicroBitPartialFlashingService( BLEDevice &_ble, EventModel &_messageBus);
+    MicroBitPartialFlashingService( BLEDevice &_ble, EventModel &_messageBus, MicroBitStorage &_storage);
+
+    /**
+     * Set bootloader setting to default
+     */
+    static void setDefaultBootloaderSettings();
+
+    /**
+     * Ensure CRC validation settings are correct.
+     */
+    static void validateBootloaderSettings();
 
     /**
       * Callback. Invoked when any of our attributes are written via BLE.
@@ -75,6 +86,7 @@ class MicroBitPartialFlashingService : public MicroBitBLEService
     private:
     // MessageBus we're using
     EventModel          &messageBus;
+    MicroBitStorage     &storage;
 
     /**
       * Writing to flash inside MicroBitEvent rather than in the ISR
@@ -113,7 +125,6 @@ class MicroBitPartialFlashingService : public MicroBitBLEService
     MicroBitBLEChar      chars[ mbbs_cIdxCOUNT];
 
     public:
-    
     int              characteristicCount()          { return mbbs_cIdxCOUNT; };
     MicroBitBLEChar *characteristicPtr( int idx)    { return &chars[ idx]; };
 };

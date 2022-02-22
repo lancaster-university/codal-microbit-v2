@@ -116,13 +116,14 @@ class MicroBitBLEManager : public CodalComponent
       * @param deviceName The name used when advertising
       * @param serialNumber The serial number exposed by the device information service
       * @param messageBus An instance of an EventModel, used during pairing.
+      * @param keyValuestorage An instance of a MicroBitStorage key/value pair storage class to use to hold bonding metadata
       * @param enableBonding If true, the security manager enabled bonding.
       *
       * @code
       * bleManager.init(uBit.getName(), uBit.getSerial(), uBit.messageBus, true);
       * @endcode
       */
-    void init(ManagedString deviceName, ManagedString serialNumber, EventModel &messageBus, bool enableBonding);
+    void init(ManagedString deviceName, ManagedString serialNumber, EventModel &messageBus, MicroBitStorage &keyValuestorage, bool enableBonding, uint16_t board = 0x9904);
     
     /**
      * Change the output power level of the transmitter to the given value.
@@ -150,7 +151,7 @@ class MicroBitBLEManager : public CodalComponent
      * bleManager.pairingMode(uBit.display, uBit.buttonA);
      * @endcode
      */
-    void pairingMode(MicroBitDisplay &display, MicroBitButton &authorisationButton);
+    void pairingMode(MicroBitDisplay &display, Button &authorisationButton);
 
     /**
      * When called, the micro:bit will begin advertising for a predefined period,
@@ -274,6 +275,11 @@ class MicroBitBLEManager : public CodalComponent
      * Return true if ready for shutdown
      */
     bool prepareForShutdown();
+
+    /**
+      * Puts the component in (or out of) sleep (low power) mode.
+      */
+    virtual int setSleep(bool doSleep) override;
 
     /**
     * Ensure service changed indication pending for all peers

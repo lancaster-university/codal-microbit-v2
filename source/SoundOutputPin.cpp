@@ -30,6 +30,7 @@ DEALINGS IN THE SOFTWARE.
 #include "SoundOutputPin.h"
 #include "Synthesizer.h"
 #include "CodalDmesg.h"
+#include "MicroBitAudio.h"
 
 using namespace codal;
 
@@ -40,26 +41,41 @@ using namespace codal;
  * @param id the unique EventModel id of this component.
  * @param mixer the mixer to use
  */
-SoundOutputPin::SoundOutputPin(Mixer2 &mixer, int id) : codal::Pin(id, 0, PIN_CAPABILITY_ANALOG), mix(mixer), synth(DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_1)
+SoundOutputPin::SoundOutputPin(Mixer2 &mix, int id) : codal::Pin(id, 0, PIN_CAPABILITY_ANALOG), mixer(mix), synth(DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_1), outputBuffer(sizeof(SoundEffect))
 {
     this->value = 512;
     this->periodUs = 0;
     this->fx = NULL;
-    this->channel = mixer.addChannel(synth);
+    this->channel = NULL;
+    this->timeOfLastUpdate = 0;
+
+    // Enable lazy periodic callback and optimised silence generation.
+    CodalComponent::status |= DEVICE_COMPONENT_STATUS_IDLE_TICK;
+    synth.allowEmptyBuffers(true);
 }
 
 
 /**
   * Configures this IO pin as an analog/pwm output, and change the output value to the given level.
   *
-  * @param value the level to set on the output pin, in the range 0 - 1024
+  * @param value the level to set on the output pin. The value is normalized to match the behaviour of 
+  * a typical hardware PWM pin. Hence, the value set will clip at a maximum value of 0..128 / 896..1024. 
+  * Values within those ranges will be mapped to 0..100% volume of the associated audio channel.
   *
   * @return DEVICE_OK on success, DEVICE_INVALID_PARAMETER if value is out of range, or DEVICE_NOT_SUPPORTED
   *         if the given pin does not have analog capability.
   */
 int SoundOutputPin::setAnalogValue(int value)
 {
-    this->value = value;
+    if (value < 0 || value > 1024)
+        return DEVICE_INVALID_PARAMETER;
+
+    // Normalize the duty cycle (we don't care if duty cycle is hi or lo)
+    if (value > 512)
+        value = 1024 - value;
+
+    // Normalize volume to approximately the behaviour of a micro:bit v1 with headphones on edge connector pin 0.
+    this->value = min(128, value);
     update();
 
     return DEVICE_OK;
@@ -132,25 +148,45 @@ int SoundOutputPin::getAnalogPeriod()
  */
 void SoundOutputPin::update()
 {
-    float v = (float) value;
-    float volume = v < 512.0f ? v / 512.0f : (1023.0f - v) / 512.0f;
+    float volume = periodUs == 0.0f ? 0.0f : (4.0f * ((float)value)) / 512.0f;
+
+    // Snapshot the curent time, so we can determine periods of silence.
+    this->timeOfLastUpdate = system_timer_current_time();
 
     // If this is the first time we've been asked to produce a sound, prime a SoundEffect buffer.
     if (fx == NULL)
     {
-        ManagedBuffer b(sizeof(SoundEffect));
+        // Enable the audio output pipeline, if needed.
+        MicroBitAudio::requestActivation();
 
-        fx = (SoundEffect *)&b[0];
+        // Create a sound effect buffer, and configure a synthesizer for a raw squarewave output into the mixer.
+        fx = (SoundEffect *)&outputBuffer[0];
         fx->duration = -CONFIG_SOUND_OUTPUT_PIN_PERIOD;
         fx->tone.tonePrint = Synthesizer::SquareWaveTone;
-        fx->frequency = periodUs == 0 ? 6068 : 1000000.0f / (float) periodUs;
-        fx->volume = periodUs == 0 ? 0 : volume;
-
-        synth.play(b);
+        fx->volume = 0.0f;
+        channel = mixer.addChannel(synth);
     }
-    else
+
+    // Update our parameters
+    fx->frequency = periodUs == 0 ? 6068 : 1000000.0f / (float) periodUs;
+    fx->volume = volume;
+}
+
+/**
+ * Disable the synthesizer during long periods of silence, for efficiency.
+ */
+void SoundOutputPin::idleCallback()
+{
+    if ((CodalComponent::status & SOUND_OUTPUT_PIN_STATUS_ACTIVE) && (fx->volume == 0.0f) && (system_timer_current_time() - this->timeOfLastUpdate > CONFIG_SOUND_OUTPUT_PIN_SILENCE_GATE))
     {
-        fx->frequency = periodUs == 0 ? 6068 : 1000000.0f / (float) periodUs;
-        fx->volume = periodUs == 0 ? 0 : volume;
+        CodalComponent::status &= ~SOUND_OUTPUT_PIN_STATUS_ACTIVE;
+        synth.stop();
+    }
+
+    // If our volume is non-zero and we're not active, then restart to synthesizer.
+    if (!(CodalComponent::status & SOUND_OUTPUT_PIN_STATUS_ACTIVE) && fx && fx->volume > 0.0f)
+    {
+        CodalComponent::status |= SOUND_OUTPUT_PIN_STATUS_ACTIVE;
+        synth.play(outputBuffer);
     }
 }

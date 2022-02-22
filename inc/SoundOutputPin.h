@@ -33,8 +33,14 @@ DEALINGS IN THE SOFTWARE.
 #include "SoundEmojiSynthesizer.h"
 
 #ifndef CONFIG_SOUND_OUTPUT_PIN_PERIOD
-#define CONFIG_SOUND_OUTPUT_PIN_PERIOD  50
+#define CONFIG_SOUND_OUTPUT_PIN_PERIOD  5
 #endif
+
+#ifndef CONFIG_SOUND_OUTPUT_PIN_SILENCE_GATE
+#define CONFIG_SOUND_OUTPUT_PIN_SILENCE_GATE  100
+#endif
+
+#define SOUND_OUTPUT_PIN_STATUS_ACTIVE        0x0001        // Synthesizer is actively generating sound
 
 /**
   * Class definition for a SoundPin.
@@ -43,15 +49,17 @@ DEALINGS IN THE SOFTWARE.
   */
 namespace codal
 {
-    class SoundOutputPin : public codal::Pin
+    class SoundOutputPin : public codal::Pin, public CodalComponent
     {
     private:
-        Mixer2                  &mix;
+        Mixer2                  &mixer;
         MixerChannel            *channel;
         SoundEmojiSynthesizer   synth;
+        ManagedBuffer           outputBuffer;
         SoundEffect             *fx;
         int                     periodUs;
         int                     value;
+        uint32_t                timeOfLastUpdate;
 
     public:
 
@@ -62,13 +70,15 @@ namespace codal
          * @param id the unique EventModel id of this component.
          * @param mixer the mixer to use
          */
-        SoundOutputPin(Mixer2 &mixer, int id = MICROBIT_ID_VIRTUAL_SPEAKER_PIN);
+        SoundOutputPin(Mixer2 &mix, int id = MICROBIT_ID_VIRTUAL_SPEAKER_PIN);
 
 
         /**
          * Configures this IO pin as an analog/pwm output, and change the output value to the given level.
          *
-         * @param value the level to set on the output pin, in the range 0 - 1024
+         * @param value the level to set on the output pin. The value is normalized to match the behaviour of 
+         * a typical hardware PWM pin. Hence, the value set will clip at a maximum value of 0..128 / 896..1024. 
+         * Values within those ranges will be mapped to 0..100% volume of the associated audio channel.
          *
          * @return DEVICE_OK on success, DEVICE_INVALID_PARAMETER if value is out of range, or DEVICE_NOT_SUPPORTED
          *         if the given pin does not have analog capability.
@@ -123,6 +133,12 @@ namespace codal
          *         given pin is not configured as an analog output.
          */
         virtual int getAnalogPeriod() override;
+
+        /**
+          * Callback when the device is idling. We use this to determine long periods of silence,
+          * and disable the synthesizer.
+          */
+        virtual void idleCallback() override;
 
         private:
 

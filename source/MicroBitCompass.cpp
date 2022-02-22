@@ -30,7 +30,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitDevice.h"
 #include "LSM303Magnetometer.h"
 
-Compass* MicroBitCompass::detectedCompass= NULL;
+Compass* MicroBitCompass::detectedCompass;
 
 /**
  * Constructor.
@@ -60,15 +60,17 @@ Compass& MicroBitCompass::autoDetect(MicroBitI2C &i2c)
      * https://github.com/microbit-foundation/codal-microbit/issues/33
      */
     target_wait(10);
-    // We only have combined sensors, so rely on the acceleromter detection code to also detect the correct magnetomter.
-    if (MicroBitCompass::detectedCompass == NULL)
-        MicroBitAccelerometer::autoDetect(i2c);
+
+    // We only have combined sensors, so rely on the accelerometer detection code to also detect the correct magnetomter.
+    MicroBitAccelerometer::autoDetect(i2c);
 
     if (MicroBitCompass::detectedCompass == NULL)
-        MicroBitCompass::detectedCompass = new Compass(MicroBitAccelerometer::coordinateSpace);
+    {
+        CoordinateSpace c(CoordinateSystem::RAW);
+        MicroBitCompass::detectedCompass = new Compass(c);
+    }
 
     return *MicroBitCompass::detectedCompass;
-
 }
 
 /**

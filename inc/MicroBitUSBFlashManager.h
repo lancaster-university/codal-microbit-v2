@@ -32,6 +32,7 @@ DEALINGS IN THE SOFTWARE.
 #include "codal-core/inc/driver-models/I2C.h"
 #include "codal-core/inc/driver-models/Pin.h"
 #include "MicroBitPowerManager.h"
+#include "NVMController.h"
 
 
 // Constants for USB Interface Flash Management Protocol
@@ -44,7 +45,13 @@ DEALINGS IN THE SOFTWARE.
 //
 // General constants 
 //
-#define MICROBIT_USB_FLASH_MAX_RETRIES              4
+#ifndef MICROBIT_USB_FLASH_MAX_TX_RETRIES
+#define MICROBIT_USB_FLASH_MAX_TX_RETRIES           20
+#endif
+
+#ifndef MICROBIT_USB_FLASH_MAX_RX_RETRIES
+#define MICROBIT_USB_FLASH_MAX_RX_RETRIES           20
+#endif
 
 //
 // Command codes for the USB Interface Chip
@@ -71,7 +78,7 @@ typedef struct
 
 typedef struct
 {
-    uint16_t            blockSize;                                  // The size of a physival blovk on the disk
+    uint16_t            blockSize;                                  // The size of a physical block on the disk
     uint8_t             blockCount;                                 // The number of available blocks on the disk
 } MicroBitUSBFlashGeometry;
 
@@ -82,12 +89,14 @@ typedef struct
 #define MICROBIT_USB_FLASH_AWAITING_RESPONSE        0x01
 #define MICROBIT_USB_FLASH_GEOMETRY_LOADED          0x02
 #define MICROBIT_USB_FLASH_CONFIG_LOADED            0x04
+#define MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY   0x08
+#define MICROBIT_USB_FLASH_USE_NULL_TRANSACTION     0x10
 
 
 /**
  * Class definition for MicroBitUSBFlashManager.
  */
-class MicroBitUSBFlashManager : public CodalComponent
+class MicroBitUSBFlashManager : public CodalComponent, public NVMController
 {
     private:
         MicroBitI2C                 &i2cBus;                            // The I2C bus to use to communicate with USB interface chip.
@@ -95,6 +104,7 @@ class MicroBitUSBFlashManager : public CodalComponent
         MicroBitPowerManager        &power;                             // Reference to power manager instance
         MicroBitUSBFlashConfig      config;                             // Current configuration of the USB File interface
         MicroBitUSBFlashGeometry    geometry;                           // Current geomtry of the USB File interface
+        int                         maxWriteLength;                     // The maximum number of bytes that can be written in a single transaction.
 
     public:
         /**
@@ -153,32 +163,41 @@ class MicroBitUSBFlashManager : public CodalComponent
          * Reads data from the specified location in the USB file staorage area.
          * 
          * @param address the logical address of the memory to read.
-         * @param length the number of bytes to read.
+         * @param length the number of 32-bit words to read.
          * 
          * @return the data read, or a zero length buffer on failure.
          */
-        ManagedBuffer read(int address, int length);
+        ManagedBuffer read(uint32_t address, uint32_t length);
+
+        /**
+         * Reads a block of memory from non-volatile memory into RAM
+         * 
+         * @param dest The address in RAM in which to store the result of the read operation
+         * @param address The logical address in non-voltile memory to read from
+         * @param length The number 32-bit words to read.
+         */ 
+        virtual int read(uint32_t* dest, uint32_t address, uint32_t length) override;
 
         /**
          * Writes data to the specified location in the USB file staorage area.
          * 
          * @param data a buffer containing the data to write
          * @param address the location to write to
-         * @param length the number of bytes to write
+         * @param length the number of 32-bit words to write
          * 
          * @return DEVICE_OK on success, or error code.
          */
-        int write(uint8_t *data, int address, int length);
+        int write(uint32_t address, uint32_t *data, uint32_t length) override;
 
         /**
          * Writes data to the specified location in the USB file staorage area.
          * 
-         * @param data a buffer containing the data to write
+         * @param data a buffer containing the data to write. Length MUST be 32-bit aligned.
          * @param address the location to write to
          * 
          * @return DEVICE_OK on success, or error code.
          */
-        int write(ManagedBuffer data, int address);
+        int write(ManagedBuffer data, uint32_t address);
 
         /**
          * Flash Erase one or more physical blocks in the USB file staorage area.
@@ -189,12 +208,51 @@ class MicroBitUSBFlashManager : public CodalComponent
          * defined by the disks geometry, areas in an overlapping block outside the given 
          * range will be automatically read, erased and rewritten. 
          * 
-         * @param start the logical address of the memory to start the erase operation.
-         * @param end the logical address of the memory to end the erase operation.
+         * @param address the logical address of the memory to start the erase operation.
+         * @param length the number of 32-bit words to erase.
          * 
          * @return DEVICE_OK on success, or error code.
          */
-        int erase(int address, int length);
+        int erase(uint32_t address, uint32_t length);
+
+        /**
+         * Erases a given page in non-volatile memory.
+         * 
+         * @param page The address of the page to erase (logical address of the start of the page).
+         */
+        virtual int erase(uint32_t page) override;
+
+
+        /**
+         * Determines the logical address of the start of non-volatile memory region
+         * 
+         * @return The logical address of the first valid logical address in the region of non-volatile memory
+         */
+        virtual uint32_t getFlashStart() override;
+
+        /**
+         * Determines the logical address of the end of the non-volatile memory region
+         * 
+         * @return The logical address of the first invalid logical address beyond
+         * the non-volatile memory.
+         */
+        virtual uint32_t getFlashEnd() override;
+
+        /**
+         * Determines the size of a non-volatile memory page. A page is defined as
+         * the block of memory the can be efficiently erased without impacted on
+         * other regions of memory.
+         * 
+         * @return The size of a single page in bytes.
+         */
+        virtual uint32_t getPageSize() override;
+
+        /**
+         * Determines the amount of available storage.
+         * 
+         * @return the amount of available storage, in bytes.
+         */
+        virtual uint32_t getFlashSize() override;
 
         /**
          * Destructor.
@@ -210,6 +268,7 @@ class MicroBitUSBFlashManager : public CodalComponent
          * @return a buffer containing the response to the request, or a zero length buffer on failure.
          */
         ManagedBuffer transact(ManagedBuffer request, int responseLength);
+        ManagedBuffer _transact(ManagedBuffer request, int responseLength);
 
         /**
          * Performs a flash storage transaction with the interface chip.

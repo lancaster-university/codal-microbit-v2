@@ -1,0 +1,79 @@
+/**
+ * Data logging support file for "online" mode.
+ * This content is managed in https://github.com/lancaster-university/codal-microbit-v2/
+ */
+body {
+  font-family: "Helvetica Now", Helvetica, Arial, sans-serif;
+}
+a {
+  color: rgba(108, 75, 193, 1);
+}
+button {
+  cursor: pointer;
+  border-radius: 23px;
+  min-height: 46px;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+  padding: 0 16px;
+
+  /* Secondary buttons */
+  color: #000;
+  border: 2px solid #000;
+  background: #fff;
+}
+/* Primary button */
+button:first-of-type {
+  border: none;
+  background: #000;
+  color: #fff;
+}
+tr:nth-child(even) {
+  background: #f2f2f2;
+}
+tr:hover {
+  background-color: #ddd;
+}
+footer {
+  margin-top: 1em;
+}
+#info {
+  max-width: 48em;
+  line-height: 1.3;
+}
+#graph-warning {
+  max-width: 48em;
+  color: red;
+  text-align: left;
+}
+#graph-warning a {
+  color: red;
+}
+#abort-row {
+  color: red;
+}
+#browser-warning {
+  color: red;
+}
+header {
+  /* Undo generic spacing as we need to be flush with edges */
+  margin-left: -1em;
+  margin-right: -1em;
+  margin-top: -1em;
+}
+.header-strip {
+  height: 10px;
+  background-image: linear-gradient(90deg, #00c800, #3eb6fd);
+}
+.header-contents {
+  height: 62px;
+  background-color: #262626;
+}
+.header-contents svg {
+  width: 167px;
+  height: 40px;
+  padding: 10px 15px;
+}
+#v {
+  display: none;
+}

@@ -68,6 +68,16 @@ class MicroBitUARTService : public MicroBitBLEService
     uint8_t txBufferHead;
     uint8_t txBufferTail;
 
+    // the number of bytes from the tx buffer that have been sent, pending confirmation
+    uint8_t txValueSize;
+
+    bool waitingForEmpty;
+
+    /**
+      * Invoked when BLE disconnects.
+      */
+    void onDisconnect( const microbit_ble_evt_t *p_ble_evt);
+
     /**
       * A callback function for whenever a Bluetooth device consumes our TX Buffer
       */
@@ -92,6 +102,12 @@ class MicroBitUARTService : public MicroBitBLEService
       *       memory to contain the copy operation
       */
     void circularCopy(uint8_t *circularBuff, uint8_t circularBuffSize, uint8_t *linearBuff, uint16_t tailPosition, uint16_t headPosition);
+
+    /**
+      * An internal method that sends the next block from the tx buffer.
+      * @return true if a block is sent
+      */
+    bool sendNext();
 
     public:
 

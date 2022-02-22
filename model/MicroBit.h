@@ -62,11 +62,15 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitAccelerometer.h"
 #include "MicroBitCompass.h"
 #include "MicroBitPowerManager.h"
+#include "NRF52FlashManager.h"
 #include "MicroBitUSBFlashManager.h"
+#include "MicroBitLog.h"
 #include "MicroBitAudio.h"
 #include "StreamNormalizer.h"
 #include "LevelDetector.h"
 #include "LevelDetectorSPL.h"
+#include "PulseIn.h"
+#include "neopixel.h"
 
 #include "MESEvents.h"
 
@@ -79,6 +83,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitIOPinService.h"
 #include "MicroBitTemperatureService.h"
 #include "MicroBitUARTService.h"
+#include "MicroBitPartialFlashingService.h"
 #endif
 
 #include "MicroBitStorage.h"
@@ -92,6 +97,16 @@ DEALINGS IN THE SOFTWARE.
 
 // Flag that we have integrate face-touch as a feature
 #define MICROBIT_UBIT_FACE_TOUCH_BUTTON       1
+
+// Power on delay time (in milliseconds) applied after a hard power-on reset only.
+#define KL27_POWER_ON_DELAY                    1000
+
+// Defines default behaviour of any stored user data when the micro:bit is reflashed.
+// 0: No action is taken
+// 1: Data is invalidated (any may be hard erased, as per policy of the respective file system used)
+#ifndef CONFIG_MICROBIT_ERASE_USER_DATA_ON_REFLASH
+#define CONFIG_MICROBIT_ERASE_USER_DATA_ON_REFLASH    1
+#endif
 
 /**
  * Class definition for a MicroBit device.
@@ -114,13 +129,15 @@ namespace codal
              */
             void onListenerRegisteredEvent(Event evt);
 
+            /**
+             * A callback listener to disable default audio streaming to P0 if an event handler is registered on that pin.
+             */
+            void onP0ListenerRegisteredEvent(Event evt);
+
             // Pin ranges used for LED matrix display.
 
         public:
 
-            // Persistent key value store
-            MicroBitStorage           storage;
-        
 #if CONFIG_ENABLED(DEVICE_BLE)
             // Bluetooth related member variables.
             // Initialize buttonless SVCI bootloader interface before interrupts are enabled
@@ -137,11 +154,12 @@ namespace codal
             NRF52TouchSensor            touchSensor;
             MicroBitIO                  io;
             NRF52Serial                 serial;
-            //Internal I2C for motion sensors
-            NRF52I2C                    _i2c;
-        public:
-            //External I2C for edge connector
-            NRF52I2C                    i2c;
+            MicroBitI2C                 _i2c;                   //Internal I2C for motion sensors
+            MicroBitI2C                 i2c;                    //External I2C for edge connector
+            MicroBitPowerManager        power;
+            MicroBitUSBFlashManager     flash;
+            NRF52FlashManager           internalFlash; 
+            MicroBitStorage             storage;                // Persistent key value store
             NRF52Pin*                   ledRowPins[5];
             NRF52Pin*                   ledColPins[5];
             const MatrixMap             ledMatrixMap;
@@ -155,9 +173,8 @@ namespace codal
             Accelerometer&              accelerometer;
             Compass&                    compass;
             MicroBitCompassCalibrator   compassCalibrator;
-            MicroBitPowerManager        power;
-            MicroBitUSBFlashManager     flash; 
             MicroBitAudio               audio;
+            MicroBitLog                 log;
 
 
             /**
@@ -204,6 +221,11 @@ namespace codal
             void sleep(uint32_t milliseconds);
 
             /**
+             * Perfom scheduler idle
+             */
+            virtual void schedulerIdle() override;
+
+            /**
              * A periodic callback invoked by the fiber scheduler idle thread.
              * We use this for any low priority, background housekeeping.
              */
@@ -219,6 +241,13 @@ namespace codal
             //TODO: handle overflow case.
             unsigned long systemTime();
 
+            /**
+             * Determines if any persistent storage needs to be erased following the reprogramming
+             * of the micro:bit.
+             *
+             * @param forceErase Force an erase of user data, even if we have not detected a reflash event.
+             */
+            void eraseUserStorage(bool forceErase = false);
     };
 
 

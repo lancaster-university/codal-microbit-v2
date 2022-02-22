@@ -81,7 +81,7 @@ MicroBitCompassCalibrator::MicroBitCompassCalibrator(Compass& _compass, Accelero
 
     if(calibrationData != NULL)
     {
-        CompassCalibration cal = CompassCalibration();
+        CompassCalibration cal;
         memcpy(&cal, calibrationData->value, sizeof(CompassCalibration));
         compass.setCalibration(cal);
         delete calibrationData;
@@ -348,7 +348,7 @@ void MicroBitCompassCalibrator::calibrateUX(MicroBitEvent)
         }
 
         // update our model of the flash status of the user controlled pixel.
-        cursor_on = (cursor_on + 1) % 4;
+        cursor_on = (cursor_on + 40) % 200;
 
         // take a snapshot of the current accelerometer data.
         int x = accelerometer.getX();
@@ -412,9 +412,8 @@ void MicroBitCompassCalibrator::calibrateUX(MicroBitEvent)
     CompassCalibration cal = calibrate(data, samples); 
     compass.setCalibration(cal);
 
-    // TODO: Reintroduce when persistent storage is implemented
-    //if(this->storage)
-    //    this->storage->put(ManagedString("compassCal"), (uint8_t *) &cal, sizeof(CompassCalibration));
+    if(this->storage)
+        this->storage->put("compassCal", (uint8_t *) &cal, sizeof(CompassCalibration));
 
     // Show a smiley to indicate that we're done, and continue on with the user program.
     display.clear();

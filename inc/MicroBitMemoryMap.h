@@ -31,6 +31,11 @@ DEALINGS IN THE SOFTWARE.
 
 #define NUMBER_OF_REGIONS 3
 
+#define REGION_SD       0
+#define REGION_CODAL    1
+#define REGION_MAKECODE 2
+#define REGION_PYTHON   3 
+
 /**
   * Class definition for the MicroBitMemoryMap class.
   * This allows reading and writing of regions within the memory map.
@@ -69,6 +74,17 @@ class MicroBitMemoryMap
         Region memoryMap[NUMBER_OF_REGIONS];
     };
 
+    struct MicroPythonLayoutRecord
+    {
+        uint8_t id;
+        uint8_t ht;
+        uint16_t reg_page;
+        uint32_t reg_len;
+        uint32_t hash_data[2];
+    };
+
+    enum hash_type{HASH_TYPE_EMPTY, HASH_TYPE_VALUE, HASH_TYPE_POINTER};
+
     uint8_t regionCount = 0;
 
     public:
@@ -102,10 +118,17 @@ class MicroBitMemoryMap
     int updateRegion(Region region);
 
     /**
-     * Function to fetch hashes from PXT build
+     * Function to fetch hashes from PXT/uPy Build
      *
      */
     void findHashes();
+
+    /**
+     * Function to process records from uPy Build
+     *
+     * @return MICROBIT_OK success, MICROBIT_INVALID_PARAM if the region.id is too great
+     */
+    int processRecord(uint32_t *address);
 };
 
 #endif

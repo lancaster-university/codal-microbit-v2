@@ -56,11 +56,11 @@
 
 // Defines where in memory persistent data is stored.
 #ifndef MICROBIT_STORAGE_PAGE
-#define MICROBIT_STORAGE_PAGE           ( MICROBIT_BOOTLOADER_ADDRESS - MICROBIT_CODEPAGESIZE)
+#define MICROBIT_STORAGE_PAGE           ( MICROBIT_BOOTLOADER_ADDRESS - MICROBIT_CODEPAGESIZE * 3)
 #endif
 
 #ifndef MICROBIT_FDS_PAGE
-#define MICROBIT_FDS_PAGE               ( MICROBIT_BOOTLOADER_ADDRESS - MICROBIT_CODEPAGESIZE * 3)
+#define MICROBIT_FDS_PAGE               ( MICROBIT_BOOTLOADER_ADDRESS - MICROBIT_CODEPAGESIZE * 2)
 #endif
 
 #ifndef MICROBIT_DEFAULT_SCRATCH_PAGE
@@ -226,10 +226,10 @@ extern uint32_t __data_end__;
 
 // Defines default power level of the BLE radio transmitter.
 // Valid values are in the range 0..7 inclusive, with 0 being the lowest power and 7 the highest power.
-// Based on trials undertaken by the BBC, the radio is normally set to its lowest power level
+// Based on trials undertaken by the BBC, the radio is normally set to a low power level
 // to best protect children's privacy.
 #ifndef MICROBIT_BLE_DEFAULT_TX_POWER
-#define MICROBIT_BLE_DEFAULT_TX_POWER           0
+#define MICROBIT_BLE_DEFAULT_TX_POWER           1
 #endif
 
 // Enable/Disable BLE Service: MicroBitDFU
@@ -245,6 +245,13 @@ extern uint32_t __data_end__;
 #ifndef MICROBIT_BLE_DEVICE_INFORMATION_SERVICE
 #define MICROBIT_BLE_DEVICE_INFORMATION_SERVICE 1
 #endif
+
+// Enable/Disable Nordic Firmware style BLE based UART implimentation.
+// The default codal implimentation reverses the TX/RX ids  
+// Set to '1' to enable
+#ifndef MICROBIT_BLE_NORDIC_STYLE_UART
+#define MICROBIT_BLE_NORDIC_STYLE_UART 0
+#endif 
 
 // Versioning options.
 // We use semantic versioning (http://semver.org/) to identify differnet versions of the micro:bit runtime.
