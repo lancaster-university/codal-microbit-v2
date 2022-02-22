@@ -80,16 +80,16 @@ DEALINGS IN THE SOFTWARE.
 //
 // USB Interface Power Management Protocol error codes
 //
-#define MICROBIT_UIPM_SUCCESS	        0x30                    
-#define MICROBIT_UIPM_INCOMPLETE_CMD	0x31
-#define MICROBIT_UIPM_UNKNOWN_CMD	    0x32
-#define MICROBIT_UIPM_FORBIDDEN 	    0x33
+#define MICROBIT_UIPM_SUCCESS	          0x30
+#define MICROBIT_UIPM_INCOMPLETE_CMD	  0x31
+#define MICROBIT_UIPM_UNKNOWN_CMD	      0x32
+#define MICROBIT_UIPM_FORBIDDEN 	      0x33
 #define MICROBIT_UIPM_NOT_RECOGNISED    0x34
 #define MICROBIT_UIPM_BAD_LENGTH        0x35
 #define MICROBIT_UIPM_READ_FORBIDDEN    0x36                    // Why not just FORBIDDEN?
 #define MICROBIT_UIPM_WRITE_FORBIDDEN   0x37                    // Why not just FORBIDDEN?
 #define MICROBIT_UIPM_WRITE_FAIL        0x38                    // Generalise to any FAIL?
-#define MICROBIT_UIPM_I2C_FAIL          0x39
+#define MICROBIT_UIPM_BUSY              0x39
 
 
 
@@ -118,6 +118,12 @@ typedef enum {
 //
 // USB interface and device version information
 //
+
+// board versions:
+// V2.0 (KL27 I/F):      0x9904
+// V2.2 (NRF52833 I/F):  0x9905
+// V2.2 (NRF52820 I/F):  0x9906
+
 typedef struct {
     uint16_t        i2c;
     uint16_t        daplink;
@@ -262,6 +268,11 @@ class MicroBitPowerManager : public CodalComponent
          * from main().
          */
         void off();
+
+        /**
+         * Service any IRQ requests raised by the USB interface chip.
+         */
+        void readInterfaceRequest();
 
         /**
          * A periodic callback invoked by the fiber scheduler idle thread.

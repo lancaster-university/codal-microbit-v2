@@ -49,6 +49,9 @@ MicroBitUSBFlashManager::MicroBitUSBFlashManager(MicroBitI2C &i2c, MicroBitIO &i
 {
     this->id = id;
     this->maxWriteLength = 64;
+
+    // Be pessimistic about the interface chip in use, until we obtain version information.
+    status = (MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY | MICROBIT_USB_FLASH_USE_NULL_TRANSACTION);
 }
 
 /**
@@ -119,7 +122,7 @@ int MicroBitUSBFlashManager::setConfiguration(MicroBitUSBFlashConfig config, boo
     getGeometry();
 
     // If the requested file is too long/short, we can't proceed.
-    if (config.fileSize <= 0 || config.fileSize >= geometry.blockSize*geometry.blockCount)
+    if (config.fileSize <= 0 || config.fileSize > geometry.blockSize*geometry.blockCount)
         return MICROBIT_INVALID_PARAMETER;
 
     // Validate filename as fixed length 8.3 format, as required by USB interface chip.
@@ -201,18 +204,33 @@ MicroBitUSBFlashGeometry MicroBitUSBFlashManager::getGeometry()
             valid = false;
 
         // Optimize behaviour for the interface chip version in use.
-        MicroBitVersion v = power.getVersion();
-        switch(v.daplink)
+        if (valid)
         {
-            case 255:
-                // Apply workarounds for V2.00 KL27 release
-                maxWriteLength = 64;
-                status |= (MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY | MICROBIT_USB_FLASH_USE_NULL_TRANSACTION);
-                break;
+            // Apply FLASH storage limiting policy to align V2.0 and V2.2 device capabilities.
+            if (geometry.blockCount * geometry.blockSize > MICROBIT_USB_FLASH_MAX_FLASH_STORAGE)
+                geometry.blockCount = MICROBIT_USB_FLASH_MAX_FLASH_STORAGE / geometry.blockSize;
 
-            default:
-                maxWriteLength = 1024;
-                status &= ~(MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY | MICROBIT_USB_FLASH_USE_NULL_TRANSACTION);
+            MicroBitVersion v = power.getVersion();
+            switch(v.i2c)
+            {
+                case 1:
+                    // Apply workarounds for V2.00 KL27 release, and V2.2 NRF528xx rev1 release.
+                    maxWriteLength = 64;
+                    status |= (MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY | MICROBIT_USB_FLASH_USE_NULL_TRANSACTION);
+                    break;
+
+                case 2:
+                default:
+                    // Apply/disable workarounds for KL27/NRF528xx rev2 release.
+                    maxWriteLength = 64;
+                    status &= ~MICROBIT_USB_FLASH_USE_NULL_TRANSACTION;
+                    status |= MICROBIT_USB_FLASH_BUSY_FLAG_SUPPORTED;
+                    status |= MICROBIT_USB_FLASH_SINGLE_PAGE_ERASE_ONLY;
+            }
+
+            // If we have a V2.2 NRF52 based DAPLink revision, apply an additional 100ms delay following a FLASH_ERASE command.
+            if (v.board == 0x9905 || v.board == 0x9906)
+                status |= MICROBIT_USB_FLASH_100MS_AFTER_ERASE;
         }
 
         // Ensure we don't cache invalid state.
@@ -535,7 +553,7 @@ ManagedBuffer MicroBitUSBFlashManager::transact(ManagedBuffer request, int respo
     if (status & MICROBIT_USB_FLASH_USE_NULL_TRANSACTION)
     {
         ManagedBuffer nop_request(1);
-        nop_request[0] = MICROBIT_USB_FLASH_VISIBILITY_CMD;
+        nop_request[0] = request[0] == MICROBIT_USB_FLASH_VISIBILITY_CMD ? MICROBIT_USB_FLASH_DISK_SIZE_CMD : MICROBIT_USB_FLASH_VISIBILITY_CMD;
         _transact(nop_request, usbFlashPropertyLength.get(MICROBIT_USB_FLASH_VISIBILITY_CMD));
     }
 
@@ -552,6 +570,7 @@ ManagedBuffer MicroBitUSBFlashManager::_transact(ManagedBuffer request, int resp
 {
     int tx_attempts = 0;
     int rx_attempts = 0;
+
     ManagedBuffer b(max(responseLength, 3));
 
     while(tx_attempts < MICROBIT_USB_FLASH_MAX_TX_RETRIES)
@@ -568,7 +587,12 @@ ManagedBuffer MicroBitUSBFlashManager::_transact(ManagedBuffer request, int resp
             continue;
         }
 
-        target_wait_us(200);
+        // if we have an erase request, ensure sufficient time is left to process it before checking for a response.
+        // (DAPLink workaround)
+        if (request[0] == MICROBIT_USB_FLASH_ERASE_CMD)
+            fiber_sleep(status & MICROBIT_USB_FLASH_100MS_AFTER_ERASE ? 100 : 20);
+        else
+            fiber_sleep(1);
 
         while(rx_attempts < MICROBIT_USB_FLASH_MAX_RX_RETRIES)
         {
@@ -576,6 +600,7 @@ ManagedBuffer MicroBitUSBFlashManager::_transact(ManagedBuffer request, int resp
 
             if(io.irq1.isActive())
             {
+                b.fill(0);
                 int r = i2cBus.read(MICROBIT_USB_FLASH_I2C_ADDRESS, &b[0], b.length(), false);
 
                 if (r == MICROBIT_OK)
@@ -591,7 +616,10 @@ ManagedBuffer MicroBitUSBFlashManager::_transact(ManagedBuffer request, int resp
                     {
                         // We have a negative response. If it's not a FAIL case, treat this as "NOT READY"
                         // reset RX timeout, as the peripheral is active on our transaction.
-                        if (b[0] == 0x00 || (b[0] == 0x20 && (b[1] == request[0] || b[1] == 0x00)))
+                        // some revisions report busy status explicitly, others do not and we must infer...
+                        bool busy = (status & MICROBIT_USB_FLASH_BUSY_FLAG_SUPPORTED) ? b[0] == 0x20 && b[1] == 0x39 : b[0] == 0x00 || (b[0] == 0x20 && (b[1] == request[0] || b[1] == 0x00));
+
+                        if (busy)
                             rx_attempts = 0;
                         else
                             break;

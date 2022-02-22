@@ -213,6 +213,8 @@ int MicroBit::init()
     NVIC_SetPriority(UARTE0_UART0_IRQn, 2);   // Serial port
     NVIC_SetPriority(GPIOTE_IRQn, 2);         // Pin interrupt events
 
+    power.readInterfaceRequest();
+
 #if CONFIG_ENABLED(DEVICE_BLE) && ( CONFIG_ENABLED(MICROBIT_BLE_PAIRING_MODE) || CONFIG_ENABLED(MICROBIT_BLE_ENABLED))
     MicroBitVersion version = power.getVersion();
 #endif
