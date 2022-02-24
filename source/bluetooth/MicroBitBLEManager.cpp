@@ -111,6 +111,7 @@ DEALINGS IN THE SOFTWARE.
 
 const char *MICROBIT_BLE_MANUFACTURER = NULL;
 const char *MICROBIT_BLE_MODEL = "BBC micro:bit";
+const char *MICROBIT_BLE_VERSION[2] = { "2.0", "2.X" };
 const char *MICROBIT_BLE_HARDWARE_VERSION = NULL;
 const char *MICROBIT_BLE_FIRMWARE_VERSION = MICROBIT_DAL_VERSION;
 const char *MICROBIT_BLE_SOFTWARE_VERSION = NULL;
@@ -228,7 +229,7 @@ MicroBitBLEManager *MicroBitBLEManager::getInstance()
   * bleManager.init(uBit.getName(), uBit.getSerial(), uBit.messageBus, true);
   * @endcode
   */
-void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNumber, EventModel &messageBus, MicroBitStorage &keyValueStorage, bool enableBonding)
+void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNumber, EventModel &messageBus, MicroBitStorage &keyValueStorage, bool enableBonding, uint16_t board)
 {
     if ( this->status & DEVICE_COMPONENT_RUNNING)
       return;
@@ -436,9 +437,17 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
 #if CONFIG_ENABLED(MICROBIT_BLE_DEVICE_INFORMATION_SERVICE)
     MICROBIT_DEBUG_DMESG( "DEVICE_INFORMATION_SERVICE");
     
-    ManagedString modelVersion("V2.0");  // TODO use a calculated version
+    int versionIdx = 0;
+    switch ( board)
+    {
+      case 0x9903:
+      case 0x9904:  break;
+      default:      versionIdx = 1; break;
+    }
+
+    ManagedString modelVersion( MICROBIT_BLE_VERSION[versionIdx]);
     ManagedString disName( MICROBIT_BLE_MODEL);
-    disName = disName + " " + modelVersion;
+    disName = disName + " V" + modelVersion;
 
     ble_dis_init_t disi;
     memset( &disi, 0, sizeof(disi));

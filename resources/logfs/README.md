@@ -16,7 +16,9 @@ There's some NodeJS-based tooling to minimize and munge the file into a C++ arra
 
 Run `npm install` in this directory to install the dependencies.
 
-To generate a `test.html` file with the sample trailer appended run `npm run test`.
+To generate test HTML files using sample trailers run `npm run test`.
+
+An equivalently named HTML file is created for each `sample-*.txt` file in this directory.
 
 To update the C++ array contents in `source/MicroBitLog.cpp` run `npm run build`.
 

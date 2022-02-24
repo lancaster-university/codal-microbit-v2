@@ -97,9 +97,14 @@ DEALINGS IN THE SOFTWARE.
 #include "NRF52Serial.h"
 #include "ManagedString.h"
 
-#ifndef CONFIG_MICROBIT_LOG_JOURNAL_PAGES
-#define CONFIG_MICROBIT_LOG_JOURNAL_PAGES       4
+#ifndef CONFIG_MICROBIT_LOG_METADATA_SIZE
+#define CONFIG_MICROBIT_LOG_METADATA_SIZE      2048
 #endif
+
+#ifndef CONFIG_MICROBIT_LOG_JOURNAL_SIZE
+#define CONFIG_MICROBIT_LOG_JOURNAL_SIZE       4096
+#endif
+
 
 #ifndef CONFIG_MICROBIT_LOG_CACHE_BLOCK_SIZE
 #define CONFIG_MICROBIT_LOG_CACHE_BLOCK_SIZE    256
@@ -201,6 +206,7 @@ namespace codal
         uint32_t                        headingLength;      // The length (in bytes) of the column header data.
         uint32_t                        headingCount;       // Total number of headings in the current log.
         bool                            headingsChanged;    // Flag to indicate if a row has been added that contains new columns.
+        bool                            timeStampChanged;   // Flag to indicate if a timestamp format has changed.
 
         struct ColumnEntry*             rowData;            // Collection of key/value pairs. Used to accumulate each data row.
         struct MicroBitLogMetaData      metaData;           // Snapshot of the metadata held in flash storage.
@@ -214,7 +220,7 @@ namespace codal
         /**
          * Constructor.
          */
-        MicroBitLog(MicroBitUSBFlashManager &flash, NRF52Serial &serial, int journalPages = CONFIG_MICROBIT_LOG_JOURNAL_PAGES);
+        MicroBitLog(MicroBitUSBFlashManager &flash, NRF52Serial &serial);
 
         /**
          * Destructor.
@@ -234,6 +240,14 @@ namespace codal
          * @return true if the log is full, false otherwise.
          */
         bool isFull();
+
+        /**
+         * Sets the visibility of the MY_DATA.HTM file on the MICROBIT drive.
+         * Only updates the persistent state of this visibility if it has changed.
+         *
+         * @param visible true to make the file visible, false otherwise.
+         */
+        void setVisibility(bool visible);
 
         /**
          * Clears the current log, including any previously defined keys.
@@ -319,6 +333,22 @@ namespace codal
          * Attempt to load an exisitng filesystem, or fomrat a new one if not found.
          */
         void init();
+
+        /*
+         * Private APIs methods.
+         * These methods enable the functionality of the public APIs, but assume mutual exclusion has already been acquired.
+         */
+        bool _isPresent();
+        void _setVisibility(bool visible);
+        void _clear(bool fullErase = CONFIG_MICROBIT_LOG_FULL_ERASE_BY_DEFAULT);
+        void _invalidate();
+        void _setTimeStamp(TimeStampFormat format);
+        int _beginRow();
+        int _endRow();
+        int _logData(ManagedString key, ManagedString value);
+        int _logString(const char *s);
+        int _logString(ManagedString s);
+
 
         /**
          * Add the given heading to the list of headings in use. If the heading already exists,

@@ -281,10 +281,21 @@ void MicroBitPartialFlashingService::flashData(uint8_t *data)
 
 }
 
+/**
+ * Ensure CRC validation settings are correct.
+ */
+void MicroBitPartialFlashingService::validateBootloaderSettings()
+{
+  nrf_dfu_settings_t *settings = (nrf_dfu_settings_t *) MICROBIT_BOOTLOADER_SETTINGS;
+
+  if (settings->boot_validation_app.type != NO_VALIDATION)
+    setDefaultBootloaderSettings();
+}
+
 /*
  * Set bootloader to no validation
  */
-void MicroBitPartialFlashingService::noValidation()
+void MicroBitPartialFlashingService::setDefaultBootloaderSettings()
 {
     MicroBitFlash flash;
 
@@ -407,7 +418,7 @@ void MicroBitPartialFlashingService::partialFlashingEvent(MicroBitEvent e)
       flash.flash_burn(flashPointer, blockPointer, 16);
 
       // Set no validation
-      noValidation();
+      setDefaultBootloaderSettings();
 
       MICROBIT_DEBUG_DMESG( "rebooting");
       // Once the final packet has been written remove the BLE mode flag and reset

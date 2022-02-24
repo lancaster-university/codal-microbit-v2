@@ -146,7 +146,8 @@ int MicroBitAudio::enable()
         setSpeakerEnabled(speakerEnabled);
         setPinEnabled(pinEnabled);
 
-        soundExpressionChannel = mixer.addChannel(synth);
+        if ( soundExpressionChannel == NULL)
+            soundExpressionChannel = mixer.addChannel(synth);
     }
     return DEVICE_OK;
 }
@@ -271,9 +272,10 @@ int MicroBitAudio::setSleep(bool doSleep)
       if (pwm)
       {
           status |= MICROBIT_AUDIO_STATUS_DEEPSLEEP;
+          NVIC_DisableIRQ(PWM1_IRQn);
+          pwm->disable();
           pwm->disconnectPin(speaker);
           pwm->disconnectPin(*pin);
-          pwm->disable();
           delete pwm;
           pwm = NULL;
       }
