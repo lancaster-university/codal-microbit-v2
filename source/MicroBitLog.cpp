@@ -709,6 +709,70 @@ int MicroBitLog::logString(const char *s)
     return r;
 }
 
+// TODO? serial.getBaud()
+static unsigned int getBaud()
+{
+    unsigned int baud = 115200;
+
+    switch ( NRF_UARTE0->BAUDRATE)
+    {
+        case NRF_UARTE_BAUDRATE_9600: baud = 9600; break;
+        case NRF_UARTE_BAUDRATE_31250: baud = 31250; break;
+        case NRF_UARTE_BAUDRATE_38400: baud = 38400; break;
+        case NRF_UARTE_BAUDRATE_57600: baud = 57600; break;
+        case NRF_UARTE_BAUDRATE_115200: baud = 115200; break;
+        case NRF_UARTE_BAUDRATE_230400: baud = 230400; break;
+        case NRF_UARTE_BAUDRATE_921600: baud = 921600; break;
+        case NRF_UARTE_BAUDRATE_1000000: baud = 1000000; break;
+    }
+
+    return baud;
+}
+
+/* Block the current fiber until the serial output buffer is empty.
+ * @param serial    A reference to the serial object
+ * @param sleep     Allow other fibers to run when the estimated wait time
+                    in microseconds is greater than this value
+ *                  If -1, do not allow other fibers to run
+ * @param timeout   Timeout in microseconds, in case the buffer is refilled.
+                    If 0, do not timeout.
+                    If -1, allow double the estimated time for the current buffer.
+*/
+static void waitForTx( NRF52Serial &serial, int sleep, int timeout)
+{
+    unsigned int tx = serial.txBufferedSize();
+    if ( tx == 0)
+        return;
+
+    CODAL_TIMESTAMP t0      = system_timer_current_time();
+    unsigned int    baud    = getBaud();
+
+    if ( timeout < 0)
+        timeout = 2000 * ( (tx * 10000 + baud - 1) / baud);
+
+    while ( tx > 0 && ( timeout == 0 || ( system_timer_current_time() - t0 < (unsigned int) timeout)))
+    {
+        // Rule out overflow in us calculation below
+        if ( tx > 420) tx = 420;
+        unsigned int pause = tx * 10000000 / baud;
+
+        if ( sleep >= 0 && pause >= (unsigned int) sleep)
+            fiber_sleep( (pause + 999) / 1000);
+        else
+            target_wait_us( pause > 0 ? pause : 1);
+
+        tx = serial.txBufferedSize();
+    }
+}
+
+#ifndef MICROBITLOG_WAITFORSERIAL_SLEEP
+#define MICROBITLOG_WAITFORSERIAL_SLEEP 2000
+#endif
+
+#ifndef MICROBITLOG_WAITFORSERIAL_TIMEOUT
+#define MICROBITLOG_WAITFORSERIAL_TIMEOUT -1
+#endif
+
 /**
  * Inject the given row into the log as text, ignoring key/value pairs.
  * @param s the string to inject.
@@ -759,6 +823,9 @@ int MicroBitLog::_logString(const char *s)
         // If we're going to fill (or overspill) the current page, erase the next one ready for use.
         if (spaceOnPage <= l && dataEnd+spaceOnPage < logEnd)
         {
+            // Wait for serial output before erasing page.
+            waitForTx( serial, MICROBITLOG_WAITFORSERIAL_SLEEP, MICROBITLOG_WAITFORSERIAL_TIMEOUT);
+
             uint32_t nextPage = ((dataEnd / flash.getPageSize()) + 1) * flash.getPageSize();
 
             //DMESG("   ERASING PAGE %p", nextPage);
