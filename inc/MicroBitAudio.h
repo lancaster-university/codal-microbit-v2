@@ -67,6 +67,8 @@ namespace codal
         NRF52Pin &microphone;                   // Microphone pin passed from MicroBit constructor
         NRF52Pin &runmic;                       // Runmic pin passed from MicroBit constructor
 
+        int micDriverTimeout;
+
         public:
         SoundExpressions soundExpressions;      // SoundExpression intepreter
         SoundOutputPin   virtualOutputPin;      // Virtual PWM channel (backward compatibility).
@@ -85,6 +87,11 @@ namespace codal
          * Demand request from a component to enable the default instance of this audio pipeline
          */
         static void requestActivation();
+
+        /**
+         * Called periodically to maintain the periperhal timout timers
+         */
+        void periodicCallback();
 
         /**
           * Catch events from the splitter
