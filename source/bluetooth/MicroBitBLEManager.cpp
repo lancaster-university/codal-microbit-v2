@@ -112,9 +112,8 @@ DEALINGS IN THE SOFTWARE.
 const char *MICROBIT_BLE_MANUFACTURER = NULL;
 const char *MICROBIT_BLE_MODEL = "BBC micro:bit";
 const char *MICROBIT_BLE_VERSION[2] = { "2.0", "2.X" };
-const char *MICROBIT_BLE_HARDWARE_VERSION = NULL;
 const char *MICROBIT_BLE_FIRMWARE_VERSION = MICROBIT_DAL_VERSION;
-const char *MICROBIT_BLE_SOFTWARE_VERSION = NULL;
+const char *MICROBIT_BLE_SOFTWARE_VERSION = MICROBIT_SW_VERSION;
 
 const int8_t MICROBIT_BLE_POWER_LEVEL[] = { -40, -20, -16, -12, -8, -4, 0, 4};
 
@@ -132,6 +131,7 @@ MicroBitBLEManager *MicroBitBLEManager::manager = NULL; // Singleton reference t
 static int                  m_power         = MICROBIT_BLE_DEFAULT_TX_POWER;
 static uint8_t              m_adv_handle    = BLE_GAP_ADV_SET_HANDLE_NOT_SET;
 static uint8_t              m_enc_advdata[ BLE_GAP_ADV_SET_DATA_SIZE_MAX];
+static uint8_t              m_enc_scan_rsp_data[ BLE_GAP_ADV_SET_DATA_SIZE_MAX];
 
 static volatile int         m_pending;
 
@@ -150,9 +150,20 @@ static void microbit_ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_conte
 static void microbit_ble_pm_evt_handler(pm_evt_t const * p_evt);
 static void microbit_ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context);
 
+#if CONFIG_ENABLED(MICROBIT_BLE_DFU_SERVICE)
 static void microbit_dfu_init(void);
+#endif
+
+static void microbit_ble_configureAdvertising( bool connectable, bool discoverable, bool whitelist,
+                                               uint16_t interval_ms, int timeout_seconds,
+                                               ble_advdata_t *p_advdata, ble_advdata_t *p_scndata = nullptr);
 
 static void microbit_ble_configureAdvertising( bool connectable, bool discoverable, bool whitelist, uint16_t interval_ms, int timeout_seconds);
+
+static void microbit_ble_configureAdvertising( bool connectable, bool discoverable, bool whitelist,
+                                               uint16_t interval_ms, int timeout_seconds,
+                                               ble_advdata_uuid_list_t *services, bool service_list_complete = true,
+                                               ble_advdata_manuf_data_t *manufacturer_data = nullptr);
 
 #if CONFIG_ENABLED(MICROBIT_BLE_EDDYSTONE_URL) || CONFIG_ENABLED(MICROBIT_BLE_EDDYSTONE_UID)
 static void microbit_ble_configureAdvertising( bool connectable, bool discoverable, bool whitelist, uint16_t interval_ms, int timeout_seconds,
@@ -455,7 +466,7 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
     const_ascii_to_utf8( &disi.manufact_name_str,  MICROBIT_BLE_MANUFACTURER);
     const_ascii_to_utf8( &disi.model_num_str,      disName.toCharArray());
     const_ascii_to_utf8( &disi.serial_num_str,     serialNumber.toCharArray());
-    const_ascii_to_utf8( &disi.hw_rev_str,         MICROBIT_BLE_HARDWARE_VERSION);
+    const_ascii_to_utf8( &disi.hw_rev_str,         modelVersion.toCharArray());
     const_ascii_to_utf8( &disi.fw_rev_str,         MICROBIT_BLE_FIRMWARE_VERSION);
     const_ascii_to_utf8( &disi.sw_rev_str,         MICROBIT_BLE_SOFTWARE_VERSION);
     //ble_dis_sys_id_t *             p_sys_id;                    /**< System ID. */
@@ -667,6 +678,40 @@ void MicroBitBLEManager::advertise()
 
 
 /**
+ * When called, the micro:bit will begin advertising for a predefined period,
+ * MICROBIT_BLE_ADVERTISING_TIMEOUT seconds to bonded devices.
+ *
+ * @param serviceUUID The service UUID to insert into advertising data.
+ */
+void MicroBitBLEManager::advertise(ble_uuid_t *serviceUUIDs, uint16_t service_count, bool service_list_complete, uint16_t manufacturer_id, uint8_t *manufacturer_data, uint16_t manufacturer_data_size)
+{
+    MICROBIT_DEBUG_DMESG( "advertise service");
+
+    ble_advdata_uuid_list_t services;
+    services.p_uuids = serviceUUIDs;
+    services.uuid_cnt = service_count;
+
+    if(manufacturer_data != nullptr)
+    {    
+        ble_advdata_manuf_data_t manuf_data;
+        manuf_data.company_identifier = manufacturer_id;
+        manuf_data.data.p_data = manufacturer_data;
+        manuf_data.data.size = manufacturer_data_size;
+    
+        microbit_ble_configureAdvertising(true, true, false, MICROBIT_BLE_ADVERTISING_INTERVAL,
+                        MICROBIT_BLE_ADVERTISING_TIMEOUT, &services, service_list_complete, &manuf_data);
+    }
+    else
+    {
+        microbit_ble_configureAdvertising(true, true, false, MICROBIT_BLE_ADVERTISING_INTERVAL,
+                        MICROBIT_BLE_ADVERTISING_TIMEOUT, &services, service_list_complete);
+    }
+
+    advertise();
+}
+
+    
+/**
 * Stops any currently running BLE advertisements
 */
 void MicroBitBLEManager::stopAdvertising()
@@ -690,7 +735,7 @@ void MicroBitBLEManager::onDisconnect()
 }
 
 
-    
+
 #if CONFIG_ENABLED(MICROBIT_BLE_EDDYSTONE_URL)
 /**
   * Set the content of Eddystone URL frames
@@ -1173,7 +1218,7 @@ void MicroBitBLEManager::servicesChanged()
  */
 static void microbit_ble_configureAdvertising( bool connectable, bool discoverable, bool whitelist,
                                                uint16_t interval_ms, int timeout_seconds,
-                                               ble_advdata_t *p_advdata)
+                                               ble_advdata_t *p_advdata, ble_advdata_t *p_scandata)
 {
     MICROBIT_DEBUG_DMESG( "configureAdvertising connectable %d, discoverable %d", (int) connectable, (int) discoverable);
     MICROBIT_DEBUG_DMESG( "whitelist %d, interval_ms %d, timeout_seconds %d", (int) whitelist, (int) interval_ms, (int) timeout_seconds);
@@ -1194,10 +1239,22 @@ static void microbit_ble_configureAdvertising( bool connectable, bool discoverab
                 
     ble_gap_adv_data_t  gap_adv_data;
     memset( &gap_adv_data, 0, sizeof( gap_adv_data));
+
+    // encode advertising data
     gap_adv_data.adv_data.p_data    = m_enc_advdata;
     gap_adv_data.adv_data.len       = BLE_GAP_ADV_SET_DATA_SIZE_MAX;
     MICROBIT_BLE_ECHK( ble_advdata_encode( p_advdata, gap_adv_data.adv_data.p_data, &gap_adv_data.adv_data.len));
     NRF_LOG_HEXDUMP_INFO( gap_adv_data.adv_data.p_data, gap_adv_data.adv_data.len);
+    
+    // encode scan response data if supplied
+    if(p_scandata != nullptr)
+    {
+        gap_adv_data.scan_rsp_data.p_data    = m_enc_scan_rsp_data;
+        gap_adv_data.scan_rsp_data.len       = BLE_GAP_ADV_SET_DATA_SIZE_MAX;
+        MICROBIT_BLE_ECHK( ble_advdata_encode( p_scandata, gap_adv_data.scan_rsp_data.p_data, &gap_adv_data.scan_rsp_data.len));
+        NRF_LOG_HEXDUMP_INFO( gap_adv_data.scan_rsp_data.p_data, gap_adv_data.scan_rsp_data.len);
+    }
+    
     MICROBIT_BLE_ECHK( sd_ble_gap_adv_set_configure( &m_adv_handle, &gap_adv_data, &gap_adv_params));
 }
 
@@ -1213,6 +1270,36 @@ static void microbit_ble_configureAdvertising( bool connectable, bool discoverab
                       : BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED;
             
     microbit_ble_configureAdvertising( connectable, discoverable, whitelist, interval_ms, timeout_seconds, &advdata);
+}
+
+
+static void microbit_ble_configureAdvertising( bool connectable, bool discoverable, bool whitelist,
+                                               uint16_t interval_ms, int timeout_seconds,
+                                               ble_advdata_uuid_list_t *services, bool service_list_complete,
+                                               ble_advdata_manuf_data_t *manufacturer_data)
+{
+    ble_advdata_t advdata;
+    memset( &advdata, 0, sizeof( advdata));
+    advdata.name_type = BLE_ADVDATA_FULL_NAME;
+    advdata.flags     = !whitelist && discoverable
+                      ? BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED | BLE_GAP_ADV_FLAG_LE_GENERAL_DISC_MODE
+                      : BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED;
+
+    ble_advdata_t scandata;
+    memset( &scandata, 0, sizeof( scandata));
+    if(service_list_complete)
+    {
+        scandata.uuids_complete = *services;
+    }
+    else
+    {
+        scandata.uuids_more_available = *services;
+    }
+    if(manufacturer_data != nullptr) {
+        scandata.p_manuf_specific_data = manufacturer_data;
+    }
+
+    microbit_ble_configureAdvertising( connectable, discoverable, whitelist, interval_ms, timeout_seconds, &advdata, &scandata);
 }
 
 
