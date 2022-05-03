@@ -61,6 +61,7 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
 
     if (mic == NULL){
         mic = adc.getChannel(microphone, false);
+        adc.setSamplePeriod( 1e6 / 22000 );
         mic->setGain(7,0);
     }
 
@@ -112,7 +113,8 @@ void MicroBitAudio::activateMic(){
 void MicroBitAudio::deactivateMic(){
     runmic.setDigitalValue(0);
     runmic.setHighDrive(false);
-    adc.releaseChannel(microphone);
+    mic->disable(); // Just disable the mic channel, releasing it makes it gone forever!
+    //adc.releaseChannel(microphone);
 }
 
 /**
@@ -137,18 +139,28 @@ int MicroBitAudio::enable()
 { 
     if (pwm == NULL)
     {
-        pwm = new NRF52PWM(NRF_PWM1, mixer, 44100);
-        pwm->setDecoderMode(PWM_DECODER_LOAD_Common);
+        pwm = new NRF52PWM( NRF_PWM1, mixer, 44100 );
+        pwm->setDecoderMode( PWM_DECODER_LOAD_Common );
 
-        mixer.setSampleRange(pwm->getSampleRange());
-        mixer.setOrMask(0x8000);
+        mixer.setSampleRange( pwm->getSampleRange() );
+        mixer.setOrMask( 0x8000 );
 
-        setSpeakerEnabled(speakerEnabled);
-        setPinEnabled(pinEnabled);
+        setSpeakerEnabled( speakerEnabled );
+        setPinEnabled( pinEnabled );
 
-        if ( soundExpressionChannel == NULL)
+        if ( soundExpressionChannel == NULL )
             soundExpressionChannel = mixer.addChannel(synth);
     }
+    return DEVICE_OK;
+}
+
+int MicroBitAudio::disable()
+{
+    setSpeakerEnabled( false );
+    setPinEnabled( false );
+
+    pwm->disable();
+
     return DEVICE_OK;
 }
 

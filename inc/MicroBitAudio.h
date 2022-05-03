@@ -89,11 +89,6 @@ namespace codal
         static void requestActivation();
 
         /**
-         * Called periodically to maintain the periperhal timout timers
-         */
-        void periodicCallback();
-
-        /**
           * Catch events from the splitter
           * @param MicroBitEvent
           */
@@ -124,6 +119,11 @@ namespace codal
          * post-constructor initialisation method
          */
         int enable();
+
+        /**
+         * Shut down the audio pipeline
+         */
+        int disable();
 
         /**
          * Get the current volume.
