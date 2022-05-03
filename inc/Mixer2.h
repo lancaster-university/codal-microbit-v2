@@ -80,6 +80,9 @@ public:
      */
     virtual int pullRequest();
     virtual ~MixerChannel() {};
+
+    void setVolume( float volume ) { this->volume = volume; }
+    float getVolume() { return this->volume; }
 };
 
 class Mixer2 : public DataSource
@@ -120,6 +123,14 @@ public:
      * @param sampleRange (quantization levels) the difference between the maximum and minimum sample level on the input channel
      */
     MixerChannel *addChannel(DataSource &stream, float sampleRate = 0, int sampleRange = CONFIG_MIXER_INTERNAL_RANGE);
+
+    /**
+     * Removes a channel from the mixer
+     * 
+     * @param channel The channel pointer to remove
+     * @return int DEVICE_OK if completed successfully
+     */
+    int removeChannel( MixerChannel * channel );
 
     /**
      * Provide the next available ManagedBuffer to our downstream caller, if available.
