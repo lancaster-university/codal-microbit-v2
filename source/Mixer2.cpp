@@ -108,6 +108,12 @@ MixerChannel *Mixer2::addChannel(DataSource &stream, float sampleRate, int sampl
     return c;
 }
 
+int Mixer2::removeChannel( MixerChannel * channel )
+{
+    DMESG( "Unsupported operation! Channel retained!" );
+    return -1;
+}
+
 ManagedBuffer Mixer2::pull() 
 {
     // If we have no channels, just return an empty buffer.

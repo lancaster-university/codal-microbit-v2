@@ -24,12 +24,13 @@ DEALINGS IN THE SOFTWARE.
 */
 
 #include "MicroBitAudio.h"
-
+#include "MicroBit.h"
 #include "CodalDmesg.h"
 #include "NRF52PWM.h"
 #include "Synthesizer.h"
 #include "SoundExpressions.h"
 #include "SoundEmojiSynthesizer.h"
+#include "StreamSplitter.h"
 
 using namespace codal;
 
@@ -38,7 +39,7 @@ MicroBitAudio* MicroBitAudio::instance = NULL;
 /**
   * Default Constructor.
   */
-MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker):
+MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NRF52Pin &microphone, NRF52Pin &runmic):
     speakerEnabled(true),
     pinEnabled(true),
     pin(&pin), 
@@ -46,6 +47,9 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker):
     synth(DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_0),
     soundExpressionChannel(NULL),
     pwm(NULL),
+    adc(adc),
+    microphone(microphone),
+    runmic(runmic),
     soundExpressions(synth),
     virtualOutputPin(mixer)
 {
@@ -54,28 +58,108 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker):
         MicroBitAudio::instance = this;
 
     synth.allowEmptyBuffers(true);
+
+    if (mic == NULL){
+        mic = adc.getChannel(microphone, false);
+        adc.setSamplePeriod( 1e6 / 22000 );
+        mic->setGain(7,0);
+    }
+
+    //Initilise stream normalizer
+    if (processor == NULL)
+        //0.2f in preperation for recording, 8 bit for frequency recogntion
+        processor = new StreamNormalizer(mic->output, 0.08f, true, DATASTREAM_FORMAT_8BIT_SIGNED, 10);
+
+    //Initilise stream splitter
+    if (splitter == NULL)
+        splitter = new StreamSplitter(processor->output);
+
+    //Initilise level detector and attach to splitter
+    if (level == NULL)  
+        level = new LevelDetector(*splitter, 150, 75, DEVICE_ID_SYSTEM_LEVEL_DETECTOR, false);
+
+    //Initilise level detector SPL and attach to splitter
+    if (levelSPL == NULL)
+        levelSPL = new LevelDetectorSPL(*splitter, 85.0, 65.0, 0.45, 52, DEVICE_ID_MICROPHONE, false);
+
+    // Register listener for splitter events
+    if(EventModel::defaultEventBus){
+        EventModel::defaultEventBus->listen(DEVICE_ID_SPLITTER, DEVICE_EVT_ANY, this, &MicroBitAudio::onSplitterEvent, MESSAGE_BUS_LISTENER_IMMEDIATE);
+    }
+}
+
+/**
+ * Handle events from splitter
+ */
+void MicroBitAudio::onSplitterEvent(MicroBitEvent e){
+    if(e.value == SPLITTER_ACTIVATE_CHANNEL)
+        activateMic();
+    else if (e.value == SPLITTER_DEACTIVATE_CHANNEL)
+        deactivateMic();
+}
+
+/**
+ * Activate Mic and Input Channel
+ */
+void MicroBitAudio::activateMic(){
+    runmic.setDigitalValue(1);
+    runmic.setHighDrive(true);
+    adc.activateChannel(mic);
+}
+
+/**
+ * Dectivate Mic and Input Channel
+ */
+void MicroBitAudio::deactivateMic(){
+    runmic.setDigitalValue(0);
+    runmic.setHighDrive(false);
+    mic->disable(); // Just disable the mic channel, releasing it makes it gone forever!
+    //adc.releaseChannel(microphone);
+}
+
+/**
+ * Dectivate Mic and Input Channel
+ */
+void MicroBitAudio::deactivateLevelSPL(){
+    //levelSPL->disable();
+}
+
+/**
+  * Set normaliser gain
+  */
+void MicroBitAudio::setMicrophoneGain(int gain){
+    processor->setGain(gain/100);
+
 }
 
 /**
  * post-constructor initialisation method
  */
 int MicroBitAudio::enable()
-{
+{ 
     if (pwm == NULL)
     {
-        pwm = new NRF52PWM(NRF_PWM1, mixer, 44100);
-        pwm->setDecoderMode(PWM_DECODER_LOAD_Common);
+        pwm = new NRF52PWM( NRF_PWM1, mixer, 44100 );
+        pwm->setDecoderMode( PWM_DECODER_LOAD_Common );
 
-        mixer.setSampleRate(44100);
-        mixer.setSampleRange(pwm->getSampleRange());
-        mixer.setOrMask(0x8000);
+        mixer.setSampleRange( pwm->getSampleRange() );
+        mixer.setOrMask( 0x8000 );
 
-        setSpeakerEnabled(speakerEnabled);
-        setPinEnabled(pinEnabled);
+        setSpeakerEnabled( speakerEnabled );
+        setPinEnabled( pinEnabled );
 
-        if ( soundExpressionChannel == NULL)
+        if ( soundExpressionChannel == NULL )
             soundExpressionChannel = mixer.addChannel(synth);
     }
+    return DEVICE_OK;
+}
+
+int MicroBitAudio::disable()
+{
+    setSpeakerEnabled( false );
+    setPinEnabled( false );
+
+    pwm->disable();
 
     return DEVICE_OK;
 }

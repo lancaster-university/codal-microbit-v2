@@ -51,15 +51,15 @@
     "generate_hex": true, 
     "libraries": [
         {
-            "branch": "6d3b41000a6e3437a432a8edb1aedf9f49d75e57", 
-            "name": "codal-core", 
-            "type": "git", 
+            "branch": "5fb5c2ebb17b61d6bb61f14b2d012b68999e6180",
+            "name": "codal-core",
+            "type": "git",
             "url": "https://github.com/lancaster-university/codal-core"
         }, 
         {
-            "branch": "0bc79cb0232b889d7ef63fb08db358cac5104c48", 
-            "name": "codal-nrf52", 
-            "type": "git", 
+            "branch": "1b5638a0731b78296ef762fa632ac46d0dee4dba",
+            "name": "codal-nrf52",
+            "type": "git",
             "url": "https://github.com/lancaster-university/codal-nrf52"
         }, 
         {
@@ -68,10 +68,10 @@
             "type": "git", 
             "url": "https://github.com/microbit-foundation/codal-microbit-nrf5sdk"
         }
-    ], 
-    "linker_flags": "-Wl,--no-wchar-size-warning -Wl,--gc-sections -Wl,--wrap,atexit -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -Wl,--start-group -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys -Wl,--end-group", 
-    "post_process": "", 
-    "processor": "NRF52833", 
-    "snapshot_version": "v0.2.36", 
+    ],
+    "linker_flags": "-Wl,--no-wchar-size-warning -Wl,--gc-sections -Wl,--wrap,atexit -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -Wl,--start-group -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys -Wl,--end-group",
+    "post_process": "",
+    "processor": "NRF52833",
+    "snapshot_version": "v0.2.33-input_pipeline.0",
     "toolchain": "ARM_GCC"
 }
