@@ -236,12 +236,13 @@ ManagedBuffer MicroBitPowerManager::awaitUIPMPacket()
     }
 
     // If we time out, return a generic write error to the caller
+    DMESG("UIPM: Await timeout");
     ManagedBuffer error(2);
     error[0] = MICROBIT_UIPM_COMMAND_ERROR_RESPONSE;
     error[1] = MICROBIT_UIPM_WRITE_FAIL;
     awaitingPacket(false);
 
-    return error;    
+    return error;
 }
 
 
