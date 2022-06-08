@@ -26,7 +26,6 @@ DEALINGS IN THE SOFTWARE.
 #include "Synthesizer.h"
 #include "CodalFiber.h"
 #include "CodalUtil.h"
-#include "CodalDmesg.h"
 #include "ErrorNo.h"
 #include "MicroBitAudio.h"
 
