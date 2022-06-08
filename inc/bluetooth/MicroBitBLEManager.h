@@ -197,6 +197,12 @@ class MicroBitBLEManager : public CodalComponent
      * */
     void onDisconnect();
 
+    /**
+     * Determine if Bluetooth is connected
+     * @return true if connected 
+     */
+    bool getConnected();
+
 #if CONFIG_ENABLED(MICROBIT_BLE_EDDYSTONE_URL)
     /**
       * Set the content of Eddystone URL frames
