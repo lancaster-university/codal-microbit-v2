@@ -30,6 +30,7 @@ DEALINGS IN THE SOFTWARE.
 #include "SoundEmojiSynthesizer.h"
 #include "SoundSynthesizerEffects.h"
 #include "ManagedString.h"
+#include "CodalDmesg.h"
 
 #define CLAMP(lo, v, hi) ((v) = ((v) < (lo) ? (lo) : (v) > (hi) ? (hi) : (v)))
 
@@ -224,6 +225,7 @@ bool SoundExpressions::parseSoundExpression(const char *soundChars, SoundEffect 
             break;
         case 18:
             fx->effects[0].effect = SoundSynthesizerEffects::logarithmicInterpolation;
+            fx->effects[0].parameter[0] = (float) endFrequency;
             break;
     }
 
