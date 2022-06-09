@@ -36,8 +36,8 @@ DEALINGS IN THE SOFTWARE.
 class MicroBitCompass : public Compass
 {
     public:
-        static Compass*             detectedCompass;          // The autodetected instance of a MicroBitAcelerometer driver.
-        MicroBitAccelerometer*      accelerometer;            // The accelerometer to use for tilt compensation.
+        static Compass*             driver;          // The instance of a MicroBitAcelerometer driver.
+        MicroBitAccelerometer*      accelerometer;    // The accelerometer to use for tilt compensation.
 
         /**
          * Constructor.
