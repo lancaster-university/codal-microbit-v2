@@ -349,8 +349,8 @@ void MicroBit::schedulerIdle()
 {
     if ( power.waitingForDeepSleep())
     {
-#if CONFIG_ENABLED( MICROBIT_BLE)
-        if ( bleManager.isConnected())
+#if CONFIG_ENABLED(DEVICE_BLE) && CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
+        if ( bleManager.getConnected())
         {
             power.cancelDeepSleep();
             target_wait_for_event();
