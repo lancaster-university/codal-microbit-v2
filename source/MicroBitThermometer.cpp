@@ -54,6 +54,7 @@ MicroBitThermometer::MicroBitThermometer(uint16_t id)
     this->samplePeriod = MICROBIT_THERMOMETER_PERIOD;
     this->sampleTime = 0;
     this->offset = 0;
+    this->temperature = 0;
 }
 
 /**
@@ -89,7 +90,7 @@ int MicroBitThermometer::updateSample()
     // check if we need to update our sample...
     if(isSampleNeeded())
     {
-        int32_t processorTemperature;
+        int32_t processorTemperature = 0;
 
         // For now, we just rely on the nrf senesor to be the most accurate.
         // The compass module also has a temperature sensor, and has the lowest power consumption, so will run the cooler...
