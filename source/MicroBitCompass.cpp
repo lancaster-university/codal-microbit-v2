@@ -30,7 +30,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitDevice.h"
 #include "LSM303Magnetometer.h"
 
-Compass* MicroBitCompass::detectedCompass;
+Compass* MicroBitCompass::driver;
 
 /**
  * Constructor.
@@ -61,16 +61,14 @@ Compass& MicroBitCompass::autoDetect(MicroBitI2C &i2c)
      */
     target_wait(10);
 
-    // We only have combined sensors, so rely on the accelerometer detection code to also detect the correct magnetomter.
+    // We only have combined sensors, so rely on the accelerometer detection code to also detect the magnetomter.
     MicroBitAccelerometer::autoDetect(i2c);
 
-    if (MicroBitCompass::detectedCompass == NULL)
-    {
-        CoordinateSpace c(CoordinateSystem::RAW);
-        MicroBitCompass::detectedCompass = new Compass(c);
-    }
+    // This should actually never happen (if the accelerometer fails, it already panics!), but its also checked here just in case
+    if( MicroBitCompass::driver == NULL )
+        target_panic( 51 ); // FixMe: This should be a constant from the PanicCode enum, but this is out of sync
 
-    return *MicroBitCompass::detectedCompass;
+    return *MicroBitCompass::driver;
 }
 
 /**
@@ -90,7 +88,7 @@ Compass& MicroBitCompass::autoDetect(MicroBitI2C &i2c)
  */
 int MicroBitCompass::heading()
 {
-    return MicroBitCompass::detectedCompass ? detectedCompass->heading() : Compass::heading();
+    return driver->heading();
 }
 
 /**
@@ -104,7 +102,7 @@ int MicroBitCompass::heading()
  */
 int MicroBitCompass::getFieldStrength()
 {
-    return MicroBitCompass::detectedCompass ? detectedCompass->getFieldStrength() : Compass::getFieldStrength();
+    return driver->getFieldStrength();
 }
 
 /**
@@ -122,7 +120,7 @@ int MicroBitCompass::getFieldStrength()
  */
 int MicroBitCompass::calibrate()
 {
-    return MicroBitCompass::detectedCompass ? detectedCompass->calibrate() : Compass::calibrate();
+    return driver->calibrate();
 }
 
 /**
@@ -137,7 +135,7 @@ int MicroBitCompass::calibrate()
  */
 void MicroBitCompass::setCalibration(CompassCalibration calibration)
 {
-    return MicroBitCompass::detectedCompass ? detectedCompass->setCalibration(calibration) : Compass::setCalibration(calibration);
+    return driver->setCalibration( calibration );
 }
 
 /**
@@ -149,7 +147,7 @@ void MicroBitCompass::setCalibration(CompassCalibration calibration)
  */
 CompassCalibration MicroBitCompass::getCalibration()
 {
-    return MicroBitCompass::detectedCompass ? detectedCompass->getCalibration() : Compass::getCalibration();
+    return driver->getCalibration();
 }
 
 /**
@@ -157,7 +155,7 @@ CompassCalibration MicroBitCompass::getCalibration()
  */
 int MicroBitCompass::isCalibrated()
 {
-    return MicroBitCompass::detectedCompass ? detectedCompass->isCalibrated() : Compass::isCalibrated();
+    return driver->isCalibrated();
 }
 
 /**
@@ -165,7 +163,7 @@ int MicroBitCompass::isCalibrated()
  */
 int MicroBitCompass::isCalibrating()
 {
-    return MicroBitCompass::detectedCompass ? detectedCompass->isCalibrating() : Compass::isCalibrating();
+    return driver->isCalibrating();
 }
 
 /**
@@ -173,7 +171,7 @@ int MicroBitCompass::isCalibrating()
  */
 void MicroBitCompass::clearCalibration()
 {
-    return MicroBitCompass::detectedCompass ? detectedCompass->clearCalibration() : Compass::clearCalibration();
+    return driver->clearCalibration();
 }
 
 /**
@@ -186,7 +184,7 @@ void MicroBitCompass::clearCalibration()
  */
 int MicroBitCompass::configure()
 {
-    return MicroBitCompass::detectedCompass ? detectedCompass->configure() : Compass::configure();
+    return driver->configure();
 }
 
 /**
@@ -197,7 +195,7 @@ int MicroBitCompass::configure()
  */
 void MicroBitCompass::setAccelerometer(MicroBitAccelerometer &accelerometer)
 {
-    return MicroBitCompass::detectedCompass ? detectedCompass->setAccelerometer(accelerometer) : Compass::setAccelerometer(accelerometer);
+    return driver->setAccelerometer( accelerometer );
 }
 
 /**
@@ -213,7 +211,7 @@ void MicroBitCompass::setAccelerometer(MicroBitAccelerometer &accelerometer)
  */
 int MicroBitCompass::setPeriod(int period)
 {
-    return MicroBitCompass::detectedCompass ? detectedCompass->setPeriod(period) : Compass::setPeriod(period);
+    return driver->setPeriod( period );
 }
 
 /**
@@ -223,7 +221,7 @@ int MicroBitCompass::setPeriod(int period)
  */
 int MicroBitCompass::getPeriod()
 {
-    return MicroBitCompass::detectedCompass ? detectedCompass->getPeriod() : Compass::getPeriod();
+    return driver->getPeriod();
 }
 
 /**
@@ -239,7 +237,7 @@ int MicroBitCompass::getPeriod()
  */
 int MicroBitCompass::requestUpdate()
 {
-    return MicroBitCompass::detectedCompass ? detectedCompass->requestUpdate() : Compass::requestUpdate();
+    return driver->requestUpdate();
 }
 
 /**
@@ -250,7 +248,7 @@ int MicroBitCompass::requestUpdate()
  */
 Sample3D MicroBitCompass::getSample(CoordinateSystem coordinateSystem)
 {
-    return MicroBitCompass::detectedCompass ? detectedCompass->getSample(coordinateSystem) : Compass::getSample(coordinateSystem);
+    return driver->getSample( coordinateSystem );
 }
 
 /**
@@ -259,7 +257,7 @@ Sample3D MicroBitCompass::getSample(CoordinateSystem coordinateSystem)
  */
 Sample3D MicroBitCompass::getSample()
 {
-    return MicroBitCompass::detectedCompass ? detectedCompass->getSample() : Compass::getSample();
+    return driver->getSample();
 }
 
 /**
@@ -270,7 +268,7 @@ Sample3D MicroBitCompass::getSample()
  */
 int MicroBitCompass::getX()
 {
-    return MicroBitCompass::detectedCompass ? detectedCompass->getX() : Compass::getX();
+    return driver->getX();
 }
 
 /**
@@ -281,7 +279,7 @@ int MicroBitCompass::getX()
  */
 int MicroBitCompass::getY()
 {
-    return MicroBitCompass::detectedCompass ? detectedCompass->getY() : Compass::getY();
+    return driver->getY();
 }
 
 /**
@@ -292,7 +290,7 @@ int MicroBitCompass::getY()
  */
 int MicroBitCompass::getZ()
 {
-    return MicroBitCompass::detectedCompass ? detectedCompass->getY() : Compass::getZ();
+    return driver->getZ();
 }
 
 /**
