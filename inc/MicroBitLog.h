@@ -118,7 +118,7 @@ DEALINGS IN THE SOFTWARE.
 #define CONFIG_MICROBIT_LOG_INVALID_CHAR_VALUE  '_'
 #endif
 
-#define MICROBIT_LOG_VERSION                "UBIT_LOG_FS_V_001\n"           // MUST be 18 characters.
+#define MICROBIT_LOG_VERSION                "UBIT_LOG_FS_V_002\n"           // MUST be 18 characters.
 #define MICROBIT_LOG_JOURNAL_ENTRY_SIZE     8
 
 #define MICROBIT_LOG_STATUS_INITIALIZED     0x0001
@@ -134,8 +134,9 @@ namespace codal
     struct MicroBitLogMetaData
     {
         char        version[18];             // MICROBIT_LOG_VERSION
-        char        logEnd[11];              // 32 bit HEX representation containing end address of available storage (e.g. "0x0000FFFF\n")
-        char        dataStart[11];           // 32 bit HEX representation of logical start address of data file (e.g. "0x00000200\n")
+        char        logEnd[11];              // 32 bit HEX representation containing end address of available storage (e.g. "0x0000FFFF\0")
+        char        dataStart[11];           // 32 bit HEX representation of logical start address of data file (e.g. "0x00000200\0")
+        char        daplinkVersion[5];       // 4 ASCII characters for the DAPLink version (e.g. "0255\0")
     };
 
     class ColumnEntry
@@ -189,7 +190,8 @@ namespace codal
     class MicroBitLog 
     {
         private:
-        MicroBitUSBFlashManager         &flash;             // Non-volatile memory contorller to use for storage.
+        MicroBitUSBFlashManager         &flash;             // Non-volatile memory controller to use for storage.
+        MicroBitPowerManager            &power;             // To obtain the Interface chip firmware (DAPLink) version.
         NRF52Serial                     &serial;            // Reference to serial port used for data mirroring.
         FSCache                         cache;              // Write through RAM cache.
         uint32_t                        status;             // Status flags.
@@ -220,7 +222,7 @@ namespace codal
         /**
          * Constructor.
          */
-        MicroBitLog(MicroBitUSBFlashManager &flash, NRF52Serial &serial);
+        MicroBitLog(MicroBitUSBFlashManager &flash, MicroBitPowerManager &power, NRF52Serial &serial);
 
         /**
          * Destructor.

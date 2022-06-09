@@ -9,6 +9,7 @@ a {
   color: rgba(108, 75, 193, 1);
 }
 button {
+  display: block;
   cursor: pointer;
   border-radius: 23px;
   min-height: 46px;

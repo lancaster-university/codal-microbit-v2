@@ -84,6 +84,9 @@ function UserGraphError(message) {
         }
 
         base.load();
+
+        // The base.load() function attaches the DAPLink version to the original object
+        this.daplinkVersion = base.dapVer;
       },
 
       hasGraph: function () {
