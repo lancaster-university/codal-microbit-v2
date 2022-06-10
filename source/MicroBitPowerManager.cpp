@@ -99,12 +99,8 @@ MicroBitVersion MicroBitPowerManager::getVersion()
         // Read I2C protocol version 
         b = readProperty(MICROBIT_UIPM_PROPERTY_I2C_VERSION);
         memcpy(&version.i2c, &b[3], 2);
-        if( version.i2c == 2 ) {
+        if( version.i2c == 2 )
             status |= MICROBIT_USB_INTERFACE_BUSY_FLAG_SUPPORTED;
-            DMESG( "[ OK ]\tUPIM Busy flag support (v%d)", version.i2c );
-        }
-        else
-            DMESG( "[NONE]\tUPIM Busy flag support (v%d)", version.i2c );
 
         // Read DAPLink version
         b = readProperty(MICROBIT_UIPM_PROPERTY_DAPLINK_VERSION);
