@@ -99,6 +99,8 @@ MicroBitVersion MicroBitPowerManager::getVersion()
         // Read I2C protocol version 
         b = readProperty(MICROBIT_UIPM_PROPERTY_I2C_VERSION);
         memcpy(&version.i2c, &b[3], 2);
+        if( version.i2c == 2 )
+            status |= MICROBIT_USB_INTERFACE_BUSY_FLAG_SUPPORTED;
 
         // Read DAPLink version
         b = readProperty(MICROBIT_UIPM_PROPERTY_DAPLINK_VERSION);
@@ -216,17 +218,30 @@ ManagedBuffer MicroBitPowerManager::awaitUIPMPacket()
 
     // Wait for a response, signalled (possibly!) by a LOW on the combined irq line
     // Retry until we get a valid response or we time out.
-    while(attempts++ < MICROBIT_UIPM_MAX_RETRIES)
+    while( attempts++ < MICROBIT_UIPM_MAX_RETRIES )
     {
         target_wait(1);
 
         // Try to read a response from the KL27
         response = recvUIPMPacket();
-        
+
         // If we receive an INCOMPLETE response, then the KL27 is still working on our request, so wait a little longer and try again.
         // Similarly, if the I2C transaction fails, retry.
-        if (response.length() == 0 || (response[0] == MICROBIT_UIPM_COMMAND_ERROR_RESPONSE && response[1] == MICROBIT_UIPM_INCOMPLETE_CMD))
+        if( response.length() == 0 )
             continue;
+        
+        if( response[0] == MICROBIT_UIPM_COMMAND_ERROR_RESPONSE )
+        {
+            // Is the KL27 still busy processing something? If so, reset the retries and go again.
+            if( (status & MICROBIT_USB_INTERFACE_BUSY_FLAG_SUPPORTED) == MICROBIT_USB_INTERFACE_BUSY_FLAG_SUPPORTED && response[1] == MICROBIT_UIPM_BUSY )
+            {
+                attempts = 0;
+                continue;
+            }
+
+            if( response[1] == MICROBIT_UIPM_INCOMPLETE_CMD )
+                continue;
+        }
 
         // Sanitize the length of the packet to meet specification and return it.
         response.truncate((response[0] == MICROBIT_UIPM_COMMAND_ERROR_RESPONSE || response[0] == MICROBIT_UIPM_COMMAND_WRITE_RESPONSE) ? 2 : 3 + uipmPropertyLengths.get(response[1]));
