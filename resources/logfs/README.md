@@ -85,8 +85,8 @@ source code of the MakeCode programme used to generate them.
   y , z) and 172 data rows with increasing time stamps.
     - The raw data contains old logging data marked as erased, that should not
       be rendered in the HTML table.
-- **sample-invalid-time-series.txt**: An invalid time series table with 4 columns (Goat, x,
-  y , z) and 172 data rows with increasing time stamps.
+- **sample-invalid-time-series.txt**: An invalid time series table with 4
+  columns (Goat, x, y , z) and 172 data rows with increasing time stamps.
     - For a time series the first column should be named `Time...`, this test
       file was based on `sample-time-series` and the `Time (seconds)` column
       name has been renamed to `Goat (seconds)`.
@@ -94,12 +94,13 @@ source code of the MakeCode programme used to generate them.
 - **sample-time-series-nonsequential**: Based on the `sample-time-series` file,
   a single entry has been modified to make the time stamps non-sequential.
     - Data entry 169 (6th from the bottom) has been changed from `18.99` to
-      `99.99`. As the next entry time stamp is `19.1`, this represent a second
+      `99.99`. As the next entry time stamp is `19.1`, this represents a second
       set of logged data after a micro:bit reset.
     - In this test file the "Visual Preview" should plot a graph until entry
       169, and display some kind of warning/error message to indicate it is
       not plotting the entire dataset.
 - **sample-full-log**: A full log with 6064 rows.
+    - There should be a visible indicator in the HTML page that the log is full.
 
 ### Generating new test files
 
