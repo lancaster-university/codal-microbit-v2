@@ -984,6 +984,156 @@ bool MicroBitLog::isFull()
 }
 
 /**
+ * Get the length of the recorded data
+ * @param format the data format
+ *          DataFormat::HTMLHeader = 0,   - The HTML header without the data
+ *          DataFormat::HTML = 1,               - The entire HTML file
+ *          DataFormat::CSV = 2                   - CSV data
+ * @return the length of the recorded data
+ */
+uint32_t MicroBitLog::getDataLength(DataFormat format)
+{
+    uint32_t r = 0;
+    mutex.wait();
+    init();
+    uint32_t hdr = sizeof(header);
+    uint32_t mtr = sizeof(MicroBitLogMetaData);
+    uint32_t csv = dataEnd - dataStart;
+    switch (format)
+    {
+        case DataFormat::HTMLHeader:
+            r = hdr + mtr + 1;
+            break;
+        case DataFormat::HTML:
+            r = hdr + mtr + csv + 1;
+            break;
+        case DataFormat::CSV:
+            r = csv;
+            break;
+    }
+    mutex.notify();
+    return r;
+}
+
+/**
+ * Read the recorded data
+ * @param data pointer to memory to store the data
+ * @param index  the index into the data
+ * @param len length of the data to fetch
+ * @param format the data format
+ *          DataFormat::HTMLHeader = 0,   - The HTML header without data
+ *          DataFormat::HTML = 1,               - The entire HTML file with data
+ *          DataFormat::CSV = 2                   - CSV data
+ * @param length expected complete length returned from getDataLength
+ * @return DEVICE_OK on success; DEVICE_INVALID_PARAMETER if data is not available for the request
+ */
+int MicroBitLog::readData(void *data, uint32_t index, uint32_t len, DataFormat format, uint32_t length)
+{
+    int r;
+    mutex.wait();
+    r = _readData((uint8_t *) data, index, len, format, length);
+    mutex.notify();
+    return r;
+}
+
+int MicroBitLog::_readData(uint8_t *data, uint32_t index, uint32_t len, DataFormat format, uint32_t length)
+{
+    int r = DEVICE_OK;
+    
+    init();
+    
+    uint32_t hdr = sizeof(header);
+    uint32_t mtr = sizeof(MicroBitLogMetaData);
+
+    // Check if there is less data than expected
+    uint32_t dataMax = dataEnd - dataStart;
+    uint32_t dataLen = dataMax;
+    switch (format)
+    {
+        case DataFormat::HTML:
+            dataLen = length - hdr - mtr - 1;
+            break;
+        case DataFormat::CSV:
+            dataLen = length;
+            break;
+        default:
+            break;
+    }
+    if ( dataLen > dataMax)
+        return DEVICE_INVALID_PARAMETER;
+
+    // Generate metadata without journal pages
+    // logEnd is reduced by the same amount as dataStart
+    // TODO Do we want the journal pages in the HTML?
+    MicroBitLogMetaData meta = metaData;
+    writeNum(meta.dataStart+2, hdr + mtr);
+    writeNum(meta.logEnd+2, logEnd - (dataStart - hdr - mtr));
+
+    uint8_t end = 0xFF;
+    
+    uint32_t pos = 0;
+                      
+    switch (format)
+    {
+        case DataFormat::HTMLHeader:
+            _readSource( data, index, len, pos, header, 0, hdr);
+            _readSource( data, index, len, pos, &meta,  0, mtr);
+            _readSource( data, index, len, pos, &end,   0, sizeof(end));
+            break;
+        case DataFormat::HTML:
+            _readSource( data, index, len, pos, header, 0, hdr);
+            _readSource( data, index, len, pos, &meta,  0, mtr);
+            r = _readSource( data, index, len, pos, NULL, dataStart, dataLen);
+            if (r == DEVICE_OK)
+              _readSource( data, index, len, pos, &end, 0, sizeof(end));
+            break;
+        case DataFormat::CSV:
+            r = _readSource( data, index, len, pos, NULL, dataStart, dataLen);
+            break;
+    }
+    return r;
+}
+
+/**
+ * Read the source data from local memory or interface flash
+ * @param data pointer reference to memory to store the data
+ * @param index  reference to the index into the data
+ * @param len reference to the length of the data to fetch
+ * @param srcIndex reference to the index where the source data should begin
+ * @param srcPtr pointer to  source data in local memory. NULL to use srcAddress
+ * @param srcAddress address of source data in interface flash. Ignored if srcPtr is not NULL.
+ * @param srcLen the length of the source data
+ * @return DEVICE_OK on success; DEVICE_INVALID_PARAMETER if data is not available for the request
+ * @note On success, the referenced pointers, indices and lengths are updated ready for the next call
+ */
+int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, uint32_t &srcIndex, const void *srcPtr, uint32_t srcAddress, uint32_t srcLen)
+{
+    int r = DEVICE_OK;
+    uint32_t next = srcIndex + srcLen;
+    uint32_t length = index < next ? next - index : 0;
+    if ( length > len)
+        length = len;
+
+    if ( length)
+    {
+        if ( srcPtr)
+            memcpy(data, (const uint8_t *) srcPtr + (index - srcIndex), length);
+        else
+            r = cache.read( srcAddress + (index - srcIndex), data, length);
+    }
+
+    if ( r == DEVICE_OK)
+    {
+        data    += length;
+        index   += length;
+        len     -= length;
+
+        srcIndex = next;
+    }
+    return r;
+}
+
+/**
  * Destructor.
  */
 MicroBitLog::~MicroBitLog()
