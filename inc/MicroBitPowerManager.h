@@ -43,7 +43,7 @@ DEALINGS IN THE SOFTWARE.
 //
 // General constants 
 //
-#define MICROBIT_UIPM_MAX_BUFFER_SIZE               8
+#define MICROBIT_UIPM_MAX_BUFFER_SIZE               12
 #define MICROBIT_UIPM_MAX_RETRIES                   20
 #define MICROBIT_USB_INTERFACE_IRQ_THRESHOLD        30
 
@@ -130,6 +130,11 @@ typedef struct {
     uint16_t        board;
 } MicroBitVersion;
 
+typedef struct {
+    uint32_t batteryMicroVolts;
+    uint32_t vinMicroVolts;
+    float estimatedPowerConsumption;
+} MicroBitPowerData;
 
 //
 // USB Interface Chip Power States
@@ -169,7 +174,8 @@ class MicroBitPowerManager : public CodalComponent
     
         MicroBitVersion         version;                            // Hardware versioning information
         MicroBitPowerSource     powerSource;                        // Last known power source
-        uint32_t                powerConsumption;                   // Last known power consumption (units?)
+        //uint32_t                powerConsumption;                   // Last known power consumption (units?)
+        MicroBitPowerData       powerData;                          //
         MicroBitUSBStatus       usbStatus;                          // Last known USB status
         MicroBitI2C             &i2cBus;                            // The I2C bus to use to communicate with USB interface chip
         MicroBitIO              &io;                                // Pins used by this device
@@ -189,7 +195,8 @@ class MicroBitPowerManager : public CodalComponent
 
         /**
          * Attempts to determine the power source currently in use on this micro:bit.
-         * note: This will query the USB interface chip via I2C, and wait for completion.
+         * 
+         * @note This will query the USB interface chip via I2C, and wait for completion.
          * 
          * @return the current power source used by this micro:bit
          */
@@ -197,15 +204,31 @@ class MicroBitPowerManager : public CodalComponent
 
         /**
          * Attempts to determine the instantaneous power consumption of this micro:bit.
-         * note: This will query the USB interface chip via I2C, and wait for completion.
          * 
-         * @return the current power consumption of this micro:bit
+         * @note This will query the USB interface chip via I2C, and wait for completion.
+         * 
+         * @warning The value returned here is actually the <code>estimatedPowerConsumption</code> in the powerData member variable, @see getPowerData() for information.
+         * 
+         * @deprecated To reduce the number of calls to the KL27, please use getPowerData() @see getPowerData()
+         * @return the current estimated power consumption of this micro:bit
          */
-        uint32_t getPowerConsumption();
+        uint32_t getPowerConsumption() __attribute__ ((deprecated("Use getPowerData() instead")));
+
+        /**
+         * Requests the current power data from the interface chip, and calculates some approximate, but potentially useful values.
+         * 
+         * @note This will query the USB interface chip via I2C, and wait for completion.
+         * 
+         * @warning Values in micro-volts in the returned structure are measured, whereas <code>estimatedPowerConsumption</code> is an approximation and subject to change.
+         * 
+         * @return MicroBitPowerData The data from the interface chip, plus calculated fields.
+         */
+        MicroBitPowerData getPowerData();
 
         /**
          * Attempts to determine the USB interface chip version in use on this micro:bit.
-         * note: This will query the USB interface chip via I2C if necessary.
+         * 
+         * @note This will query the USB interface chip via I2C if necessary.
          * 
          * @return MicroBitUSBVersion information.
          */
@@ -213,7 +236,8 @@ class MicroBitPowerManager : public CodalComponent
 
         /**
          * Attempts to determine the status of the USB interface on this micro:bit.
-         * note: This will query the USB interface chip via I2C, and wait for completion.
+         * 
+         * @note This will query the USB interface chip via I2C, and wait for completion.
          * 
          * @return the current status of the USB interface on this micro:bit
          */
@@ -300,7 +324,7 @@ class MicroBitPowerManager : public CodalComponent
          * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
          * operation.
          * 
-         * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+         * @note ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
          * simply use uBit.sleep();
          *
          * The current fiber is blocked immediately.
@@ -316,7 +340,7 @@ class MicroBitPowerManager : public CodalComponent
           * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
           * operation.
           * 
-          * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+          * @note ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
           * simply use uBit.sleep();
           *
           * The current fiber is blocked immediately.
@@ -336,7 +360,7 @@ class MicroBitPowerManager : public CodalComponent
          * program state is preserved. CPU will deepsleep until the next codal::Timer event or other wake up source event, before returning to normal
          * operation.
          *
-         * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+         * @note ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
          * simply use uBit.sleep();
          *
          * The function returns immediately.

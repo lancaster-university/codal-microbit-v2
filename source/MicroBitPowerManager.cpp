@@ -27,12 +27,13 @@ DEALINGS IN THE SOFTWARE.
 
 static const uint8_t UIPM_I2C_NOP[3] = {0,0,0};
 
+// Developer note - if any of these get longer than 8 bytes of payload, MICROBIT_UIPM_MAX_BUFFER_SIZE will also have to be updated
 static const KeyValueTableEntry uipmPropertyLengthData[] = {
     {MICROBIT_UIPM_PROPERTY_BOARD_REVISION, 2},
     {MICROBIT_UIPM_PROPERTY_I2C_VERSION,2},
     {MICROBIT_UIPM_PROPERTY_DAPLINK_VERSION, 2},
     {MICROBIT_UIPM_PROPERTY_POWER_SOURCE, 1},
-    {MICROBIT_UIPM_PROPERTY_POWER_CONSUMPTION, 4},
+    {MICROBIT_UIPM_PROPERTY_POWER_CONSUMPTION, 8},
     {MICROBIT_UIPM_PROPERTY_USB_STATE, 1},
     {MICROBIT_UIPM_PROPERTY_KL27_POWER_MODE, 1},
     {MICROBIT_UIPM_PROPERTY_KL27_POWER_LED_STATE, 1}
@@ -58,6 +59,8 @@ MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins,
     eventValue(0)
 {
     this->id = id;
+
+    memset( &powerData, 0, sizeof(powerData) );
 
     // Indicate we'd like to receive periodic callbacks both in idle and interrupt context.
     // Also, be pessimistic about the interface chip in use, until we obtain version information.
@@ -140,19 +143,23 @@ MicroBitUSBStatus MicroBitPowerManager::getUSBStatus()
     return usbStatus;
 }
 
-/**
- * Attempts to determine the instantaneous power consumption of this micro:bit.
- * note: This will query the USB interface chip via I2C, and wait for completion.
- * 
- * @return the current power consumption of this micro:bit
- */
 uint32_t MicroBitPowerManager::getPowerConsumption()
+{
+    getPowerData(); // Proxy to the new method
+    return powerData.estimatedPowerConsumption;
+}
+
+MicroBitPowerData MicroBitPowerManager::getPowerData()
 {
     ManagedBuffer b;
     b = readProperty(MICROBIT_UIPM_PROPERTY_POWER_CONSUMPTION);
 
-    memcpy(&powerConsumption, &b[3], 4);
-    return powerConsumption;
+    memcpy( &powerData.batteryMicroVolts, &b[3], 4 );
+    memcpy( &powerData.vinMicroVolts, &b[3+4], 4 );
+    
+    powerData.estimatedPowerConsumption = (float)abs( (float)powerData.vinMicroVolts - (float)powerData.batteryMicroVolts );
+
+    return powerData;
 }
 
 /**
