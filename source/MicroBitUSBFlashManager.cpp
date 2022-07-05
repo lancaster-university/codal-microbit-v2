@@ -82,6 +82,10 @@ MicroBitUSBFlashConfig MicroBitUSBFlashManager::getConfiguration()
         memcpy(&s, &response[1], 4);
         config.fileSize = htonl(s);
 
+        // Sanity check that the filesize isnt longer than the possible block count
+        if( config.fileSize > MICROBIT_USB_FLASH_MAX_FLASH_STORAGE )
+            config.fileSize = MICROBIT_USB_FLASH_MAX_FLASH_STORAGE;
+
         // Load the visibility status
         response = transact(MICROBIT_USB_FLASH_VISIBILITY_CMD);
         config.visible = response[1] == 0 ? 0 : 1;
@@ -131,7 +135,7 @@ int MicroBitUSBFlashManager::setConfiguration(MicroBitUSBFlashConfig config, boo
         if (config.fileName.charAt(i) =='.')
             dots++;
         else if (!isValidChar(config.fileName.charAt(i)))
-            invalidChar = true;        
+            invalidChar = true;
     }
 
     // Blimey 8.3 is complex. :)
