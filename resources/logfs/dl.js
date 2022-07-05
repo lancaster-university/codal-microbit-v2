@@ -112,7 +112,7 @@ function UserGraphError(message) {
 
       graph: function () {
         function readData(table) {
-          if (table.rows.length === 0) {
+          if (!table || !table.rows || table.rows.length === 0) {
             throw new UserGraphError("No data to graph.");
           }
           const rows = table.rows;
