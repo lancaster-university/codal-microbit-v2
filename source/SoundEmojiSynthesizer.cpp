@@ -321,12 +321,17 @@ int SoundEmojiSynthesizer::getSampleRate()
 }
 
 /**
- * Change the sample rate used by this Synthesizer,
+ * Change the sample rate used by this Synthesizer.
+ * 
+ * This will prohibit updates if the requested sampleRate is less than 1, to safeguard processing later.
+ * 
  * @param frequency The new sample rate, in Hz.
- * @return DEVICE_OK on success.
+ * @return DEVICE_OK on success or ErrorCode::DEVICE_INVALID_STATUS if the sample rate is out of range.
  */
 int SoundEmojiSynthesizer::setSampleRate(int sampleRate)
 {
+    if( sampleRate < 1 )
+        return ErrorCode::DEVICE_INVALID_PARAMETER;
     this->sampleRate = sampleRate;
     return DEVICE_OK;
 }
