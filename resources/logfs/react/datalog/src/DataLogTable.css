@@ -1,0 +1,30 @@
+table {
+    border-collapse: collapse;
+    margin-top: 1em;
+    text-align: right;
+}
+
+tr:first-child {
+    font-weight: bold;
+}
+
+td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    min-width: 8ch;
+}
+
+tr:nth-child(even) {
+    background: #f2f2f2;
+}
+
+tr:hover {
+    background-color: #ddd;
+}
+
+#datalog-end {
+    text-align: center;
+    font-weight: bold;
+    background-color: #e9e9e9;
+    border-top: 2px solid #333333;
+}
