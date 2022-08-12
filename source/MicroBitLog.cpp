@@ -970,7 +970,13 @@ bool MicroBitLog::_isPresent()
     journalStart = startAddress + CONFIG_MICROBIT_LOG_METADATA_SIZE;
 
     // Perform some basic validation checks. Load in the state of the file system if things look OK.
-    return (dataStart >= journalStart + flash.getPageSize() && dataStart < logEnd && logEnd < flash.getFlashEnd() && memcmp(metaData.version, MICROBIT_LOG_VERSION, 17) == 0);
+    // This intentionally does not check the full LOG_VERSION string, but instead checks if there is a valid
+    // version string _preamble_, aka 'UBIT_LOG_FS_V_' to avoid bugs where old flash logs are not detected
+    // correctly and erase on a new flash event, as they don't match the version string _exactly_.
+    return ( dataStart >= journalStart + flash.getPageSize() &&
+        dataStart < logEnd &&
+        logEnd < flash.getFlashEnd() &&
+        memcmp(metaData.version, MICROBIT_LOG_VERSION, 14) == 0 );
 }
 
 /**
