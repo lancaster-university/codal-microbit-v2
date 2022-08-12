@@ -30,6 +30,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitDevice.h"
 #include "MicroBitI2C.h"
 #include "MicroBitCompass.h"
+#include "MicroBitError.h"
 #include "LSM303Accelerometer.h"
 #include "LSM303Magnetometer.h"
 
@@ -72,12 +73,12 @@ Accelerometer& MicroBitAccelerometer::autoDetect(MicroBitI2C &i2c)
         MicroBitCompass::driver       = NULL;
 
         // Now, probe for the LSM303, and if it doesn't reply, panic
-        if (!LSM303Accelerometer::isDetected(i2c, 0x32))
-            microbit_panic( 50 ); // FixMe: This should be a constant from the PanicCode enum, but this is out of sync
-
-        MicroBitAccelerometer::driver = new LSM303Accelerometer( i2c, irq1, coordinateSpace, 0x32 );
-        MicroBitCompass::driver = new LSM303Magnetometer( i2c, irq1, coordinateSpace, 0x3C );
-        MicroBitCompass::driver->setAccelerometer( *MicroBitAccelerometer::driver );
+        if ( LSM303Accelerometer::isDetected(i2c, 0x32) )
+        {
+            MicroBitAccelerometer::driver = new LSM303Accelerometer( i2c, irq1, coordinateSpace, 0x32 );
+            MicroBitCompass::driver = new LSM303Magnetometer( i2c, irq1, coordinateSpace, 0x3C );
+            MicroBitCompass::driver->setAccelerometer( *MicroBitAccelerometer::driver );
+        }
 
         autoDetectCompleted = true;
     }
@@ -102,6 +103,9 @@ Accelerometer& MicroBitAccelerometer::autoDetect(MicroBitI2C &i2c)
   */
 int MicroBitAccelerometer::setPeriod(int period)
 {
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
     return driver->setPeriod(period);
 }
 
@@ -112,6 +116,9 @@ int MicroBitAccelerometer::setPeriod(int period)
   */
 int MicroBitAccelerometer::getPeriod()
 {
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
     return driver->getPeriod();
 }
 
@@ -132,6 +139,9 @@ int MicroBitAccelerometer::getPeriod()
   */
 int MicroBitAccelerometer::setRange(int range)
 {
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
     return driver->setRange( range );
 }
 
@@ -142,6 +152,9 @@ int MicroBitAccelerometer::setRange(int range)
   */
 int MicroBitAccelerometer::getRange()
 {
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
     return driver->getRange();
 }
 
@@ -158,6 +171,9 @@ int MicroBitAccelerometer::getRange()
  */
 int MicroBitAccelerometer::configure()
 {
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
     return driver->configure();
 }
 
@@ -174,6 +190,9 @@ int MicroBitAccelerometer::configure()
  */
 int MicroBitAccelerometer::requestUpdate()
 {
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
     return driver->requestUpdate();
 }
 
@@ -185,6 +204,9 @@ int MicroBitAccelerometer::requestUpdate()
  */
 Sample3D MicroBitAccelerometer::getSample(CoordinateSystem coordinateSystem)
 {
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
     return driver->getSample( coordinateSystem );
 }
 
@@ -194,6 +216,9 @@ Sample3D MicroBitAccelerometer::getSample(CoordinateSystem coordinateSystem)
  */
 Sample3D MicroBitAccelerometer::getSample()
 {
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
     return driver->getSample();
 }
 
@@ -205,6 +230,9 @@ Sample3D MicroBitAccelerometer::getSample()
  */
 int MicroBitAccelerometer::getX()
 {
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
     return driver->getX();
 }
 
@@ -216,6 +244,9 @@ int MicroBitAccelerometer::getX()
  */
 int MicroBitAccelerometer::getY()
 {
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
     return driver->getY();
 }
 
@@ -227,6 +258,9 @@ int MicroBitAccelerometer::getY()
  */
 int MicroBitAccelerometer::getZ()
 {
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
     return driver->getZ();
 }
 
@@ -241,6 +275,9 @@ int MicroBitAccelerometer::getZ()
   */
 int MicroBitAccelerometer::getPitch()
 {
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
     return driver->getPitch();
 }
 
@@ -255,6 +292,9 @@ int MicroBitAccelerometer::getPitch()
   */
 float MicroBitAccelerometer::getPitchRadians()
 {
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
     return driver->getPitchRadians();
 }
 
@@ -269,6 +309,9 @@ float MicroBitAccelerometer::getPitchRadians()
   */
 int MicroBitAccelerometer::getRoll()
 {
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
     return driver->getRoll();
 }
 
@@ -283,6 +326,9 @@ int MicroBitAccelerometer::getRoll()
   */
 float MicroBitAccelerometer::getRollRadians()
 {
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
     return driver->getRollRadians();
 }
 
@@ -300,6 +346,9 @@ float MicroBitAccelerometer::getRollRadians()
   */
 uint16_t MicroBitAccelerometer::getGesture()
 {
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
     return driver->getGesture();
 }
 
