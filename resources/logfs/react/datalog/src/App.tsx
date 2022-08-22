@@ -9,6 +9,7 @@ import { Map, Marker } from "pigeon-maps";
 import LineGraphVisualisation from './LineGraphVisualisation';
 import { throws } from 'assert';
 import MapVisualisation from './MapVisualisation';
+import Button from './Button';
 
 export interface DataLog {
   [key: string]: string[]
@@ -72,12 +73,18 @@ let visualPreview: VisualisationType | null = null;
 
 const log: DataLog = {
   "Time (s)": ["20", "40", "60", "80", "100"],
-  Latitude: ["100", "50", "40", "49"],
+  Latitude: ["100", "50", "40", "49", "48"],
   Longitude: ["58", "48", "29", "49", "46"],
   Test: ["58", "62", "38", "38", "39"]
 };
 
-const graphs: JSX.Element[] = [];
+const visualisations: VisualisationType[] = [
+  LineGraphVisualisation, MapVisualisation
+];
+
+function availableVisualisations() {
+  return visualisations.filter(vis => !vis.availablityError(log));
+}
 
 interface AppState {
   visualisation: VisualisationType | null;
@@ -94,6 +101,8 @@ class App extends React.Component<{}, AppState> {
   }
 
   render() {
+    const visualPreviews = availableVisualisations();
+
     return (<div className="app">
       <Header />
       <main>
@@ -103,13 +112,15 @@ class App extends React.Component<{}, AppState> {
           <button onClick={this.download}>Copy</button>
           <button onClick={this.download}>Update data…</button>
           <button onClick={this.download}>Clear log…</button>
-          <button onClick={this.visualise}>Visual preview</button>
+          <Button dropdown={visualPreviews.map(vis => vis.name)} onDropdownSelected={index => this.visualise(index)}>{this.state.visualisation ? "Close " + this.state.visualisation.name : (visualPreviews.length === 0 ? "No visual previews available" : visualPreviews[0].name)}</Button>
         </div>
         <p id="info">
-          This is the data on your micro:bit. To analyse it and create your own graphs, transfer it to your computer. You can copy and paste your data, or download it as a CSV file which you can import into a spreadsheet or graphing tool. <a href="https://microbit.org/get-started/user-guide/data-logging/">Learn more about micro:bit data logging</a>.
+          This is the data on your micro:bit. To analyse it and create your own graphs, transfer it to your computer. You can copy and paste your data, or download it as a CSV file which you can import into a spreadsheet or graphing tool. <a href="https://microbit.org/get-started/user-guide/data-logging/" target="_blank">Learn more about micro:bit data logging</a>.
         </p>
+        <div id="data">
         {this.state.visualisation && this.state.visualisation.generate(log)}
         <DataLogTable log={log} />
+        </div>
       </main>
     </div>)
       ;
@@ -131,8 +142,8 @@ class App extends React.Component<{}, AppState> {
   
   }
   
-  visualise = () => {
-    this.setState({visualisation: MapVisualisation});
+  visualise = (visIndex: number) => {
+    this.setState({visualisation: availableVisualisations()[visIndex]});
   }
 }
 

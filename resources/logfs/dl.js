@@ -19,7 +19,7 @@ function UserGraphError(message) {
   let isParentPage = !location.href.split("?")[1];
   if (isParentPage) {
     const base = Object.keys(window.dl).reduce(function (acc, curr) {
-      acc[curr] = window.dl[curr];
+      acc[curr] = function() {window.dl[curr]};
       return acc;
     }, {});
     // Overrides that provide additional behaviour when online.

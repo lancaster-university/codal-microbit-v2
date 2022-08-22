@@ -1,9 +1,9 @@
-import Plot from "react-plotly.js";
-import { Data } from 'plotly.js';
 import { DataLog, VisualisationType } from "./App";
-import { Map, Marker, GeoJson, Point, GeoJsonFeature } from "pigeon-maps";
 import { ReactNode } from "react";
 import React from "react";
+import "./MapVisualisation.css";
+import Plot from "react-plotly.js";
+import { Data, Layout } from "plotly.js";
 
 const latitudeColumn = "Latitude";
 const longitudeColumn = "Longitude";
@@ -26,21 +26,118 @@ function toGeoJson(log: DataLog) {
 
 interface LogValueTooltipProps {
     log: DataLog;
-    renderRow?: number | null;
+    renderRow: number;
     children: React.ReactNode;
 }
 
-class LogValueTooltip extends React.Component<LogValueTooltipProps, {}> {
+class LogValueTooltip extends React.Component<LogValueTooltipProps, { absX: number, absY: number }> {
 
     constructor(props: LogValueTooltipProps) {
         super(props);
+
+        this.state = {
+            absX: -1,
+            absY: -1
+        }
+    }
+
+    componentDidMount() {
+        window.addEventListener('mousemove', this.handleMouseMove);
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('mousemove', this.handleMouseMove);
+    }
+
+    handleMouseMove = (event: MouseEvent) => {
+        this.setState(
+            { absX: event.clientX, absY: event.clientY }
+        );
     }
 
     render() {
-        return (<div>
-            <div className="log-tooltip">tooltip tooltip {this.props.renderRow}</div>
-            {this.props.children}
-        </div>)
+        return (
+            <div>
+                {this.props.children}
+                {this.props.renderRow > -1 &&
+                    <div className="log-tooltip" style={{ left: this.state.absX, top: this.state.absY }}>
+                        <table>
+                            <tbody>
+                                <tr>
+                                    {Object.keys(this.props.log).map(header => <td>{header}</td>)}
+                                </tr>
+                                <tr>
+                                    {Object.keys(this.props.log).map(header => <td>{this.props.log[header][this.props.renderRow]}</td>)}
+                                </tr>
+                            </tbody>
+                        </table>
+                        tooltip tooltip {this.props.renderRow}
+                    </div>
+                }
+            </div>
+        )
+    }
+}
+
+interface MapViewProps {
+    log: DataLog
+}
+
+class MapView extends React.Component<MapViewProps, { selectedRow: number }> {
+
+    constructor(props: MapViewProps) {
+        super(props);
+
+        this.state = {
+            selectedRow: -1
+        }
+    }
+
+    render() {
+        const headings = Object.keys(this.props.log);
+
+        // zip the latitude and longitude arrays into an array of lat/long pairs
+        const latLongPairs: [number, number][] = this.props.log[latitudeColumn].map((elem, index) => [Number(elem), Number(this.props.log[longitudeColumn][index])]);
+
+        const geoJson = toGeoJson(this.props.log);
+
+        const data: Data = {
+                type: "scattermapbox",
+                lat: this.props.log[latitudeColumn].map(elem => Number(elem)),
+                lon: this.props.log[longitudeColumn].map(elem => Number(elem)),
+                text: "A",
+                marker: { color: "fuchsia", size: 4 }
+        };
+
+        const layout: Partial<Layout> =  {
+			dragmode: "zoom",
+			mapbox: { style: "open-street-map", center: { lat: 38, lon: -90 }, zoom: 3 },
+			margin: { r: 0, t: 0, b: 0, l: 0 }
+		};
+
+        return (
+            <Plot data={[data]} layout={layout}/>
+        );
+
+        /*return (
+            <LogValueTooltip log={this.props.log} renderRow={this.state.selectedRow}>
+                <Map height={300} defaultCenter={[50.879, 4.6997]} defaultZoom={11}>
+                    {latLongPairs.map((latLong, index) => <Marker width={50} anchor={latLong} key={index} />)}
+                    <Marker width={50} anchor={[0, 0]} />
+                    <GeoJson>
+                        {geoJson.map((feature, index) => <GeoJsonFeature feature={feature} key={index} onMouseOver={() => { this.handleMarkerHover(index) }} onMouseOut={this.handleMarkerLeave} />)}
+                    </GeoJson>
+                </Map>
+            </LogValueTooltip>
+        );*/
+    }
+
+    handleMarkerHover = (index: number) => {
+        this.setState({ selectedRow: index });
+    }
+
+    handleMarkerLeave = () => {
+        this.setState({ selectedRow: -1 });
     }
 }
 
@@ -50,7 +147,7 @@ class LogValueTooltip extends React.Component<LogValueTooltipProps, {}> {
         </Map> */
 
 const MapVisualisation: VisualisationType = {
-    name: "Line Graph",
+    name: "Map",
     availablityError: log => {
         const headings = Object.keys(log);
 
@@ -66,43 +163,14 @@ const MapVisualisation: VisualisationType = {
         }
 
         // check all latitude and longitude values at once
-        if ([...log[lats], ...log[lngs]].every(elem => Number(elem) !== NaN)) {
+        if ([...log[lats], ...log[lngs]].every(elem => isNaN(Number(elem)))) {
             return "Latitude and Longitude fields need to be numeric.";
-        }
-
-        if (headings.length < 2) {
-            return "Requires two or more columns. Timestamps must be enabled.";
         }
 
         return null;
     },
     generate: log => {
-        const headings = Object.keys(log);
-
-        // zip the latitude and longitude arrays into an array of lat/long pairs
-        const latLongPairs: [number, number][] = log[latitudeColumn].map((elem, index) => [Number(elem), Number(log[longitudeColumn][index])]);
-
-        const geoJson = toGeoJson(log);
-
-        const [selectedRow, setSelectedRow] = React.useState(0);
-
-        function handleMarkerClick(rowIndex: number) {
-            console.log("handle", rowIndex);
-            setSelectedRow(rowIndex);
-        }
-
-
-        return (
-            <LogValueTooltip log={log} renderRow={selectedRow} key={selectedRow}>
-                <Map height={300} defaultCenter={[50.879, 4.6997]} defaultZoom={11}>
-                    {latLongPairs.map((latLong, index) => <Marker width={50} anchor={latLong} key={index} />)}
-                    <Marker width={50} anchor={[0, 0]} />
-                    <GeoJson>
-                        {geoJson.map((feature, index) => <GeoJsonFeature feature={feature} key={index} onClick={() => { handleMarkerClick(index) }} />)}
-                    </GeoJson>
-                </Map>
-            </LogValueTooltip>
-        );
+        return (<MapView log={log} />);
     }
 };
 

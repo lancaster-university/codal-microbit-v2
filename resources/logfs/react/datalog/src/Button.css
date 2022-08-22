@@ -1,0 +1,36 @@
+.button-wrapper {
+    display: flex;
+    position: relative;
+}
+
+button {
+    display: block;
+    cursor: pointer;
+    border-radius: 23px;
+    min-height: 46px;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.3px;
+    padding: 0 16px;
+
+    /* Secondary buttons */
+    color: #000;
+    border: 2px solid #000;
+    background: #fff;
+}
+
+.button-main.dropdown {
+    border-radius: 23px 0 0 23px;
+}
+
+.button-dropdown {
+    border-left: 0;
+    border-radius: 0 23px 23px 0;
+}
+
+/* Primary button */
+bu-tton:first-of-type {
+    border: none;
+    background: #000;
+    color: #fff;
+}
