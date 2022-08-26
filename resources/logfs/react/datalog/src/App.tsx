@@ -5,7 +5,6 @@ import Header from './Header';
 import DataLogTable from './DataLogTable';
 import Plot from 'react-plotly.js';
 import { Data } from 'plotly.js';
-import { Map, Marker } from "pigeon-maps";
 import LineGraphVisualisation from './LineGraphVisualisation';
 import { throws } from 'assert';
 import MapVisualisation from './MapVisualisation';
@@ -71,11 +70,12 @@ function isIE(): boolean {
 
 let visualPreview: VisualisationType | null = null;
 
-const log: DataLog = {
-  "Time (s)": ["20", "40", "60", "80", "100"],
-  Latitude: ["100", "50", "40", "49", "48"],
-  Longitude: ["58", "48", "29", "49", "46"],
-  Test: ["58", "62", "38", "38", "39"]
+//@ts-ignore
+const log: DataLog = window.dataLog || {
+  "Time (s)": ["20", "40", "60", "80", "100", "10", "20", "30"],
+  Latitude: ["80", "50", "40", "49", "48", "48", "39", "37"],
+  Longitude: ["58", "48", "29", "49", "46", "48", "29", "50"],
+  Test: ["58", "62", "38", "38", "39", "40", "40", "50"]
 };
 
 const visualisations: VisualisationType[] = [

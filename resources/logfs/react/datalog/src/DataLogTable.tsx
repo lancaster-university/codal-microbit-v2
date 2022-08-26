@@ -29,7 +29,7 @@ function DataLogTable(props: DataLogProps) {
                 </tr>
                 {rows}
                 <tr>
-                    <td colSpan={headers.length} id="datalog-end">End of datalog</td>
+                    <td colSpan={headers.length} id="datalog-end">End of data log</td>
                 </tr>
             </tbody>
         </table>

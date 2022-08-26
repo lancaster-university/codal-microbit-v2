@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 import React from "react";
 import "./MapVisualisation.css";
 import Plot from "react-plotly.js";
-import { Data, Layout } from "plotly.js";
+import { Data, Layout, PlotData } from "plotly.js";
 
 const latitudeColumn = "Latitude";
 const longitudeColumn = "Longitude";
@@ -96,27 +96,37 @@ class MapView extends React.Component<MapViewProps, { selectedRow: number }> {
     render() {
         const headings = Object.keys(this.props.log);
 
+        const lats = this.props.log[latitudeColumn].map(elem => Number(elem));
+        const lons = this.props.log[longitudeColumn].map(elem => Number(elem));
+
         // zip the latitude and longitude arrays into an array of lat/long pairs
-        const latLongPairs: [number, number][] = this.props.log[latitudeColumn].map((elem, index) => [Number(elem), Number(this.props.log[longitudeColumn][index])]);
+        const latLonPairs: [number, number][] = this.props.log[latitudeColumn].map((elem, index) => [Number(elem), Number(this.props.log[longitudeColumn][index])]);
 
         const geoJson = toGeoJson(this.props.log);
 
         const data: Data = {
-                type: "scattermapbox",
-                lat: this.props.log[latitudeColumn].map(elem => Number(elem)),
-                lon: this.props.log[longitudeColumn].map(elem => Number(elem)),
-                text: "A",
-                marker: { color: "fuchsia", size: 4 }
+            type: "scattermapbox",
+            lat: lats,
+            lon: lons,
+            text: lats.map((_, index) => headings.filter(header => header !== latitudeColumn && header !== longitudeColumn).map(heading => heading + ": " + this.props.log[heading][index]).join(", ")),
+            marker: { color: "fuchsia", size: 4 }
         };
 
-        const layout: Partial<Layout> =  {
-			dragmode: "zoom",
-			mapbox: { style: "open-street-map", center: { lat: 38, lon: -90 }, zoom: 3 },
-			margin: { r: 0, t: 0, b: 0, l: 0 }
-		};
+
+        const layout: Partial<Layout> = {
+            dragmode: "zoom",
+            mapbox: {
+                style: "open-street-map",
+                center: { lat: lats[0], lon: lons[0] }, zoom: 3
+            },
+            width: 800,
+            height: 600,
+            title: "Test 2",
+            margin: { r: 0, t: 0, b: 0, l: 0 }
+        };
 
         return (
-            <Plot data={[data]} layout={layout}/>
+            <Plot data={[data]} layout={layout} config={{ displaylogo: false, responsive: true, toImageButtonOptions: { filename: "MY_DATA" }, modeBarButtonsToRemove: ["select2d", "lasso2d", "autoScale2d"] }} />
         );
 
         /*return (

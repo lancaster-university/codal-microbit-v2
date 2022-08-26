@@ -36,9 +36,6 @@
       let d = document;
       let l = location;
 
-      // CSV
-      let v = "";
-
       // By using obj[c] syntax, we can invoke this whilst saving bytes.
       let c = "createElement";
       let f = "diff";
@@ -48,6 +45,9 @@
       let m = " your micro:bit";
       let g = "Log is ";
 
+      // CSV
+      x = "";
+
       // Allow external JS to override these actions if we managed to load it.
       // This script block is first so external JS can override individual functions.
       dl = {
@@ -55,12 +55,12 @@
         get download() {
           let a = d[c /*createElement*/]("a");
           a.download = "microbit.csv";
-          a.href = URL.createObjectURL(new Blob([v], { type: "text/plain" }));
+          a.href = URL.createObjectURL(new Blob([x], { type: "text/plain" }));
           a.click();
           a.remove();
         },
         get copy() {
-          navigator.clipboard.writeText(v.replace(/\,/g, "\t"));
+          navigator.clipboard.writeText(x.replace(/\,/g, "\t"));
         },
         get update() {
           alert("Unplug" + m /* your micro:bit*/ + ", then plug it back in and wait");
@@ -85,7 +85,7 @@
             if (!dataSize) {
               append("p").innerText = g /*Log is */ + "empty. Logged data appears here.";
             }
-            v = raw.substr(dataStart, dataSize);
+            x = raw.substr(dataStart, dataSize);
 
             // Hash the content and reload if it changes using an iframe to check for a different hash
             let hash = 0;
@@ -109,9 +109,9 @@
                 append("p").innerHTML = g /*Log is */ + "full. <a href=microbit.org/dl/full>Learn more.";
               }
 
-              let table = append("table");
-              v[s /*split*/]("\n").forEach(function (r) {
-                let tr = table.insertRow();
+              tb = append("table");
+              x[s /*split*/]("\n").forEach(function (r) {
+                let tr = tb.insertRow();
                 r && r[s /*split*/](",").forEach(function(c) { tr.insertCell().innerText = c; });
               });
 

@@ -31,6 +31,34 @@ const LineGraphVisualisation: VisualisationType = {
         const graphX = log[headings[0]];
         const graphY = log;
 
+        const splitLogs: DataLog[] = [];
+
+        let prevTimestamp = 0;
+
+        let currentLog: DataLog = {};
+
+        headings.forEach(heading => currentLog[heading] = []);
+
+        for (let y = 0; y < graphX.length; y++) {
+            if (Number(graphX[y]) < prevTimestamp) {
+                // we've gone back in time! split the log here to create multiple graphs...
+
+                splitLogs.push(currentLog);
+
+                currentLog = {};
+
+                headings.forEach(heading => currentLog[heading] = []);
+            }
+
+            headings.forEach(heading => {
+                currentLog[heading].push(log[heading][y]);
+            });
+
+            prevTimestamp = Number(graphX[y]);
+        }
+
+        splitLogs.push(currentLog);
+
         const colors = [
             // micro:bit brand colors
             "rgb(0, 200, 0)",
@@ -41,30 +69,34 @@ const LineGraphVisualisation: VisualisationType = {
             "rgb(123, 205, 194)",
         ];
 
-        const data: Data[] = headings.slice(1).map((y, index): Data => {
-            return {
-                name: headings[index + 1],
-                type: "scatter",
-                mode: "lines+markers",
-                x: graphX,
-                y: log[y],
-                line: {
-                    color: colors[(index - 1) % colors.length],
-                },
-                marker: {
-                    // There are more than this but they look increasingly odd.
-                    symbol: (index - 1) % 24,
-                },
-            }
-        }
-        );
+        return (<div>
+            {splitLogs.map(log => {
+                const data: Data[] = headings.slice(1).map((y, index): Data => {
+                    return {
+                        name: headings[index + 1],
+                        type: "scatter",
+                        mode: "lines+markers",
+                        x: graphX,
+                        y: log[y],
+                        line: {
+                            color: colors[(index - 1) % colors.length],
+                        },
+                        marker: {
+                            // There are more than this but they look increasingly odd.
+                            symbol: (index - 1) % 24,
+                        },
+                    };
+                }
+                );
 
-        return <Plot
-            data={data}
+                return <Plot
+                    data={data}
 
-            layout={{ width: 800, height: 600, title: "Test", xaxis: { title: headings[0] } }}
-            config={{ displaylogo: false, responsive: true, toImageButtonOptions: { filename: "MY_DATA" }, modeBarButtonsToRemove: ["select2d", "lasso2d", "autoScale2d"] }}
-        />;
+                    layout={{ width: 800, height: 600, title: "Test", xaxis: { title: headings[0] } }}
+                    config={{ displaylogo: false, responsive: true, toImageButtonOptions: { filename: "MY_DATA" }, modeBarButtonsToRemove: ["select2d", "lasso2d", "autoScale2d"] }}
+                />;
+            })}
+        </div>);
     }
 };
 
