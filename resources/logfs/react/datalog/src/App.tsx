@@ -8,7 +8,7 @@ import { Data } from 'plotly.js';
 import LineGraphVisualisation from './LineGraphVisualisation';
 import { throws } from 'assert';
 import MapVisualisation from './MapVisualisation';
-import Button from './Button';
+import DropDownButton from './DropDownButton';
 
 export interface DataLog {
   [key: string]: string[]
@@ -109,10 +109,10 @@ class App extends React.Component<{}, AppState> {
         <h1>micro:bit data log</h1>
         <div className="buttons">
           <button onClick={this.download}>Download</button>
-          <button onClick={this.download}>Copy</button>
-          <button onClick={this.download}>Update data…</button>
-          <button onClick={this.download}>Clear log…</button>
-          <Button dropdown={visualPreviews.map(vis => vis.name)} onDropdownSelected={index => this.visualise(index)}>{this.state.visualisation ? "Close " + this.state.visualisation.name : (visualPreviews.length === 0 ? "No visual previews available" : visualPreviews[0].name)}</Button>
+          <button onClick={this.copy}>Copy</button>
+          <button onClick={this.updateData}>Update data…</button>
+          <button onClick={this.clearLog}>Clear log…</button>
+          {visualPreviews.length > 0 && <DropDownButton dropdown={visualPreviews.map(vis => vis.name)} onClick={() => this.visualise(-1)} onDropdownSelected={index => this.visualise(index)}>{this.state.visualisation ? "Close " + this.state.visualisation.name : visualPreviews[0].name}</DropDownButton>}
         </div>
         <p id="info">
           This is the data on your micro:bit. To analyse it and create your own graphs, transfer it to your computer. You can copy and paste your data, or download it as a CSV file which you can import into a spreadsheet or graphing tool. <a href="https://microbit.org/get-started/user-guide/data-logging/" target="_blank">Learn more about micro:bit data logging</a>.
@@ -127,7 +127,8 @@ class App extends React.Component<{}, AppState> {
   }
 
   download = () => {
-
+    //@ts-ignore
+    const res = window.dl.download;
   }
   
   copy = () => {
@@ -135,14 +136,23 @@ class App extends React.Component<{}, AppState> {
   }
   
   updateData = () => {
-  
+    console.log("To see the latest data that changed after you opened this file, you must unplug your micro:bit and plug it back in.");
   }
   
   clearLog = () => {
-  
+    console.log("The log is cleared when you reflash your micro:bit. Your program can include code or blocks to clear the log when you choose.");
   }
   
   visualise = (visIndex: number) => {
+    if (visIndex === -1) { // clicked the main section of the button
+      if (this.state.visualisation) {
+        this.setState({visualisation: null});
+        return;
+      }
+
+      visIndex = 0; // load the first visualisation
+    }
+
     this.setState({visualisation: availableVisualisations()[visIndex]});
   }
 }

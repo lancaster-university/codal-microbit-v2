@@ -1,6 +1,7 @@
 import Plot from "react-plotly.js";
 import { Data } from 'plotly.js';
 import { DataLog, VisualisationType } from "./App";
+import "./LineGraphVisualisation.css";
 
 const timestampRegex = /Time \(.+\)/;
 
@@ -69,6 +70,8 @@ const LineGraphVisualisation: VisualisationType = {
             "rgb(123, 205, 194)",
         ];
 
+        let currentRow = 1;
+
         return (<div>
             {splitLogs.map(log => {
                 const data: Data[] = headings.slice(1).map((y, index): Data => {
@@ -89,12 +92,20 @@ const LineGraphVisualisation: VisualisationType = {
                 }
                 );
 
-                return <Plot
+                let rowFrom = currentRow;
+                let rowTo = (currentRow += log[headings[0]].length) - 1;
+
+                return [
+                <div className="graph-span">Rows {rowFrom} - {rowTo}</div>,
+                <Plot
                     data={data}
 
-                    layout={{ width: 800, height: 600, title: "Test", xaxis: { title: headings[0] } }}
+                    className="graph"
+
+                    layout={{ height: 500, margin: {l: 60, r: 60, t: 30, b: 70}, xaxis: { title: headings[0] } }}
                     config={{ displaylogo: false, responsive: true, toImageButtonOptions: { filename: "MY_DATA" }, modeBarButtonsToRemove: ["select2d", "lasso2d", "autoScale2d"] }}
-                />;
+                />
+            ];
             })}
         </div>);
     }

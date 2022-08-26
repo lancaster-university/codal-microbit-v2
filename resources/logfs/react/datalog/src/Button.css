@@ -28,6 +28,14 @@ button {
     border-radius: 0 23px 23px 0;
 }
 
+.button-dropdown > div {
+    transition: all linear 0.2s;
+}
+
+.button-dropdown.open > div {
+    transform: scale(-1);
+}
+
 /* Primary button */
 bu-tton:first-of-type {
     border: none;
