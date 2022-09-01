@@ -29,10 +29,10 @@ DEALINGS IN THE SOFTWARE.
 // Note: the maximum offset for this range is +9, to avoid hitting the next block!
 enum MicroBitPanic {
     // Accelerometer unable proceed (hardware i/o failure)
-    ACCELEROMETER_ERROR = PanicCode::DEVICE_PERIPHERAL_ERROR + 1, // Aka. Panic 51
+    ACCELEROMETER_ERROR = PanicCode::DEVICE_PERIPHERAL_ERROR + 0, // Aka. Panic 50
 
     // Compass unable to proceed (hardware i/o failure)
-    COMPASS_ERROR = PanicCode::DEVICE_PERIPHERAL_ERROR + 2        // Aka. Panic 52
+    COMPASS_ERROR = PanicCode::DEVICE_PERIPHERAL_ERROR + 1        // Aka. Panic 51
 };
 
 #endif
