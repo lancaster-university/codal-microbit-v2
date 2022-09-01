@@ -500,7 +500,11 @@ void MicroBitPowerManager::deepSleep()
   *
   * @param milliSeconds The period of time to sleep, in milliseconds (minimum CONFIG_MINIMUM_DEEP_SLEEP_TIME).
   */
-void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
+void MicroBitPowerManager::deepSleep( uint32_t milliSeconds ) {
+    deepSleep( milliSeconds, false );
+}
+
+bool MicroBitPowerManager::deepSleep(uint32_t milliSeconds, bool interruptable )
 {
     if ( milliSeconds > CONFIG_MINIMUM_DEEP_SLEEP_TIME)
     {
@@ -523,7 +527,7 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
             CODAL_TIMESTAMP awake = system_timer_current_time_us();
 
             // Timed wake-up is usually < 20ms early here
-            if ( wakeUpTime > awake + 1000)
+            if ( wakeUpTime > awake + 1000 && !interruptable)
             {
                 // If another fiber triggers deep sleep
                 // the wake-up timer is still in place
@@ -537,7 +541,8 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
 
     // Block power down
     powerDownDisable();
-    fiber_sleep( milliSeconds);
+    if( !interruptable )
+        fiber_sleep( milliSeconds);
     powerDownEnable();
 }
 
