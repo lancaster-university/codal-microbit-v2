@@ -522,6 +522,7 @@ void MicroBitPowerManager::deepSleep( uint32_t milliSeconds ) {
   *
   * @param milliSeconds The period of time to sleep, in milliseconds (minimum CONFIG_MINIMUM_DEEP_SLEEP_TIME).
   * @param interruptable If true, when woken prematurely, the call will ignore any remaining time and return immediately. Otherwise it will attempt to respect the remaining time via fiber_sleep.
+  * @return True, if interrupted, else false. Can only be true if interruptable is also true.
   */
 bool MicroBitPowerManager::deepSleep(uint32_t milliSeconds, bool interruptable )
 {
@@ -552,7 +553,7 @@ bool MicroBitPowerManager::deepSleep(uint32_t milliSeconds, bool interruptable )
                     system_timer_cancel_event( id, eventValue);
                     return true;
                 }
-                
+
                 // If another fiber triggers deep sleep
                 // the wake-up timer is still in place
                 fiber_sleep( (wakeUpTime - awake) / 1000);
