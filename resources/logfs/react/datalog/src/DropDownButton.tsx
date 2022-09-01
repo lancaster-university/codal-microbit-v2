@@ -7,6 +7,7 @@ export interface ButtonProps {
     children: React.ReactNode,
     onClick?: () => any,
     onDropdownSelected?: (index: number) => any;
+    primary?: boolean;
 }
 
 function DropDownButton(props: ButtonProps) {
@@ -33,11 +34,11 @@ function DropDownButton(props: ButtonProps) {
 
     return (
         <div className="button-wrapper" onBlur={handleBlur}>
-            <button className={"button-main " + (validDropdown ? "dropdown" : "")} onClick={handleMainButtonClick}>
+            <button className={"button-main " + (validDropdown ? "dropdown " : " ") + (props.primary ? "primary" : "")} onClick={handleMainButtonClick}>
                 {props.children}
             </button>
             {validDropdown && 
-            <button className={"button-dropdown " + (dropdownOpen ? "open" : "")} onClick={() => setDropdownOpen(!dropdownOpen)}>
+            <button className={"button-dropdown " + (dropdownOpen ? "open " : " ") + (props.primary ? "primary" : "")} onClick={() => setDropdownOpen(!dropdownOpen)}>
                 <div>&#709;</div>
             </button>
             }

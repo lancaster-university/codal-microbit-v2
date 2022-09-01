@@ -1,7 +1,6 @@
-import React from "react";
 import "./Header.css";
 
-function Header() {
+export default function Header() {
     //@ts-ignore
     const isIE = Boolean(document.documentMode);
 
@@ -21,5 +20,3 @@ function Header() {
         </header>
     )
 }
-
-export default Header;

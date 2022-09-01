@@ -44,7 +44,8 @@ function load() {
 
     document.head.appendChild(reactScript);
 
-    window.dataLog = readData(window.x); //x = csv data
+    window.csv = window.x; //x = csv data
+    window.dataLog = readData(window.csv); 
 
     reactScript.addEventListener("load", function () {
         document.body.removeChild(offlineRoot);

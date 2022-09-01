@@ -1,27 +1,28 @@
 import Plot from "react-plotly.js";
 import { Data } from 'plotly.js';
-import { DataLog, VisualisationType } from "./App";
+import { timestampRegex, visualisationConfig, VisualisationType } from "./App";
 import "./LineGraphVisualisation.css";
-
-const timestampRegex = /Time \(.+\)/;
+import DataLog from "./DataLog";
 
 const LineGraphVisualisation: VisualisationType = {
     name: "Line Graph",
     availablityError: log => {
-        const headings = Object.keys(log);
-
-        if (headings.length < 2) {
+        if (log.headers.length < 2) {
             return "Requires two or more columns. Timestamps must be enabled.";
         }
 
-        if (!timestampRegex.test(headings[0])) {
+        if (!timestampRegex.test(log.headers[0])) {
             return "Timestamps must be enabled when logging data.";
         }
 
         return null;
     },
     generate: log => {
-        const headings = Object.keys(log);
+
+        const splitLogs = log.split((row, prevRow) => !row.isHeading && !!prevRow && Number(row.data[0]) < Number(prevRow.data[0]));
+
+
+        /*const headings = Object.keys(log);
 
         // todo: error when going back in time!
 
@@ -58,7 +59,7 @@ const LineGraphVisualisation: VisualisationType = {
             prevTimestamp = Number(graphX[y]);
         }
 
-        splitLogs.push(currentLog);
+        splitLogs.push(currentLog);*/
 
         const colors = [
             // micro:bit brand colors
@@ -72,15 +73,17 @@ const LineGraphVisualisation: VisualisationType = {
 
         let currentRow = 1;
 
+        const graphX = log.dataForHeader(0);
+
         return (<div>
             {splitLogs.map(log => {
-                const data: Data[] = headings.slice(1).map((y, index): Data => {
+                const data: Data[] = log.headers.slice(1).map((header, index): Data => {
                     return {
-                        name: headings[index + 1],
+                        name: header,
                         type: "scatter",
                         mode: "lines+markers",
                         x: graphX,
-                        y: log[y],
+                        y: log.dataForHeader(header),
                         line: {
                             color: colors[(index - 1) % colors.length],
                         },
@@ -93,7 +96,7 @@ const LineGraphVisualisation: VisualisationType = {
                 );
 
                 let rowFrom = currentRow;
-                let rowTo = (currentRow += log[headings[0]].length) - 1;
+                let rowTo = (currentRow += log.data.length) - 1;
 
                 return [
                 <div className="graph-span">Rows {rowFrom} - {rowTo}</div>,
@@ -102,8 +105,8 @@ const LineGraphVisualisation: VisualisationType = {
 
                     className="graph"
 
-                    layout={{ height: 500, margin: {l: 60, r: 60, t: 30, b: 70}, xaxis: { title: headings[0] } }}
-                    config={{ displaylogo: false, responsive: true, toImageButtonOptions: { filename: "MY_DATA" }, modeBarButtonsToRemove: ["select2d", "lasso2d", "autoScale2d"] }}
+                    layout={{ height: 500, margin: {l: 60, r: 60, t: 30, b: 70}, xaxis: { title: log.headers[0] } }}
+                    config={visualisationConfig}
                 />
             ];
             })}

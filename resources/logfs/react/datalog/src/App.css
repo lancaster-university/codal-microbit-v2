@@ -1,9 +1,21 @@
+:root {
+  --primary-accent: #000;
+}
+
+body {
+  font-family: Helvetica, Arial, sans-serif;
+  margin: 0;
+}
+
 main {
   margin: 1em;
 }
 
 .buttons {
   display: flex;
+  position: sticky;
+  top: 0.5em;
+  z-index: 1; /*to stick above plotly graphs*/
 }
 
 .buttons>*+* {

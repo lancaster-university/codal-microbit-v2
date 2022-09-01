@@ -1,115 +1,63 @@
-import { DataLog, VisualisationType } from "./App";
+import { visualisationConfig, VisualisationType } from "./App";
 import { ReactNode } from "react";
 import React from "react";
 import "./MapVisualisation.css";
 import Plot from "react-plotly.js";
 import { Data, Layout, PlotData } from "plotly.js";
+import DataLog from "./DataLog";
+import { lstat } from "fs";
 
 const latitudeColumn = "Latitude";
 const longitudeColumn = "Longitude";
-
-function toGeoJson(log: DataLog) {
-    let features = [];
-
-    for (let i = 0; i < log.Latitude.length; i++) {
-        features.push({
-            type: "Feature",
-            geometry: {
-                type: "Point",
-                coordinates: [Number(log[longitudeColumn][i]), Number(log[latitudeColumn][i])]
-            }
-        });
-    }
-
-    return features;
-}
-
-interface LogValueTooltipProps {
-    log: DataLog;
-    renderRow: number;
-    children: React.ReactNode;
-}
-
-class LogValueTooltip extends React.Component<LogValueTooltipProps, { absX: number, absY: number }> {
-
-    constructor(props: LogValueTooltipProps) {
-        super(props);
-
-        this.state = {
-            absX: -1,
-            absY: -1
-        }
-    }
-
-    componentDidMount() {
-        window.addEventListener('mousemove', this.handleMouseMove);
-    }
-
-    componentWillUnmount() {
-        window.removeEventListener('mousemove', this.handleMouseMove);
-    }
-
-    handleMouseMove = (event: MouseEvent) => {
-        this.setState(
-            { absX: event.clientX, absY: event.clientY }
-        );
-    }
-
-    render() {
-        return (
-            <div>
-                {this.props.children}
-                {this.props.renderRow > -1 &&
-                    <div className="log-tooltip" style={{ left: this.state.absX, top: this.state.absY }}>
-                        <table>
-                            <tbody>
-                                <tr>
-                                    {Object.keys(this.props.log).map(header => <td>{header}</td>)}
-                                </tr>
-                                <tr>
-                                    {Object.keys(this.props.log).map(header => <td>{this.props.log[header][this.props.renderRow]}</td>)}
-                                </tr>
-                            </tbody>
-                        </table>
-                        tooltip tooltip {this.props.renderRow}
-                    </div>
-                }
-            </div>
-        )
-    }
-}
 
 interface MapViewProps {
     log: DataLog
 }
 
-class MapView extends React.Component<MapViewProps, { selectedRow: number }> {
+class MapView extends React.Component<MapViewProps, { selectedRow: number, openStreetMapConsent: boolean }> {
 
     constructor(props: MapViewProps) {
         super(props);
 
         this.state = {
-            selectedRow: -1
+            selectedRow: -1,
+            openStreetMapConsent: window.localStorage.getItem("open-street-map-consent") === "true"
         }
     }
 
     render() {
-        const headings = Object.keys(this.props.log);
+        if (!this.state.openStreetMapConsent) {
+            return (
+                <div id="map-privacy-notice">
+                    <div>
+                        <h3>Using the map view requires accessing data from OpenStreetMap</h3>
+                        You can view their privacy policy <a href="https://wiki.osmfoundation.org/wiki/Privacy_Policy">here</a>.
+                    </div>
 
-        const lats = this.props.log[latitudeColumn].map(elem => Number(elem));
-        const lons = this.props.log[longitudeColumn].map(elem => Number(elem));
+                    <div className="modal-buttons">
+                        <button onClick={() => {
+                            window.localStorage.setItem("open-street-map-consent", "true");
+                            this.setState({ openStreetMapConsent: true });
+                        }}>I'm OK with this</button>
+                    </div>
+                </div>
+            );
+        }
 
-        // zip the latitude and longitude arrays into an array of lat/long pairs
-        const latLonPairs: [number, number][] = this.props.log[latitudeColumn].map((elem, index) => [Number(elem), Number(this.props.log[longitudeColumn][index])]);
-
-        const geoJson = toGeoJson(this.props.log);
+        const lats = this.props.log.dataForHeader(latitudeColumn).map(elem => Number(elem));
+        const lons = this.props.log.dataForHeader(longitudeColumn).map(elem => Number(elem));
 
         const data: Data = {
             type: "scattermapbox",
             lat: lats,
             lon: lons,
-            text: lats.map((_, index) => headings.filter(header => header !== latitudeColumn && header !== longitudeColumn).map(heading => heading + ": " + this.props.log[heading][index]).join(", ")),
-            marker: { color: "fuchsia", size: 4 }
+            text: lats.map((_, index) => this.props.log.headers.filter(header => header !== latitudeColumn && header !== longitudeColumn).map(heading => heading + ": " + this.props.log.dataForHeader(heading)[index]).join(", ")),
+            marker: { color: "fuchsia", size: 9 },
+            mode: "lines+markers",
+            line: {
+                width: 1,
+                color: "red"
+            }
         };
 
 
@@ -117,29 +65,15 @@ class MapView extends React.Component<MapViewProps, { selectedRow: number }> {
             dragmode: "zoom",
             mapbox: {
                 style: "open-street-map",
-                center: { lat: lats[0], lon: lons[0] }, zoom: 3
+                center: { lat: lats[0], lon: lons[0] }, zoom: 16
             },
-            width: 800,
-            height: 600,
-            title: "Test 2",
+            height: 500,
             margin: { r: 0, t: 0, b: 0, l: 0 }
         };
 
         return (
-            <Plot data={[data]} layout={layout} config={{ displaylogo: false, responsive: true, toImageButtonOptions: { filename: "MY_DATA" }, modeBarButtonsToRemove: ["select2d", "lasso2d", "autoScale2d"] }} />
+            <Plot className="graph" data={[data]} layout={layout} config={visualisationConfig} />
         );
-
-        /*return (
-            <LogValueTooltip log={this.props.log} renderRow={this.state.selectedRow}>
-                <Map height={300} defaultCenter={[50.879, 4.6997]} defaultZoom={11}>
-                    {latLongPairs.map((latLong, index) => <Marker width={50} anchor={latLong} key={index} />)}
-                    <Marker width={50} anchor={[0, 0]} />
-                    <GeoJson>
-                        {geoJson.map((feature, index) => <GeoJsonFeature feature={feature} key={index} onMouseOver={() => { this.handleMarkerHover(index) }} onMouseOut={this.handleMarkerLeave} />)}
-                    </GeoJson>
-                </Map>
-            </LogValueTooltip>
-        );*/
     }
 
     handleMarkerHover = (index: number) => {
@@ -151,29 +85,22 @@ class MapView extends React.Component<MapViewProps, { selectedRow: number }> {
     }
 }
 
-/*
-        <Map height={300} defaultCenter={[50.879, 4.6997]} defaultZoom={11}>
-          <Marker width={50} anchor={[0, 0]} />
-        </Map> */
-
 const MapVisualisation: VisualisationType = {
     name: "Map",
     availablityError: log => {
-        const headings = Object.keys(log);
+        const lats = log.dataForHeader(latitudeColumn);
+        const lngs = log.dataForHeader(longitudeColumn);
 
-        const lats = headings.find(heading => heading === latitudeColumn);
-        const lngs = headings.find(heading => heading === longitudeColumn);
-
-        if (!lats || !lngs) {
+        if (lats.length === 0 || lngs.length === 0) {
             return "Latitude and Longitude columns are required.";
         }
 
-        if (log[latitudeColumn].length !== log[longitudeColumn].length) {
+        if (lats.length !== lngs.length) {
             return "Latitude and Longitude columns need to be the same length.";
         }
 
         // check all latitude and longitude values at once
-        if ([...log[lats], ...log[lngs]].every(elem => isNaN(Number(elem)))) {
+        if ([...lats, ...lngs].every(elem => isNaN(Number(elem)))) {
             return "Latitude and Longitude fields need to be numeric.";
         }
 

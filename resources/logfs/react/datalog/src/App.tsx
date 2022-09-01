@@ -1,18 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import Header from './Header';
 import DataLogTable from './DataLogTable';
 import Plot from 'react-plotly.js';
-import { Data } from 'plotly.js';
+import { Config, Data } from 'plotly.js';
 import LineGraphVisualisation from './LineGraphVisualisation';
 import { throws } from 'assert';
 import MapVisualisation from './MapVisualisation';
 import DropDownButton from './DropDownButton';
-
-export interface DataLog {
-  [key: string]: string[]
-}
+import Modal, { ModalContents, ModalProps } from './Modal';
+import DataLog from './DataLog';
+import { gpsData } from './sample-data';
 
 export interface VisualisationType {
   name: string;
@@ -20,141 +19,114 @@ export interface VisualisationType {
   generate: (log: DataLog) => JSX.Element;
 }
 
-export class UserGraphError extends Error {
+export const timestampRegex = /Time \(.+\)/;
 
-}
-
-function convertTableToLog(table: HTMLTableElement) {
-  let log: DataLog = {};
-
-  if (table.rows.length === 0) {
-    return log;
-  }
-
-  const headings = Array.prototype.slice.call(table.rows[0].cells).map(header => header.innerText);
-
-  headings.forEach(heading => log[heading] = []);
-
-  let abortRow = 0;
-
-  for (let row = 1; row < table.rows.length; row++) {
-    const cells = table.rows[row].cells;
-
-    if (cells.length === 0) {
-      continue;
-    }
-
-    if (cells.length !== headings.length) {
-      abortRow = row;
-      break;
-    }
-
-    for (let cell = 0; cell < cells.length; cell++) {
-      log[headings[cell]].push(cells[cell].innerText);
-    }
-  }
-
-  return log;
-}
-
-type GraphData = {
-  xAxisLabel: string;
-  abortRow: number | null;
-  data: Data[];
-}
-
-function isIE(): boolean {
-  // @ts-ignore
-  return window.document.documentMode;
-}
-
-let visualPreview: VisualisationType | null = null;
-
-//@ts-ignore
-const log: DataLog = window.dataLog || {
-  "Time (s)": ["20", "40", "60", "80", "100", "10", "20", "30"],
-  Latitude: ["80", "50", "40", "49", "48", "48", "39", "37"],
-  Longitude: ["58", "48", "29", "49", "46", "48", "29", "50"],
-  Test: ["58", "62", "38", "38", "39", "40", "40", "50"]
-};
+export const visualisationConfig: Partial<Config> = { displaylogo: false, responsive: true, toImageButtonOptions: { filename: "MY_DATA" }, modeBarButtonsToRemove: ["select2d", "lasso2d", "autoScale2d"] }
 
 const visualisations: VisualisationType[] = [
   LineGraphVisualisation, MapVisualisation
 ];
 
-function availableVisualisations() {
-  return visualisations.filter(vis => !vis.availablityError(log));
+interface ShareTarget {
+  name: string;
+  onShare: (log: DataLog) => any;
 }
 
-interface AppState {
-  visualisation: VisualisationType | null;
-}
+const shareTargets: ShareTarget[] = [
+  {
+    name: "Download",
+    onShare(log) {
+      const anchor = document.createElement("a");
+      
+      anchor.download = "microbit.csv";
+      anchor.href = URL.createObjectURL(new Blob([log.toCSV()], { type: "text/csv" }));
+      anchor.click();
+      anchor.remove();
+    }
+  },
+  {
+    name: "Share",
+    onShare(log) {
+      const file = new File([new Blob([log.toCSV()], { type: "text/csv" })], "microbit.csv", { type: "text/csv" });
 
-class App extends React.Component<{}, AppState> {
+      navigator.share({
+        title: "My micro:bit data",
+        files: [file]
+      });
+    }
+  }
+];
 
-  constructor() {
-    super({});
+export function App() {
+  const [visualisation, setVisualisation] = useState<VisualisationType | null>(null);
+  const [modal, setModal] = useState<ModalProps | null>(null);
+  //@ts-ignore
+  const [log, setLog] = useState<DataLog>(window.dataLog || gpsData);
 
-    this.state = {
-      visualisation: null
-    };
+  const showModal = (content: ModalContents) => {
+    setModal({ ...content, onClose: () => setModal(null) });
   }
 
-  render() {
-    const visualPreviews = availableVisualisations();
+  const visualPreviews = visualisations.filter(vis => !vis.availablityError(log));
 
-    return (<div className="app">
-      <Header />
-      <main>
-        <h1>micro:bit data log</h1>
-        <div className="buttons">
-          <button onClick={this.download}>Download</button>
-          <button onClick={this.copy}>Copy</button>
-          <button onClick={this.updateData}>Update data…</button>
-          <button onClick={this.clearLog}>Clear log…</button>
-          {visualPreviews.length > 0 && <DropDownButton dropdown={visualPreviews.map(vis => vis.name)} onClick={() => this.visualise(-1)} onDropdownSelected={index => this.visualise(index)}>{this.state.visualisation ? "Close " + this.state.visualisation.name : visualPreviews[0].name}</DropDownButton>}
-        </div>
-        <p id="info">
-          This is the data on your micro:bit. To analyse it and create your own graphs, transfer it to your computer. You can copy and paste your data, or download it as a CSV file which you can import into a spreadsheet or graphing tool. <a href="https://microbit.org/get-started/user-guide/data-logging/" target="_blank">Learn more about micro:bit data logging</a>.
-        </p>
-        <div id="data">
-        {this.state.visualisation && this.state.visualisation.generate(log)}
-        <DataLogTable log={log} />
-        </div>
-      </main>
-    </div>)
-      ;
+  const copy = () => {
+
   }
 
-  download = () => {
-    //@ts-ignore
-    const res = window.dl.download;
+  const updateData = () => {
+    showModal({ title: "Updating Data", content: <div>To see the latest data that changed after you opened this file, you must unplug your micro:bit and plug it back in.</div> });
   }
-  
-  copy = () => {
-  
+
+  const clearLog = () => {
+    showModal({ title: "Clearing Log", content: <div>The log is cleared when you reflash your micro:bit. Your program can include code or blocks to clear the log when you choose. <a href="https://microbit.org/get-started/user-guide/data-logging/">Learn more about data logging</a>.</div> });
   }
-  
-  updateData = () => {
-    console.log("To see the latest data that changed after you opened this file, you must unplug your micro:bit and plug it back in.");
-  }
-  
-  clearLog = () => {
-    console.log("The log is cleared when you reflash your micro:bit. Your program can include code or blocks to clear the log when you choose.");
-  }
-  
-  visualise = (visIndex: number) => {
+
+  const visualise = (visIndex: number) => {
     if (visIndex === -1) { // clicked the main section of the button
-      if (this.state.visualisation) {
-        this.setState({visualisation: null});
+      if (visualisation) {
+        setVisualisation(null);
         return;
       }
 
       visIndex = 0; // load the first visualisation
     }
 
-    this.setState({visualisation: availableVisualisations()[visIndex]});
+
+    setVisualisation(visualPreviews[visIndex]);
   }
+
+  const debugCSV = () => {
+    const data = prompt("csv data?") || "";
+
+    setLog(DataLog.fromCSV(data));
+  }
+
+  const handleShare = (index: number = 0) => {
+    shareTargets[index].onShare(log);
+  }
+
+  return (<div className="app">
+    {modal && <Modal {...modal} />}
+    <Header />
+    <main>
+      <h1>micro:bit data log</h1>
+      <div className="buttons">
+        <DropDownButton primary={true} dropdown={shareTargets.map(target => target.name)} onClick={handleShare} onDropdownSelected={handleShare}>{shareTargets[0].name}</DropDownButton>
+        <button onClick={copy}>Copy</button>
+        <button onClick={updateData}>Update data…</button>
+        <button onClick={clearLog}>Clear log…</button>
+        <button onClick={debugCSV}>Debug CSV</button>
+        {visualPreviews.length > 0 && <DropDownButton dropdown={visualPreviews.map(vis => vis.name)} onClick={() => visualise(-1)} onDropdownSelected={index => visualise(index)}>{visualisation ? "Close " + visualisation.name : visualPreviews[0].name}</DropDownButton>}
+      </div>
+      <p id="info">
+        This is the data on your micro:bit. To analyse it and create your own graphs, transfer it to your computer. You can copy and paste your data, or download it as a CSV file which you can import into a spreadsheet or graphing tool. <a href="https://microbit.org/get-started/user-guide/data-logging/" target="_blank">Learn more about micro:bit data logging</a>.
+      </p>
+      <div id="data">
+        {visualisation && visualisation.generate(log)}
+        <DataLogTable log={log} highlightDiscontinuousTimes={visualisation === LineGraphVisualisation} />
+      </div>
+    </main>
+  </div>);
 }
 
 export default App;

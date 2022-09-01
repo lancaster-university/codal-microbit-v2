@@ -13,10 +13,23 @@ button {
     letter-spacing: 0.3px;
     padding: 0 16px;
 
+    outline: 3px solid transparent;
+    transition: all 0.2s;
+
     /* Secondary buttons */
-    color: #000;
-    border: 2px solid #000;
+    color: var(--primary-accent);
+    border: 2px solid var(--primary-accent);
     background: #fff;
+}
+
+button.primary {
+    background: var(--primary-accent);
+    border: none;
+    color: #fff;
+}
+
+button:focus {
+    outline: 3px solid rgba(66, 153, 225, 0.6);
 }
 
 .button-main.dropdown {
@@ -28,17 +41,14 @@ button {
     border-radius: 0 23px 23px 0;
 }
 
+.primary.button-dropdown {
+    margin-left: 1px;
+}
+
 .button-dropdown > div {
     transition: all linear 0.2s;
 }
 
 .button-dropdown.open > div {
     transform: scale(-1);
-}
-
-/* Primary button */
-bu-tton:first-of-type {
-    border: none;
-    background: #000;
-    color: #fff;
 }

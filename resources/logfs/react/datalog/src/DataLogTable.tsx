@@ -1,32 +1,45 @@
 import React from "react";
-import { DataLog } from "./App";
+import { timestampRegex } from "./App";
+import DataLog from "./DataLog";
 import "./DataLogTable.css";
 
 type DataLogProps = {
-    log: DataLog
+    log: DataLog,
+    highlightDiscontinuousTimes?: boolean
 }
 
 function DataLogTable(props: DataLogProps) {
     // get the column with the highest row count
-    const headers = Object.keys(props.log);
-    const logLength = headers.map(header => props.log[header].length).reduce((p, c) => p > c ? p : c); // p = our highest row count
+    //const headers = Object.keys(props.log);
+    //const logLength = headers.map(header => props.log[header].length).reduce((p, c) => p > c ? p : c); // p = our highest row count
+
+    const headers = props.log.headers;
+    const logLength = props.log.data.length;
 
     const rows = [];
+
+    let prevRowTimestamp = 0;
 
     for (let i = 0; i < logLength; i++) {
         const row: JSX.Element[] = [];
 
-        headers.forEach((header, index) => row.push(<td key={index}>{props.log[header][i] ?? 'None'}</td>));
+        const firstRowValue = Number(props.log.dataForHeader(0)[i]);
 
-        rows.push(<tr key={i}>{row}</tr>);
+        const discontinous = (props.highlightDiscontinuousTimes && timestampRegex.test(headers[0]) && firstRowValue < prevRowTimestamp);
+        prevRowTimestamp = firstRowValue;
+
+        props.log.data[i].data.forEach((data, index) => row.push(
+            <td key={index}>
+                {data ?? 'None'}
+            </td>
+        ));
+
+        rows.push(<tr key={i} className={discontinous ? "discontinous" : ""}>{row}</tr>);
     }
 
     return (
         <table>
             <tbody>
-                <tr>
-                    {headers.map((header, index) => <td key={index}>{header}</td>)}
-                </tr>
                 {rows}
                 <tr>
                     <td colSpan={headers.length} id="datalog-end">End of data log</td>

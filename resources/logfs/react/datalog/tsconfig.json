@@ -22,5 +22,5 @@
   },
   "include": [
     "src"
-  ]
+, "gpx-converter.ts"  ]
 }
