@@ -1,10 +1,4 @@
 # codal-microbit-v2
 CODAL target for the micro:bit v2.x series of devices
 
-# Splitter input pipeline Branch
-
-Should be used with branches:
-
-https://github.com/JoshuaAHill/codal-core/tree/recordingAPI
-
-https://github.com/JoshuaAHill/codal-nrf52/tree/adc-live-demux
+See https://github.com/lancaster-university/microbit-v2-samples for details on building and using CODAL.
