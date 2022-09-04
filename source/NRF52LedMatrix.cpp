@@ -55,6 +55,7 @@ static void display_irq(uint16_t mask)
  */
 NRF52LEDMatrix::NRF52LEDMatrix(NRFLowLevelTimer &displayTimer, const MatrixMap &map, uint16_t id, DisplayMode mode) : Display(map.width, map.height, id), matrixMap(map), timer(displayTimer)
 {
+    rotation = MATRIX_DISPLAY_ROTATION_0;
     enabled = false;
     strobeRow = 0;
     instance = this;
@@ -125,6 +126,20 @@ void NRF52LEDMatrix::setDisplayMode(DisplayMode mode)
 DisplayMode NRF52LEDMatrix::getDisplayMode()
 {
     return this->mode;
+}
+
+/**
+  * Rotates the display to the given position.
+  *
+  * Axis aligned values only.
+  *
+  * @code
+  * display.rotateTo(MATRIX_DISPLAY_ROTATION_180); //rotates 180 degrees from original orientation
+  * @endcode
+  */
+void NRF52LEDMatrix::rotateTo(DisplayRotation rotation)
+{
+    this->rotation = rotation;
 }
 
 /**
@@ -230,7 +245,24 @@ void NRF52LEDMatrix::render()
 
         for (int column = 0; column < matrixMap.columns; column++)
         {
-            value = screenBuffer[p->y * width + p->x];
+            switch ( this->rotation)
+            {
+              case MATRIX_DISPLAY_ROTATION_0:
+                value = screenBuffer[ p->y * width + p->x];
+                break;
+              case MATRIX_DISPLAY_ROTATION_90:
+                value = screenBuffer[ p->x * width + width - 1 - p->y];
+                break;
+              case MATRIX_DISPLAY_ROTATION_180:
+                value = screenBuffer[ (height - 1 - p->y) * width + width - 1 - p->x];
+                break;
+              case MATRIX_DISPLAY_ROTATION_270:
+                value = screenBuffer[ ( height - 1 - p->x) * width + p->y];
+                break;
+              default:
+                value = screenBuffer[ p->y * width + p->x];
+                break;
+            }
 
             // Clip pixels to full or zero brightness if in black and white mode.
             if (mode == DISPLAY_MODE_BLACK_AND_WHITE || mode == DISPLAY_MODE_BLACK_AND_WHITE_LIGHT_SENSE)
