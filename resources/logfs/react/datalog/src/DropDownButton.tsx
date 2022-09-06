@@ -1,9 +1,10 @@
 import React, { useState } from "react";
+import { RiMore2Fill } from "react-icons/ri";
 import "./Button.css";
 import DropDownMenu from "./DropDownMenu";
 
 export interface ButtonProps {
-    dropdown?: string[],
+    dropdown?: JSX.Element[],
     children: React.ReactNode,
     onClick?: () => any,
     onDropdownSelected?: (index: number) => any;
@@ -39,7 +40,7 @@ function DropDownButton(props: ButtonProps) {
             </button>
             {validDropdown && 
             <button className={"button-dropdown " + (dropdownOpen ? "open " : " ") + (props.primary ? "primary" : "")} onClick={() => setDropdownOpen(!dropdownOpen)}>
-                <div>&#709;</div>
+                <RiMore2Fill/>
             </button>
             }
             {validDropdown && dropdownOpen && <DropDownMenu items={props.dropdown || []} onSelected={handleDropdownSelect}/>}

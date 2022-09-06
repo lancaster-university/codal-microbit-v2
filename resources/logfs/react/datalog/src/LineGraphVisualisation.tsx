@@ -3,9 +3,11 @@ import { Data } from 'plotly.js';
 import { timestampRegex, visualisationConfig, VisualisationType } from "./App";
 import "./LineGraphVisualisation.css";
 import DataLog from "./DataLog";
+import { RiLineChartLine } from "react-icons/ri";
 
 const LineGraphVisualisation: VisualisationType = {
     name: "Line Graph",
+    icon: <RiLineChartLine/>,
     availablityError: log => {
         if (log.headers.length < 2) {
             return "Requires two or more columns. Timestamps must be enabled.";

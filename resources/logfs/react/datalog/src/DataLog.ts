@@ -22,8 +22,8 @@ export default class DataLog {
         return new DataLog(headers, data);
     }
 
-    public dataForHeader(header: string | number): string[] {
-        const index = typeof header === "number" ? header : this.headers.indexOf(header);
+    public dataForHeader(header: string | number | RegExp): string[] {
+        const index = typeof header === "number" ? header : header instanceof RegExp ? this.headers.findIndex(h => header.test(h)) : this.headers.indexOf(header);
 
         if (index === -1) {
             return [];

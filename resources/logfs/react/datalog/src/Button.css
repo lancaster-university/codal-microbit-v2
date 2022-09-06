@@ -9,9 +9,9 @@ button {
     border-radius: 23px;
     min-height: 46px;
     font-weight: 700;
-    font-size: 15px;
+    font-size: 1.125em;
     letter-spacing: 0.3px;
-    padding: 0 16px;
+    padding: 0 1em;
 
     outline: 3px solid transparent;
     transition: all 0.2s;
@@ -20,6 +20,13 @@ button {
     color: var(--primary-accent);
     border: 2px solid var(--primary-accent);
     background: #fff;
+
+    display: flex;
+    align-items: center;
+}
+
+button .icon {
+    padding-bottom: 2px;
 }
 
 button.primary {
@@ -39,6 +46,11 @@ button:focus {
 .button-dropdown {
     border-left: 0;
     border-radius: 0 23px 23px 0;
+    padding: 0 0.8em 0 0.6em;
+}
+
+.button-dropdown .icon {
+    margin: 0;
 }
 
 .primary.button-dropdown {

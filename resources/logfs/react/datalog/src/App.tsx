@@ -12,9 +12,12 @@ import DropDownButton from './DropDownButton';
 import Modal, { ModalContents, ModalProps } from './Modal';
 import DataLog from './DataLog';
 import { gpsData } from './sample-data';
+import { RiClipboardLine, RiDeleteBin2Line, RiDownload2Line, RiRefreshLine, RiShareLine } from "react-icons/ri";
+import { IconContext } from 'react-icons';
 
 export interface VisualisationType {
   name: string;
+  icon: JSX.Element;
   availablityError: (log: DataLog) => string | null;
   generate: (log: DataLog) => JSX.Element;
 }
@@ -29,15 +32,17 @@ const visualisations: VisualisationType[] = [
 
 interface ShareTarget {
   name: string;
+  icon: JSX.Element;
   onShare: (log: DataLog) => any;
 }
 
 const shareTargets: ShareTarget[] = [
   {
     name: "Download",
+    icon: <RiDownload2Line />,
     onShare(log) {
       const anchor = document.createElement("a");
-      
+
       anchor.download = "microbit.csv";
       anchor.href = URL.createObjectURL(new Blob([log.toCSV()], { type: "text/csv" }));
       anchor.click();
@@ -46,6 +51,7 @@ const shareTargets: ShareTarget[] = [
   },
   {
     name: "Share",
+    icon: <RiShareLine />,
     onShare(log) {
       const file = new File([new Blob([log.toCSV()], { type: "text/csv" })], "microbit.csv", { type: "text/csv" });
 
@@ -105,28 +111,32 @@ export function App() {
     shareTargets[index].onShare(log);
   }
 
-  return (<div className="app">
-    {modal && <Modal {...modal} />}
-    <Header />
-    <main>
-      <h1>micro:bit data log</h1>
-      <div className="buttons">
-        <DropDownButton primary={true} dropdown={shareTargets.map(target => target.name)} onClick={handleShare} onDropdownSelected={handleShare}>{shareTargets[0].name}</DropDownButton>
-        <button onClick={copy}>Copy</button>
-        <button onClick={updateData}>Update data…</button>
-        <button onClick={clearLog}>Clear log…</button>
-        <button onClick={debugCSV}>Debug CSV</button>
-        {visualPreviews.length > 0 && <DropDownButton dropdown={visualPreviews.map(vis => vis.name)} onClick={() => visualise(-1)} onDropdownSelected={index => visualise(index)}>{visualisation ? "Close " + visualisation.name : visualPreviews[0].name}</DropDownButton>}
+  return (
+    <IconContext.Provider value={{ className: "icon" }}>
+      <div className="app">
+        {modal && <Modal {...modal} />}
+        <Header />
+        <main>
+          <h1>micro:bit data log</h1>
+          <div className="buttons">
+            <DropDownButton primary={true} dropdown={shareTargets.map(target => <>{target.icon}{target.name}</>)} onClick={handleShare} onDropdownSelected={handleShare}><>{shareTargets[0].icon}{shareTargets[0].name}</></DropDownButton>
+            <button onClick={copy}><RiClipboardLine />Copy</button>
+            <button onClick={updateData}><RiRefreshLine />Update data…</button>
+            <button onClick={clearLog}><RiDeleteBin2Line />Clear log…</button>
+            <button onClick={debugCSV}>Debug CSV</button>
+            {visualPreviews.length > 0 && <DropDownButton dropdown={visualPreviews.map(vis => <>{vis.icon}{vis.name}</>)} onClick={() => visualise(-1)} onDropdownSelected={index => visualise(index)}>{visualisation ? "Close " + visualisation.name : <>{visualPreviews[0].icon}{visualPreviews[0].name}</>}</DropDownButton>}
+          </div>
+          <p id="info">
+            This is the data on your micro:bit. To analyse it and create your own graphs, transfer it to your computer. You can copy and paste your data, or download it as a CSV file which you can import into a spreadsheet or graphing tool. <a href="https://microbit.org/get-started/user-guide/data-logging/" target="_blank">Learn more about micro:bit data logging</a>.
+          </p>
+          <div id="data">
+            {visualisation && visualisation.generate(log)}
+            <DataLogTable log={log} highlightDiscontinuousTimes={visualisation === LineGraphVisualisation} />
+          </div>
+        </main>
       </div>
-      <p id="info">
-        This is the data on your micro:bit. To analyse it and create your own graphs, transfer it to your computer. You can copy and paste your data, or download it as a CSV file which you can import into a spreadsheet or graphing tool. <a href="https://microbit.org/get-started/user-guide/data-logging/" target="_blank">Learn more about micro:bit data logging</a>.
-      </p>
-      <div id="data">
-        {visualisation && visualisation.generate(log)}
-        <DataLogTable log={log} highlightDiscontinuousTimes={visualisation === LineGraphVisualisation} />
-      </div>
-    </main>
-  </div>);
+    </IconContext.Provider>
+  );
 }
 
 export default App;

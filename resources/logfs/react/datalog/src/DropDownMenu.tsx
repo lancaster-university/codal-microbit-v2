@@ -1,7 +1,7 @@
 import "./DropDownMenu.css";
 
 export interface DropDownMenuProps {
-    items: string[],
+    items: JSX.Element[],
     onSelected?: (index: number) => any;
 }
 

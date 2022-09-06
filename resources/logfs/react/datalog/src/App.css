@@ -26,3 +26,8 @@ main {
   max-width: 48em;
   line-height: 1.3;
 }
+
+.icon {
+  margin-right: 0.5em;
+  min-width: 1em;
+}
