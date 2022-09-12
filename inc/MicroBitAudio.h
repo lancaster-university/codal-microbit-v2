@@ -34,6 +34,7 @@ DEALINGS IN THE SOFTWARE.
 #include "StreamSplitter.h"
 #include "LevelDetector.h"
 #include "LevelDetectorSPL.h"
+#include "LowPassFilter.h"
 
 // Status Flags
 #define MICROBIT_AUDIO_STATUS_DEEPSLEEP       0x0001
@@ -51,9 +52,11 @@ namespace codal
         Mixer2                  mixer;          // Multi channel audio mixer
         NRF52ADCChannel *mic;                   // Microphone ADC Channel from uBit.IO
         StreamNormalizer        *processor;     // Stream Normaliser instance
-        StreamSplitter          *splitter;      // Stream Splitter instance
+        StreamSplitter          *splitter;      // Stream Splitter instance (8bit normalized output)
+        StreamSplitter          *rawSplitter;   // Stream Splitter instance (raw input)
         LevelDetector           *level;         // Level Detector instance
         LevelDetectorSPL        *levelSPL;      // Level Detector SPL instance
+        LowPassFilter           *micFilter;     // Low pass filter to remove high frequency noise on the mic
 
         private:
         bool speakerEnabled;                    // State of on board speaker

@@ -59,28 +59,27 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
 
     synth.allowEmptyBuffers(true);
 
-    if (mic == NULL){
-        mic = adc.getChannel(microphone, false);
-        adc.setSamplePeriod( 1e6 / 22000 );
-        mic->setGain(7,0);
-    }
+    mic = adc.getChannel(microphone, false);
+    adc.setSamplePeriod( 1e6 / 22000 );
+    mic->setGain(7,0);
+
+    //Initialialise the microphone filter
+    micFilter = new LowPassFilter(mic->output, 0.1f, true);
+
+    //Initilise input splitter
+    rawSplitter = new StreamSplitter(*micFilter);
 
     //Initilise stream normalizer
-    if (processor == NULL)
-        //0.2f in preperation for recording, 8 bit for frequency recogntion
-        processor = new StreamNormalizer(mic->output, 0.08f, true, DATASTREAM_FORMAT_8BIT_SIGNED, 10);
+    processor = new StreamNormalizer(*rawSplitter, 0.08f, true, DATASTREAM_FORMAT_8BIT_SIGNED, 10);
 
     //Initilise stream splitter
-    if (splitter == NULL)
-        splitter = new StreamSplitter(processor->output);
+    splitter = new StreamSplitter(processor->output);
 
     //Initilise level detector and attach to splitter
-    if (level == NULL)  
-        level = new LevelDetector(*splitter, 150, 75, DEVICE_ID_SYSTEM_LEVEL_DETECTOR, false);
+    level = new LevelDetector(*splitter, 150, 75, DEVICE_ID_SYSTEM_LEVEL_DETECTOR, false);
 
     //Initilise level detector SPL and attach to splitter
-    if (levelSPL == NULL)
-        levelSPL = new LevelDetectorSPL(*splitter, 85.0, 65.0, 0.45, 52, DEVICE_ID_MICROPHONE, false);
+    levelSPL = new LevelDetectorSPL(*rawSplitter, 85.0, 65.0, 16.0, 0, DEVICE_ID_MICROPHONE, false);
 
     // Register listener for splitter events
     if(EventModel::defaultEventBus){
