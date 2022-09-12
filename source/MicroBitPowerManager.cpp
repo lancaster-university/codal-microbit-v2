@@ -500,7 +500,31 @@ void MicroBitPowerManager::deepSleep()
   *
   * @param milliSeconds The period of time to sleep, in milliseconds (minimum CONFIG_MINIMUM_DEEP_SLEEP_TIME).
   */
-void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
+void MicroBitPowerManager::deepSleep( uint32_t milliSeconds ) {
+    deepSleep( milliSeconds, false );
+}
+
+/**
+  * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+  * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
+  * operation.
+  * 
+  * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+  * simply use uBit.sleep();
+  *
+  * The current fiber is blocked immediately.
+  * Sleep occurs when the scheduler is next idle, unless cancelled by wake up events before then.
+  *
+  * If deep sleep is disturbed within the requested time interval and 'interruptable' is false, the remainder will be awake.
+  * 
+  * If the requested time interval is less than CONFIG_MINIMUM_DEEP_SLEEP_TIME, or a wake-up timer
+  * cannot be allocated, the sleep will be a simple uBit.sleep() without powering down and 'interruptable' state will be ignored.
+  *
+  * @param milliSeconds The period of time to sleep, in milliseconds (minimum CONFIG_MINIMUM_DEEP_SLEEP_TIME).
+  * @param interruptable If true, when woken prematurely, the call will ignore any remaining time and return immediately. Otherwise it will attempt to respect the remaining time via fiber_sleep.
+  * @return True, if interrupted, else false. Can only be true if interruptable is also true.
+  */
+bool MicroBitPowerManager::deepSleep(uint32_t milliSeconds, bool interruptable )
 {
     if ( milliSeconds > CONFIG_MINIMUM_DEEP_SLEEP_TIME)
     {
@@ -511,7 +535,7 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
         if (!fiber_scheduler_running())
         {
             simpleDeepSleep( true /*wakeOnTime*/, wakeUpTime, true /*wakeUpSources*/, NULL /*wakeUpPin*/);
-            return;
+            return false;
         }
 
         eventValue++;
@@ -523,22 +547,29 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
             CODAL_TIMESTAMP awake = system_timer_current_time_us();
 
             // Timed wake-up is usually < 20ms early here
-            if ( wakeUpTime > awake + 1000)
+            if ( wakeUpTime > awake + 1000 )
             {
+                if( interruptable ) {
+                    system_timer_cancel_event( id, eventValue);
+                    return true;
+                }
+
                 // If another fiber triggers deep sleep
                 // the wake-up timer is still in place
                 fiber_sleep( (wakeUpTime - awake) / 1000);
             }
 
             system_timer_cancel_event( id, eventValue);
-            return;
+            return false;
         }
     }
 
     // Block power down
     powerDownDisable();
-    fiber_sleep( milliSeconds);
+    fiber_sleep( milliSeconds );
     powerDownEnable();
+
+    return false;
 }
 
 /**

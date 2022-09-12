@@ -355,6 +355,8 @@ class MicroBitPowerManager : public CodalComponent
           */
         void deepSleep(uint32_t milliSeconds);
 
+        bool deepSleep(uint32_t milliSeconds, bool interruptable );
+
         /**
          * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
          * program state is preserved. CPU will deepsleep until the next codal::Timer event or other wake up source event, before returning to normal
