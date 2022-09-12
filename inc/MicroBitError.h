@@ -32,7 +32,10 @@ enum MicroBitPanic {
     ACCELEROMETER_ERROR = PanicCode::DEVICE_PERIPHERAL_ERROR + 0, // Aka. Panic 50
 
     // Compass unable to proceed (hardware i/o failure)
-    COMPASS_ERROR = PanicCode::DEVICE_PERIPHERAL_ERROR + 1        // Aka. Panic 51
+    COMPASS_ERROR = PanicCode::DEVICE_PERIPHERAL_ERROR + 1,       // Aka. Panic 51
+
+    // DAPLink comms failure (likely used a daplink feature without a daplink chip, or similar failure)
+    USB_INTERFACE_ERROR = PanicCode::DEVICE_PERIPHERAL_ERROR + 2  // Aka. Panic 52
 };
 
 #endif
