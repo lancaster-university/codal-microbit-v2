@@ -53,6 +53,7 @@ namespace codal
         uint8_t timeslots;                      // The total number of timeslots used by the driver (includes light sensing).
         DisplayMode mode;                       // The currnet display mode being used.
         bool enabled;                           // Whether or not the display is enabled.
+        uint8_t rotation;                       // DisplayRotation
 
         const MatrixMap     &matrixMap;         // Data structure that maps screen x/y pixels into GPIO pins.
         NRFLowLevelTimer    &timer;             // The timer module used to drive this LEDMatrix.
@@ -63,7 +64,6 @@ namespace codal
         int8_t              gpiote[NRF52_LED_MATRIX_MAXIMUM_COLUMNS];            // GPIOTE channels used by output columns.
         int8_t              ppi[NRF52_LED_MATRIX_MAXIMUM_COLUMNS];               // PPI channels used by output columns.
 
-     
         public:
         /**
          * Configure the next frame to be drawn.
@@ -101,6 +101,17 @@ namespace codal
          * @return the current mode of the display
          */
         DisplayMode getDisplayMode();
+
+        /**
+         * Rotates the display to the given position.
+         *
+         * Axis aligned values only.
+         *
+         * @code
+         * display.rotateTo(DISPLAY_ROTATION_180); //rotates 180 degrees from original orientation
+         * @endcode
+         */
+        void rotateTo(DisplayRotation position);
 
         /**
          * Enables the display, should only be called if the display is disabled.
