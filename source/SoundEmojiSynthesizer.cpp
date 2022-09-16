@@ -208,7 +208,7 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
                 if (renderComplete || status & EMOJI_SYNTHESIZER_STATUS_STOPPING)
                 {
                     // Wait for a hanful of milliseconds while we finish playing the last buffer we sent out ...
-                    fiber_sleep( buffer.length() / sampleRate );
+                    //fiber_sleep( buffer.length() / sampleRate ); // Removed due to causing issues for Python
 
                     // ... THEN flip out status and fire the event
                     status &= ~EMOJI_SYNTHESIZER_STATUS_STOPPING;
