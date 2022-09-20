@@ -207,7 +207,7 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
                 done = true;
                 if (renderComplete || status & EMOJI_SYNTHESIZER_STATUS_STOPPING)
                 {
-                    // ... THEN flip out status and fire the event
+                    // Flip out status and fire the event
                     status &= ~EMOJI_SYNTHESIZER_STATUS_STOPPING;
                     Event(id, DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_DONE);
                     lock.notify();
