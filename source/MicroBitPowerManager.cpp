@@ -762,25 +762,6 @@ int MicroBitPowerManager::canDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpT
             return DEVICE_INVALID_STATE;
         }
     }
-    /*else
-    {
-        if ( wakeUpSources)
-        {
-            deepSleepCallbackData data;
-            CodalComponent::deepSleepAll( deepSleepCallbackCountWakeUps, &data);
-            if ( data.count == 0)
-            {
-                return DEVICE_INVALID_STATE;
-            }
-        }
-        else
-        {
-            if ( wakeUpPin == NULL)
-            {
-                return DEVICE_INVALID_STATE;
-            }
-        }
-    }*/
 
     return DEVICE_OK;
 }
