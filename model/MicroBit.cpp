@@ -119,6 +119,9 @@ MicroBit::MicroBit() :
     // serial.set_flow_control(mbed::Serial::Disabled);
     //serial.baud(115200);
 
+    // Enable the serial port as a deep sleep wake event. (Useful for MicroPython REPL, for example)
+    serial.status |= CODAL_SERIAL_STATUS_DEEPSLEEP;
+
     // Add pullup resisitor to IRQ line (it's floating ACTIVE LO)
     io.irq1.getDigitalValue();
     io.irq1.setPull(PullMode::Up);
