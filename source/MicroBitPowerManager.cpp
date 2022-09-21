@@ -475,11 +475,7 @@ void MicroBitPowerManager::deepSleep()
         return;
     }
 
-    //CODAL_TIMESTAMP eventTime = 0;
-    //bool wakeOnTime = system_timer_deepsleep_wakeup_time( eventTime);
-    //int can = canDeepSleep( false, eventTime, true /*wakeUpSources*/, NULL /*wakeUpPin*/);
-    //if ( can == DEVICE_OK)
-        deepSleepWait();
+    deepSleepWait();
 }
 
 /**
