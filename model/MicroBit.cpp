@@ -121,7 +121,6 @@ MicroBit::MicroBit() :
 
     // Enable the serial port as a deep sleep wake event. (Useful for MicroPython REPL, for example)
     #if CONFIG_ENABLED(MICROBIT_USB_SERIAL_WAKE)
-        DMESGF( "Enabling serial wake on USB" );
         serial.status |= CODAL_SERIAL_STATUS_DEEPSLEEP;
     #endif
 
