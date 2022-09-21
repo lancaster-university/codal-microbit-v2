@@ -356,13 +356,13 @@ typedef codal::BitmapFont MicroBitFont;
 #define MICROBIT_ID_SERIAL                                      DEVICE_ID_SERIAL
 #define MICROBIT_ID_THERMOMETER                                 DEVICE_ID_THERMOMETER
 
-#define MICROBIT_ID_PARTIAL_FLASHING                            36
-#define MICROBIT_ID_POWER_MANAGER                               37
-#define MICROBIT_ID_USB_FLASH_MANAGER                           38
+#define MICROBIT_ID_POWER_MANAGER                               DEVICE_ID_POWER_MANAGER
+#define MICROBIT_ID_PARTIAL_FLASHING                            DEVICE_ID_PARTIAL_FLASHING
+#define MICROBIT_ID_USB_FLASH_MANAGER                           DEVICE_ID_USB_FLASH_MANAGER
 
-#define MICROBIT_ID_VIRTUAL_SPEAKER_PIN                         39
+#define MICROBIT_ID_VIRTUAL_SPEAKER_PIN                         DEVICE_ID_VIRTUAL_SPEAKER_PIN
 
-#define MICROBIT_ID_LOG                                         44
+#define MICROBIT_ID_LOG                                         DEVICE_ID_LOG
 
 #define MICROBIT_MAXIMUM_HEAPS                                  DEVICE_MAXIMUM_HEAPS
 #define MICROBIT_NESTED_HEAP_SIZE                               0
