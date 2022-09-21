@@ -475,11 +475,7 @@ void MicroBitPowerManager::deepSleep()
         return;
     }
 
-    CODAL_TIMESTAMP eventTime = 0;
-    bool wakeOnTime = system_timer_deepsleep_wakeup_time( eventTime);
-    int can = canDeepSleep( wakeOnTime, eventTime, true /*wakeUpSources*/, NULL /*wakeUpPin*/);
-    if ( can == DEVICE_OK)
-        deepSleepWait();
+    deepSleepWait();
 }
 
 /**
@@ -760,25 +756,6 @@ int MicroBitPowerManager::canDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpT
         if ( wakeUpTime < timeEntry || wakeUpTime - timeEntry < CONFIG_MINIMUM_DEEP_SLEEP_TIME * 1000)
         {
             return DEVICE_INVALID_STATE;
-        }
-    }
-    else
-    {
-        if ( wakeUpSources)
-        {
-            deepSleepCallbackData data;
-            CodalComponent::deepSleepAll( deepSleepCallbackCountWakeUps, &data);
-            if ( data.count == 0)
-            {
-                return DEVICE_INVALID_STATE;
-            }
-        }
-        else
-        {
-            if ( wakeUpPin == NULL)
-            {
-                return DEVICE_INVALID_STATE;
-            }
         }
     }
 

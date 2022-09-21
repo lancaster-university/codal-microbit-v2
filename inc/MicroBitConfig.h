@@ -262,4 +262,11 @@ extern uint32_t __data_end__;
 #define MICROBIT_DAL_VERSION                    "unknown"
 #endif
 
+// Allow USB serial events to wake the board from deep sleep.
+// 
+// Set to '1' to enable
+#ifndef MICROBIT_USB_SERIAL_WAKE
+#define MICROBIT_USB_SERIAL_WAKE 0
+#endif
+
 #endif
