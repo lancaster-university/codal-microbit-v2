@@ -120,7 +120,10 @@ MicroBit::MicroBit() :
     //serial.baud(115200);
 
     // Enable the serial port as a deep sleep wake event. (Useful for MicroPython REPL, for example)
-    serial.status |= CODAL_SERIAL_STATUS_DEEPSLEEP;
+    #if CONFIG_ENABLED(MICROBIT_USB_SERIAL_WAKE)
+        DMESGF( "Enabling serial wake on USB" );
+        serial.status |= CODAL_SERIAL_STATUS_DEEPSLEEP;
+    #endif
 
     // Add pullup resisitor to IRQ line (it's floating ACTIVE LO)
     io.irq1.getDigitalValue();
