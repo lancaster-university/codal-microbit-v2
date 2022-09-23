@@ -6,8 +6,8 @@
 #include "MicroBitCompat.h"
 
 #ifdef SOFTDEVICE_PRESENT
-#include "nrf_mbr.h"
-#include "nrf_sdm.h"
+    #include "nrf_mbr.h"
+    #include "nrf_sdm.h"
 #endif
 
 /*
@@ -57,7 +57,7 @@
 // Defines where in memory persistent data is stored.
 #ifndef MICROBIT_STORAGE_PAGE
 #ifdef SOFTDEVICE_PRESENT
-#define MICROBIT_STORAGE_PAGE           ( MICROBIT_BOOTLOADER_ADRESS - MICROBIT_CODEPDAGESIZE * 3)
+#define MICROBIT_STORAGE_PAGE           ( MICROBIT_BOOTLOADER_ADDRESS - MICROBIT_CODEPAGESIZE * 3)
 #else
 #define MICROBIT_STORAGE_PAGE           ( 0x7F000 )
 #endif
