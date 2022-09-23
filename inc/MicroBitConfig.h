@@ -273,4 +273,12 @@ extern uint32_t __data_end__;
 #define MICROBIT_USB_SERIAL_WAKE 0
 #endif
 
+// Include the softdevice binary, bootloader and associated components into the build.
+// This is required for bluetooth to operate, see DEVICE_BLE
+//
+// Set to '0' to disable
+#ifndef SOFTDEVICE_PRESENT
+#define SOFTDEVICE_PRESENT 1
+#endig
+
 #endif
