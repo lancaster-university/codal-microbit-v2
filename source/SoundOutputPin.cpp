@@ -41,17 +41,18 @@ using namespace codal;
  * @param id the unique EventModel id of this component.
  * @param mixer the mixer to use
  */
-SoundOutputPin::SoundOutputPin(Mixer2 &mix, int id) : codal::Pin(id, 0, PIN_CAPABILITY_ANALOG), mixer(mix), synth(DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_1), outputBuffer(sizeof(SoundEffect))
+SoundOutputPin::SoundOutputPin(Mixer2 &mix, int id) : codal::Pin(id, 0, PIN_CAPABILITY_ANALOG), mixer(mix), outputBuffer(SOUND_OUTPUT_PIN_BUFFER_SIZE)
 {
-    this->value = 512;
+    this->value = 128;
     this->periodUs = 0;
-    this->fx = NULL;
     this->channel = NULL;
     this->timeOfLastUpdate = 0;
+    this->bufferWritePos = outputBuffer.getBytes();
+    this->position = 0.0f;
+    this->volume = 0;
 
     // Enable lazy periodic callback and optimised silence generation.
     CodalComponent::status |= DEVICE_COMPONENT_STATUS_IDLE_TICK;
-    synth.allowEmptyBuffers(true);
 }
 
 
@@ -148,28 +149,51 @@ int SoundOutputPin::getAnalogPeriod()
  */
 void SoundOutputPin::update()
 {
-    float volume = periodUs == 0.0f ? 0.0f : (4.0f * ((float)value)) / 512.0f;
-
     // Snapshot the curent time, so we can determine periods of silence.
     this->timeOfLastUpdate = system_timer_current_time();
+    this->volume = periodUs == 0 ? 0 : value;
 
-    // If this is the first time we've been asked to produce a sound, prime a SoundEffect buffer.
-    if (fx == NULL)
+    updateOutputBuffer();
+
+    // If this is the first time we've been asked to produce a sound, connect to the audio mixer pipeline.
+    if ((CodalComponent::status & SOUND_OUTPUT_PIN_STATUS_ENABLED) == 0)
     {
-        // Enable the audio output pipeline, if needed.
         MicroBitAudio::requestActivation();
+        channel = mixer.addChannel(*this, SOUND_OUTPUT_PIN_SAMPLE_RATE, 128);
+        CodalComponent::status |= SOUND_OUTPUT_PIN_STATUS_ENABLED;
+        channel->pullRequest();
+    }
+}
 
-        // Create a sound effect buffer, and configure a synthesizer for a raw squarewave output into the mixer.
-        fx = (SoundEffect *)&outputBuffer[0];
-        fx->duration = -CONFIG_SOUND_OUTPUT_PIN_PERIOD;
-        fx->tone.tonePrint = Synthesizer::SquareWaveTone;
-        fx->volume = 0.0f;
-        channel = mixer.addChannel(synth);
+/**
+  * Backfill samples into the output buffer based on the currnet time, and the previously defined
+  * frequency and volume settings.
+  */
+void SoundOutputPin::updateOutputBuffer(bool all)
+{
+    uint8_t *bufferEnd = outputBuffer.getBytes() + outputBuffer.length();
+    uint8_t *endPosition = all ? bufferEnd : outputBuffer.getBytes() + min(outputBuffer.length(), (int) ((1000.0f / SOUND_OUTPUT_PIN_SAMPLE_RATE) * (timeOfLastUpdate - timeOfLastPull)));
+
+    // Fill the buffer based on the previously defined period and value settings.
+    float frequency = _periodUs ? 1000000.0f / _periodUs : 0;
+    float skip = ((float)(EMOJI_SYNTHESIZER_TONE_WIDTH_F * frequency) / (float)SOUND_OUTPUT_PIN_SAMPLE_RATE);
+
+    //DMESG("[outputBuffer: %p][bufferEnd: %p][endPosition: %p][bufferWritePos: %p][volume: %d]", outputBuffer.getBytes(), bufferEnd, endPosition, bufferWritePos, this->volume);
+
+    while(bufferWritePos < endPosition)
+    {
+        *bufferWritePos = Synthesizer::SquareWaveTone(NULL, (int) position) ? this->volume : 0;
+        bufferWritePos++;
+        position += skip;
+
+        // Keep our toneprint pointer in range
+        while(position > EMOJI_SYNTHESIZER_TONE_WIDTH_F)
+            position -= EMOJI_SYNTHESIZER_TONE_WIDTH_F;
     }
 
-    // Update our parameters
-    fx->frequency = periodUs == 0 ? 6068 : 1000000.0f / (float) periodUs;
-    fx->volume = volume;
+    // Snapshot the current sound parameters in case they are changed in flight
+    _periodUs = periodUs;
+    _value = value;
 }
 
 /**
@@ -177,16 +201,34 @@ void SoundOutputPin::update()
  */
 void SoundOutputPin::idleCallback()
 {
-    if ((CodalComponent::status & SOUND_OUTPUT_PIN_STATUS_ACTIVE) && (fx->volume == 0.0f) && (system_timer_current_time() - this->timeOfLastUpdate > CONFIG_SOUND_OUTPUT_PIN_SILENCE_GATE))
-    {
+    if ((CodalComponent::status & SOUND_OUTPUT_PIN_STATUS_ACTIVE) && (this->volume == 0) && (system_timer_current_time() - this->timeOfLastUpdate > CONFIG_SOUND_OUTPUT_PIN_SILENCE_GATE))
         CodalComponent::status &= ~SOUND_OUTPUT_PIN_STATUS_ACTIVE;
-        synth.stop();
-    }
 
     // If our volume is non-zero and we're not active, then restart to synthesizer.
-    if (!(CodalComponent::status & SOUND_OUTPUT_PIN_STATUS_ACTIVE) && fx && fx->volume > 0.0f)
-    {
+    if (!(CodalComponent::status & SOUND_OUTPUT_PIN_STATUS_ACTIVE) && this->volume > 0)
         CodalComponent::status |= SOUND_OUTPUT_PIN_STATUS_ACTIVE;
-        synth.play(outputBuffer);
+}
+
+ManagedBuffer SoundOutputPin::pull()
+{
+    ManagedBuffer result;
+
+    if (CodalComponent::status & SOUND_OUTPUT_PIN_STATUS_ACTIVE)
+    {
+        result = outputBuffer;
+
+        updateOutputBuffer(true);
+        outputBuffer = ManagedBuffer(SOUND_OUTPUT_PIN_BUFFER_SIZE);
     }
+
+    this->bufferWritePos = outputBuffer.getBytes();
+    this->timeOfLastPull = system_timer_current_time();
+    channel->pullRequest();
+
+    return result;
+}
+
+int SoundOutputPin::getFormat()
+{
+    return DATASTREAM_FORMAT_8BIT_UNSIGNED;
 }
