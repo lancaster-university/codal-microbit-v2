@@ -59,6 +59,18 @@ namespace codal
         void playAsync(ManagedString sound);
 
         /**
+         * Plays a sound encoded as an array of one or more SoundEffect structures.
+         * Blocks until the sound is complete.
+         */
+        void play(ManagedBuffer sound);
+
+        /**
+         * Plays a sound encoded as an array of one or more SoundEffect structures.
+         * Does not block unless a sound effect is already queued.
+         */
+        void playAsync(ManagedBuffer sound);
+        
+        /**
          * Stops the currently playing sound.
          */
         void stop();
