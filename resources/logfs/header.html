@@ -30,62 +30,52 @@
         display: none;
       }
     </style>
-    <link rel="stylesheet" href="https://microbit.org/dl/2/dl.css" />
+    <link rel="stylesheet" href="https://mbdl.netlify.app/dl.css" />
     <script>
       // These help significantly to save bytes.
       let d = document;
       let l = location;
-
-      // By using obj[c] syntax, we can invoke this whilst saving bytes.
-      let c = "createElement";
-      let f = "diff";
-      let s = "split";
-
-      //Common strings, to save bytes.
-      let m = " your micro:bit";
-      let g = "Log is ";
-
-      // CSV
-      x = "";
+      let n = null;
+      let tag = d.createElement.bind(d);
+      let csv = "";
 
       // Allow external JS to override these actions if we managed to load it.
       // This script block is first so external JS can override individual functions.
       dl = {
-        // Using getters saves bytes significantly compared to function() whilst still remaining IE compatible
-        get download() {
-          let a = d[c /*createElement*/]("a");
+        download: function () {
+          let a = tag("a");
           a.download = "microbit.csv";
-          a.href = URL.createObjectURL(new Blob([x], { type: "text/plain" }));
+          a.href = URL.createObjectURL(new Blob([csv], { type: "text/plain" }));
           a.click();
           a.remove();
         },
-        get copy() {
-          navigator.clipboard.writeText(x.replace(/\,/g, "\t"));
+        copy: function () {
+          navigator.clipboard.writeText(csv.replace(/\,/g, "\t"));
         },
-        get update() {
-          alert("Unplug" + m /* your micro:bit*/ + ", then plug it back in and wait");
-        },
-        get clear() {
-          alert(g + /*Log is*/ "cleared when you reflash" /* your micro:bit*/ + m);
-        },
-        get load() {
+        update: alert.bind(
+          n,
+          "Unplug your micro:bit, then plug it back in and wait"
+        ),
+        clear: alert.bind(
+          n,
+          "The log is cleared when you reflash your micro:bit"
+        ),
+        load: function () {
           // Find the CSV text in the file system
           let p = d.querySelector("#w");
-          let raw = d.documentElement.outerHTML[s /*split*/]("FS_START")[2];
-          let append = function(tagName) {return p.appendChild(d[c /*createElement*/](tagName));}
+          let raw = dl.raw = d.documentElement.outerHTML.split("FS_START")[2];
           // See MicroBitLog.h/cpp for the format.
           if (/^UBIT_LOG_FS_V_002/.test(raw)) {
             let parseInteger = parseInt;
+            // To save bytes we could remove the DAPLink version as it's unused
+            // offline and the online js file could reparse the raw data
+            this.dapVer = parseInteger(raw.substr(40, 4));
 
-            let dataStart = parseInteger(raw.substr(29, 10), 16) - 2048;
+            let dataStart = parseInteger(raw.substr(29, 10)) - 2048;
             let dataSize = 0;
             while (raw.charCodeAt(dataStart + dataSize) != 0xfffd) {
               dataSize++;
             }
-            if (!dataSize) {
-              append("p").innerText = g /*Log is */ + "empty. Logged data appears here.";
-            }
-            x = raw.substr(dataStart, dataSize);
 
             // Hash the content and reload if it changes using an iframe to check for a different hash
             let hash = 0;
@@ -93,11 +83,11 @@
               hash = 31 * hash + raw.charCodeAt(i);
               hash |= 0;
             }
-            let other = l.href[s /*split*/]("?")[1];
+            let other = l.href.split("?")[1];
             if (other !== undefined) {
               // We're the iframe. Check the hash from the URL and request the parent reload if it differs.
               if (other != hash) {
-                parent.postMessage(f /*diff*/, "*");
+                parent.postMessage(raw, "*");
               }
             } else {
               // We're the parent so add content.
@@ -106,47 +96,45 @@
               // We also plan to add a "Log 65% full" indicator here in online mode.
               let logEnd = parseInteger(raw.substr(18, 10), 16);
               if (raw.substr(logEnd - 2048 + 1, 3) === "FUL") {
-                append("p").innerHTML = g /*Log is */ + "full. <a href=microbit.org/dl/full>Learn more.";
+                p.appendChild(tag("p")).innerText = "LOG FULL";
               }
 
-              tb = append("table");
-              x[s /*split*/]("\n").forEach(function (r) {
-                let tr = tb.insertRow();
-                r && r[s /*split*/](",").forEach(function(c) { tr.insertCell().innerText = c; });
+              let table = p.appendChild(tag("table"));
+              (csv = raw.substr(dataStart, dataSize)).split("\n").forEach(function (r) {
+                let tr = table.insertRow();
+                r &&
+                  r.split(",").forEach(function (c) {
+                    tr.insertCell().innerText = c;
+                  });
               });
 
               // Wait for reload messages and continually reload our iframe.
-              onmessage = function(e) {
-                if (e.data == f /*diff*/) {
-                  // MAYBE: Skip this if the tab is not visible.
-                  l.reload();
-                }
-              };
+              onmessage = l.reload.bind(l);
+
               // We assume that 5s is long enough to load a file from disk.
               // We can't afford the bytes to have onload/onerror handlers.
               let iframe;
-              setInterval(function() {
+              dl.upd = setInterval(function () {
                 iframe && iframe.remove();
-                iframe = append("iframe");
+                iframe = p.appendChild(tag("iframe"));
                 iframe.src = l.href + "?" + hash;
               }, 5_000);
             }
           }
-          return raw;
         },
       };
     </script>
-    <script src="https://microbit.org/dl/2/dl.js"></script>
+    <script src="https://mbdl.netlify.app/dl.js"></script>
     <title>micro:bit data log</title>
   </head>
-  <body onload="dl.load">
+  <body onload="dl.load()">
     <div id="w">
       <h1>micro:bit data log</h1>
       <div class="bb">
-        <button onclick="dl.download">Download</button>
-        <button onclick="dl.copy">Copy</button>
-        <button onclick="dl.update">Update data&mldr;</button>
-        <button onclick="dl.clear">Clear log&mldr;</button>
+        <button onclick="dl.download()">Download</button>
+        <button onclick="dl.copy()">Copy</button>
+        <button onclick="dl.update()">Update data&mldr;</button>
+        <button onclick="dl.clear()">Clear log&mldr;</button>
       </div>
       <p id="v">Offline: no visual preview</p>
     </div>
