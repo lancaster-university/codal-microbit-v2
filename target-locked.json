@@ -51,13 +51,13 @@
     "generate_hex": true,
     "libraries": [
         {
-            "branch": "f08eb30d75d0a786229344431177aa0e1c67c0a3",
+            "branch": "d376f1a851457effaf34058c62bd6c42c5ada6a0",
             "name": "codal-core",
             "type": "git",
             "url": "https://github.com/lancaster-university/codal-core"
         },
         {
-            "branch": "92341a800190536a6eb9df186864a49f9e7ce2da",
+            "branch": "f169008a35e69171aa60761a17bd4917be9dee08",
             "name": "codal-nrf52",
             "type": "git",
             "url": "https://github.com/lancaster-university/codal-nrf52"
@@ -72,6 +72,6 @@
     "linker_flags": "-Wl,--no-wchar-size-warning -Wl,--gc-sections -Wl,--wrap,atexit -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -Wl,--start-group -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys -Wl,--end-group",
     "post_process": "",
     "processor": "NRF52833",
-    "snapshot_version": "v0.2.43",
+    "snapshot_version": "v0.2.42",
     "toolchain": "ARM_GCC"
 }
