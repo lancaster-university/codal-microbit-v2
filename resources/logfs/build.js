@@ -31,6 +31,7 @@ let result = minify(input, {
 const limit = 2048;
 const maxSize = limit - delimiter.length;
 const padding = maxSize - result.length;
+console.log(`${padding} bytes remaining`);
 if (padding < 0) {
   console.error(
     `Could not minimize to ${maxSize} bytes. Difference: ${Math.abs(padding)}`

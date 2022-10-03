@@ -19,7 +19,7 @@
         text-align: right;
       }
       tr:first-child {
-        font-weight: bold;
+        font-weight: 700;
       }
       td {
         border: 1px solid #ddd;
@@ -30,18 +30,18 @@
         display: none;
       }
     </style>
-    <link rel="stylesheet" href="https://microbit.org/dl/2/dl.css" />
+    <link rel="stylesheet" href="https://mbdl.netlify.app/dl.css" />
     <script>
       // These help significantly to save bytes.
-      let w = window;
       let d = document;
-      let l = w.location;
+      let l = location;
       let n = null;
-      let csv = "";
       let tag = d.createElement.bind(d);
+      let csv = "";
+
       // Allow external JS to override these actions if we managed to load it.
       // This script block is first so external JS can override individual functions.
-      w.dl = {
+      dl = {
         download: function () {
           let a = tag("a");
           a.download = "microbit.csv";
@@ -63,20 +63,19 @@
         load: function () {
           // Find the CSV text in the file system
           let p = d.querySelector("#w");
-          let raw = d.documentElement.outerHTML.split("FS_START")[2];
+          let raw = dl.raw = d.documentElement.outerHTML.split("FS_START")[2];
           // See MicroBitLog.h/cpp for the format.
           if (/^UBIT_LOG_FS_V_002/.test(raw)) {
             let parseInteger = parseInt;
             // To save bytes we could remove the DAPLink version as it's unused
             // offline and the online js file could reparse the raw data
-            this.dapVer = parseInteger(raw.substr(40, 4), 10);
+            this.dapVer = parseInteger(raw.substr(40, 4));
 
-            let dataStart = parseInteger(raw.substr(29, 10), 16) - 2048;
+            let dataStart = parseInteger(raw.substr(29, 10)) - 2048;
             let dataSize = 0;
             while (raw.charCodeAt(dataStart + dataSize) != 0xfffd) {
               dataSize++;
             }
-            csv = raw.substr(dataStart, dataSize);
 
             // Hash the content and reload if it changes using an iframe to check for a different hash
             let hash = 0;
@@ -88,7 +87,7 @@
             if (other !== undefined) {
               // We're the iframe. Check the hash from the URL and request the parent reload if it differs.
               if (other != hash) {
-                parent.postMessage("diff", "*");
+                parent.postMessage(raw, "*");
               }
             } else {
               // We're the parent so add content.
@@ -101,7 +100,7 @@
               }
 
               let table = p.appendChild(tag("table"));
-              csv.split("\n").forEach(function (r) {
+              (csv = raw.substr(dataStart, dataSize)).split("\n").forEach(function (r) {
                 let tr = table.insertRow();
                 r &&
                   r.split(",").forEach(function (c) {
@@ -110,16 +109,12 @@
               });
 
               // Wait for reload messages and continually reload our iframe.
-              w.onmessage = function (e) {
-                if (e.data == "diff") {
-                  // MAYBE: Skip this if the tab is not visible.
-                  l.reload();
-                }
-              };
+              onmessage = l.reload.bind(l);
+
               // We assume that 5s is long enough to load a file from disk.
               // We can't afford the bytes to have onload/onerror handlers.
               let iframe;
-              setInterval(function () {
+              dl.upd = setInterval(function () {
                 iframe && iframe.remove();
                 iframe = p.appendChild(tag("iframe"));
                 iframe.src = l.href + "?" + hash;
@@ -129,7 +124,7 @@
         },
       };
     </script>
-    <script src="https://microbit.org/dl/2/dl.js"></script>
+    <script src="https://mbdl.netlify.app/dl.js"></script>
     <title>micro:bit data log</title>
   </head>
   <body onload="dl.load()">

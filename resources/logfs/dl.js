@@ -19,7 +19,7 @@ function UserGraphError(message) {
   let isParentPage = !location.href.split("?")[1];
   if (isParentPage) {
     const base = Object.keys(window.dl).reduce(function (acc, curr) {
-      acc[curr] = window.dl[curr];
+      acc[curr] = function() {window.dl[curr]};
       return acc;
     }, {});
     // Overrides that provide additional behaviour when online.
@@ -83,10 +83,11 @@ function UserGraphError(message) {
           document.head.appendChild(graphLib);
         }
 
-        base.load();
+        // base.load() returns the raw data contained after FS_START, meaning we
+        // can parse it again here to fetch the DAPLink version - saves bytes!
+        const rawData = base.load();
 
-        // The base.load() function attaches the DAPLink version to the original object
-        this.daplinkVersion = base.dapVer;
+        this.daplinkVersion = parseInt(rawData.substring(40, 44));
       },
 
       hasGraph: function () {
