@@ -3,10 +3,27 @@
  *
  * Run it via the NPM scripts. See docs in README.md.
  */
+const ejs = require("ejs");
 const minify = require("html-minifier").minify;
 const fs = require("fs");
 
-const input = fs.readFileSync("header.html", { encoding: "ascii" });
+// Nab the codal config for the current project
+const codal = JSON.parse( fs.readFileSync( "../../../../codal.json" ) );
+
+// Build the template vars. Environment beats config which beats constant defaults
+const TEMPLATE_VARS = {
+  URL_BASE: process.env.MICROBIT_URL || codal.config.MICROBIT_URL || "https://microbit.org/dl/2"
+};
+TEMPLATE_VARS.URL_JS = process.env.MICROBIT_JS_URL || codal.config.MICROBIT_JS_URL || `${TEMPLATE_VARS.URL_BASE}/dl.js`;
+TEMPLATE_VARS.URL_CSS = process.env.MICROBIT_CSS_URL || codal.config.MICROBIT_CSS_URL || `${TEMPLATE_VARS.URL_BASE}/dl.css`;
+
+Object.keys(TEMPLATE_VARS).forEach(k => {
+  console.log( `${k} => '${TEMPLATE_VARS[k]}'` );
+});
+
+// Render the template and minify the best we can...
+const template = fs.readFileSync("header.html", { encoding: "ascii" });
+const input = ejs.render( template, TEMPLATE_VARS );
 const delimiter = "<!--FS_START";
 let result = minify(input, {
   collapseBooleanAttributes: true,

@@ -30,7 +30,7 @@
         display: none;
       }
     </style>
-    <link rel="stylesheet" href="https://mbdl.netlify.app/dl.css" />
+    <link rel="stylesheet" href="<%= URL_CSS %>" />
     <script>
       // These help significantly to save bytes.
       let d = document;
@@ -124,7 +124,7 @@
         },
       };
     </script>
-    <script src="https://mbdl.netlify.app/dl.js"></script>
+    <script src="<%= URL_JS %>"></script>
     <title>micro:bit data log</title>
   </head>
   <body onload="dl.load()">
