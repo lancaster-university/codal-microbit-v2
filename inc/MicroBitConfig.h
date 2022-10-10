@@ -279,6 +279,6 @@ extern uint32_t __data_end__;
 // Set to '0' to disable
 #ifndef SOFTDEVICE_PRESENT
 #define SOFTDEVICE_PRESENT 1
-#endig
+#endif
 
 #endif
