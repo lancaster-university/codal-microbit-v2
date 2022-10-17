@@ -33,5 +33,16 @@ target_link_libraries(
     ${LIB_ARCHIVE_FILES}
 )
 
+# Check if we need to rebuild the HTML sources based on an URL change via the variable MICROBIT_URL
+if("${codal.config.MICROBIT_URL}" STRGREATER "")
+    message( INFO "Using non-standard upstream URL, building with custom HTML stages!" )
+    add_custom_target(
+        htmlRebuildTarget
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/resources/logfs 
+        COMMAND node ${CMAKE_CURRENT_SOURCE_DIR}/resources/logfs/build.js
+    )
+    add_dependencies(codal-microbit-v2 htmlRebuildTarget)
+endif()
+
 # expose it to parent cmake.
 target_include_directories(codal-microbit-v2 PUBLIC ${INCLUDE_DIRS})
