@@ -234,7 +234,13 @@ namespace codal
              * A periodic callback invoked by the fiber scheduler idle thread.
              * We use this for any low priority, background housekeeping.
              */
-            virtual void idleCallback();
+            virtual void idleCallback() override;
+
+            /**
+            * Periodic callback from Device system timer.
+            *
+            */
+            virtual void periodicCallback() override;
 
             /**
              * Determine the time since this MicroBit was last reset.

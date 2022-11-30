@@ -6,7 +6,8 @@ MEMORY
   BOOTLOADER (rx) : ORIGIN = 0x77000, LENGTH = 0x7E000 - 0x77000
   SETTINGS (rx) : ORIGIN = 0x7E000, LENGTH = 0x2000
   UICR (rx) : ORIGIN = 0x10001014, LENGTH = 0x8
-  RAM (rwx) : ORIGIN = 0x20002030, LENGTH = 0x20020000 - 0x20002030
+  NOINIT (rwx) : ORIGIN = 0x20002030, LENGTH = 0x4
+  RAM (rwx) : ORIGIN = 0x20002034, LENGTH = 0x20020000 - 0x20002034
 }
 OUTPUT_FORMAT ("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 ENTRY(Reset_Handler)
@@ -162,12 +163,12 @@ SECTIONS
         __data_end__ = .;
     } > RAM
     __edata = .;
-    .noinit :
+    .noinit (NOLOAD):
     {
       PROVIDE(__start_noinit = .);
       KEEP(*(.noinit))
       PROVIDE(__stop_noinit = .);
-    } > RAM
+    } > NOINIT
     .bss :
     {
         . = ALIGN(4);
