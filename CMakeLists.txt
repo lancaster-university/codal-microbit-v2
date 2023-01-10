@@ -1,7 +1,14 @@
 project(codal-microbit-v2)
 
+# Actually merge our multiple configs into a single set of values so we can query them easily.
+# Note: This will be removed when we move to a library-ified version of the build system
+#       so do not rely on it for anything.
+foreach( _key _val IN ZIP_LISTS FINAL_FIELDS FINAL_VALUES )
+    set( "__merged.config.${_key}" "${_val}" )
+endforeach()
+
 # Determine if we need SOFTDEVICE support by checking if BLE is enabled.
-if( ("${codal.config.DEVICE_BLE}" STREQUAL "1") OR ("${device.config.DEVICE_BLE}" STREQUAL "1") )
+if( "${__merged.config.DEVICE_BLE}" STREQUAL "1" )
     message( "Building WITH softdevice support" )
     file( APPEND "${EXTRA_INCLUDES_PATH}" " #define SOFTDEVICE_PRESENT    1" )
     set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -T\"${CMAKE_CURRENT_LIST_DIR}/ld/nrf52833-softdevice.ld\"" PARENT_SCOPE)
