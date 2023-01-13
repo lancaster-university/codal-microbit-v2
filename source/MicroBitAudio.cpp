@@ -309,9 +309,9 @@ int MicroBitAudio::setSleep(bool doSleep)
  */
 bool MicroBitAudio::isPlaying()
 {
-    CODAL_TIMESTAMP t = system_timer_current_time_us();
-    CODAL_TIMESTAMP start = mixer.getSilenceStartTime() + CONFIG_AUDIO_MIXER_OUTPUT_LATENCY_US;
-    CODAL_TIMESTAMP end = mixer.getSilenceEndTime() + CONFIG_AUDIO_MIXER_OUTPUT_LATENCY_US;
+    uint32_t t = system_timer_current_time_us();
+    uint32_t start = mixer.getSilenceStartTime();
+    uint32_t end = mixer.getSilenceEndTime();
 
-    return (start && t > start && (end == 0 || t < end));
+    return ((start && t >= (start + CONFIG_AUDIO_MIXER_OUTPUT_LATENCY_US)) && (end == 0 || t < (end + CONFIG_AUDIO_MIXER_OUTPUT_LATENCY_US - 100)));
 }

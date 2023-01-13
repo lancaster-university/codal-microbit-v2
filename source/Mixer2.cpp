@@ -423,5 +423,5 @@ CODAL_TIMESTAMP Mixer2::getSilenceStartTime()
  */
 CODAL_TIMESTAMP Mixer2::getSilenceEndTime()
 {
-        return silenceEndTime;
+    return silenceEndTime;
 }
