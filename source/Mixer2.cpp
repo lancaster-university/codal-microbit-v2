@@ -25,6 +25,7 @@ DEALINGS IN THE SOFTWARE.
 #include "Mixer2.h"
 #include "StreamNormalizer.h"
 #include "ErrorNo.h"
+#include "Timer.h"
 #include "CodalDmesg.h"
 
 using namespace codal;
@@ -48,6 +49,8 @@ Mixer2::Mixer2(float sampleRate, int sampleRange, int format)
     this->orMask = 0;
     this->silenceLevel = 0.0f;
     this->silent = true;
+    this->silenceStartTime = 0;
+    this->silenceEndTime = 0;
 
     // Attempt to configure output format to requested value
     this->setFormat(format);
@@ -116,6 +119,9 @@ int Mixer2::removeChannel( MixerChannel * channel )
 
 ManagedBuffer Mixer2::pull() 
 {
+    // Take a local timestamp, in case we need to compute a time when a pice of audio will be played out of the speaker
+    CODAL_TIMESTAMP pullTime = system_timer_current_time_us();
+
     // If we have no channels, just return an empty buffer.
     if (!channels)
     {
@@ -200,10 +206,22 @@ ManagedBuffer Mixer2::pull()
             mix[i] = silenceLevel;
     }
 
-    if ( this->silent != silence)
+    if (this->silent != silence)
     {
         this->silent = silence;
-        Event(DEVICE_ID_MIXER, this->silent ? DEVICE_MIXER_EVT_SILENCE : DEVICE_MIXER_EVT_SOUND);
+
+        if (this->silent)
+        {
+            silenceStartTime = pullTime;
+            silenceEndTime = 0;
+
+            Event(DEVICE_ID_MIXER, DEVICE_MIXER_EVT_SILENCE);
+        }
+        else
+        {
+            silenceEndTime = pullTime;
+            Event(DEVICE_ID_MIXER, DEVICE_MIXER_EVT_SOUND);
+        }
     }
 
     // Scale and pack to our output format
@@ -384,4 +402,26 @@ int Mixer2::setSilenceLevel(float level)
 bool Mixer2::isSilent()
 {
   return silent;
+}
+
+/**
+ * Determines the time at which the mixer has most recently been generating silence 
+ *
+ * @return the system time in microseconds at which the mixer has been continuously 
+ * producing silence on its output, or zero if the mixer is not producing silence.
+ */
+CODAL_TIMESTAMP Mixer2::getSilenceStartTime()
+{
+    return silenceStartTime;
+}
+
+/**
+ * Determines the time at which the mixer has been continuously generating silence 
+ *
+ * @return the system time in microseconds at which the mixer has been continuously 
+ * producing silence on its output, or zero if the mixer is not producing silence.
+ */
+CODAL_TIMESTAMP Mixer2::getSilenceEndTime()
+{
+        return silenceEndTime;
 }

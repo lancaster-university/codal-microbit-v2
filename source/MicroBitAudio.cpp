@@ -302,3 +302,16 @@ int MicroBitAudio::setSleep(bool doSleep)
    
     return DEVICE_OK;
 }
+
+/**
+ * Determine if any audio is currently being played, from any source.
+ * @return true if audio is being played, false otherwise.
+ */
+bool MicroBitAudio::isPlaying()
+{
+    CODAL_TIMESTAMP t = system_timer_current_time_us();
+    CODAL_TIMESTAMP start = mixer.getSilenceStartTime() + CONFIG_AUDIO_MIXER_OUTPUT_LATENCY_US;
+    CODAL_TIMESTAMP end = mixer.getSilenceEndTime() + CONFIG_AUDIO_MIXER_OUTPUT_LATENCY_US;
+
+    return (start && t > start && (end == 0 || t < end));
+}

@@ -38,7 +38,13 @@ DEALINGS IN THE SOFTWARE.
 
 // Status Flags
 #define MICROBIT_AUDIO_STATUS_DEEPSLEEP       0x0001
-#define CONFIG_DEFAULT_MICROPHONE_GAIN 0.1f
+#define CONFIG_DEFAULT_MICROPHONE_GAIN        0.1f
+
+
+// Configurable options
+#ifndef CONFIG_AUDIO_MIXER_OUTPUT_LATENCY_US
+#define CONFIG_AUDIO_MIXER_OUTPUT_LATENCY_US              (uint32_t) ((CONFIG_MIXER_BUFFER_SIZE/2) * (1000000.0f/44100.0f))
+#endif
 
 namespace codal
 {
@@ -152,6 +158,12 @@ namespace codal
          * @return true if enabled, false otherwise.
          */
         bool isSpeakerEnabled();
+
+        /**
+         * Query whether any audio is currently being played, from any source.
+         * @return true if audio is being played, false otherwise.
+         */
+        bool isPlaying();
 
         /**
          * Define which pin on the edge connector is used for audio.
