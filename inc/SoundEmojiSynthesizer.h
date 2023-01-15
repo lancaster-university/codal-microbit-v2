@@ -114,9 +114,11 @@ namespace codal
         DataSink*               downStream;             // Our downstream component.
         FiberLock               lock;                   // Ingress queue to handle concurrent playback requests.
         ManagedBuffer           buffer;                 // Current playout buffer.
+        ManagedBuffer           buffer2;                // Current playout buffer.
         ManagedBuffer           effectBuffer;           // Current sound effect sequence being generated.
         ManagedBuffer           emptyBuffer;            // Zero length buffer.
         SoundEffect*            effect;                 // The effect within the current EffectBuffer that's being generated.
+        uint16_t*               partialBuffer;          // Reference to a position within a DMA buffer, if a SFX completed mid buffer.
 
         int                     sampleRate;             // The sample rate of our output, measure in samples per second (e.g. 44000).
         float                   sampleRange;            // The maximum sample value that can be output.
@@ -240,6 +242,11 @@ namespace codal
          * (at the currently defined sample rate)
          */
         int determineSampleCount(float playoutTime);
+
+        /**
+        * Provide the next available ManagedBuffer to our downstream caller, if available.
+        */
+        ManagedBuffer fillOutputBuffer();
 
     };
 }
