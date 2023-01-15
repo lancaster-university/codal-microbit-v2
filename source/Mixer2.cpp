@@ -342,9 +342,9 @@ int Mixer2::getSampleRange()
  * Determine the sample rate output of this Mixer.
  * @return The sample rate (samples per second) of the mixer output.
  */
-int Mixer2::getSampleRate()
+float Mixer2::getSampleRate()
 {
-    return (int) this->outputRate;
+    return this->outputRate;
 }
 
 /**

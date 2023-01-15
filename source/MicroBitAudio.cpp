@@ -70,16 +70,16 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
     rawSplitter = new StreamSplitter(*micFilter);
 
     //Initilise stream normalizer
-    processor = new StreamNormalizer(*rawSplitter, 0.08f, true, DATASTREAM_FORMAT_8BIT_SIGNED, 10);
+    processor = new StreamNormalizer(*rawSplitter->createChannel(), 0.08f, true, DATASTREAM_FORMAT_8BIT_SIGNED, 10);
 
     //Initilise stream splitter
-    splitter = new StreamSplitter(processor->output);
+    splitter = new StreamSplitter(processor->output, DEVICE_ID_SPLITTER);
 
     //Initilise level detector and attach to splitter
-    level = new LevelDetector(*splitter, 150, 75, DEVICE_ID_SYSTEM_LEVEL_DETECTOR, false);
+    level = new LevelDetector(*splitter->createChannel(), 150, 75, DEVICE_ID_SYSTEM_LEVEL_DETECTOR, false);
 
     //Initilise level detector SPL and attach to splitter
-    levelSPL = new LevelDetectorSPL(*rawSplitter, 85.0, 65.0, 16.0, 0, DEVICE_ID_MICROPHONE, false);
+    levelSPL = new LevelDetectorSPL(*rawSplitter->createChannel(), 85.0, 65.0, 16.0, 0, DEVICE_ID_MICROPHONE, false);
 
     // Register listener for splitter events
     if(EventModel::defaultEventBus){

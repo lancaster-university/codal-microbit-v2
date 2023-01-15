@@ -199,7 +199,7 @@ public:
      * Determine the sample rate output of this Mixer.
      * @return The sample rate (samples per second) of the mixer output.
      */
-    int getSampleRate();
+    float getSampleRate();
 
     /**
      * Defines an optional bit mask to logical OR with each sample.

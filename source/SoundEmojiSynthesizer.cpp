@@ -312,7 +312,7 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
  * Determine the sample rate currently in use by this Synthesizer.
  * @return the current sample rate, in Hz.
  */
-int SoundEmojiSynthesizer::getSampleRate()
+float SoundEmojiSynthesizer::getSampleRate()
 {
     return sampleRate;
 }

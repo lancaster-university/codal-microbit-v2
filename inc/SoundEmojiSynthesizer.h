@@ -190,7 +190,7 @@ namespace codal
          * Determine the sample rate currently in use by this Synthesizer.
          * @return the current sample rate, in Hz.
          */
-        int getSampleRate();
+        float getSampleRate();
 
         /**
          * Change the sample rate used by this Synthesizer,
