@@ -7,6 +7,10 @@ foreach( _key _val IN ZIP_LISTS FINAL_FIELDS FINAL_VALUES )
     set( "__merged.config.${_key}" "${_val}" )
 endforeach()
 
+if( DEFINED __merged.config.SOFTDEVICE_PRESENT )
+    message( FATAL_ERROR "Do not define SOFTDEVICE_PRESENT in your configuration, use DEVICE_BLE instead." )
+endif()
+
 # Determine if we need SOFTDEVICE support by checking if BLE is enabled.
 if( "${__merged.config.DEVICE_BLE}" STREQUAL "1" )
     message( "Building WITH softdevice support" )
