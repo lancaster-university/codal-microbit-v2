@@ -215,8 +215,13 @@ namespace codal
              *
              * @param milliseconds the amount of time, in ms, to wait for. This number cannot be negative.
              *
-             * @return MICROBIT_OK on success, MICROBIT_INVALID_PARAMETER milliseconds is less than zero.
+             * @code
+             * uBit.sleep(20); //sleep for 20ms
+             * @endcode
              *
+             * @note This operation is currently limited by the rate of the system timer, therefore
+             *       the granularity of the sleep operation is limited to 4 ms, unless the rate of
+             *       the system timer is modified.
              */
             void sleep(uint32_t milliseconds);
 
@@ -289,8 +294,13 @@ namespace codal
      *
      * @param milliseconds the amount of time, in ms, to wait for. This number cannot be negative.
      *
-     * @return MICROBIT_OK on success, MICROBIT_INVALID_PARAMETER milliseconds is less than zero.
+     * @code
+     * uBit.sleep(20); //sleep for 20ms
+     * @endcode
      *
+     * @note This operation is currently limited by the rate of the system timer, therefore
+     *       the granularity of the sleep operation is limited to 4 ms, unless the rate of
+     *       the system timer is modified.
      */
     inline void MicroBit::sleep(uint32_t milliseconds)
     {
