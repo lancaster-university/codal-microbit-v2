@@ -100,6 +100,8 @@ namespace codal
 
     class MicroBitRadio : CodalComponent
     {
+        uint8_t                 band;       // The radio transmission and reception frequency band.
+        uint8_t                 power;      // The radio output power level of the transmitter.
         uint8_t                 group;      // The radio group to which this micro:bit belongs.
         uint8_t                 queueDepth; // The number of packets in the receiver queue.
         int                     rssi;
