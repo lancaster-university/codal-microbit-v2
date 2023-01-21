@@ -159,7 +159,27 @@ int MicroBitRadio::setFrequencyBand(int band)
     // Record our frequency band locally
     this->band = band;
 
-    NRF_RADIO->FREQUENCY = (uint32_t)band;
+    if ( NRF_RADIO->FREQUENCY != (uint32_t) band && (status & MICROBIT_RADIO_STATUS_INITIALISED))
+    {
+        // We need to restart the radio for the frequency change to take effect
+        NVIC_DisableIRQ(RADIO_IRQn);
+        NRF_RADIO->EVENTS_DISABLED = 0;
+        NRF_RADIO->TASKS_DISABLE = 1;
+        while (NRF_RADIO->EVENTS_DISABLED == 0);
+
+        NRF_RADIO->FREQUENCY = (uint32_t) band;
+
+        // Reenable the radio to wait for the next packet
+        NRF_RADIO->EVENTS_READY = 0;
+        NRF_RADIO->TASKS_RXEN = 1;
+        while (NRF_RADIO->EVENTS_READY == 0);
+
+        NRF_RADIO->EVENTS_END = 0;
+        NRF_RADIO->TASKS_START = 1;
+
+        NVIC_ClearPendingIRQ(RADIO_IRQn);
+        NVIC_EnableIRQ(RADIO_IRQn);
+    }
 
     return DEVICE_OK;
 }
