@@ -109,8 +109,10 @@ MicroBitRadio::MicroBitRadio(uint16_t id) : datagram(*this), event (*this)
 {
     this->id = id;
     this->status = 0;
-	this->group = MICROBIT_RADIO_DEFAULT_GROUP;
-	this->queueDepth = 0;
+    this->band  = MICROBIT_RADIO_DEFAULT_FREQUENCY;
+    this->power = MICROBIT_RADIO_DEFAULT_TX_POWER;
+    this->group = MICROBIT_RADIO_DEFAULT_GROUP;
+    this->queueDepth = 0;
     this->rssi = 0;
     this->rxQueue = NULL;
     this->rxBuf = NULL;
@@ -129,6 +131,9 @@ int MicroBitRadio::setTransmitPower(int power)
 {
     if (power < 0 || power >= MICROBIT_RADIO_POWER_LEVELS)
         return DEVICE_INVALID_PARAMETER;
+
+    // Record our power locally
+    this->power = power;
 
     NRF_RADIO->TXPOWER = (uint32_t)MICROBIT_RADIO_POWER_LEVEL[power];
 
@@ -151,7 +156,30 @@ int MicroBitRadio::setFrequencyBand(int band)
     if (band < 0 || band > 100)
         return DEVICE_INVALID_PARAMETER;
 
-    NRF_RADIO->FREQUENCY = (uint32_t)band;
+    // Record our frequency band locally
+    this->band = band;
+
+    if ( NRF_RADIO->FREQUENCY != (uint32_t) band && (status & MICROBIT_RADIO_STATUS_INITIALISED))
+    {
+        // We need to restart the radio for the frequency change to take effect
+        NVIC_DisableIRQ(RADIO_IRQn);
+        NRF_RADIO->EVENTS_DISABLED = 0;
+        NRF_RADIO->TASKS_DISABLE = 1;
+        while (NRF_RADIO->EVENTS_DISABLED == 0);
+
+        NRF_RADIO->FREQUENCY = (uint32_t) band;
+
+        // Reenable the radio to wait for the next packet
+        NRF_RADIO->EVENTS_READY = 0;
+        NRF_RADIO->TASKS_RXEN = 1;
+        while (NRF_RADIO->EVENTS_READY == 0);
+
+        NRF_RADIO->EVENTS_END = 0;
+        NRF_RADIO->TASKS_START = 1;
+
+        NVIC_ClearPendingIRQ(RADIO_IRQn);
+        NVIC_EnableIRQ(RADIO_IRQn);
+    }
 
     return DEVICE_OK;
 }
@@ -277,9 +305,9 @@ int MicroBitRadio::enable()
     NRF_CLOCK->TASKS_HFCLKSTART = 1;
     while (NRF_CLOCK->EVENTS_HFCLKSTARTED == 0);
 
-    // Bring up the nrf51822 RADIO module in Nordic's proprietary 1MBps packet radio mode.
-    setTransmitPower(MICROBIT_RADIO_DEFAULT_TX_POWER);
-    setFrequencyBand(MICROBIT_RADIO_DEFAULT_FREQUENCY);
+    // Bring up the nrf RADIO module in Nordic's proprietary 1MBps packet radio mode.
+    NRF_RADIO->TXPOWER = (uint32_t)MICROBIT_RADIO_POWER_LEVEL[this->power];
+    NRF_RADIO->FREQUENCY = (uint32_t)this->band;
 
     // Configure for 1Mbps throughput.
     // This may sound excessive, but running a high data rates reduces the chances of collisions...
