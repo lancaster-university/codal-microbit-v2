@@ -116,7 +116,7 @@ MicroBitVersion MicroBitPowerManager::getVersion()
         switch(version.board)
         {
             // V2.00 KL27
-            case 39172:
+            case 0x9904:
                 status |= MICROBIT_USB_INTERFACE_ALWAYS_NOP;
                 break;
 
