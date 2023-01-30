@@ -221,10 +221,6 @@ int MicroBit::init()
 
     power.readInterfaceRequest();
 
-#if CONFIG_ENABLED(DEVICE_BLE) && ( CONFIG_ENABLED(MICROBIT_BLE_PAIRING_MODE) || CONFIG_ENABLED(MICROBIT_BLE_ENABLED))
-    MicroBitVersion version = power.getVersion();
-#endif
-
 #if CONFIG_ENABLED(DEVICE_BLE) && CONFIG_ENABLED(MICROBIT_BLE_PAIRING_MODE)
     int i=0;
     // Test if we need to enter BLE pairing mode
@@ -255,7 +251,7 @@ int MicroBit::init()
             delete flashIncomplete;
 
             // Start the BLE stack, if it isn't already running.
-            bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, storage, true, version.board);
+            bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, storage, true);
             
             // Enter pairing mode, using the LED matrix for any necessary pairing operations
             bleManager.pairingMode(display, buttonA);
@@ -265,7 +261,7 @@ int MicroBit::init()
 
 #if CONFIG_ENABLED(DEVICE_BLE) && CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
     // Start the BLE stack, if it isn't already running.
-    bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, storage, false, version.board);
+    bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, storage, false);
 #endif
 
     // Deschedule for a little while, just to allow for any components that finialise initialisation
