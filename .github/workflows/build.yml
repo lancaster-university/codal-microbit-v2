@@ -43,11 +43,10 @@ jobs:
           repository: 'lancaster-university/microbit-v2-samples'
       # We need to use the checkout action (instead of build.py cloning the
       # repository) so that on PRs we can get the commit from the PR merge
-      - name: Clone the this repository in the libraries folder
+      - name: Clone this repository in the libraries folder
         uses: actions/checkout@v3
         with:
           path: libraries/codal-microbit-v2
-          fetch-depth: '0'
       # Changing the commit SHA might be unnecessary, as we've already cloned this
       # repo, but could be useful to ensure codal.json points to the same commit
       - name: Modify codal.json files to use this codal-microbit-v2 commit
@@ -55,13 +54,15 @@ jobs:
         run: |
           echo "codal.json before:"
           cat codal.json
-          python -c "import pathlib; \
-                     f1 = pathlib.Path('codal.json'); \
-                     f1.write_text(f1.read_text().replace(',\n        \"dev\": true', '')); \
-                     f1.write_text(f1.read_text().replace('master', '${GITHUB_SHA}')); \
-                     f2 = pathlib.Path('codal.ble.json'); \
-                     f2.write_text(f2.read_text().replace('master', '${GITHUB_SHA}')); \
-                     f2.write_text(f2.read_text().replace(',\n        \"dev\": true', ''))"
+          python - << EOF
+          import pathlib
+          for codal_file in ['codal.json', 'codal.ble.json']:
+              f = pathlib.Path(codal_file)
+              f.write_text(f.read_text() \
+                  .replace('lancaster-university/codal-microbit-v2', '${GITHUB_REPOSITORY}') \
+                  .replace('master', '${GITHUB_SHA}') \
+                  .replace(',\n        \"dev\": true', ''))
+          EOF
           echo "codal.json after:"
           cat codal.json
       - name: Build default (non-ble) project using build.py
