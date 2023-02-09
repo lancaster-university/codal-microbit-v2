@@ -1,0 +1,94 @@
+name: Build MakeCode
+
+# MakeCode has to git clone/checkout this repo commit SHA, so only run this
+# workflow on pushes, as PRs generate a "merge commit" that is not clonable.
+on:
+  push:
+    branches: '*'
+
+jobs:
+  build-makecode:
+    strategy:
+      matrix:
+        # One job builds with the local toolchain, the other with Docker
+        pxt-flags: ["PXT_NODOCKER=1", ""]
+      fail-fast: false
+    name: Build MakeCode ${{ matrix.pxt-flags && '(nodocker)' }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Setup Python 3.7
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.7'
+      - name: Setup arm-none-eabi-gcc v10.3
+        if: ${{ matrix.pxt-flags }}
+        uses: carlosperate/arm-none-eabi-gcc-action@v1
+        with:
+          release: 10.3-2021.10
+      - name: Install Yotta, Ninja v1.10 & CMake v3.22 via PyPI
+        if: ${{ matrix.pxt-flags }}
+        # MarkupSafe < 2.0 needed for Yotta
+        run: python -m pip install MarkupSafe==1.1.1 ninja==1.10.2.2 cmake==3.22.1 yotta
+      - name: Install srecord
+        if: ${{ matrix.pxt-flags }}
+        run: |
+          sudo apt update
+          sudo apt install srecord
+      - name: Setup Node.js v16
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+      - name: Clone the pxt-microbit repo
+        uses: actions/checkout@v3
+        with:
+          repository: 'microsoft/pxt-microbit'
+      - name: Install MakeCode dependencies
+        run: |
+          npm install -g pxt
+          npm install
+          # Running from pxt-microbit main branch, so use latest release of these packages
+          npm install pxt-core@latest pxt-common-packages@latest
+      - name: Edit pxtarget.json to use this repository and commit
+        shell: bash
+        run: |
+          python - << EOF
+          import json, collections
+
+          def msg_exit(msg):
+              print('{}\nThe GH Actions workflow Python script needs to be updated.'.format(msg))
+              exit(1)
+
+          with open('pxtarget.json', 'r') as f:
+              pxt_target = json.loads(f.read(), object_pairs_hook=collections.OrderedDict)
+
+          try:
+              mbcodal = pxt_target['variants']['mbcodal']
+              mbdal = pxt_target['variants']['mbdal']
+              if mbdal['compileService'] != {}:
+                  msg_exit("Unexpected variants.mbdal.compileService value.")
+              if mbcodal['compileService']['codalTarget']['url'] != "https://github.com/lancaster-university/codal-microbit-v2":
+                  msg_exit("Unexpected variants.mbcodal.compileService.codalTarget.url value.")
+              # Just need to check this exists, we don't care about the value
+              _ = mbcodal['compileService']['codalTarget']['branch']
+          except KeyError as e:
+              msg_exit('The pxt-microbit/pxtarget.json structure has changed and expected keys are not found.')
+          else:
+              mbdal['compileService'] = { 'dockerArgs' : ['--env', 'YOTTA_GITHUB_AUTHTOKEN=${{ secrets.YOTTA_GITHUB_AUTHTOKEN }}'] }
+              mbcodal['compileService']['codalTarget']['url'] = mbcodal['compileService']['codalTarget']['url'].replace(
+                  'lancaster-university/codal-microbit-v2', '${GITHUB_REPOSITORY}'
+              )
+              mbcodal['compileService']['codalTarget']['branch'] = '${GITHUB_SHA}'
+
+          with open('pxtarget.json', 'w') as f:
+              f.write(json.dumps(pxt_target, indent=4))
+          EOF
+          git diff pxtarget.json
+      - name: Build MakeCode targets
+        # Because pxt runs docker with "--user build" it doesn't have write access to some mounted files,
+        # so we need to force all files created by the pxt cli to have write/execute rights for everyone
+        run: |
+          chmod -R a+rwx .
+          umask 0000
+          ${{ matrix.pxt-flags }} pxt buildtarget --local
+        env:
+          YOTTA_GITHUB_AUTHTOKEN: ${{ secrets.YOTTA_GITHUB_AUTHTOKEN }}
