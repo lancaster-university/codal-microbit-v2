@@ -10,6 +10,15 @@ project(codal-microbit-v2)
 #    set( "__merged.config.${_key}" "${_val}" )
 #endforeach()
 
+message(STATUS "===================== DEBUG VARIABLE =====================")
+get_cmake_property(_variableNames VARIABLES)
+list (SORT _variableNames)
+foreach (_variableName ${_variableNames})
+    message(STATUS "${_variableName}=${${_variableName}}")
+endforeach()
+message(STATUS "=========================================================")
+
+
 LIST( LENGTH FINAL_FIELDS _idxMax )
 MATH( EXPR _idxMax "${_idxMax} - 1" )
 foreach( _index RANGE ${_idxMax} )
