@@ -83,6 +83,7 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
 
     // Register listener for splitter events
     if(EventModel::defaultEventBus){
+        EventModel::defaultEventBus->listen(rawSplitter->id, DEVICE_EVT_ANY, this, &MicroBitAudio::onSplitterEvent, MESSAGE_BUS_LISTENER_IMMEDIATE);
         EventModel::defaultEventBus->listen(DEVICE_ID_SPLITTER, DEVICE_EVT_ANY, this, &MicroBitAudio::onSplitterEvent, MESSAGE_BUS_LISTENER_IMMEDIATE);
     }
 }
@@ -94,7 +95,8 @@ void MicroBitAudio::onSplitterEvent(MicroBitEvent e){
     if(e.value == SPLITTER_ACTIVATE_CHANNEL)
         activateMic();
     else if (e.value == SPLITTER_DEACTIVATE_CHANNEL)
-        deactivateMic();
+        if( splitter->numberChannels <= 0 && rawSplitter->numberChannels <= 0 ) // Only deactivate if we have no more channels to serve!
+            deactivateMic();
 }
 
 /**
