@@ -100,5 +100,13 @@ target_link_libraries(
     ${LIB_ARCHIVE_FILES}
 )
 
+message(STATUS "===================== DEBUG VARIABLE =====================")
+get_cmake_property(_variableNames VARIABLES)
+list (SORT _variableNames)
+foreach (_variableName ${_variableNames})
+    message(STATUS "${_variableName}=${${_variableName}}")
+endforeach()
+message(STATUS "=========================================================")
+
 # expose it to parent cmake.
 target_include_directories(codal-microbit-v2 PUBLIC ${INCLUDE_DIRS})
