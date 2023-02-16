@@ -32,7 +32,7 @@ DEALINGS IN THE SOFTWARE.
 
 using namespace codal;
 
-const uint8_t MICROBIT_RADIO_POWER_LEVEL[] = {0xD8, 0xD8, 0xEC, 0xF0, 0xF4, 0xF8, 0xFC, 0x00, 0x03, 0x04};
+const uint8_t MICROBIT_RADIO_POWER_LEVEL[] = {0xD8, 0xEC, 0xF0, 0xF4, 0xF8, 0xFC, 0x00, 0x04};
 
 /**
   * Provides a simple broadcast radio abstraction, built upon the raw nrf51822 RADIO module.
