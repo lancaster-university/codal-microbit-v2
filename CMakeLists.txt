@@ -40,10 +40,15 @@ if( "${__merged.config.DEVICE_BLE}" STREQUAL "1" )
     file( APPEND "${EXTRA_INCLUDES_PATH}" " #define SOFTDEVICE_PRESENT    1" )
     set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -T\"${CMAKE_CURRENT_LIST_DIR}/ld/nrf52833-softdevice-${NRF52833_SOFTDEVICE_VERSION}.ld\"" PARENT_SCOPE)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T\"${CMAKE_CURRENT_LIST_DIR}/ld/nrf52833-softdevice-${NRF52833_SOFTDEVICE_VERSION}.ld\"" PARENT_SCOPE)
+
+    RECURSIVE_FIND_FILE(LIB_ARCHIVE_FILES "${CMAKE_CURRENT_LIST_DIR}/lib/${NRF52833_SOFTDEVICE_VERSION}" "*.o")
+    
 else()
     message( "Building WITHOUT softdevice support" )
     set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -T\"${CMAKE_CURRENT_LIST_DIR}/ld/nrf52833.ld\"" PARENT_SCOPE)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T\"${CMAKE_CURRENT_LIST_DIR}/ld/nrf52833.ld\"" PARENT_SCOPE)
+
+    RECURSIVE_FIND_FILE(LIB_ARCHIVE_FILES "${CMAKE_CURRENT_LIST_DIR}/lib/no_softdevice" "*.o")
 endif()
 
 # find sources and headers
@@ -57,19 +62,23 @@ list(APPEND INCLUDE_DIRS "${INCLUDE_DIRS2}")
 list(APPEND SOURCE_FILES "${SOURCE_FILES2}")
 
 # find prebuilt libraries and objects
-# RECURSIVE_FIND_FILE(LIB_OBJECT_FILES "${CMAKE_CURRENT_LIST_DIR}/lib" "*.o")
 
-FILE(GLOB new_o_files "${CMAKE_CURRENT_LIST_DIR}/lib/*.o")
-FOREACH(o_file ${new_o_files})
-    LIST(APPEND LIB_OBJECT_FILES ${o_file})
-ENDFOREACH()
+# Add object files form lib folder (not recursively)
+# FILE(GLOB new_o_files "${CMAKE_CURRENT_LIST_DIR}/lib/*.o")
+# FOREACH(o_file ${new_o_files})
+#     LIST(APPEND LIB_OBJECT_FILES ${o_file})
+# ENDFOREACH()
 
-FILE(GLOB new_drivers_o_files "${CMAKE_CURRENT_LIST_DIR}/lib/${NRF52833_SOFTDEVICE_VERSION}/*.o")
-FOREACH(o_file ${new_drivers_o_files})
-    LIST(APPEND LIB_OBJECT_FILES ${o_file})
-ENDFOREACH()
 
-LIST(REMOVE_DUPLICATES LIB_OBJECT_FILES)
+# if( "${__merged.config.DEVICE_BLE}" STREQUAL "1" )
+#     # Add object files from specific softdevice lib folder (not recursively)
+#     FILE(GLOB new_drivers_o_files "${CMAKE_CURRENT_LIST_DIR}/lib/${NRF52833_SOFTDEVICE_VERSION}/*.o")
+#     FOREACH(o_file ${new_drivers_o_files})
+#         LIST(APPEND LIB_OBJECT_FILES ${o_file})
+#     ENDFOREACH()
+# endif()
+
+# LIST(REMOVE_DUPLICATES LIB_OBJECT_FILES)
 
 
 RECURSIVE_FIND_FILE(LIB_ARCHIVE_FILES "${CMAKE_CURRENT_LIST_DIR}/lib" "*.a")
