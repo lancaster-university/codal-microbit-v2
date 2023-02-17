@@ -61,26 +61,6 @@ RECURSIVE_FIND_FILE(SOURCE_FILES2 "${CMAKE_CURRENT_SOURCE_DIR}/model" "*.c??")
 list(APPEND INCLUDE_DIRS "${INCLUDE_DIRS2}")
 list(APPEND SOURCE_FILES "${SOURCE_FILES2}")
 
-# find prebuilt libraries and objects
-
-# Add object files form lib folder (not recursively)
-# FILE(GLOB new_o_files "${CMAKE_CURRENT_LIST_DIR}/lib/*.o")
-# FOREACH(o_file ${new_o_files})
-#     LIST(APPEND LIB_OBJECT_FILES ${o_file})
-# ENDFOREACH()
-
-
-# if( "${__merged.config.DEVICE_BLE}" STREQUAL "1" )
-#     # Add object files from specific softdevice lib folder (not recursively)
-#     FILE(GLOB new_drivers_o_files "${CMAKE_CURRENT_LIST_DIR}/lib/${NRF52833_SOFTDEVICE_VERSION}/*.o")
-#     FOREACH(o_file ${new_drivers_o_files})
-#         LIST(APPEND LIB_OBJECT_FILES ${o_file})
-#     ENDFOREACH()
-# endif()
-
-# LIST(REMOVE_DUPLICATES LIB_OBJECT_FILES)
-
-
 RECURSIVE_FIND_FILE(LIB_ARCHIVE_FILES "${CMAKE_CURRENT_LIST_DIR}/lib" "*.a")
 
 set(CMAKE_SYSTEM_PROCESSOR "armv7-m" PARENT_SCOPE)
@@ -99,14 +79,6 @@ target_link_libraries(
     ${LIB_OBJECT_FILES}
     ${LIB_ARCHIVE_FILES}
 )
-
-message(STATUS "===================== DEBUG VARIABLE =====================")
-get_cmake_property(_variableNames VARIABLES)
-list (SORT _variableNames)
-foreach (_variableName ${_variableNames})
-    message(STATUS "${_variableName}=${${_variableName}}")
-endforeach()
-message(STATUS "=========================================================")
 
 # expose it to parent cmake.
 target_include_directories(codal-microbit-v2 PUBLIC ${INCLUDE_DIRS})
