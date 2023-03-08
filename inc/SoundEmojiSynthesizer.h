@@ -27,6 +27,10 @@ DEALINGS IN THE SOFTWARE.
 
 #include "DataStream.h"
 
+#ifndef CONFIG_EMOJI_SYNTHESIZER_OUTPUT_BUFFER_DEPTH
+#define CONFIG_EMOJI_SYNTHESIZER_OUTPUT_BUFFER_DEPTH  3
+#endif
+
 #define EMOJI_SYNTHESIZER_SAMPLE_RATE         44100
 #define EMOJI_SYNTHESIZER_TONE_WIDTH          1024
 #define EMOJI_SYNTHESIZER_TONE_WIDTH_F        1024.0f
@@ -55,6 +59,8 @@ DEALINGS IN THE SOFTWARE.
 #define DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_9 3019
 
 #define DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_DONE 1
+#define DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_PLAYBACK_COMPLETE 2
+
 
 namespace codal
 {
@@ -124,6 +130,7 @@ namespace codal
         float                   sampleRange;            // The maximum sample value that can be output.
         uint16_t                orMask;                 // A bitmask that is logically OR'd with each output sample.
         int                     bufferSize;             // The number of samples to create in a single buffer before scheduling it for playback
+        int                     playbackCompleteIn;     // The number of DMA buffers to generate befor next issuing a DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_PLAYBACK_COMPLETE event
 
         float                   frequency;              // The instantaneous frequency currently being generated within an effect.
         float                   volume;                 // The instantaneous volume currently being generated within an effect.

@@ -48,21 +48,26 @@ namespace codal
 
         /**
          * Plays a sound encoded as a series of decimal encoded effects or specified by name.
-         * Blocks until the sound is complete.
+         * Blocks until the sound generation is complete, and the synthesizer is ready to accept new requests.
+         * @param sound a string representing the sound effect to play, in the form descripbed by parseSoundExperession().
+         * @param event the event to wait for - either DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_DONE (default) or DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_PLAYBACK_COMPLETE.
          */
-        void play(ManagedString sound);
+        void play(ManagedString sound, uint16_t event = DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_DONE);
 
         /**
          * Plays a sound encoded as a series of decimal encoded effects or specified by name.
          * Does not block.
+         * @param a string representing the sound effect to play, in the form descripbed by parseSoundExperession().
          */
         void playAsync(ManagedString sound);
 
         /**
-         * Plays a sound encoded as an array of one or more SoundEffect structures.
-         * Blocks until the sound is complete.
+         * Plays a sound encoded as a series of decimal encoded effects or specified by name.
+         * Blocks until the sound generation is complete, and the synthesizer is ready to accept new requests.
+         * @param sound a string representing the sound effect to play, in the form descripbed by parseSoundExperession().
+         * @param event the event to wait for - either DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_DONE (default) or DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_PLAYBACK_COMPLETE.
          */
-        void play(ManagedBuffer sound);
+        void play(ManagedBuffer sound, uint16_t event = DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_DONE);
 
         /**
          * Plays a sound encoded as an array of one or more SoundEffect structures.

@@ -42,6 +42,7 @@ SoundEmojiSynthesizer::SoundEmojiSynthesizer(uint16_t id, int sampleRate) : Coda
     this->position = 0.0f;
     this->effect = NULL;
     this->partialBuffer = NULL;
+    this->playbackCompleteIn = 0;
     this->buffer2 = ManagedBuffer(bufferSize);
 
     this->samplesToWrite = 0;
@@ -205,6 +206,15 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
     // Issue a Pull Request so that we are always receiver driven, and we're done.
     downStream->pullRequest();
 
+    // Issue a deferred DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_PLAYBACK_COMPLETE event if requested.
+    if (playbackCompleteIn > 0)
+    {
+        playbackCompleteIn--;
+
+        if (playbackCompleteIn == 0)
+            Event(id, DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_PLAYBACK_COMPLETE);
+    }
+
     return output;
 }
 
@@ -237,6 +247,7 @@ ManagedBuffer SoundEmojiSynthesizer::fillOutputBuffer()
 
                     // Flip our status bit and fire the event
                     status &= ~EMOJI_SYNTHESIZER_STATUS_STOPPING;
+                    playbackCompleteIn = CONFIG_EMOJI_SYNTHESIZER_OUTPUT_BUFFER_DEPTH+2;
                     Event(id, DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_DONE);
                     lock.notify();
                 }
