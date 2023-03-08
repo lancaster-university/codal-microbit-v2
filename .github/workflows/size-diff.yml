@@ -5,6 +5,15 @@ on:
     branches: '*'
   push:
     branches: '*'
+  workflow_dispatch:
+    inputs:
+      old-commit:
+        description: 'Base/old commit to compare against the branch HEAD or new-commit below'
+        required: true
+      new-commit:
+        description: '(Optional) New commit to use instead of branch HEAD'
+        required: false
+        default: ''
 
 jobs:
   size-diff:
@@ -39,6 +48,9 @@ jobs:
         with:
           path: libraries/codal-microbit-v2
           fetch-depth: '0'
+          # Unless manually triggered via workflow_dispatch this will be an empty
+          # string, checking out the default commit for the commit/branch/PR
+          ref: ${{ github.event.inputs.new-commit }}
       # Changing the commit SHA might be unnecessary, as we've already cloned this
       # repo, but could be useful to ensure codal.json points to the same commit
       - name: Modify files to use BLE & this codal-microbit-v2 commit
@@ -79,15 +91,24 @@ jobs:
           echo "${{ github.event.pull_request.base.sha }}"
           echo "GIT_BASE_SHA=${{ github.event.pull_request.base.sha }}" >> $GITHUB_ENV
           echo "# Bloaty comparison with PR base commit" >> $GITHUB_STEP_SUMMARY
-          echo "Base commit: ${{ github.event.pull_request.base.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "Base commit: [${{ github.event.pull_request.base.sha }}](https://github.com/${GITHUB_REPOSITORY}/commit/${{ github.event.pull_request.base.sha }})" >> $GITHUB_STEP_SUMMARY
+      - name: "Manual trigger only: Get input commits"
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          echo "${{ github.event.inputs.old-commit }}"
+          echo "GIT_BASE_SHA=${{ github.event.inputs.old-commit }}" >> $GITHUB_ENV
+          echo "# Bloaty comparison with input commit(s)" >> $GITHUB_STEP_SUMMARY
+          echo "Old commit: [${{ github.event.inputs.old-commit }}](https://github.com/${GITHUB_REPOSITORY}/commit/${{ github.event.inputs.old-commit }})" >> $GITHUB_STEP_SUMMARY
+          echo "New commit: [${{ github.event.inputs.new-commit || github.sha }}](https://github.com/${GITHUB_REPOSITORY}/commit/${{ github.event.inputs.new-commit || github.sha}})" >> $GITHUB_STEP_SUMMARY
+          echo "Full diff: https://github.com/${GITHUB_REPOSITORY}/compare/${{ github.event.inputs.old-commit }}...${{ github.event.inputs.new-commit || github.sha}}" >> $GITHUB_STEP_SUMMARY
       - name: "Commit only: Get parent commit SHA"
-        if: ${{ ! github.event.pull_request.base.sha }}
+        if: ${{ ! github.event.pull_request.base.sha && github.event_name != 'workflow_dispatch'}}
         run: |
           cd libraries/codal-microbit-v2
           echo "$(git log --pretty=%P -n 1 HEAD^0)"
           echo "GIT_BASE_SHA=$(git log --pretty=%P -n 1 HEAD^0)" >> $GITHUB_ENV
           echo "# Bloaty comparison with parent commit" >> $GITHUB_STEP_SUMMARY
-          echo "Parent commit: $(git log --pretty=%P -n 1 HEAD^0)" >> $GITHUB_STEP_SUMMARY
+          echo "Parent commit: [$(git log --pretty=%P -n 1 HEAD^0)](https://github.com/${GITHUB_REPOSITORY}/commit/$(git log --pretty=%P -n 1 HEAD^0))" >> $GITHUB_STEP_SUMMARY
       # We don't need to update codal.json because we've kept the
       # codal-microbit-v2 repo and we manually check out the right base commit
       - name: Checkout parent/base commit of codal-microbit-v2
@@ -105,15 +126,26 @@ jobs:
         id: bloaty-comparison
         uses: carlosperate/bloaty-action@v1
         with:
-          bloaty-args: -s vm original-build/MICROBIT.elf -- build/MICROBIT
+          bloaty-args: -d compileunits --domain=vm original-build/MICROBIT.elf -- build/MICROBIT
           output-to-summary: true
+          summary-title: "Bloaty diff between the two commits"
+      # Show total memory consumption of the main memory sections
+      - name: Show memory usage in summary using size
+        run: |
+          echo '# This commit total memory usage' >> $GITHUB_STEP_SUMMARY
+          echo '## GNU size' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo '$ arm-none-eabi-size original-build/MICROBIT.elf' >> $GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+          arm-none-eabi-size original-build/MICROBIT.elf >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
       # Then show memory consumption of top 30 components for this build
       - name: Run Bloaty to view ELF file full info
         uses: carlosperate/bloaty-action@v1
         with:
-          bloaty-args: original-build/MICROBIT.elf -d compileunits -n 30 -s vm
+          bloaty-args: -d compileunits --domain=vm -n 30 original-build/MICROBIT.elf
           output-to-summary: true
-      - name: Add comment to PR with the bloaty diff
+      - name: "PR only: Add comment to PR with the bloaty diff"
         if: ${{ github.event.pull_request }}
         continue-on-error: true
         uses: actions/github-script@v6
