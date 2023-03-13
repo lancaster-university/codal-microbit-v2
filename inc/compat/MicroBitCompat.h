@@ -372,6 +372,8 @@ const uint16_t MICROBIT_ID_MBED_TICKER       __attribute__ ((deprecated)) = 83;
 
 #define MICROBIT_ID_LOG                                         DEVICE_ID_LOG
 
+#define MICROBIT_ID_UTILITY                                     45
+
 #define MICROBIT_MAXIMUM_HEAPS                                  DEVICE_MAXIMUM_HEAPS
 #define MICROBIT_NESTED_HEAP_SIZE                               0
 #define MICROBIT_PANIC_HEAP_FULL                                DEVICE_PANIC_HEAP_FULL
