@@ -98,6 +98,8 @@ class Mixer2 : public DataSource
     uint32_t        orMask;
     float           silenceLevel;
     bool            silent;
+    CODAL_TIMESTAMP silenceStartTime;
+    CODAL_TIMESTAMP silenceEndTime;
 
 public:
     /**
@@ -199,7 +201,7 @@ public:
      * Determine the sample rate output of this Mixer.
      * @return The sample rate (samples per second) of the mixer output.
      */
-    int getSampleRate();
+    float getSampleRate();
 
     /**
      * Defines an optional bit mask to logical OR with each sample.
@@ -224,6 +226,23 @@ public:
      * @return true if the mixer is silent
      */
     bool isSilent();
+
+    /**
+     * Determines the time at which the mixer has most recently been generating silence 
+     *
+     * @return the system time in microseconds at which the mixer has been continuously 
+     * producing silence on its output, or zero if the mixer is not producing silence.
+     */
+    CODAL_TIMESTAMP getSilenceStartTime();
+
+    /**
+     * Determines the time at which the mixer stopped continuously generating silence 
+     *
+     * @return the system time in microseconds at which the mixer stopped continuously 
+     * producing silence on its output, or zero if the mixer is not producing silence.
+     */
+    CODAL_TIMESTAMP getSilenceEndTime();
+
 
     private:
     void configureChannel(MixerChannel *c);

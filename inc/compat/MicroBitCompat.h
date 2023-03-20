@@ -267,6 +267,14 @@ typedef codal::BitmapFont MicroBitFont;
 
 //#define MICROBIT_PANIC_ERROR_CHARS
 
+//
+// MBed legacy IDs - DO NOT USE
+// Note: These are actual integers to allow us to use __attribute__
+//
+const uint16_t MICROBIT_ID_MBED_INTERRUPT_IN __attribute__ ((deprecated)) = 80;
+const uint16_t MICROBIT_ID_MBED_PWM          __attribute__ ((deprecated)) = 81;
+const uint16_t MICROBIT_ID_MBED_TIMEOUT      __attribute__ ((deprecated)) = 82;
+const uint16_t MICROBIT_ID_MBED_TICKER       __attribute__ ((deprecated)) = 83;
 
 //
 // MICROBIT specific component IDs and event codes

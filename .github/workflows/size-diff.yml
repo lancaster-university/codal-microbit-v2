@@ -1,0 +1,165 @@
+name: Bloaty size diff
+
+on:
+  pull_request:
+    branches: '*'
+  push:
+    branches: '*'
+  workflow_dispatch:
+    inputs:
+      old-commit:
+        description: 'Base/old commit to compare against the branch HEAD or new-commit below'
+        required: true
+      new-commit:
+        description: '(Optional) New commit to use instead of branch HEAD'
+        required: false
+        default: ''
+
+jobs:
+  size-diff:
+    name: Run Bloaty
+    runs-on: ubuntu-latest
+    steps:
+      #########################
+      # Install the toolchain #
+      #########################
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+      - name: Setup arm-none-eabi-gcc 10.3
+        uses: carlosperate/arm-none-eabi-gcc-action@v1
+        with:
+          release: 10.3-2021.10
+      - name: Install Ninja 1.11 & CMake 3.25 via PyPI
+        run: python -m pip install ninja==1.11.1 cmake==3.25.0
+
+      #########################################
+      # Set up the CODAL project and build it #
+      #########################################
+      - name: Clone the microbit-v2-samples repository
+        uses: actions/checkout@v3
+        with:
+          repository: 'lancaster-university/microbit-v2-samples'
+      # We need to use the checkout action (instead of build.py cloning the
+      # repository) so that on PRs we can get the commit from the PR merge
+      - name: Clone this repository in the libraries folder
+        uses: actions/checkout@v3
+        with:
+          path: libraries/codal-microbit-v2
+          fetch-depth: '0'
+          # Unless manually triggered via workflow_dispatch this will be an empty
+          # string, checking out the default commit for the commit/branch/PR
+          ref: ${{ github.event.inputs.new-commit }}
+      # Changing the commit SHA might be unnecessary, as we've already cloned this
+      # repo, but could be useful to ensure codal.json points to the same commit
+      - name: Modify files to use BLE & this codal-microbit-v2 commit
+        shell: bash
+        run: |
+          echo "coda.json before:"
+          cat codal.json
+          mv codal.ble.json codal.json
+          python - << EOF
+          import pathlib;
+          f = pathlib.Path('codal.json');
+          f.write_text(f.read_text() \
+              .replace('lancaster-university/codal-microbit-v2', '${GITHUB_REPOSITORY}') \
+              .replace('master', '${GITHUB_SHA}') \
+              .replace(',\n        \"dev\": true', ''))
+          f = pathlib.Path('source/main.cpp')
+          f.write_text(f.read_text().replace('out_of_box_experience()', 'ble_test()'))
+          EOF
+          echo "coda.json after:"
+          cat codal.json
+      - name: Build using build.py
+        run: python build.py
+      - name: Save ELF file in a different directory
+        run: |
+          mkdir original-build
+          mv build/MICROBIT original-build/MICROBIT.elf
+      # Manually clean the project, but keep the codal-microbit-v2 library
+      # If the codal-microbit-v2 target adds more libs this step will need to include them as well
+      - name: Clean project
+        run: rm -rf build/ libraries/codal-core libraries/codal-microbit-nrf5sdk libraries/codal-nrf52
+
+      ####################################################################
+      # Set up codal-microbit-v2 to a parent/base commit and build again #
+      ####################################################################
+      - name: "PR only: Get base commit SHA"
+        if: ${{ github.event.pull_request.base.sha }}
+        run: |
+          echo "${{ github.event.pull_request.base.sha }}"
+          echo "GIT_BASE_SHA=${{ github.event.pull_request.base.sha }}" >> $GITHUB_ENV
+          echo "# Bloaty comparison with PR base commit" >> $GITHUB_STEP_SUMMARY
+          echo "Base commit: [${{ github.event.pull_request.base.sha }}](https://github.com/${GITHUB_REPOSITORY}/commit/${{ github.event.pull_request.base.sha }})" >> $GITHUB_STEP_SUMMARY
+      - name: "Manual trigger only: Get input commits"
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          echo "${{ github.event.inputs.old-commit }}"
+          echo "GIT_BASE_SHA=${{ github.event.inputs.old-commit }}" >> $GITHUB_ENV
+          echo "# Bloaty comparison with input commit(s)" >> $GITHUB_STEP_SUMMARY
+          echo "Old commit: [${{ github.event.inputs.old-commit }}](https://github.com/${GITHUB_REPOSITORY}/commit/${{ github.event.inputs.old-commit }})" >> $GITHUB_STEP_SUMMARY
+          echo "New commit: [${{ github.event.inputs.new-commit || github.sha }}](https://github.com/${GITHUB_REPOSITORY}/commit/${{ github.event.inputs.new-commit || github.sha}})" >> $GITHUB_STEP_SUMMARY
+          echo "Full diff: https://github.com/${GITHUB_REPOSITORY}/compare/${{ github.event.inputs.old-commit }}...${{ github.event.inputs.new-commit || github.sha}}" >> $GITHUB_STEP_SUMMARY
+      - name: "Commit only: Get parent commit SHA"
+        if: ${{ ! github.event.pull_request.base.sha && github.event_name != 'workflow_dispatch'}}
+        run: |
+          cd libraries/codal-microbit-v2
+          echo "$(git log --pretty=%P -n 1 HEAD^0)"
+          echo "GIT_BASE_SHA=$(git log --pretty=%P -n 1 HEAD^0)" >> $GITHUB_ENV
+          echo "# Bloaty comparison with parent commit" >> $GITHUB_STEP_SUMMARY
+          echo "Parent commit: [$(git log --pretty=%P -n 1 HEAD^0)](https://github.com/${GITHUB_REPOSITORY}/commit/$(git log --pretty=%P -n 1 HEAD^0))" >> $GITHUB_STEP_SUMMARY
+      # We don't need to update codal.json because we've kept the
+      # codal-microbit-v2 repo and we manually check out the right base commit
+      - name: Checkout parent/base commit of codal-microbit-v2
+        run: |
+          cd libraries/codal-microbit-v2
+          git checkout ${GIT_BASE_SHA}
+      - name: Build 'base' project using build.py
+        run: python build.py --clean
+
+      #######################################
+      # Run the Bloaty McBloatface analysis #
+      #######################################
+      # 1st run the bloaty diff so that it's added to the top of the summary page
+      - name: Run Bloaty to compare before and after ELF files
+        id: bloaty-comparison
+        uses: carlosperate/bloaty-action@v1
+        with:
+          bloaty-args: -d compileunits --domain=vm original-build/MICROBIT.elf -- build/MICROBIT
+          output-to-summary: true
+          summary-title: "Bloaty diff between the two commits"
+      # Show total memory consumption of the main memory sections
+      - name: Show memory usage in summary using size
+        run: |
+          echo '# This commit total memory usage' >> $GITHUB_STEP_SUMMARY
+          echo '## GNU size' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo '$ arm-none-eabi-size original-build/MICROBIT.elf' >> $GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+          arm-none-eabi-size original-build/MICROBIT.elf >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+      # Then show memory consumption of top 30 components for this build
+      - name: Run Bloaty to view ELF file full info
+        uses: carlosperate/bloaty-action@v1
+        with:
+          bloaty-args: -d compileunits --domain=vm -n 30 original-build/MICROBIT.elf
+          output-to-summary: true
+      - name: "PR only: Add comment to PR with the bloaty diff"
+        if: ${{ github.event.pull_request }}
+        continue-on-error: true
+        uses: actions/github-script@v6
+        with:
+          script: |
+            let prComment = '## Build diff\n' +
+              'Base commit: [${{ env.GIT_BASE_SHA }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ env.GIT_BASE_SHA }})\n' +
+              'Action run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\n' +
+              '```\n' +
+              '${{ steps.bloaty-comparison.outputs.bloaty-output-encoded }}' +
+              '```\n'
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: prComment
+            })

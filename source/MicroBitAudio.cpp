@@ -63,6 +63,16 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
     adc.setSamplePeriod( 1e6 / 22000 );
     mic->setGain(7,0);
 
+    // Implementers note: The order that the pipeline comes up here is quite senitive. If we connect up to splitters after starting to
+    // listen for events from them, we'll see channel startup events (which are valid!) that we don't want. So roughly always follow
+    // the following schema:
+    //
+    // 1. Create the splitter
+    // 2. Attach any stages to the splitter
+    // 3. Start listening for splitter events
+    //
+    // This prevents any cases where the pipeline stages cause a connect() message to be emitted, which then auto-activates the mic.
+
     //Initialialise the microphone filter
     micFilter = new LowPassFilter(mic->output, 0.1f, true);
 
@@ -70,31 +80,38 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
     rawSplitter = new StreamSplitter(*micFilter);
 
     //Initilise stream normalizer
-    processor = new StreamNormalizer(*rawSplitter, 0.08f, true, DATASTREAM_FORMAT_8BIT_SIGNED, 10);
+    processor = new StreamNormalizer(*rawSplitter->createChannel(), 0.08f, true, DATASTREAM_FORMAT_8BIT_SIGNED, 10);
+
+    // Connect to the rawSplitter. This must come AFTER the processor, to prevent the processor's channel activation starting the microphone
+    if(EventModel::defaultEventBus)
+        EventModel::defaultEventBus->listen(rawSplitter->id, DEVICE_EVT_ANY, this, &MicroBitAudio::onSplitterEvent, MESSAGE_BUS_LISTENER_IMMEDIATE);
 
     //Initilise stream splitter
-    splitter = new StreamSplitter(processor->output);
+    splitter = new StreamSplitter(processor->output, DEVICE_ID_SPLITTER);
 
     //Initilise level detector and attach to splitter
-    level = new LevelDetector(*splitter, 150, 75, DEVICE_ID_SYSTEM_LEVEL_DETECTOR, false);
+    level = new LevelDetector(*splitter->createChannel(), 150, 75, DEVICE_ID_SYSTEM_LEVEL_DETECTOR, false);
 
     //Initilise level detector SPL and attach to splitter
-    levelSPL = new LevelDetectorSPL(*rawSplitter, 85.0, 65.0, 16.0, 0, DEVICE_ID_MICROPHONE, false);
+    levelSPL = new LevelDetectorSPL(*rawSplitter->createChannel(), 85.0, 65.0, 16.0, 0, DEVICE_ID_MICROPHONE, false);
 
-    // Register listener for splitter events
-    if(EventModel::defaultEventBus){
+    // Connect to the splitter - this COULD come after we create it, before we add any stages, as these are dynamic and will only connect on-demand, but just in case
+    // we're going to follow the schema set out above, to be 100% sure.
+    if(EventModel::defaultEventBus)
         EventModel::defaultEventBus->listen(DEVICE_ID_SPLITTER, DEVICE_EVT_ANY, this, &MicroBitAudio::onSplitterEvent, MESSAGE_BUS_LISTENER_IMMEDIATE);
-    }
 }
 
 /**
  * Handle events from splitter
  */
 void MicroBitAudio::onSplitterEvent(MicroBitEvent e){
-    if(e.value == SPLITTER_ACTIVATE_CHANNEL)
+    if( e.value == SPLITTER_CHANNEL_CONNECT )
         activateMic();
-    else if (e.value == SPLITTER_DEACTIVATE_CHANNEL)
-        deactivateMic();
+    
+    // Note: The processor will always be present on the rawSplitter, hence the <= 1.
+    else if( e.value == SPLITTER_CHANNEL_DISCONNECT )
+        if( splitter->numberActiveChannels <= 0 && rawSplitter->numberActiveChannels <= 1 )
+            deactivateMic();
 }
 
 /**
@@ -301,4 +318,17 @@ int MicroBitAudio::setSleep(bool doSleep)
     }
    
     return DEVICE_OK;
+}
+
+/**
+ * Determine if any audio is currently being played, from any source.
+ * @return true if audio is being played, false otherwise.
+ */
+bool MicroBitAudio::isPlaying()
+{
+    uint32_t t = system_timer_current_time_us();
+    uint32_t start = mixer.getSilenceStartTime();
+    uint32_t end = mixer.getSilenceEndTime();
+
+    return !((start && t >= (start + CONFIG_AUDIO_MIXER_OUTPUT_LATENCY_US)) && (end == 0 || t < (end + CONFIG_AUDIO_MIXER_OUTPUT_LATENCY_US - 100)));
 }

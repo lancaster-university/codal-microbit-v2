@@ -49,8 +49,28 @@ SoundExpressions::~SoundExpressions()
 {
 }
 
-void SoundExpressions::play(ManagedString sound) {
-    fiber_wake_on_event(synth.id, DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_DONE);
+/**
+ * Plays a sound encoded as an array of one or more SoundEffect structures.
+ * Blocks until the sound is complete.
+ */
+void SoundExpressions::play(ManagedBuffer sound, uint16_t event)
+{
+    fiber_wake_on_event(synth.id, event);
+    playAsync(sound);
+    schedule();
+}
+
+/**
+ * Plays a sound encoded as an array of one or more SoundEffect structures.
+ * Does not block unless a sound effect is already queued.
+ */
+void SoundExpressions::playAsync(ManagedBuffer sound)
+{
+    synth.play(sound);
+}
+
+void SoundExpressions::play(ManagedString sound, uint16_t event) {
+    fiber_wake_on_event(synth.id, event);
     playAsync(sound);
     schedule();
 }

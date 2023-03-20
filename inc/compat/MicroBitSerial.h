@@ -109,7 +109,7 @@ class MicroBitSerial : public NRF52Serial
       *
       * @param rx the new reception pin.
       *
-      * @return CODAL_SERIAL_IN_USE if another fiber is currently transmitting or receiving, otherwise DEVICE_OK.
+      * @return DEVICE_SERIAL_IN_USE if another fiber is currently transmitting or receiving, otherwise DEVICE_OK.
       */
     int redirect(PinName tx, PinName rx);
 
@@ -121,7 +121,7 @@ class MicroBitSerial : public NRF52Serial
       *
       * @param rx the new reception pin.
       *
-      * @return CODAL_SERIAL_IN_USE if another fiber is currently transmitting or receiving, otherwise DEVICE_OK.
+      * @return DEVICE_SERIAL_IN_USE if another fiber is currently transmitting or receiving, otherwise DEVICE_OK.
       */
     int redirect(PinNumber tx, PinNumber rx);
 
