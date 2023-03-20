@@ -6,16 +6,18 @@
 const ejs = require("ejs");
 const minify = require("html-minifier").minify;
 const fs = require("fs");
+const path = require("path");
 
 // Nab the codal config for the current project
 const codal = JSON.parse( fs.readFileSync( "../../../../codal.json" ) );
 
 // Build the template vars. Environment beats config which beats constant defaults
 const TEMPLATE_VARS = {
-  URL_BASE: process.env.MICROBIT_URL || codal.config.MICROBIT_URL || "https://microbit.org/dl/2"
+  URL_BASE: process.env.MICROBIT_CUSTOM_DATALOG_URL || codal.config.MICROBIT_CUSTOM_DATALOG_URL || "https://microbit.org/dl/2"
 };
 TEMPLATE_VARS.URL_JS = process.env.MICROBIT_JS_URL || codal.config.MICROBIT_JS_URL || `${TEMPLATE_VARS.URL_BASE}/dl.js`;
 TEMPLATE_VARS.URL_CSS = process.env.MICROBIT_CSS_URL || codal.config.MICROBIT_CSS_URL || `${TEMPLATE_VARS.URL_BASE}/dl.css`;
+const BUILDPATH = process.env.BUILDPATH || undefined;
 
 Object.keys(TEMPLATE_VARS).forEach(k => {
   console.log( `${k} => '${TEMPLATE_VARS[k]}'` );
@@ -94,4 +96,24 @@ if (process.argv[2] === "test") {
     "MicroBitLog::header[2048] = {" + arrayContents + "}"
   );
   fs.writeFileSync(cppFile, replaced, { encoding: "utf-8" });
+
+  /*if( BUILDPATH ) {
+    const custom_datalogger_source = path.join( BUILDPATH, 'custom_datalogger_source.h' )
+    console.log( `Creating ${custom_datalogger_source}` )
+
+    const header_content = [
+      "#ifndef CUSTOM_MICROBIT_DATALOG_H",
+      "#define CUSTOM_MICROBIT_DATALOG_H",
+      "const uint8_t MicroBitLog::header[2048] = {" + arrayContents + "};",
+      "#endif",
+    ]
+
+    if( !fs.existsSync( BUILDPATH ) )
+      fs.mkdirSync( BUILDPATH );
+    fs.writeFileSync(
+      custom_datalogger_source,
+      header_content.join("\n"),
+      { encoding: "utf-8" }
+    );
+  }*/
 }
