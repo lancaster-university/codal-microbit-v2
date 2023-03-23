@@ -96,24 +96,4 @@ if (process.argv[2] === "test") {
     "MicroBitLog::header[2048] = {" + arrayContents + "}"
   );
   fs.writeFileSync(cppFile, replaced, { encoding: "utf-8" });
-
-  /*if( BUILDPATH ) {
-    const custom_datalogger_source = path.join( BUILDPATH, 'custom_datalogger_source.h' )
-    console.log( `Creating ${custom_datalogger_source}` )
-
-    const header_content = [
-      "#ifndef CUSTOM_MICROBIT_DATALOG_H",
-      "#define CUSTOM_MICROBIT_DATALOG_H",
-      "const uint8_t MicroBitLog::header[2048] = {" + arrayContents + "};",
-      "#endif",
-    ]
-
-    if( !fs.existsSync( BUILDPATH ) )
-      fs.mkdirSync( BUILDPATH );
-    fs.writeFileSync(
-      custom_datalogger_source,
-      header_content.join("\n"),
-      { encoding: "utf-8" }
-    );
-  }*/
 }
