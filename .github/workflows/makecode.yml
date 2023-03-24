@@ -27,8 +27,12 @@ jobs:
           release: 10.3-2021.10
       - name: Install Yotta, Ninja v1.10 & CMake v3.22 via PyPI
         if: ${{ matrix.pxt-flags }}
-        # MarkupSafe < 2.0 needed for Yotta
-        run: python -m pip install MarkupSafe==1.1.1 ninja==1.10.2.2 cmake==3.22.1 yotta
+        run: |
+          # Newer pip needed to install newer wheels type for cmsis-pack-manager
+          python -m pip install --upgrade pip
+          # project-generator==0.8.17 and MarkupSafe < 2.0 needed for Yotta
+          python -m pip install project-generator==0.8.17 MarkupSafe==1.1.1
+          python -m pip install ninja==1.10.2.2 cmake==3.22.1 yotta
       - name: Install srecord
         if: ${{ matrix.pxt-flags }}
         run: |
