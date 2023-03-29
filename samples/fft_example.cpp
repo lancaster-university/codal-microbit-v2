@@ -2,7 +2,6 @@
 #include "CodalDmesg.h"
 #include "MicroBitAudioProcessor.h"
 #include "StreamNormalizer.h"
-#include "Tests.h"
 
 static NRF52ADCChannel *mic = NULL;
 static StreamNormalizer *processor = NULL;
@@ -14,8 +13,9 @@ MicroBit uBit;
   * fft_test function - creates an example MicroBitAudioProcessor and then queries it for results.
   * Currently configured to use 1024 samples with 8bit signed data.
   */
-void fft_test(){
+void fft_test() {
     uBit.display.print("L");
+/*
      if (mic == NULL){
         mic = uBit.adc.getChannel(uBit.io.microphone);
         mic->setGain(7,0);
@@ -29,13 +29,17 @@ void fft_test(){
 
     uBit.io.runmic.setDigitalValue(1);
     uBit.io.runmic.setHighDrive(true);
+*/
 
+    // Code above commented out was from the original example, which can
+    // probably be replaced with this single line, but we need to double check
+    // the configuration because the fft calculation results are twice the frequency
+    fft = new MicroBitAudioProcessor(*uBit.audio.splitter->createChannel());
 
     //Start fft running
     fft->startRecording();
 
-
-    while(1){
+    while (1){
         //TODO - de-noise : if last X samples are same - display ect.
         //The output values depend on the input type (DATASTREAM_FORMAT_8BIT_SIGNED) and the size
         //of the FFT - which is changed using the 'AUDIO_SAMPLES_NUMBER' in MicroBitAudioProcessor.h
@@ -64,13 +68,7 @@ void fft_test(){
     }
 }
 
-
-
-int 
-main()
-{
-
+int main() {
     uBit.init();
     fft_test();
-    
 }

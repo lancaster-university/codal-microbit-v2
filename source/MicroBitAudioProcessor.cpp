@@ -55,8 +55,6 @@ MicroBitAudioProcessor::~MicroBitAudioProcessor()
 
 int MicroBitAudioProcessor::pullRequest()
 {
-
-    int s;
     int result;
 
     auto mic_samples = audiostream.pull();
@@ -99,9 +97,9 @@ int MicroBitAudioProcessor::pullRequest()
             //DMESG("Before FFT: %d", (int)a);
             //DMESG("After FFT: %d (%d)", (int)b, (int)(b - a));
 
-            uint32_t freq = ((uint32_t)MIC_SAMPLE_RATE / AUDIO_SAMPLES_NUMBER) * (index + 1);
+            lastFreq = ((uint32_t)MIC_SAMPLE_RATE / AUDIO_SAMPLES_NUMBER) * (index + 1);
             DMESG("Freq: %d (max: %d.%d, Index: %d)",
-                  freq,
+                  lastFreq,
                   (int)maxValue,
                   ((int)(maxValue * 100) % 100),
                   index);

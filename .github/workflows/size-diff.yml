@@ -116,6 +116,7 @@ jobs:
         run: |
           cd libraries/codal-microbit-v2
           git checkout ${GIT_BASE_SHA}
+          git restore .
       - name: Build 'base' project using build.py
         run: python build.py --clean
 
