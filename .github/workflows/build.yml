@@ -47,6 +47,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           path: libraries/codal-microbit-v2
+          submodules: 'recursive'
       # Changing the commit SHA might be unnecessary, as we've already cloned this
       # repo, but could be useful to ensure codal.json points to the same commit
       - name: Modify codal.json files to use this codal-microbit-v2 commit
