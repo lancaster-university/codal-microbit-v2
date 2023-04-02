@@ -87,7 +87,7 @@ DEALINGS IN THE SOFTWARE.
 #endif
 
 #include "MicroBitStorage.h"
-#include "MicroBitMemoryMap.h"
+#include "JacdacMailbox.h"
 
 //#include "MicroBitLightSensor.h"
 
@@ -183,7 +183,7 @@ namespace codal
             MicroBitCompassCalibrator   compassCalibrator;
             MicroBitAudio               audio;
             MicroBitLog                 log;
-
+            JacdacMailbox               mailbox;
 
             /**
              * Constructor.

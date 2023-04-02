@@ -27,6 +27,7 @@ DEALINGS IN THE SOFTWARE.
 #include "Timer.h"
 #include "MicroBitDevice.h"
 #include "CodalDmesg.h"
+#include "DataLogMailboxHandler.h"
 
 using namespace codal;
 
@@ -45,6 +46,7 @@ static const MatrixPoint ledMatrixPositions[5*5] =
 static const uint32_t reflash_status = 0xffffffff;
 
 volatile MicroBitNoInitMemoryRegion __attribute__ ((section (".noinit"))) microbit_no_init_memory_region;
+extern "C" uint32_t __StackTop;
 
 /**
   * Constructor.
@@ -89,7 +91,8 @@ MicroBit::MicroBit() :
     compass(MicroBitCompass::autoDetect(_i2c)),
     compassCalibrator(compass, accelerometer, display, storage),
     audio(io.P0, io.speaker, adc, io.microphone, io.runmic),
-    log(flash, power, serial)
+    log(flash, power, serial),
+    mailbox(&microbit_no_init_memory_region)
 {
     // Clear our status
     status = 0;
@@ -281,6 +284,14 @@ int MicroBit::init()
     // Start the BLE stack, if it isn't already running.
     bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, storage, false);
 #endif
+
+    // Initiailize mailbox interface for data log
+    new DataLogMailboxHandler(log, &mailbox);
+
+    // Add legacy pointer to exchange buffer - temporayr backward compatibility with older jacdac interface JS
+    // TODO: Deprecate this ASAP!
+    (&__StackTop)[-1] = (uint32_t) microbit_no_init_memory_region.mailboxBaseAddress;
+
 
     // Deschedule for a little while, just to allow for any components that finialise initialisation
     // as a background task, and to allow the power mamanger to repsonse to background events from the KL27
