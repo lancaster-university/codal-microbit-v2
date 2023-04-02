@@ -42,7 +42,7 @@ DEALINGS IN THE SOFTWARE.
 struct MicroBitNoInitMemoryRegion
 {
   volatile uint32_t  resetClickCount;
-  volatile uint32_t  reserved1;
+  volatile uint32_t  mailboxBaseAddress;
   volatile uint32_t  reserved2;
   volatile uint32_t  reserved3;
 };
