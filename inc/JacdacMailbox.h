@@ -36,6 +36,10 @@ DEALINGS IN THE SOFTWARE.
 #define JACDAC_MAILBOX_MAXIMUM_SERVICES         10
 #define JACDAC_MAILBOX_LINKED_FRAME_HEADER_SIZE (sizeof(uint32_t) + sizeof(void *))
 
+// Known service ID numbers for micro:bit mailbox services
+#define JACDAC_MAILBOX_SERVICE_ID_DATALOG       1
+
+
 /**
   * Class definition for a MicroBitMailbox.
   *
@@ -63,7 +67,12 @@ namespace codal
 
     class JacdacMailboxHandler
     {
+        protected:
+
         JacdacMailbox *mailbox;
+        uint16_t id;
+        volatile bool busy;
+
         public:
         /**
          * Constructor.

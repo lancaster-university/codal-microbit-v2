@@ -35,6 +35,9 @@ using namespace codal;
  */
 JacdacMailboxHandler::JacdacMailboxHandler(JacdacMailbox *m)
 {
+    busy = false;
+    id = CodalComponent::generateDynamicID();
+
     if (m != NULL)
         mailbox = (m != NULL) ? m : JacdacMailbox::instance;
 
