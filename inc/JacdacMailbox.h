@@ -33,6 +33,8 @@ DEALINGS IN THE SOFTWARE.
 
 #define JACDAC_MAILBOX_BUFFER_SIZE              256
 #define JACDAC_MAILBOX_MAXIMUM_QUEUE_SIZE       10
+#define JACDAC_MAILBOX_MAXIMUM_SERVICES         10
+#define JACDAC_MAILBOX_LINKED_FRAME_HEADER_SIZE (sizeof(uint32_t) + sizeof(void *))
 
 /**
   * Class definition for a MicroBitMailbox.
@@ -49,8 +51,8 @@ namespace codal
         uint8_t magic[8];                                              // Validation identifier
         uint8_t irqn;                                                  // IRQ number raised by PC to signal new command/data has been written
         uint8_t padding[3];                                            // unused
-        volatile uint8_t inputBuffer[JACDAC_MAILBOX_BUFFER_SIZE];      // the PC reads from here
-        volatile uint8_t outputBuffer[JACDAC_MAILBOX_BUFFER_SIZE];     // the PC writes here
+        volatile uint8_t outputBuffer[JACDAC_MAILBOX_BUFFER_SIZE];     // the PC reads from here
+        volatile uint8_t inputBuffer[JACDAC_MAILBOX_BUFFER_SIZE];      // the PC writes here
     };
 
     struct LinkedFrame {
@@ -62,7 +64,7 @@ namespace codal
     class JacdacMailboxHandler
     {
         JacdacMailbox *mailbox;
-
+        public:
         /**
          * Constructor.
          * Create a JacdacMailboxHandler instance, and register it with the given mailbox.
@@ -74,7 +76,8 @@ namespace codal
         /**
          * Process a frame that has been received by the mailbox 
          * This method will be invokedfor on each packet received. 
-         * NOTE: This may (likely) be called in interrupt context, so decoupling via scheduler is recommended for complex operations
+         * NOTE: This may (likely) be called in interrupt context, with interrupts disabled,
+         * so decoupling via the scheduler is highly recommended for complex operations
          *
          * @param frame The data that has been received
          */
@@ -84,9 +87,10 @@ namespace codal
     class JacdacMailbox
     {
     public:
-        static JacdacMailbox    *instance;             // Reference to the singleton of this class
-        JacdacMailboxBuffer*    exchangeBuffer;        // pointer to heap allocated memory in which the mailbox memory is stored.
-        LinkedFrame *volatile   outputQueue;           // queue of frames waiting to be sent to the PC by the device.
+        static JacdacMailbox    *instance;                                      // Reference to the singleton of this class.
+        JacdacMailboxBuffer*    exchangeBuffer;                                 // Pointer to heap allocated memory in which the mailbox memory is stored.
+        LinkedFrame *volatile   outputQueue;                                    // Queue of frames waiting to be sent to the PC by the device.
+        JacdacMailboxHandler*   services[JACDAC_MAILBOX_MAXIMUM_SERVICES];      // List of servies wishing to inspect incoming frames.
 
         /**
          * Constructor.
@@ -110,7 +114,7 @@ namespace codal
          * Send a given buffer to an attached PC via the mailbox. 
          * If the mailbox is empty, it is scheduled for immediate transmission. if not, it is queued awaiting collection.
          * @param frame the jacdac frame to send
-         * @return DEVICE_OK, or DEVICE_INSUFFICIENT_RESOURCES if the outputQueue is full.
+         * @return DEVICE_OK, or DEVICE_NO_RESOURCES if the outputQueue is full.
          */
         int sendFrame(const jd_frame_t *frame);
 
@@ -120,6 +124,28 @@ namespace codal
          * Schedule the next packet to be sent from the outputQueue is applicable.
          */
         void processQueues();
+
+        private:
+
+        /**
+         * Provides a pointer to the outputbuffer if available, NULL otherwise.
+         * @return a pointer to the start of the output buffer if the buffer is free, and NULL otherwise.
+         */
+        volatile uint32_t* getOutputPointer();
+
+        /**
+        * Queue outputBuffer to transmission to attached PC.
+        * @param frame The Jacdac frame to send - the frame is duplicated once queued.
+        * @return DEVICE_OK
+        */
+        int writeOutputFrame(const jd_frame_t *frame);
+
+        /**
+        * Queue outputBuffer to transmission to attached PC.
+        * @param frame The Jacdac frame to send - the frame is duplicated once queued.
+        * @return DEVICE_OK, or DEVICE_NO_RESOURCES if the outputQueue is full.
+        */
+        int queueOutputFrame(const jd_frame_t *frame);
     };
 }
 
