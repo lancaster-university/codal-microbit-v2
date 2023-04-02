@@ -26,7 +26,6 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBit.h"
 #include "Timer.h"
 #include "MicroBitDevice.h"
-#include "MicroBitMemoryMap.h"
 #include "CodalDmesg.h"
 
 using namespace codal;
@@ -45,7 +44,7 @@ static const MatrixPoint ledMatrixPositions[5*5] =
 
 static const uint32_t reflash_status = 0xffffffff;
 
-static volatile MicroBitNoInitMemoryRegion __attribute__ ((section (".noinit"))) microbit_no_init_memory_region;
+volatile MicroBitNoInitMemoryRegion __attribute__ ((section (".noinit"))) microbit_no_init_memory_region;
 
 /**
   * Constructor.

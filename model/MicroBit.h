@@ -87,6 +87,7 @@ DEALINGS IN THE SOFTWARE.
 #endif
 
 #include "MicroBitStorage.h"
+#include "MicroBitMemoryMap.h"
 
 //#include "MicroBitLightSensor.h"
 
@@ -335,6 +336,7 @@ namespace codal
 }
 
 void microbit_dmesg_flush();
+extern volatile MicroBitNoInitMemoryRegion __attribute__ ((section (".noinit"))) microbit_no_init_memory_region;
 
 using namespace codal;
 

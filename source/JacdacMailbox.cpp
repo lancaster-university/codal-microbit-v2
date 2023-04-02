@@ -38,14 +38,17 @@ JacdacMailbox* JacdacMailbox::instance = NULL;
  *
  * @param memoryRegion Pointer to a RAM data structure where the address of the mailbox in memory can be registered.
  */
-JacdacMailbox::JacdacMailbox(MicroBitNoInitMemoryRegion *memoryRegion)
+JacdacMailbox::JacdacMailbox(volatile MicroBitNoInitMemoryRegion *memoryRegion)
 {
     // Allocate memory for the shared memory mailbox.
     exchangeBuffer = new JacdacMailboxBuffer;
     memset(exchangeBuffer, 0, sizeof(*exchangeBuffer));
 
     // Initialize the list of services to empty.
-    memset(services, 0, sizeof(*services));
+    memset(services, 0, sizeof(void *) * JACDAC_MAILBOX_MAXIMUM_SERVICES);
+
+    // Reset the the queue of registered services.
+    outputQueue = NULL;
 
     // Initialize mailbox magic and mark the buffer to indicate we are ready for communication to begin.
     memcpy(exchangeBuffer->magic, "JDmx\xe9\xc0\xa6\xb0", 8);

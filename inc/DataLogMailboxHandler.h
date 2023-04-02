@@ -40,6 +40,8 @@ namespace codal
     class DataLogMailboxHandler : JacdacMailboxHandler
     {
         jd_packet_t request;
+        uint32_t    requestIndex;
+
         MicroBitLog &log;
 
         public:

@@ -53,11 +53,12 @@ void DataLogMailboxHandler::process(const jd_frame_t *frame)
     jd_packet_t *packet = (jd_packet_t *) frame;
 
     // Validate that this message is for us. If not, ignore it.
-    if (busy || frame == NULL || frame->size == 0 || frame->device_identifier != 0 || packet->service_number != JACDAC_MAILBOX_SERVICE_ID_DATALOG)
+    if (busy || frame == NULL || frame->size == 0 || frame->device_identifier != MICROBIT_MAILBOX_DEVICE_ID || packet->service_number != JACDAC_MAILBOX_SERVICE_ID_DATALOG)
         return;
  
     busy = true;
     request = *packet;
+    requestIndex = *((uint32_t *) &packet->data[0]);
 
     Event(id, DATALOG_MAILBOX_EVENT_COMMAND_READY);
 }
@@ -72,16 +73,15 @@ void DataLogMailboxHandler::onCommandRequest(Event e)
 
     // Copy in the header from the request, and adapt as a response.
     *response = request;
-    response->_size = JD_SERIAL_PAYLOAD_SIZE;
+    response->_size = 128 + 4;
     response->flags &= ~ 0x01;
 
     if (request.service_command == DATALOG_MAILBOX_COMMAND_GET_CSV_DATA)
     {
-        uint32_t index = *((uint32_t *) &request.data[0]);
         uint32_t maxlength = log.getDataLength(DataFormat::CSV);
-        log.readData(&b[sizeof(jd_packet_t)], index, JD_SERIAL_PAYLOAD_SIZE, DataFormat::CSV, maxlength);
+        log.readData(&b[sizeof(jd_packet_t)], requestIndex, 128, DataFormat::CSV, maxlength);
     }
 
-    mailbox->sendFrame((const jd_frame_t *)response);
+    mailbox->sendFrame((const jd_frame_t *) response);
     busy = false;
 }

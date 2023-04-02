@@ -39,6 +39,7 @@ DEALINGS IN THE SOFTWARE.
 // Known service ID numbers for micro:bit mailbox services
 #define JACDAC_MAILBOX_SERVICE_ID_DATALOG       1
 
+#define MICROBIT_MAILBOX_DEVICE_ID              0x6c69614d74694275
 
 /**
   * Class definition for a MicroBitMailbox.
@@ -67,13 +68,12 @@ namespace codal
 
     class JacdacMailboxHandler
     {
-        protected:
+        public:
 
         JacdacMailbox *mailbox;
         uint16_t id;
         volatile bool busy;
 
-        public:
         /**
          * Constructor.
          * Create a JacdacMailboxHandler instance, and register it with the given mailbox.
@@ -90,7 +90,7 @@ namespace codal
          *
          * @param frame The data that has been received
          */
-        virtual void process(const jd_frame_t *frame);
+        virtual void process(const jd_frame_t *frame) = 0;
     };
 
     class JacdacMailbox
@@ -107,7 +107,7 @@ namespace codal
          *
          * @param memoryRegion Pointer to a RAM data structure where the address of the mailbox in memory can be registered.
          */
-        JacdacMailbox(MicroBitNoInitMemoryRegion *memoryRegion = NULL);
+        JacdacMailbox(volatile MicroBitNoInitMemoryRegion *memoryRegion = NULL);
 
         /**
          * Add a protocol service handler. 

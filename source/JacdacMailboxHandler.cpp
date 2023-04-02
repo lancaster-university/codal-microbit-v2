@@ -38,8 +38,7 @@ JacdacMailboxHandler::JacdacMailboxHandler(JacdacMailbox *m)
     busy = false;
     id = CodalComponent::generateDynamicID();
 
-    if (m != NULL)
-        mailbox = (m != NULL) ? m : JacdacMailbox::instance;
+    mailbox = (m != NULL) ? m : JacdacMailbox::instance;
 
     if (mailbox)
         mailbox->addHandler(this);
