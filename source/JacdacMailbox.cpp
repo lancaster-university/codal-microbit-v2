@@ -31,6 +31,7 @@ using namespace codal;
  * Initialize singleton
  */
 JacdacMailbox* JacdacMailbox::instance = NULL;
+extern "C" uint32_t __StackTop;
 
 /**
  * Constructor.
@@ -56,6 +57,10 @@ JacdacMailbox::JacdacMailbox(volatile MicroBitNoInitMemoryRegion *memoryRegion)
 
     // Store the address of the exchange buffer in part of the NOINIT region (a well known location)
     memoryRegion->mailboxBaseAddress = (uint32_t) exchangeBuffer;
+
+    // Add legacy pointer to exchange buffer - temporayr backward compatibility with older jacdac interface JS
+    (&__StackTop)[-1] = (uint32_t) exchangeBuffer;
+
 
     // Store the IRQ for the PC to use to indicate new data is available
     exchangeBuffer->irqn = TEMP_IRQn;
