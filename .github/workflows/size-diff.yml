@@ -67,11 +67,13 @@ jobs:
               .replace('lancaster-university/codal-microbit-v2', '${GITHUB_REPOSITORY}') \
               .replace('master', '${GITHUB_SHA}') \
               .replace(',\n        \"dev\": true', ''))
-          f = pathlib.Path('source/main.cpp')
-          f.write_text(f.read_text().replace('out_of_box_experience()', 'ble_test()'))
           EOF
           echo "coda.json after:"
           cat codal.json
+      - name: Move fft example
+        run: |
+          mv libraries/codal-microbit-v2/samples/fft_example.cpp source/main.cpp
+          cat source/main.cpp
       - name: Build using build.py
         run: python build.py
       - name: Save ELF file in a different directory
@@ -117,6 +119,9 @@ jobs:
           cd libraries/codal-microbit-v2
           git checkout ${GIT_BASE_SHA}
           git restore .
+      - name: Build the default OOB for the parent/base commit comparison
+        shell: bash
+        run: git checkout source/main.cpp
       - name: Build 'base' project using build.py
         run: python build.py --clean
 
