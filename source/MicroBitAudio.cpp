@@ -24,12 +24,13 @@ DEALINGS IN THE SOFTWARE.
 */
 
 #include "MicroBitAudio.h"
-
+#include "MicroBit.h"
 #include "CodalDmesg.h"
 #include "NRF52PWM.h"
 #include "Synthesizer.h"
 #include "SoundExpressions.h"
 #include "SoundEmojiSynthesizer.h"
+#include "StreamSplitter.h"
 
 using namespace codal;
 
@@ -38,7 +39,7 @@ MicroBitAudio* MicroBitAudio::instance = NULL;
 /**
   * Default Constructor.
   */
-MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker):
+MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NRF52Pin &microphone, NRF52Pin &runmic):
     speakerEnabled(true),
     pinEnabled(true),
     pin(&pin), 
@@ -46,6 +47,9 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker):
     synth(DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_0),
     soundExpressionChannel(NULL),
     pwm(NULL),
+    adc(adc),
+    microphone(microphone),
+    runmic(runmic),
     soundExpressions(synth),
     virtualOutputPin(mixer)
 {
@@ -54,28 +58,132 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker):
         MicroBitAudio::instance = this;
 
     synth.allowEmptyBuffers(true);
+
+    mic = adc.getChannel(microphone, false);
+    adc.setSamplePeriod( 1e6 / 11000 );
+    mic->setGain(7, 0);
+
+    // Implementers note: The order that the pipeline comes up here is quite sensitive. If we connect up to splitters after starting to
+    // listen for events from them, we'll see channel startup events (which are valid!) that we don't want. So roughly always follow
+    // the following schema:
+    //
+    // 1. Create the splitter
+    // 2. Attach any stages to the splitter
+    // 3. Start listening for splitter events
+    //
+    // This prevents any cases where the pipeline stages cause a connect() message to be emitted, which then auto-activates the mic.
+
+    //Initialialise the microphone filter
+    //micFilter = new LowPassFilter(mic->output, 0.35f, true);
+
+    //Initilise input splitter
+    //rawSplitter = new StreamSplitter(*micFilter);
+    rawSplitter = new StreamSplitter(mic->output);
+
+    //Initilise stream normalizer
+    processor = new StreamNormalizer(*rawSplitter->createChannel(), 0.08f, true, DATASTREAM_FORMAT_8BIT_SIGNED, 10);
+
+    //Initilise level detector SPL and attach to splitter
+    levelSPL = new LevelDetectorSPL(*rawSplitter->createChannel(), 85.0, 65.0, 16.0, 0, DEVICE_ID_MICROPHONE, false);
+
+    // Connect to the rawSplitter. This must come AFTER the processor, to prevent the processor's channel activation starting the microphone
+    if(EventModel::defaultEventBus)
+        EventModel::defaultEventBus->listen(rawSplitter->id, DEVICE_EVT_ANY, this, &MicroBitAudio::onSplitterEvent, MESSAGE_BUS_LISTENER_IMMEDIATE);
+
+    //Initilise stream splitter
+    splitter = new StreamSplitter(processor->output, DEVICE_ID_SPLITTER);
+
+    //Initilise level detector and attach to splitter
+    level = new LevelDetector(*splitter->createChannel(), 150, 75, DEVICE_ID_SYSTEM_LEVEL_DETECTOR, false);
+
+    // Connect to the splitter - this COULD come after we create it, before we add any stages, as these are dynamic and will only connect on-demand, but just in case
+    // we're going to follow the schema set out above, to be 100% sure.
+    if(EventModel::defaultEventBus)
+        EventModel::defaultEventBus->listen(DEVICE_ID_SPLITTER, DEVICE_EVT_ANY, this, &MicroBitAudio::onSplitterEvent, MESSAGE_BUS_LISTENER_IMMEDIATE);
+    
+    //activateMic();
+}
+
+/**
+ * Handle events from splitter
+ */
+void MicroBitAudio::onSplitterEvent(MicroBitEvent e){
+
+    DMESGF( "Event! (%d -> %d)", e.source, e.value );
+
+    if( e.value == SPLITTER_ACTIVATE || e.value == SPLITTER_CHANNEL_CONNECT )
+        activateMic();
+    
+    // Note: The processor will always be present on the rawSplitter, hence the <= 1.
+    else if( e.value == SPLITTER_DEACTIVATE || e.value == SPLITTER_CHANNEL_DISCONNECT )
+    {
+        if( splitter->activeChannels < 1 )
+            deactivateMic();
+    }
+}
+
+/**
+ * Activate Mic and Input Channel
+ */
+void MicroBitAudio::activateMic(){
+    runmic.setDigitalValue(1);
+    runmic.setHighDrive(true);
+    adc.activateChannel(mic);
+}
+
+/**
+ * Dectivate Mic and Input Channel
+ */
+void MicroBitAudio::deactivateMic(){
+    runmic.setDigitalValue(0);
+    runmic.setHighDrive(false);
+    mic->disable(); // Just disable the mic channel, releasing it makes it gone forever!
+    //adc.releaseChannel(microphone);
+}
+
+/**
+ * Dectivate Mic and Input Channel
+ */
+void MicroBitAudio::deactivateLevelSPL(){
+    //levelSPL->disable();
+    levelSPL->activateForEvents( false );
+}
+
+/**
+  * Set normaliser gain
+  */
+void MicroBitAudio::setMicrophoneGain(int gain){
+    processor->setGain(gain/100);
 }
 
 /**
  * post-constructor initialisation method
  */
 int MicroBitAudio::enable()
-{
+{ 
     if (pwm == NULL)
     {
-        pwm = new NRF52PWM(NRF_PWM1, mixer, 44100);
-        pwm->setDecoderMode(PWM_DECODER_LOAD_Common);
+        pwm = new NRF52PWM( NRF_PWM1, mixer, 44100 );
+        pwm->setDecoderMode( PWM_DECODER_LOAD_Common );
 
-        mixer.setSampleRate(44100);
-        mixer.setSampleRange(pwm->getSampleRange());
-        mixer.setOrMask(0x8000);
+        mixer.setSampleRange( pwm->getSampleRange() );
+        mixer.setOrMask( 0x8000 );
 
-        setSpeakerEnabled(speakerEnabled);
-        setPinEnabled(pinEnabled);
+        setSpeakerEnabled( speakerEnabled );
+        setPinEnabled( pinEnabled );
 
-        if ( soundExpressionChannel == NULL)
+        if ( soundExpressionChannel == NULL )
             soundExpressionChannel = mixer.addChannel(synth);
     }
+    return DEVICE_OK;
+}
+
+int MicroBitAudio::disable()
+{
+    setSpeakerEnabled( false );
+    setPinEnabled( false );
+
+    pwm->disable();
 
     return DEVICE_OK;
 }
@@ -218,4 +326,17 @@ int MicroBitAudio::setSleep(bool doSleep)
     }
    
     return DEVICE_OK;
+}
+
+/**
+ * Determine if any audio is currently being played, from any source.
+ * @return true if audio is being played, false otherwise.
+ */
+bool MicroBitAudio::isPlaying()
+{
+    uint32_t t = system_timer_current_time_us();
+    uint32_t start = mixer.getSilenceStartTime();
+    uint32_t end = mixer.getSilenceEndTime();
+
+    return !((start && t >= (start + CONFIG_AUDIO_MIXER_OUTPUT_LATENCY_US)) && (end == 0 || t < (end + CONFIG_AUDIO_MIXER_OUTPUT_LATENCY_US - 100)));
 }

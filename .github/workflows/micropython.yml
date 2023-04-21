@@ -1,0 +1,66 @@
+name: Build MicroPython
+
+# MicroPython has to git clone/checkout this repo commit SHA, so only run this
+# workflow on pushes, as PRs generate a "merge commit" that is not clonable.
+on:
+  push:
+    branches: '*'
+
+jobs:
+  build-micropython:
+    runs-on: ubuntu-22.04
+    name: Build MicroPython
+    steps:
+      - name: Clone MicroPython
+        uses: actions/checkout@v3
+        with:
+          repository: 'microbit-foundation/micropython-microbit-v2'
+          submodules: 'recursive'
+      - name: Setup arm-none-eabi-gcc v10.3
+        uses: carlosperate/arm-none-eabi-gcc-action@v1
+        with:
+          release: 10.3-2021.10
+      - name: Install CMake v3.22 via PyPI
+        run: python -m pip install cmake==3.22.1
+      - name: Check Versions
+        run: |
+          arm-none-eabi-gcc --version
+          cmake --version
+      - name: Modify codal.json to use this codal-microbit-v2 commit
+        shell: bash
+        run: |
+          python - << EOF
+          import json, collections
+
+          with open('src/codal_app/codal.json', 'r') as f:
+              codal_json = json.loads(f.read(), object_pairs_hook=collections.OrderedDict)
+
+          try:
+              if codal_json['target']['url'] != "https://github.com/lancaster-university/codal-microbit-v2":
+                  print("Unexpected target URL value.")
+                  exit(1)
+              # Just need to check this exists, we don't care about the value
+              _ = codal_json['target']['branch']
+          except KeyError as e:
+              print('The src/codal_app/codal.json structure has changed and expected keys are not found.')
+              exit(1)
+          else:
+              codal_json['target']['url'] = codal_json['target']['url'].replace(
+                  'lancaster-university/codal-microbit-v2', '${GITHUB_REPOSITORY}'
+              )
+              codal_json['target']['branch'] = '${GITHUB_SHA}'
+
+          with open('src/codal_app/codal.json', 'w') as f:
+              f.write(json.dumps(codal_json, indent=4))
+          EOF
+          git diff src/codal_app/codal.json
+      - name: Build MicroPython
+        run: |
+          make -C lib/micropython/mpy-cross -j4
+          cd src
+          make -j4
+      - name: Upload hex file
+        uses: actions/upload-artifact@v1
+        with:
+          name: micropython-${{ github.sha }}.hex
+          path: src/MICROBIT.hex

@@ -27,12 +27,13 @@ DEALINGS IN THE SOFTWARE.
 
 static const uint8_t UIPM_I2C_NOP[3] = {0,0,0};
 
+// Developer note - if any of these get longer than 8 bytes of payload, MICROBIT_UIPM_MAX_BUFFER_SIZE will also have to be updated
 static const KeyValueTableEntry uipmPropertyLengthData[] = {
     {MICROBIT_UIPM_PROPERTY_BOARD_REVISION, 2},
     {MICROBIT_UIPM_PROPERTY_I2C_VERSION,2},
     {MICROBIT_UIPM_PROPERTY_DAPLINK_VERSION, 2},
     {MICROBIT_UIPM_PROPERTY_POWER_SOURCE, 1},
-    {MICROBIT_UIPM_PROPERTY_POWER_CONSUMPTION, 4},
+    {MICROBIT_UIPM_PROPERTY_POWER_CONSUMPTION, 8},
     {MICROBIT_UIPM_PROPERTY_USB_STATE, 1},
     {MICROBIT_UIPM_PROPERTY_KL27_POWER_MODE, 1},
     {MICROBIT_UIPM_PROPERTY_KL27_POWER_LED_STATE, 1}
@@ -58,6 +59,8 @@ MicroBitPowerManager::MicroBitPowerManager(MicroBitI2C &i2c, MicroBitIO &ioPins,
     eventValue(0)
 {
     this->id = id;
+
+    memset( &powerData, 0, sizeof(powerData) );
 
     // Indicate we'd like to receive periodic callbacks both in idle and interrupt context.
     // Also, be pessimistic about the interface chip in use, until we obtain version information.
@@ -99,6 +102,8 @@ MicroBitVersion MicroBitPowerManager::getVersion()
         // Read I2C protocol version 
         b = readProperty(MICROBIT_UIPM_PROPERTY_I2C_VERSION);
         memcpy(&version.i2c, &b[3], 2);
+        if( version.i2c == 2 )
+            status |= MICROBIT_USB_INTERFACE_BUSY_FLAG_SUPPORTED;
 
         // Read DAPLink version
         b = readProperty(MICROBIT_UIPM_PROPERTY_DAPLINK_VERSION);
@@ -111,7 +116,7 @@ MicroBitVersion MicroBitPowerManager::getVersion()
         switch(version.board)
         {
             // V2.00 KL27
-            case 39172:
+            case 0x9904:
                 status |= MICROBIT_USB_INTERFACE_ALWAYS_NOP;
                 break;
 
@@ -138,19 +143,23 @@ MicroBitUSBStatus MicroBitPowerManager::getUSBStatus()
     return usbStatus;
 }
 
-/**
- * Attempts to determine the instantaneous power consumption of this micro:bit.
- * note: This will query the USB interface chip via I2C, and wait for completion.
- * 
- * @return the current power consumption of this micro:bit
- */
 uint32_t MicroBitPowerManager::getPowerConsumption()
+{
+    getPowerData(); // Proxy to the new method
+    return powerData.estimatedPowerConsumption;
+}
+
+MicroBitPowerData MicroBitPowerManager::getPowerData()
 {
     ManagedBuffer b;
     b = readProperty(MICROBIT_UIPM_PROPERTY_POWER_CONSUMPTION);
 
-    memcpy(&powerConsumption, &b[3], 4);
-    return powerConsumption;
+    memcpy( &powerData.batteryMicroVolts, &b[3], 4 );
+    memcpy( &powerData.vinMicroVolts, &b[3+4], 4 );
+    
+    powerData.estimatedPowerConsumption = (float)abs( (float)powerData.vinMicroVolts - (float)powerData.batteryMicroVolts );
+
+    return powerData;
 }
 
 /**
@@ -216,17 +225,30 @@ ManagedBuffer MicroBitPowerManager::awaitUIPMPacket()
 
     // Wait for a response, signalled (possibly!) by a LOW on the combined irq line
     // Retry until we get a valid response or we time out.
-    while(attempts++ < MICROBIT_UIPM_MAX_RETRIES)
+    while( attempts++ < MICROBIT_UIPM_MAX_RETRIES )
     {
         target_wait(1);
 
         // Try to read a response from the KL27
         response = recvUIPMPacket();
-        
+
         // If we receive an INCOMPLETE response, then the KL27 is still working on our request, so wait a little longer and try again.
         // Similarly, if the I2C transaction fails, retry.
-        if (response.length() == 0 || (response[0] == MICROBIT_UIPM_COMMAND_ERROR_RESPONSE && response[1] == MICROBIT_UIPM_INCOMPLETE_CMD))
+        if( response.length() == 0 )
             continue;
+        
+        if( response[0] == MICROBIT_UIPM_COMMAND_ERROR_RESPONSE )
+        {
+            // Is the KL27 still busy processing something? If so, reset the retries and go again.
+            if( (status & MICROBIT_USB_INTERFACE_BUSY_FLAG_SUPPORTED) == MICROBIT_USB_INTERFACE_BUSY_FLAG_SUPPORTED && response[1] == MICROBIT_UIPM_BUSY )
+            {
+                attempts = 0;
+                continue;
+            }
+
+            if( response[1] == MICROBIT_UIPM_INCOMPLETE_CMD )
+                continue;
+        }
 
         // Sanitize the length of the packet to meet specification and return it.
         response.truncate((response[0] == MICROBIT_UIPM_COMMAND_ERROR_RESPONSE || response[0] == MICROBIT_UIPM_COMMAND_WRITE_RESPONSE) ? 2 : 3 + uipmPropertyLengths.get(response[1]));
@@ -236,12 +258,13 @@ ManagedBuffer MicroBitPowerManager::awaitUIPMPacket()
     }
 
     // If we time out, return a generic write error to the caller
+    DMESG("UIPM: Await timeout");
     ManagedBuffer error(2);
     error[0] = MICROBIT_UIPM_COMMAND_ERROR_RESPONSE;
     error[1] = MICROBIT_UIPM_WRITE_FAIL;
     awaitingPacket(false);
 
-    return error;    
+    return error;
 }
 
 
@@ -452,11 +475,7 @@ void MicroBitPowerManager::deepSleep()
         return;
     }
 
-    CODAL_TIMESTAMP eventTime = 0;
-    bool wakeOnTime = system_timer_deepsleep_wakeup_time( eventTime);
-    int can = canDeepSleep( wakeOnTime, eventTime, true /*wakeUpSources*/, NULL /*wakeUpPin*/);
-    if ( can == DEVICE_OK)
-        deepSleepWait();
+    deepSleepWait();
 }
 
 /**
@@ -477,7 +496,31 @@ void MicroBitPowerManager::deepSleep()
   *
   * @param milliSeconds The period of time to sleep, in milliseconds (minimum CONFIG_MINIMUM_DEEP_SLEEP_TIME).
   */
-void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
+void MicroBitPowerManager::deepSleep( uint32_t milliSeconds ) {
+    deepSleep( milliSeconds, false );
+}
+
+/**
+  * Powers down the CPU and USB interface and instructs peripherals to enter an inoperative low power state. However, all
+  * program state is preserved. CPU will deepsleep for the given period of time, before returning to normal
+  * operation.
+  * 
+  * note: ALL peripherals will be shutdown in this period. If you wish to keep peripherals active,
+  * simply use uBit.sleep();
+  *
+  * The current fiber is blocked immediately.
+  * Sleep occurs when the scheduler is next idle, unless cancelled by wake up events before then.
+  *
+  * If deep sleep is disturbed within the requested time interval and 'interruptable' is false, the remainder will be awake.
+  * 
+  * If the requested time interval is less than CONFIG_MINIMUM_DEEP_SLEEP_TIME, or a wake-up timer
+  * cannot be allocated, the sleep will be a simple uBit.sleep() without powering down and 'interruptable' state will be ignored.
+  *
+  * @param milliSeconds The period of time to sleep, in milliseconds (minimum CONFIG_MINIMUM_DEEP_SLEEP_TIME).
+  * @param interruptable If true, when woken prematurely, the call will ignore any remaining time and return immediately. Otherwise it will attempt to respect the remaining time via fiber_sleep.
+  * @return True, if interrupted, else false. Can only be true if interruptable is also true.
+  */
+bool MicroBitPowerManager::deepSleep(uint32_t milliSeconds, bool interruptable )
 {
     if ( milliSeconds > CONFIG_MINIMUM_DEEP_SLEEP_TIME)
     {
@@ -488,7 +531,7 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
         if (!fiber_scheduler_running())
         {
             simpleDeepSleep( true /*wakeOnTime*/, wakeUpTime, true /*wakeUpSources*/, NULL /*wakeUpPin*/);
-            return;
+            return false;
         }
 
         eventValue++;
@@ -500,22 +543,29 @@ void MicroBitPowerManager::deepSleep(uint32_t milliSeconds)
             CODAL_TIMESTAMP awake = system_timer_current_time_us();
 
             // Timed wake-up is usually < 20ms early here
-            if ( wakeUpTime > awake + 1000)
+            if ( wakeUpTime > awake + 1000 )
             {
+                if( interruptable ) {
+                    system_timer_cancel_event( id, eventValue);
+                    return true;
+                }
+
                 // If another fiber triggers deep sleep
                 // the wake-up timer is still in place
                 fiber_sleep( (wakeUpTime - awake) / 1000);
             }
 
             system_timer_cancel_event( id, eventValue);
-            return;
+            return false;
         }
     }
 
     // Block power down
     powerDownDisable();
-    fiber_sleep( milliSeconds);
+    fiber_sleep( milliSeconds );
     powerDownEnable();
+
+    return false;
 }
 
 /**
@@ -706,25 +756,6 @@ int MicroBitPowerManager::canDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpT
         if ( wakeUpTime < timeEntry || wakeUpTime - timeEntry < CONFIG_MINIMUM_DEEP_SLEEP_TIME * 1000)
         {
             return DEVICE_INVALID_STATE;
-        }
-    }
-    else
-    {
-        if ( wakeUpSources)
-        {
-            deepSleepCallbackData data;
-            CodalComponent::deepSleepAll( deepSleepCallbackCountWakeUps, &data);
-            if ( data.count == 0)
-            {
-                return DEVICE_INVALID_STATE;
-            }
-        }
-        else
-        {
-            if ( wakeUpPin == NULL)
-            {
-                return DEVICE_INVALID_STATE;
-            }
         }
     }
 

@@ -111,7 +111,6 @@ DEALINGS IN THE SOFTWARE.
 
 const char *MICROBIT_BLE_MANUFACTURER = NULL;
 const char *MICROBIT_BLE_MODEL = "BBC micro:bit";
-const char *MICROBIT_BLE_VERSION[2] = { "2.0", "2.X" };
 const char *MICROBIT_BLE_HARDWARE_VERSION = NULL;
 const char *MICROBIT_BLE_FIRMWARE_VERSION = MICROBIT_DAL_VERSION;
 const char *MICROBIT_BLE_SOFTWARE_VERSION = NULL;
@@ -229,7 +228,7 @@ MicroBitBLEManager *MicroBitBLEManager::getInstance()
   * bleManager.init(uBit.getName(), uBit.getSerial(), uBit.messageBus, true);
   * @endcode
   */
-void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNumber, EventModel &messageBus, MicroBitStorage &keyValueStorage, bool enableBonding, uint16_t board)
+void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNumber, EventModel &messageBus, MicroBitStorage &keyValueStorage, bool enableBonding)
 {
     if ( this->status & DEVICE_COMPONENT_RUNNING)
       return;
@@ -436,18 +435,10 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
 
 #if CONFIG_ENABLED(MICROBIT_BLE_DEVICE_INFORMATION_SERVICE)
     MICROBIT_DEBUG_DMESG( "DEVICE_INFORMATION_SERVICE");
-    
-    int versionIdx = 0;
-    switch ( board)
-    {
-      case 0x9903:
-      case 0x9904:  break;
-      default:      versionIdx = 1; break;
-    }
 
-    ManagedString modelVersion( MICROBIT_BLE_VERSION[versionIdx]);
+    ManagedString modelVersion("V2");
     ManagedString disName( MICROBIT_BLE_MODEL);
-    disName = disName + " V" + modelVersion;
+    disName = disName + " " + modelVersion;
 
     ble_dis_init_t disi;
     memset( &disi, 0, sizeof(disi));
@@ -690,7 +681,17 @@ void MicroBitBLEManager::onDisconnect()
 }
 
 
-    
+
+/**
+ * Determine if Bluetooth is connected
+ * @return true if connected 
+ */
+bool MicroBitBLEManager::getConnected()
+{
+    return ble_conn_state_peripheral_conn_count() > 0;
+}
+
+
 #if CONFIG_ENABLED(MICROBIT_BLE_EDDYSTONE_URL)
 /**
   * Set the content of Eddystone URL frames
@@ -1072,34 +1073,37 @@ bool MicroBitBLEManager::prepareForShutdown()
  */
 int MicroBitBLEManager::setSleep(bool doSleep)
 {
-    static bool wasEnabled;
+    static uint8_t wasEnabled;
 
     if (doSleep)
     {
-        wasEnabled = !nrf_sdh_is_suspended();
-        if (wasEnabled)
-        {
-            nrf_sdh_suspend();
-            app_timer_pause();
-            NVIC_DisableIRQ(RTC1_IRQn);
-            NVIC_DisableIRQ(POWER_CLOCK_IRQn);
-            NVIC_DisableIRQ(RTC0_IRQn);
-            NVIC_DisableIRQ(SWI5_EGU5_IRQn);
-            NVIC_DisableIRQ(MWU_IRQn);
-        }
+        app_timer_pause();
+        wasEnabled = 0;
+        if (!nrf_sdh_is_suspended())                wasEnabled |= 1;
+        if (NVIC_GetEnableIRQ(RTC1_IRQn))           wasEnabled |= 2;
+        if (NVIC_GetEnableIRQ(MWU_IRQn))            wasEnabled |= 4;
+        if (NVIC_GetEnableIRQ(SWI5_EGU5_IRQn))      wasEnabled |= 8;
+        if (NVIC_GetEnableIRQ(POWER_CLOCK_IRQn))    wasEnabled |= 16;
+        if (NVIC_GetEnableIRQ(RTC0_IRQn))           wasEnabled |= 32;
+        if (NRF_SUCCESS == MICROBIT_BLE_ECHK( sd_ble_gap_adv_stop( m_adv_handle))) wasEnabled |= 64;
+
+        if (wasEnabled & 1)    nrf_sdh_suspend();
+        if (wasEnabled & 2)    NVIC_DisableIRQ(RTC1_IRQn);
+        if (wasEnabled & 4)    NVIC_DisableIRQ(MWU_IRQn);
+        if (wasEnabled & 8)    NVIC_DisableIRQ(SWI5_EGU5_IRQn);
+        if (wasEnabled & 16)   NVIC_DisableIRQ(POWER_CLOCK_IRQn);
+        if (wasEnabled & 32)   NVIC_DisableIRQ(RTC0_IRQn);
     }
     else
     {
-        if (wasEnabled)
-        {
-            NVIC_DisableIRQ(POWER_CLOCK_IRQn);
-            NVIC_DisableIRQ(RTC0_IRQn);
-            NVIC_DisableIRQ(SWI5_EGU5_IRQn);
-            NVIC_DisableIRQ(MWU_IRQn);
-            NVIC_EnableIRQ(RTC1_IRQn);
-            app_timer_resume();
-            nrf_sdh_resume();
-        }
+        if (wasEnabled & 32)    NVIC_EnableIRQ(RTC0_IRQn);
+        if (wasEnabled & 16)    NVIC_EnableIRQ(POWER_CLOCK_IRQn);
+        if (wasEnabled & 8)     NVIC_EnableIRQ(SWI5_EGU5_IRQn);
+        if (wasEnabled & 4)     NVIC_EnableIRQ(MWU_IRQn);
+        if (wasEnabled & 2)     NVIC_EnableIRQ(RTC1_IRQn);
+        if (wasEnabled & 1)     nrf_sdh_resume();
+        if (wasEnabled & 64)    advertise();
+        app_timer_resume();
     }
    
     return DEVICE_OK;

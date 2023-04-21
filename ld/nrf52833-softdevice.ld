@@ -1,21 +1,48 @@
 MEMORY
 {
-  FLASH (rx) : ORIGIN = 0x00000, LENGTH = 0x7F000
-  STORAGE (rx) : ORIGIN = 0x7F000, LENGTH = 0x1000
+  MBR (rx) : ORIGIN = 0x0000, LENGTH = 0x1000
+  SD (rx) : ORIGIN = 0x1000, LENGTH = 0x1B000
+  FLASH (rx) : ORIGIN = 0x1C000, LENGTH = 0x77000 - 0x1C000
+  BOOTLOADER (rx) : ORIGIN = 0x77000, LENGTH = 0x7E000 - 0x77000
+  SETTINGS (rx) : ORIGIN = 0x7E000, LENGTH = 0x2000
   UICR (rx) : ORIGIN = 0x10001014, LENGTH = 0x8
-  NOINIT (rwx) : ORIGIN = 0x20000000, LENGTH = 0x20000010 - 0x20000000
-  RAM (rwx) : ORIGIN = 0x20000010, LENGTH = 0x20020000 - 0x20000010
+  NOINIT (rwx) : ORIGIN = 0x20002030, LENGTH = 0x20002040 - 0x20002030
+  RAM (rwx) : ORIGIN = 0x20002040, LENGTH = 0x20020000 - 0x20002040
 }
 OUTPUT_FORMAT ("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 ENTRY(Reset_Handler)
 SECTIONS
 {
     . = ALIGN(4);
+    .mbr :
+    {
+        KEEP(*(.mbr))
+    } > MBR
+
+    . = ALIGN(4);
+    .softdevice :
+    {
+        KEEP(*(.softdevice))
+    } > SD
+    
+    . = ALIGN(4);
+    .bootloader :
+    {
+        KEEP(*(.bootloader))
+    } > BOOTLOADER
+
+    . = ALIGN(4);
     .uicr :
     {
         KEEP(*(.uicr))
     } > UICR
-  
+
+    . = ALIGN(4);
+    .settings :
+    {
+        KEEP(*(.settings))
+    } > SETTINGS
+    
     .text :
     {
         KEEP(*(.isr_vector))

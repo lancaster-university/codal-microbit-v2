@@ -267,6 +267,14 @@ typedef codal::BitmapFont MicroBitFont;
 
 //#define MICROBIT_PANIC_ERROR_CHARS
 
+//
+// MBed legacy IDs - DO NOT USE
+// Note: These are actual integers to allow us to use __attribute__
+//
+const uint16_t MICROBIT_ID_MBED_INTERRUPT_IN __attribute__ ((deprecated)) = 80;
+const uint16_t MICROBIT_ID_MBED_PWM          __attribute__ ((deprecated)) = 81;
+const uint16_t MICROBIT_ID_MBED_TIMEOUT      __attribute__ ((deprecated)) = 82;
+const uint16_t MICROBIT_ID_MBED_TICKER       __attribute__ ((deprecated)) = 83;
 
 //
 // MICROBIT specific component IDs and event codes
@@ -356,18 +364,13 @@ typedef codal::BitmapFont MicroBitFont;
 #define MICROBIT_ID_SERIAL                                      DEVICE_ID_SERIAL
 #define MICROBIT_ID_THERMOMETER                                 DEVICE_ID_THERMOMETER
 
-#define MICROBIT_ID_PARTIAL_FLASHING                            36
-#define MICROBIT_ID_POWER_MANAGER                               37
-#define MICROBIT_ID_USB_FLASH_MANAGER                           38
+#define MICROBIT_ID_POWER_MANAGER                               DEVICE_ID_POWER_MANAGER
+#define MICROBIT_ID_PARTIAL_FLASHING                            DEVICE_ID_PARTIAL_FLASHING
+#define MICROBIT_ID_USB_FLASH_MANAGER                           DEVICE_ID_USB_FLASH_MANAGER
 
-#define MICROBIT_ID_VIRTUAL_SPEAKER_PIN                         39
+#define MICROBIT_ID_VIRTUAL_SPEAKER_PIN                         DEVICE_ID_VIRTUAL_SPEAKER_PIN
 
-#define MICROBIT_ID_MBED_INTERRUPT_IN                           40 
-#define MICROBIT_ID_MBED_PWM                                    41
-#define MICROBIT_ID_MBED_TIMEOUT                                42
-#define MICROBIT_ID_MBED_TICKER                                 43
-
-#define MICROBIT_ID_LOG                                         44
+#define MICROBIT_ID_LOG                                         DEVICE_ID_LOG
 
 #define MICROBIT_MAXIMUM_HEAPS                                  DEVICE_MAXIMUM_HEAPS
 #define MICROBIT_NESTED_HEAP_SIZE                               0

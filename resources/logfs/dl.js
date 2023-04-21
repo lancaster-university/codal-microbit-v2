@@ -84,6 +84,9 @@ function UserGraphError(message) {
         }
 
         base.load();
+
+        // The base.load() function attaches the DAPLink version to the original object
+        this.daplinkVersion = base.dapVer;
       },
 
       hasGraph: function () {
@@ -109,7 +112,7 @@ function UserGraphError(message) {
 
       graph: function () {
         function readData(table) {
-          if (table.rows.length === 0) {
+          if (!table || !table.rows || table.rows.length === 0) {
             throw new UserGraphError("No data to graph.");
           }
           const rows = table.rows;

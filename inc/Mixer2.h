@@ -80,6 +80,9 @@ public:
      */
     virtual int pullRequest();
     virtual ~MixerChannel() {};
+
+    void setVolume( float volume ) { this->volume = volume; }
+    float getVolume() { return this->volume; }
 };
 
 class Mixer2 : public DataSource
@@ -95,6 +98,8 @@ class Mixer2 : public DataSource
     uint32_t        orMask;
     float           silenceLevel;
     bool            silent;
+    CODAL_TIMESTAMP silenceStartTime;
+    CODAL_TIMESTAMP silenceEndTime;
 
 public:
     /**
@@ -120,6 +125,14 @@ public:
      * @param sampleRange (quantization levels) the difference between the maximum and minimum sample level on the input channel
      */
     MixerChannel *addChannel(DataSource &stream, float sampleRate = 0, int sampleRange = CONFIG_MIXER_INTERNAL_RANGE);
+
+    /**
+     * Removes a channel from the mixer
+     * 
+     * @param channel The channel pointer to remove
+     * @return int DEVICE_OK if completed successfully
+     */
+    int removeChannel( MixerChannel * channel );
 
     /**
      * Provide the next available ManagedBuffer to our downstream caller, if available.
@@ -188,7 +201,7 @@ public:
      * Determine the sample rate output of this Mixer.
      * @return The sample rate (samples per second) of the mixer output.
      */
-    int getSampleRate();
+    float getSampleRate();
 
     /**
      * Defines an optional bit mask to logical OR with each sample.
@@ -213,6 +226,23 @@ public:
      * @return true if the mixer is silent
      */
     bool isSilent();
+
+    /**
+     * Determines the time at which the mixer has most recently been generating silence 
+     *
+     * @return the system time in microseconds at which the mixer has been continuously 
+     * producing silence on its output, or zero if the mixer is not producing silence.
+     */
+    CODAL_TIMESTAMP getSilenceStartTime();
+
+    /**
+     * Determines the time at which the mixer stopped continuously generating silence 
+     *
+     * @return the system time in microseconds at which the mixer stopped continuously 
+     * producing silence on its output, or zero if the mixer is not producing silence.
+     */
+    CODAL_TIMESTAMP getSilenceEndTime();
+
 
     private:
     void configureChannel(MixerChannel *c);

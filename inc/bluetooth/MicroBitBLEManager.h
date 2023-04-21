@@ -31,7 +31,7 @@ DEALINGS IN THE SOFTWARE.
 #if CONFIG_ENABLED(DEVICE_BLE)
 
 #ifndef SOFTDEVICE_PRESENT
-#error "Please define SOFTDEVICE_PRESENT as 1"
+#error "Please define SOFTDEVICE_PRESENT in your configuration"
 #endif
 
 #include "MicroBitBLETypes.h"
@@ -123,7 +123,7 @@ class MicroBitBLEManager : public CodalComponent
       * bleManager.init(uBit.getName(), uBit.getSerial(), uBit.messageBus, true);
       * @endcode
       */
-    void init(ManagedString deviceName, ManagedString serialNumber, EventModel &messageBus, MicroBitStorage &keyValuestorage, bool enableBonding, uint16_t board = 0x9904);
+    void init(ManagedString deviceName, ManagedString serialNumber, EventModel &messageBus, MicroBitStorage &keyValuestorage, bool enableBonding);
     
     /**
      * Change the output power level of the transmitter to the given value.
@@ -196,6 +196,12 @@ class MicroBitBLEManager : public CodalComponent
      * A member function called on disconnection
      * */
     void onDisconnect();
+
+    /**
+     * Determine if Bluetooth is connected
+     * @return true if connected 
+     */
+    bool getConnected();
 
 #if CONFIG_ENABLED(MICROBIT_BLE_EDDYSTONE_URL)
     /**

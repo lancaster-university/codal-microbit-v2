@@ -109,7 +109,7 @@ MicroBitSerial::MicroBitSerial(PinNumber tx, PinNumber rx, uint8_t rxBufferSize,
   *
   * @param rx the new reception pin.
   *
-  * @return CODAL_SERIAL_IN_USE if another fiber is currently transmitting or receiving, otherwise DEVICE_OK.
+  * @return DEVICE_SERIAL_IN_USE if another fiber is currently transmitting or receiving, otherwise DEVICE_OK.
   */
 int MicroBitSerial::redirect(PinName tx, PinName rx) {
     static Pin *oldRx = NULL;
@@ -134,7 +134,7 @@ int MicroBitSerial::redirect(PinName tx, PinName rx) {
   *
   * @param rx the new reception pin.
   *
-  * @return CODAL_SERIAL_IN_USE if another fiber is currently transmitting or receiving, otherwise DEVICE_OK.
+  * @return DEVICE_SERIAL_IN_USE if another fiber is currently transmitting or receiving, otherwise DEVICE_OK.
   */
 int MicroBitSerial::redirect(PinNumber tx, PinNumber rx) {
     static Pin *oldRx = NULL;

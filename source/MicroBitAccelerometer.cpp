@@ -24,19 +24,18 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitAccelerometer.h"
 #include "MicroBitIO.h"
-#include "ErrorNo.h"
 #include "MicroBitEvent.h"
 #include "MicroBitCompat.h"
 #include "MicroBitFiber.h"
 #include "MicroBitDevice.h"
 #include "MicroBitI2C.h"
 #include "MicroBitCompass.h"
-#include "FXOS8700.h"
+#include "MicroBitError.h"
 #include "LSM303Accelerometer.h"
 #include "LSM303Magnetometer.h"
 
 
-Accelerometer* MicroBitAccelerometer::detectedAccelerometer;
+Accelerometer* MicroBitAccelerometer::driver;
 
 MicroBitAccelerometer::MicroBitAccelerometer(MicroBitI2C &i2c, uint16_t id) : Accelerometer(coordinateSpace)
 {
@@ -55,7 +54,6 @@ Accelerometer& MicroBitAccelerometer::autoDetect(MicroBitI2C &i2c)
 {
     static bool autoDetectCompleted = false;
     static CoordinateSpace coordinateSpace(SIMPLE_CARTESIAN, true, COORDINATE_SPACE_ROTATED_0);
-    static CoordinateSpace coordinateSpaceFXOS8700(SIMPLE_CARTESIAN, true, COORDINATE_SPACE_ROTATED_180);
     static NRF52Pin irq1(ID_PIN_IRQ1, P0_25, PIN_CAPABILITY_AD);
 
     /*
@@ -71,34 +69,21 @@ Accelerometer& MicroBitAccelerometer::autoDetect(MicroBitI2C &i2c)
     
     if (!autoDetectCompleted)
     {
-        MicroBitAccelerometer::detectedAccelerometer = NULL;
-        MicroBitCompass::detectedCompass = NULL;
+        MicroBitAccelerometer::driver = NULL;
+        MicroBitCompass::driver       = NULL;
 
-        // All known accelerometer/magnetometer peripherals have the same alignment
-        if (FXOS8700::isDetected(i2c, 0x3E))
+        // Now, probe for the LSM303, and if it doesn't reply, panic
+        if ( LSM303Accelerometer::isDetected(i2c, 0x32) )
         {
-            FXOS8700 *fxos = new FXOS8700(i2c, irq1, coordinateSpaceFXOS8700, 0x3E);
-            MicroBitAccelerometer::detectedAccelerometer = fxos;
-            MicroBitCompass::detectedCompass = fxos;
+            MicroBitAccelerometer::driver = new LSM303Accelerometer( i2c, irq1, coordinateSpace, 0x32 );
+            MicroBitCompass::driver = new LSM303Magnetometer( i2c, irq1, coordinateSpace, 0x3C );
+            MicroBitCompass::driver->setAccelerometer( *MicroBitAccelerometer::driver );
         }
-
-        // Now, probe for connected peripherals, if none have already been found.
-        if (LSM303Accelerometer::isDetected(i2c, 0x32))
-        {
-            MicroBitAccelerometer::detectedAccelerometer = new LSM303Accelerometer(i2c, irq1, coordinateSpace, 0x32);
-            MicroBitCompass::detectedCompass = new LSM303Magnetometer(i2c, irq1, coordinateSpace, 0x3C);
-        }
-
-        if (MicroBitAccelerometer::detectedAccelerometer == NULL)
-            MicroBitAccelerometer::detectedAccelerometer = new Accelerometer(coordinateSpace);
-
-        if (MicroBitCompass::detectedCompass)
-            MicroBitCompass::detectedCompass->setAccelerometer(*MicroBitAccelerometer::detectedAccelerometer);
 
         autoDetectCompleted = true;
     }
     
-    return *detectedAccelerometer;
+    return *driver;
 }
 
 /**
@@ -118,7 +103,10 @@ Accelerometer& MicroBitAccelerometer::autoDetect(MicroBitI2C &i2c)
   */
 int MicroBitAccelerometer::setPeriod(int period)
 {
-    return MicroBitAccelerometer::detectedAccelerometer ? detectedAccelerometer->setPeriod(period) : Accelerometer::setPeriod(period);
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
+    return driver->setPeriod(period);
 }
 
 /**
@@ -128,7 +116,10 @@ int MicroBitAccelerometer::setPeriod(int period)
   */
 int MicroBitAccelerometer::getPeriod()
 {
-    return MicroBitAccelerometer::detectedAccelerometer ? detectedAccelerometer->getPeriod() : Accelerometer::getPeriod();
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
+    return driver->getPeriod();
 }
 
 /**
@@ -148,7 +139,10 @@ int MicroBitAccelerometer::getPeriod()
   */
 int MicroBitAccelerometer::setRange(int range)
 {
-    return MicroBitAccelerometer::detectedAccelerometer ? detectedAccelerometer->setRange(range) : Accelerometer::setRange(range);
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
+    return driver->setRange( range );
 }
 
 /**
@@ -158,7 +152,10 @@ int MicroBitAccelerometer::setRange(int range)
   */
 int MicroBitAccelerometer::getRange()
 {
-    return MicroBitAccelerometer::detectedAccelerometer ? detectedAccelerometer->getRange() : Accelerometer::getRange();
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
+    return driver->getRange();
 }
 
 /**
@@ -174,7 +171,10 @@ int MicroBitAccelerometer::getRange()
  */
 int MicroBitAccelerometer::configure()
 {
-    return MicroBitAccelerometer::detectedAccelerometer ? detectedAccelerometer->configure() : Accelerometer::configure();
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
+    return driver->configure();
 }
 
 /**
@@ -190,7 +190,10 @@ int MicroBitAccelerometer::configure()
  */
 int MicroBitAccelerometer::requestUpdate()
 {
-    return MicroBitAccelerometer::detectedAccelerometer ? detectedAccelerometer->requestUpdate() : Accelerometer::requestUpdate();
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
+    return driver->requestUpdate();
 }
 
 /**
@@ -201,7 +204,10 @@ int MicroBitAccelerometer::requestUpdate()
  */
 Sample3D MicroBitAccelerometer::getSample(CoordinateSystem coordinateSystem)
 {
-    return MicroBitAccelerometer::detectedAccelerometer ? detectedAccelerometer->getSample(coordinateSystem) : Accelerometer::getSample(coordinateSystem);
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
+    return driver->getSample( coordinateSystem );
 }
 
 /**
@@ -210,7 +216,10 @@ Sample3D MicroBitAccelerometer::getSample(CoordinateSystem coordinateSystem)
  */
 Sample3D MicroBitAccelerometer::getSample()
 {
-    return MicroBitAccelerometer::detectedAccelerometer ? detectedAccelerometer->getSample() : Accelerometer::getSample();
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
+    return driver->getSample();
 }
 
 /**
@@ -221,7 +230,10 @@ Sample3D MicroBitAccelerometer::getSample()
  */
 int MicroBitAccelerometer::getX()
 {
-    return MicroBitAccelerometer::detectedAccelerometer ? detectedAccelerometer->getX() : Accelerometer::getX();
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
+    return driver->getX();
 }
 
 /**
@@ -232,7 +244,10 @@ int MicroBitAccelerometer::getX()
  */
 int MicroBitAccelerometer::getY()
 {
-    return MicroBitAccelerometer::detectedAccelerometer ? detectedAccelerometer->getY() : Accelerometer::getY();
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
+    return driver->getY();
 }
 
 /**
@@ -243,7 +258,10 @@ int MicroBitAccelerometer::getY()
  */
 int MicroBitAccelerometer::getZ()
 {
-    return MicroBitAccelerometer::detectedAccelerometer ? detectedAccelerometer->getZ() : Accelerometer::getZ();
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
+    return driver->getZ();
 }
 
 /**
@@ -257,7 +275,10 @@ int MicroBitAccelerometer::getZ()
   */
 int MicroBitAccelerometer::getPitch()
 {
-    return MicroBitAccelerometer::detectedAccelerometer ? detectedAccelerometer->getPitch() : Accelerometer::getPitch();
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
+    return driver->getPitch();
 }
 
 /**
@@ -271,7 +292,10 @@ int MicroBitAccelerometer::getPitch()
   */
 float MicroBitAccelerometer::getPitchRadians()
 {
-    return MicroBitAccelerometer::detectedAccelerometer ? detectedAccelerometer->getPitchRadians() : Accelerometer::getPitchRadians();
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
+    return driver->getPitchRadians();
 }
 
 /**
@@ -285,7 +309,10 @@ float MicroBitAccelerometer::getPitchRadians()
   */
 int MicroBitAccelerometer::getRoll()
 {
-    return MicroBitAccelerometer::detectedAccelerometer ? detectedAccelerometer->getRoll() : Accelerometer::getRoll();
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
+    return driver->getRoll();
 }
 
 /**
@@ -299,7 +326,10 @@ int MicroBitAccelerometer::getRoll()
   */
 float MicroBitAccelerometer::getRollRadians()
 {
-    return MicroBitAccelerometer::detectedAccelerometer ? detectedAccelerometer->getRollRadians() : Accelerometer::getRollRadians();
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
+    return driver->getRollRadians();
 }
 
 /**
@@ -316,12 +346,12 @@ float MicroBitAccelerometer::getRollRadians()
   */
 uint16_t MicroBitAccelerometer::getGesture()
 {
-    return MicroBitAccelerometer::detectedAccelerometer ? detectedAccelerometer->getGesture() : Accelerometer::getGesture();
+    if( driver == NULL )
+        target_panic( MicroBitPanic::ACCELEROMETER_ERROR );
+    
+    return driver->getGesture();
 }
 
-/**
-  * Destructor for FXS8700, where we deregister from the array of fiber components.
-  */
 MicroBitAccelerometer::~MicroBitAccelerometer()
 {
 }

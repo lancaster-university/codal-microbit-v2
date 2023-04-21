@@ -108,6 +108,13 @@ DEALINGS IN THE SOFTWARE.
 #define CONFIG_MICROBIT_ERASE_USER_DATA_ON_REFLASH    1
 #endif
 
+// Defines default behaviour of triple-tap-reset-to-pair feature.
+// 0: Feature disabled
+// 1: Feature enabled. Triple tap of reset button enters Bluetooth pairing mode.
+#ifndef DEVICE_TRIPLE_RESET_TO_PAIR
+#define DEVICE_TRIPLE_RESET_TO_PAIR             1
+#endif
+
 /**
  * Class definition for a MicroBit device.
  *
@@ -215,8 +222,13 @@ namespace codal
              *
              * @param milliseconds the amount of time, in ms, to wait for. This number cannot be negative.
              *
-             * @return MICROBIT_OK on success, MICROBIT_INVALID_PARAMETER milliseconds is less than zero.
+             * @code
+             * uBit.sleep(20); //sleep for 20ms
+             * @endcode
              *
+             * @note This operation is currently limited by the rate of the system timer, therefore
+             *       the granularity of the sleep operation is limited to 4 ms, unless the rate of
+             *       the system timer is modified.
              */
             void sleep(uint32_t milliseconds);
 
@@ -229,7 +241,13 @@ namespace codal
              * A periodic callback invoked by the fiber scheduler idle thread.
              * We use this for any low priority, background housekeeping.
              */
-            virtual void idleCallback();
+            virtual void idleCallback() override;
+
+            /**
+            * Periodic callback from Device system timer.
+            *
+            */
+            virtual void periodicCallback() override;
 
             /**
              * Determine the time since this MicroBit was last reset.
@@ -289,8 +307,13 @@ namespace codal
      *
      * @param milliseconds the amount of time, in ms, to wait for. This number cannot be negative.
      *
-     * @return MICROBIT_OK on success, MICROBIT_INVALID_PARAMETER milliseconds is less than zero.
+     * @code
+     * uBit.sleep(20); //sleep for 20ms
+     * @endcode
      *
+     * @note This operation is currently limited by the rate of the system timer, therefore
+     *       the granularity of the sleep operation is limited to 4 ms, unless the rate of
+     *       the system timer is modified.
      */
     inline void MicroBit::sleep(uint32_t milliseconds)
     {
@@ -321,9 +344,9 @@ using namespace codal;
 
 #define MIC_DEVICE NRF52ADCChannel*
 #define MIC_INIT \
-    : microphone(uBit.adc.getChannel(uBit.io.microphone)) \
-    , level((new StreamNormalizer(microphone->output, 1.0f, true, DATASTREAM_FORMAT_UNKNOWN, 10))->output, 75.0, 60.0, 9, 52, DEVICE_ID_MICROPHONE)
+    : microphone(uBit.audio.mic) \
+    , level(* uBit.audio.levelSPL)
 
-#define MIC_ENABLE uBit.io.runmic.setDigitalValue(1); uBit.io.runmic.setHighDrive(true); microphone->setGain(7,0)
+#define MIC_ENABLE //uBit.audio.deactivateLevelSPL(); //uBit.io.runmic.setDigitalValue(1); uBit.io.runmic.setHighDrive(true); microphone->setGain(7,0)
 
 #endif
