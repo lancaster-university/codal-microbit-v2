@@ -25,7 +25,6 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitAudio.h"
 #include "MicroBit.h"
-#include "CodalDmesg.h"
 #include "NRF52PWM.h"
 #include "Synthesizer.h"
 #include "SoundExpressions.h"
@@ -73,11 +72,7 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
     //
     // This prevents any cases where the pipeline stages cause a connect() message to be emitted, which then auto-activates the mic.
 
-    //Initialialise the microphone filter
-    //micFilter = new LowPassFilter(mic->output, 0.35f, true);
-
     //Initilise input splitter
-    //rawSplitter = new StreamSplitter(*micFilter);
     rawSplitter = new StreamSplitter(mic->output);
 
     //Initilise stream normalizer
@@ -98,28 +93,20 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
 
     // Connect to the splitter - this COULD come after we create it, before we add any stages, as these are dynamic and will only connect on-demand, but just in case
     // we're going to follow the schema set out above, to be 100% sure.
-    if(EventModel::defaultEventBus)
+    if(EventModel::defaultEventBus) {
         EventModel::defaultEventBus->listen(DEVICE_ID_SPLITTER, DEVICE_EVT_ANY, this, &MicroBitAudio::onSplitterEvent, MESSAGE_BUS_LISTENER_IMMEDIATE);
-    
-    //activateMic();
+        EventModel::defaultEventBus->listen(DEVICE_ID_NOTIFY, mic->output.emitFlowEvents(), this, &MicroBitAudio::onSplitterEvent, MESSAGE_BUS_LISTENER_IMMEDIATE);
+    }
 }
 
 /**
  * Handle events from splitter
  */
 void MicroBitAudio::onSplitterEvent(MicroBitEvent e){
-
-    DMESGF( "Event! (%d -> %d)", e.source, e.value );
-
-    if( e.value == SPLITTER_ACTIVATE || e.value == SPLITTER_CHANNEL_CONNECT )
+    if( mic->output.isFlowing() || (e.value == SPLITTER_ACTIVATE || e.value == SPLITTER_CHANNEL_CONNECT) )
         activateMic();
-    
-    // Note: The processor will always be present on the rawSplitter, hence the <= 1.
-    else if( e.value == SPLITTER_DEACTIVATE || e.value == SPLITTER_CHANNEL_DISCONNECT )
-    {
-        if( splitter->activeChannels < 1 )
-            deactivateMic();
-    }
+    else
+        deactivateMic();
 }
 
 /**
@@ -137,15 +124,12 @@ void MicroBitAudio::activateMic(){
 void MicroBitAudio::deactivateMic(){
     runmic.setDigitalValue(0);
     runmic.setHighDrive(false);
-    mic->disable(); // Just disable the mic channel, releasing it makes it gone forever!
-    //adc.releaseChannel(microphone);
 }
 
 /**
  * Dectivate Mic and Input Channel
  */
 void MicroBitAudio::deactivateLevelSPL(){
-    //levelSPL->disable();
     levelSPL->activateForEvents( false );
 }
 

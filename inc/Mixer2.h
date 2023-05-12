@@ -83,6 +83,20 @@ public:
 
     void setVolume( float volume ) { this->volume = volume; }
     float getVolume() { return this->volume; }
+
+    /**
+     * @brief Sets the sample rate of this channel.
+     * 
+     * @warning For this to take effect you _must_ call `void Mixer2::configureChannel(MixerChannel *c)` on your mixer instance to recalculate the internal constants.
+     * 
+     * @param rate 
+     */
+    void setSampleRate( float rate ) {
+        if( this->rate == DATASTREAM_SAMPLE_RATE_UNKNOWN )
+            this->rate = stream->getSampleRate();
+        this->rate = rate;
+    }
+    float getSampleRate() { return this->rate; }
 };
 
 class Mixer2 : public DataSource
