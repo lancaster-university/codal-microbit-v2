@@ -1,6 +1,8 @@
 # codal-microbit-v2
 CODAL target for the micro:bit v2.x series of devices
 
+[![Build Samples](https://github.com/lancaster-university/codal-microbit-v2/actions/workflows/build.yml/badge.svg)](https://github.com/lancaster-university/codal-microbit-v2/actions/workflows/build.yml) [![Build MicroPython](https://github.com/lancaster-university/codal-microbit-v2/actions/workflows/micropython.yml/badge.svg)](https://github.com/lancaster-university/codal-microbit-v2/actions/workflows/micropython.yml) [![Build MakeCode](https://github.com/lancaster-university/codal-microbit-v2/actions/workflows/makecode.yml/badge.svg)](https://github.com/lancaster-university/codal-microbit-v2/actions/workflows/makecode.yml)
+
 See https://github.com/lancaster-university/microbit-v2-samples for details on building and using CODAL.
 
 ## Tags and Releases
