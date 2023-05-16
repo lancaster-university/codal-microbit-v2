@@ -81,21 +81,39 @@ public:
     virtual int pullRequest();
     virtual ~MixerChannel() {};
 
+    /**
+     * @brief Changes the volume between 0 and CONFIG_MIXER_INTERNAL_RANGE
+     * 
+     * @param volume A floating point value between 0 and CONFIG_MIXER_INTERNAL_RANGE
+     */
     void setVolume( float volume ) { this->volume = volume; }
+
+    /**
+     * @brief Gets the volume for this channel (not the overall mixer volume)
+     * 
+     * @return float A floating point value between 0 and CONFIG_MIXER_INTERNAL_RANGE
+     */
     float getVolume() { return this->volume; }
 
     /**
      * @brief Sets the sample rate of this channel.
      * 
-     * @warning For this to take effect you _must_ call `void Mixer2::configureChannel(MixerChannel *c)` on your mixer instance to recalculate the internal constants.
-     * 
      * @param rate 
      */
     void setSampleRate( float rate ) {
+        this->rate = rate;
+        this->skip = 0.0f;
         if( this->rate == DATASTREAM_SAMPLE_RATE_UNKNOWN )
             this->rate = stream->getSampleRate();
-        this->rate = rate;
     }
+
+    /**
+     * @brief Gets the sample rate for this channel.
+     * 
+     * @note This may be set to DATASTREAM_SAMPLE_RATE_UNKNOWN if the upstream is unable to determine a correct rate
+     * 
+     * @return float 
+     */
     float getSampleRate() { return this->rate; }
 };
 

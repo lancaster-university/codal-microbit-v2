@@ -153,6 +153,10 @@ ManagedBuffer Mixer2::pull()
         float *end = &mix[CONFIG_MIXER_BUFFER_SIZE/bytesPerSampleOut];
         int inputFormat = ch->format;
 
+        // Check if we need to recalculate skip after a channel rate change
+        if( ch->skip == 0.0f )
+            ch->skip = ch->rate / outputRate;
+
         while (out < end)
         {
             // precalculate the maximum number of samples the we can process with the current buffer allocations.
