@@ -179,6 +179,14 @@ public:
     virtual void connect(DataSink &sink);
 
     /**
+     * Determines if this source is connected to a downstream component
+     * 
+     * @return true If a downstream is connected
+     * @return false If a downstream is not connected
+     */
+    bool isConnected();
+
+    /**
      * Determines the output format for the Mixer.
      */
     virtual int getFormat();

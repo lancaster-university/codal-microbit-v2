@@ -232,3 +232,8 @@ int SoundOutputPin::getFormat()
 {
     return DATASTREAM_FORMAT_8BIT_UNSIGNED;
 }
+
+bool SoundOutputPin::isConnected()
+{
+    return this->channel != NULL;
+}

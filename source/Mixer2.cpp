@@ -279,6 +279,11 @@ void Mixer2::connect(DataSink &sink)
     this->downStream->pullRequest();
 }
 
+bool Mixer2::isConnected()
+{
+    return this->downStream != NULL;
+}
+
 int Mixer2::getFormat()
 {
     return outputFormat;

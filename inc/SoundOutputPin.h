@@ -157,6 +157,14 @@ namespace codal
           */
         virtual ManagedBuffer pull();
         virtual int getFormat();
+        
+        /**
+         * Determines if this source is connected to a downstream component
+         * 
+         * @return true If a downstream is connected
+         * @return false If a downstream is not connected
+         */
+        bool isConnected();
 
         private:
 
