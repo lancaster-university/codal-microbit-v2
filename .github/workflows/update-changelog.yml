@@ -1,0 +1,33 @@
+name: 'Autoupdate Changelog.md'
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+        - v*
+
+permissions:
+  contents: write
+
+jobs:
+  update-changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - run: python3 -m pip install natsort
+
+      - name: Generate a new Changelog
+        run: python3 .github/tools/gitchanges.py > Changelog.md
+      
+      - name: Commit the new Changelog
+        run: |
+          git config --global user.name 'Github Actions'
+          git config --global user.email 'actions+git@johnvidler.co.uk'
+          git add Changelog.md
+          git commit -m "Updated the Changelog"
+          git push
