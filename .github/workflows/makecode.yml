@@ -50,8 +50,6 @@ jobs:
         run: |
           npm install -g pxt
           npm install
-          # Running from pxt-microbit main branch, so use latest release of these packages
-          npm install pxt-core@latest pxt-common-packages@latest
       - name: Edit pxtarget.json to use this repository and commit
         shell: bash
         run: |
