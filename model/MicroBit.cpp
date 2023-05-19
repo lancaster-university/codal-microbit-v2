@@ -283,6 +283,11 @@ int MicroBit::init()
     bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, storage, false);
 #endif
 
+    // Bring up the 64MHz external oscillator.
+    NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
+    NRF_CLOCK->TASKS_HFCLKSTART = 1;
+    while (NRF_CLOCK->EVENTS_HFCLKSTARTED == 0);
+
     // Deschedule for a little while, just to allow for any components that finialise initialisation
     // as a background task, and to allow the power mamanger to repsonse to background events from the KL27
     // before any user code begins running.

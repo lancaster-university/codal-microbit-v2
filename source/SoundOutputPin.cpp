@@ -104,6 +104,25 @@ int SoundOutputPin::getAnalogValue()
 int SoundOutputPin::setAnalogPeriodUs(uint32_t period)
 {
     this->periodUs = period;
+
+#if CONFIG_ENABLED(CONFIG_SOUND_OUTPUT_PIN_DISCRETE_OUTPUT)
+    // Snap to the nearest clean divisor of our carrier freuency.
+    float frequency = CONFIG_MIXER_DEFAULT_SAMPLERATE;
+    uint32_t samplePeriodUs = (1000000 / frequency);
+
+    // Find the nearest integer value to periodUs that is a divisor of sampleUs
+    uint32_t i = period / samplePeriodUs;
+
+    uint32_t period1 = i * samplePeriodUs;
+    uint32_t period2 = (i+1) * samplePeriodUs;
+
+    float error1 = abs((float)period - (float)period1);
+    float error2 = abs((float)period - (float)period2);
+
+    this->periodUs = (error1 < error2) ? period1 : period2;
+
+#endif
+
     update();
 
     return DEVICE_OK;
@@ -175,10 +194,9 @@ void SoundOutputPin::updateOutputBuffer(bool all)
     uint8_t *endPosition = all ? bufferEnd : outputBuffer.getBytes() + min(outputBuffer.length(), (int) ((1000.0f / SOUND_OUTPUT_PIN_SAMPLE_RATE) * (timeOfLastUpdate - timeOfLastPull)));
 
     // Fill the buffer based on the previously defined period and value settings.
+#if CONFIG_ENABLED(CONFIG_SOUND_OUTPUT_PIN_TONEPRINT)
     float frequency = _periodUs ? 1000000.0f / _periodUs : 0;
     float skip = ((float)(EMOJI_SYNTHESIZER_TONE_WIDTH_F * frequency) / (float)SOUND_OUTPUT_PIN_SAMPLE_RATE);
-
-    //DMESG("[outputBuffer: %p][bufferEnd: %p][endPosition: %p][bufferWritePos: %p][volume: %d]", outputBuffer.getBytes(), bufferEnd, endPosition, bufferWritePos, this->volume);
 
     while(bufferWritePos < endPosition)
     {
@@ -190,6 +208,23 @@ void SoundOutputPin::updateOutputBuffer(bool all)
         while(position > EMOJI_SYNTHESIZER_TONE_WIDTH_F)
             position -= EMOJI_SYNTHESIZER_TONE_WIDTH_F;
     }
+
+#else
+    uint32_t samplePeriodUs = (1000000 / SOUND_OUTPUT_PIN_SAMPLE_RATE);
+    uint32_t skip = _periodUs / samplePeriodUs;
+
+    while(bufferWritePos < endPosition)
+    {
+        *bufferWritePos = position < skip / 2 ? this->volume : 0;
+        position++;
+
+        // Keep our toneprint pointer in range
+        if(position > skip)
+            position = 0;
+
+        bufferWritePos++;
+    }
+#endif
 
     // Snapshot the current sound parameters in case they are changed in flight
     _periodUs = periodUs;
