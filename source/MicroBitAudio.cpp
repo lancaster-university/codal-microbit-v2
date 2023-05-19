@@ -79,7 +79,8 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
     processor = new StreamNormalizer(*rawSplitter->createChannel(), 0.08f, true, DATASTREAM_FORMAT_8BIT_SIGNED, 10);
 
     //Initilise level detector SPL and attach to splitter
-    levelSPL = new LevelDetectorSPL(*rawSplitter->createChannel(), 85.0, 65.0, 16.0, 0, DEVICE_ID_MICROPHONE, false);
+    //levelSPL = new LevelDetectorSPL(*rawSplitter->createChannel(), 85.0, 65.0, 16.0, 0, DEVICE_ID_MICROPHONE, false);
+    levelSPL = new LevelDetectorSPL(*rawSplitter->createChannel(), 85.0, 65.0, 16.0, 0, DEVICE_ID_SYSTEM_LEVEL_DETECTOR, false);
 
     // Connect to the rawSplitter. This must come AFTER the processor, to prevent the processor's channel activation starting the microphone
     if(EventModel::defaultEventBus)
@@ -89,7 +90,7 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
     splitter = new StreamSplitter(processor->output, DEVICE_ID_SPLITTER);
 
     //Initilise level detector and attach to splitter
-    level = new LevelDetector(*splitter->createChannel(), 150, 75, DEVICE_ID_SYSTEM_LEVEL_DETECTOR, false);
+    //level = new LevelDetector(*splitter->createChannel(), 150, 75, DEVICE_ID_SYSTEM_LEVEL_DETECTOR, false);
 
     // Connect to the splitter - this COULD come after we create it, before we add any stages, as these are dynamic and will only connect on-demand, but just in case
     // we're going to follow the schema set out above, to be 100% sure.

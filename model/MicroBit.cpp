@@ -357,7 +357,7 @@ void MicroBit::onListenerRegisteredEvent(Event evt)
             // The level detector uses lazy instantiation, we just need to read the data once to start it running.
             //audio.level->getValue();
             // The level detector requires that we enable constant listening, otherwise no events will be emitted.
-            audio.level->activateForEvents( true );
+            audio.levelSPL->activateForEvents( true );
             break;
 
         case DEVICE_ID_MICROPHONE:
