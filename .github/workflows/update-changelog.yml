@@ -24,7 +24,9 @@ jobs:
       - run: python3 -m pip install natsort
 
       - name: Generate a new Changelog
-        run: python3 .github/tools/gitchanges.py > Changelog.md
+        run: |
+          git checkout master
+          python3 .github/tools/gitchanges.py > Changelog.md
       
       - name: Commit the new Changelog
         run: |
