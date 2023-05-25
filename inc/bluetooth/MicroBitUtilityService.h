@@ -41,14 +41,6 @@ DEALINGS IN THE SOFTWARE.
 #include "EventModel.h"
 #include "MicroBitLog.h"
 
-/* Set this to enable an alternative implementation, which creates a fiber to process requests.
- * The default simply uses an event to trigger processing, and if processRequest() blocks,
- * a temporary fiber is created as necessary.
- */
-#ifndef MicroBitUtilityService_FIBER
-#define MicroBitUtilityService_FIBER 0
-#endif
-
 
 class MicroBitUtilityWorkspace;
 
@@ -178,28 +170,6 @@ class MicroBitUtilityService : public MicroBitBLEService
      * @return DEVICE_OK if finished
      */
     int processLogRead();
-    
-#if MicroBitUtilityService_FIBER
-    volatile int8_t fiberActive;
-    volatile bool   fiberExists;
-
-    /**
-     * Keep the fiber running or create a new one
-     */
-    void ensureFiber();
-    
-    /**
-     * Callback invoked when the fiber exits
-     * @param param Pointer to the MicroBitUtilityService
-     */
-    static void fiberComplete( void *param);
-    
-    /**
-     * Fiber to process requests, which releases itself after a period of inactivity
-     * @param param Pointer to the MicroBitUtilityService
-     */
-    static void fiberEntry( void *param);
-#endif
 };
 
 

@@ -176,9 +176,6 @@ MicroBitUtilityService *MicroBitUtilityService::createShared( BLEDevice &_ble, E
  */
 MicroBitUtilityService::MicroBitUtilityService( BLEDevice &_ble, EventModel &_messageBus, MicroBitStorage &_storage, MicroBitLog &_log) :
     messageBus(_messageBus), storage(_storage), log(_log), workspace(NULL)
-#if MicroBitUtilityService_FIBER
-    , fiberActive(0), fiberExists(false)
-#endif
 {
     // Initialise data
     memclr( characteristicValue, sizeof( characteristicValue));
@@ -214,9 +211,6 @@ void MicroBitUtilityService::onConnect( const microbit_ble_evt_t *p_ble_evt)
 void MicroBitUtilityService::onDisconnect( const microbit_ble_evt_t *p_ble_evt)
 {
     listen(false);
-#if MicroBitUtilityService_FIBER
-    fiberActive = 0;
-#endif
 }
 
 
@@ -242,14 +236,7 @@ void MicroBitUtilityService::onDataWritten(const microbit_ble_evt_write_t *param
         }
         
         workspace->setRequest( params->data, params->len);
-#if MicroBitUtilityService_FIBER
-        if ( fiberActive)
-            fiberActive = MicroBitUtilityService_TIMEOUT;
-        else
-            MicroBitEvent evt( MICROBIT_ID_UTILITY, MICROBIT_ID_UTILITY_PROCESS);
-#else
         MicroBitEvent evt( MICROBIT_ID_UTILITY, MICROBIT_ID_UTILITY_PROCESS);
-#endif
     }
 }
 
@@ -265,11 +252,7 @@ void MicroBitUtilityService::onEvent(MicroBitEvent e)
             switch(e.value)
             {
                 case MICROBIT_ID_UTILITY_PROCESS:
-#if MicroBitUtilityService_FIBER
-                    ensureFiber();
-#else
                     processRequest();
-#endif
                     break;
             }
             break;
@@ -338,11 +321,8 @@ int MicroBitUtilityService::processRequest()
         workspace->lock = false;
     }
     
-#if MicroBitUtilityService_FIBER
-#else
     if ( workspace && workspace->request.type != requestTypeNone)
         MicroBitEvent evt( MICROBIT_ID_UTILITY, MICROBIT_ID_UTILITY_PROCESS);
-#endif
     return result;
 }
 
@@ -401,67 +381,5 @@ int MicroBitUtilityService::processLogRead()
     
     return DEVICE_OK;
 }
-
-
-#if MicroBitUtilityService_FIBER
-
-/**
- * Keep the fiber running or create a new fiber
- */
-void MicroBitUtilityService::ensureFiber()
-{
-    if ( fiberActive)
-    {
-        fiberActive = MicroBitUtilityService_TIMEOUT;
-    }
-    else
-    {
-        fiberActive = 0;
-        while ( fiberExists)
-            fiber_sleep(0);
-        fiberActive = MicroBitUtilityService_TIMEOUT;
-        if ( create_fiber( MicroBitUtilityService::fiberEntry, this, MicroBitUtilityService::fiberComplete))
-            fiberExists = true;
-    }
-}
-
-
-/**
- * Callback invoked when the fiber exits
- * @param param Pointer to the MicroBitUtilityService
- */
-void MicroBitUtilityService::fiberComplete( void *param)
-{
-    MicroBitUtilityService *self = (MicroBitUtilityService *) param;
-    self->fiberExists = false;
-    release_fiber(param);
-}
-
-
-/**
- * Fiber to process requests, which releases itself after a period of inactivity
- * @param param Pointer to the MicroBitUtilityService
- */
-void MicroBitUtilityService::fiberEntry( void *param)
-{
-    MicroBitUtilityService *self = (MicroBitUtilityService *) param;
-    while (self->fiberActive > 0)
-    {
-        int result = self->processRequest();
-
-        if ( self->fiberActive <= 0)
-            break;
-        else if ( result != DEVICE_OK)
-            self->fiberActive = MicroBitUtilityService_TIMEOUT;
-        if ( --self->fiberActive <= 0)
-            break;
-        
-        fiber_sleep(MicroBitUtilityService_SLEEP);
-    }
-    self->fiberActive = 0;
-}
-
-#endif // MicroBitUtilityService_FIBER
-
 
 #endif
