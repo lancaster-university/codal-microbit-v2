@@ -60,7 +60,6 @@ namespace codal
         StreamNormalizer        *processor;     // Stream Normaliser instance
         StreamSplitter          *splitter;      // Stream Splitter instance (8bit normalized output)
         StreamSplitter          *rawSplitter;   // Stream Splitter instance (raw input)
-        LevelDetector           *level;         // Level Detector instance
         LevelDetectorSPL        *levelSPL;      // Level Detector SPL instance
         LowPassFilter           *micFilter;     // Low pass filter to remove high frequency noise on the mic
 

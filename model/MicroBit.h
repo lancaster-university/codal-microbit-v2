@@ -109,6 +109,13 @@ DEALINGS IN THE SOFTWARE.
 #define CONFIG_MICROBIT_ERASE_USER_DATA_ON_REFLASH    1
 #endif
 
+// Defines default behaviour of triple-tap-reset-to-pair feature.
+// 0: Feature disabled
+// 1: Feature enabled. Triple tap of reset button enters Bluetooth pairing mode.
+#ifndef DEVICE_TRIPLE_RESET_TO_PAIR
+#define DEVICE_TRIPLE_RESET_TO_PAIR             1
+#endif
+
 /**
  * Class definition for a MicroBit device.
  *
@@ -235,7 +242,13 @@ namespace codal
              * A periodic callback invoked by the fiber scheduler idle thread.
              * We use this for any low priority, background housekeeping.
              */
-            virtual void idleCallback();
+            virtual void idleCallback() override;
+
+            /**
+            * Periodic callback from Device system timer.
+            *
+            */
+            virtual void periodicCallback() override;
 
             /**
              * Determine the time since this MicroBit was last reset.

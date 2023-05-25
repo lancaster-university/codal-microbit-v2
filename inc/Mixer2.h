@@ -81,8 +81,40 @@ public:
     virtual int pullRequest();
     virtual ~MixerChannel() {};
 
+    /**
+     * @brief Changes the volume between 0 and CONFIG_MIXER_INTERNAL_RANGE
+     * 
+     * @param volume A floating point value between 0 and CONFIG_MIXER_INTERNAL_RANGE
+     */
     void setVolume( float volume ) { this->volume = volume; }
+
+    /**
+     * @brief Gets the volume for this channel (not the overall mixer volume)
+     * 
+     * @return float A floating point value between 0 and CONFIG_MIXER_INTERNAL_RANGE
+     */
     float getVolume() { return this->volume; }
+
+    /**
+     * @brief Sets the sample rate of this channel.
+     * 
+     * @param rate 
+     */
+    void setSampleRate( float rate ) {
+        this->rate = rate;
+        this->skip = 0.0f;
+        if( this->rate == DATASTREAM_SAMPLE_RATE_UNKNOWN )
+            this->rate = stream->getSampleRate();
+    }
+
+    /**
+     * @brief Gets the sample rate for this channel.
+     * 
+     * @note This may be set to DATASTREAM_SAMPLE_RATE_UNKNOWN if the upstream is unable to determine a correct rate
+     * 
+     * @return float 
+     */
+    float getSampleRate() { return this->rate; }
 };
 
 class Mixer2 : public DataSource
@@ -145,6 +177,14 @@ public:
      * @sink The component that data will be delivered to, when it is availiable
      */
     virtual void connect(DataSink &sink);
+
+    /**
+     * Determines if this source is connected to a downstream component
+     * 
+     * @return true If a downstream is connected
+     * @return false If a downstream is not connected
+     */
+    bool isConnected();
 
     /**
      * Determines the output format for the Mixer.

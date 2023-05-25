@@ -3,7 +3,8 @@ MEMORY
   FLASH (rx) : ORIGIN = 0x00000, LENGTH = 0x7F000
   STORAGE (rx) : ORIGIN = 0x7F000, LENGTH = 0x1000
   UICR (rx) : ORIGIN = 0x10001014, LENGTH = 0x8
-  RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x20020000 - 0x20000000
+  NOINIT (rwx) : ORIGIN = 0x20000000, LENGTH = 0x20000010 - 0x20000000
+  RAM (rwx) : ORIGIN = 0x20000010, LENGTH = 0x20020000 - 0x20000010
 }
 OUTPUT_FORMAT ("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 ENTRY(Reset_Handler)
@@ -94,6 +95,12 @@ SECTIONS
     } > FLASH
     __exidx_end = .;
     __etext = .;
+    .noinit (NOLOAD):
+    {
+      PROVIDE(__start_noinit = .);
+      KEEP(*(.noinit))
+      PROVIDE(__stop_noinit = .);
+    } > NOINIT
     .data : AT (__etext)
     {
         __data_start__ = .;
@@ -135,12 +142,6 @@ SECTIONS
         __data_end__ = .;
     } > RAM
     __edata = .;
-    .noinit :
-    {
-      PROVIDE(__start_noinit = .);
-      KEEP(*(.noinit))
-      PROVIDE(__stop_noinit = .);
-    } > RAM
     .bss :
     {
         . = ALIGN(4);

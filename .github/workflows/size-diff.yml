@@ -48,6 +48,7 @@ jobs:
         with:
           path: libraries/codal-microbit-v2
           fetch-depth: '0'
+          submodules: 'recursive'
           # Unless manually triggered via workflow_dispatch this will be an empty
           # string, checking out the default commit for the commit/branch/PR
           ref: ${{ github.event.inputs.new-commit }}

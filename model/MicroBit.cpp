@@ -26,6 +26,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBit.h"
 #include "Timer.h"
 #include "MicroBitDevice.h"
+#include "MicroBitMemoryMap.h"
 #include "CodalDmesg.h"
 
 using namespace codal;
@@ -43,6 +44,9 @@ static const MatrixPoint ledMatrixPositions[5*5] =
 };
 
 static const uint32_t reflash_status = 0xffffffff;
+
+static volatile MicroBitNoInitMemoryRegion __attribute__ ((section (".noinit"))) microbit_no_init_memory_region;
+
 /**
   * Constructor.
   *
@@ -74,7 +78,6 @@ MicroBit::MicroBit() :
     storage(internalFlash, 0),
     ledRowPins{&io.row1, &io.row2, &io.row3, &io.row4, &io.row5},
     ledColPins{&io.col1, &io.col2, &io.col3, &io.col4, &io.col5},
-
     ledMatrixMap{ 5, 5, 5, 5, (Pin**)ledRowPins, (Pin**)ledColPins, ledMatrixPositions},
     display(ledMatrixMap),
     buttonA(io.P5, DEVICE_ID_BUTTON_A, DEVICE_BUTTON_ALL_EVENTS, ACTIVE_LOW),
@@ -166,7 +169,14 @@ int MicroBit::init()
 
     // On a hard reset, wait for the USB interface chip to come online.
     if(NRF_POWER->RESETREAS == 0)
+    {
+        microbit_no_init_memory_region.resetClickCount = 0;
         target_wait(KL27_POWER_ON_DELAY);
+    }
+    else
+    {
+        microbit_no_init_memory_region.resetClickCount++;
+    }
 
 #if CONFIG_ENABLED(DEVICE_BLE)
     // Ensure BLE bootloader settings are up to date.
@@ -200,7 +210,9 @@ int MicroBit::init()
     codal_dmesg_set_flush_fn(microbit_dmesg_flush);
 #endif
 #endif
+
     status |= DEVICE_COMPONENT_STATUS_IDLE_TICK;
+    status |= DEVICE_COMPONENT_STATUS_SYSTEM_TICK;
 
     // Set IRQ priorities for peripherals we use.
     // Note that low values have highest priority, and only 2, 3, 4, 5 and 7 are available with SoftDevice enabled.
@@ -230,7 +242,13 @@ int MicroBit::init()
     sleep(100);
     // Animation
     uint8_t x = 0; uint8_t y = 0;
-    while ((buttonA.isPressed() && buttonB.isPressed() && i<25) || RebootMode != NULL || flashIncomplete != NULL)
+    bool triple_reset = 0;
+
+#if CONFIG_ENABLED(DEVICE_TRIPLE_RESET_TO_PAIR)
+    triple_reset = (microbit_no_init_memory_region.resetClickCount == 3);
+#endif
+
+    while (((triple_reset || (buttonA.isPressed() && buttonB.isPressed())) && i<25) || RebootMode != NULL || flashIncomplete != NULL)
     {
         display.image.setPixelValue(x,y,255);
         sleep(50);
@@ -249,6 +267,7 @@ int MicroBit::init()
             }
             delete RebootMode;
             delete flashIncomplete;
+            microbit_no_init_memory_region.resetClickCount = 0;
 
             // Start the BLE stack, if it isn't already running.
             bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, storage, true);
@@ -273,6 +292,11 @@ int MicroBit::init()
     MicroBitUtilityService::createShared( *ble, messageBus, storage, log);
 #endif
 #endif
+
+    // Bring up the 64MHz external oscillator.
+    NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
+    NRF_CLOCK->TASKS_HFCLKSTART = 1;
+    while (NRF_CLOCK->EVENTS_HFCLKSTARTED == 0);
 
     // Deschedule for a little while, just to allow for any components that finialise initialisation
     // as a background task, and to allow the power mamanger to repsonse to background events from the KL27
@@ -341,7 +365,9 @@ void MicroBit::onListenerRegisteredEvent(Event evt)
         case DEVICE_ID_SYSTEM_LEVEL_DETECTOR:
             // A listener has been registered for the level detector.
             // The level detector uses lazy instantiation, we just need to read the data once to start it running.
-            audio.level->getValue();
+            //audio.level->getValue();
+            // The level detector requires that we enable constant listening, otherwise no events will be emitted.
+            audio.levelSPL->activateForEvents( true );
             break;
 
         case DEVICE_ID_MICROPHONE:
@@ -390,6 +416,22 @@ void MicroBit::idleCallback()
     codal_dmesg_flush();
 #endif
 #endif
+}
+
+/**
+  * Periodic callback from Device system timer.
+  *
+  */
+void MicroBit::periodicCallback()
+{
+    // Zero our reset_count once the micro:bit has been running for half a second
+    static int timeout = 500 / (SCHEDULER_TICK_PERIOD_US/1000);
+
+    if (timeout-- == 0 && microbit_no_init_memory_region.resetClickCount != 0)
+    {
+        microbit_no_init_memory_region.resetClickCount = 0;
+        status &= ~DEVICE_COMPONENT_STATUS_SYSTEM_TICK;
+    }
 }
 
 /**
