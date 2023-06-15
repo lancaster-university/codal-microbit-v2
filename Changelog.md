@@ -3,6 +3,15 @@
 
 For official release notes, please see Releases.md
 
+## [v0.2.54](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.53...v0.2.54)
+
+Dr John Vidler (2):
+ - Update update-changelog.yml
+ - Snapshot v0.2.54
+
+Github Actions (1):
+ - Updated the Changelog
+
 ## [v0.2.53](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.52...v0.2.53)
 
 Carlos Pereira Atencio (1):
