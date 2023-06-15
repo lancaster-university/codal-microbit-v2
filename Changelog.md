@@ -3,6 +3,18 @@
 
 For official release notes, please see Releases.md
 
+## [v0.2.55](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.54...v0.2.55)
+
+Dr John Vidler (2):
+ - Added additional workflow status badges
+ - Snapshot v0.2.55
+
+Github Actions (1):
+ - Updated the Changelog
+
+Martin Williams (1):
+ - Fix BLE panic 071 (#334)
+
 ## [v0.2.54](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.53...v0.2.54)
 
 Dr John Vidler (2):
