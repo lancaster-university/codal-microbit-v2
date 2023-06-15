@@ -91,6 +91,6 @@ jobs:
         run: |
           chmod -R a+rwx .
           umask 0000
-          ${{ matrix.pxt-flags }} pxt buildtarget --local
+          ${{ matrix.pxt-flags }} PXT_COMPILE_SWITCHES=csv---mbcodal pxt buildtarget --local
         env:
           YOTTA_GITHUB_AUTHTOKEN: ${{ secrets.YOTTA_GITHUB_AUTHTOKEN }}
