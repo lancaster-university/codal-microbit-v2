@@ -32,7 +32,6 @@ DEALINGS IN THE SOFTWARE.
 #include "SoundOutputPin.h"
 #include "StreamNormalizer.h"
 #include "StreamSplitter.h"
-#include "LevelDetector.h"
 #include "LevelDetectorSPL.h"
 #include "LowPassFilter.h"
 
