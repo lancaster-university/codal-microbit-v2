@@ -25,6 +25,7 @@ DEALINGS IN THE SOFTWARE.
 #include "Mixer2.h"
 #include "StreamNormalizer.h"
 #include "ErrorNo.h"
+#include "Timer.h"
 #include "CodalDmesg.h"
 
 using namespace codal;
@@ -48,6 +49,8 @@ Mixer2::Mixer2(float sampleRate, int sampleRange, int format)
     this->orMask = 0;
     this->silenceLevel = 0.0f;
     this->silent = true;
+    this->silenceStartTime = 0;
+    this->silenceEndTime = 0;
 
     // Attempt to configure output format to requested value
     this->setFormat(format);
@@ -108,8 +111,17 @@ MixerChannel *Mixer2::addChannel(DataSource &stream, float sampleRate, int sampl
     return c;
 }
 
+int Mixer2::removeChannel( MixerChannel * channel )
+{
+    DMESG( "Unsupported operation! Channel retained!" );
+    return -1;
+}
+
 ManagedBuffer Mixer2::pull() 
 {
+    // Take a local timestamp, in case we need to compute a time when a pice of audio will be played out of the speaker
+    CODAL_TIMESTAMP pullTime = system_timer_current_time_us();
+
     // If we have no channels, just return an empty buffer.
     if (!channels)
     {
@@ -141,6 +153,10 @@ ManagedBuffer Mixer2::pull()
         float *end = &mix[CONFIG_MIXER_BUFFER_SIZE/bytesPerSampleOut];
         int inputFormat = ch->format;
 
+        // Check if we need to recalculate skip after a channel rate change
+        if( ch->skip == 0.0f )
+            ch->skip = ch->rate / outputRate;
+
         while (out < end)
         {
             // precalculate the maximum number of samples the we can process with the current buffer allocations.
@@ -154,8 +170,10 @@ ManagedBuffer Mixer2::pull()
 
             uint8_t *d = ch->in;
 
-            while(len--)
+            while(len)
             {
+                d = ch->in + (int)(ch->position * ch->bytesPerSample);
+
                 float v = StreamNormalizer::readSample[inputFormat](d);
                 v += ch->offset;
                 v *= ch->gain;    
@@ -163,14 +181,14 @@ ManagedBuffer Mixer2::pull()
                 *out += v;
  
                 ch->position += ch->skip;
-                d = ch->in + (int)(ch->position * ch->bytesPerSample);
 
                 out++;
+                len--;
             }
 
             // Check if we've completed an input buffer. If so, pull down another if available.
             // if no buffer is available, then move on to the next channel.
-            if (inLen <= outLen)
+            if (inLen < outLen)
             {
                 if (ch->pullRequests == 0)
                     break;
@@ -194,10 +212,22 @@ ManagedBuffer Mixer2::pull()
             mix[i] = silenceLevel;
     }
 
-    if ( this->silent != silence)
+    if (this->silent != silence)
     {
         this->silent = silence;
-        Event(DEVICE_ID_MIXER, this->silent ? DEVICE_MIXER_EVT_SILENCE : DEVICE_MIXER_EVT_SOUND);
+
+        if (this->silent)
+        {
+            silenceStartTime = pullTime;
+            silenceEndTime = 0;
+
+            Event(DEVICE_ID_MIXER, DEVICE_MIXER_EVT_SILENCE);
+        }
+        else
+        {
+            silenceEndTime = pullTime;
+            Event(DEVICE_ID_MIXER, DEVICE_MIXER_EVT_SOUND);
+        }
     }
 
     // Scale and pack to our output format
@@ -249,6 +279,11 @@ void Mixer2::connect(DataSink &sink)
 {
     this->downStream = &sink;
     this->downStream->pullRequest();
+}
+
+bool Mixer2::isConnected()
+{
+    return this->downStream != NULL;
 }
 
 int Mixer2::getFormat()
@@ -336,9 +371,9 @@ int Mixer2::getSampleRange()
  * Determine the sample rate output of this Mixer.
  * @return The sample rate (samples per second) of the mixer output.
  */
-int Mixer2::getSampleRate()
+float Mixer2::getSampleRate()
 {
-    return (int) this->outputRate;
+    return this->outputRate;
 }
 
 /**
@@ -378,4 +413,26 @@ int Mixer2::setSilenceLevel(float level)
 bool Mixer2::isSilent()
 {
   return silent;
+}
+
+/**
+ * Determines the time at which the mixer has most recently been generating silence 
+ *
+ * @return the system time in microseconds at which the mixer has been continuously 
+ * producing silence on its output, or zero if the mixer is not producing silence.
+ */
+CODAL_TIMESTAMP Mixer2::getSilenceStartTime()
+{
+    return silenceStartTime;
+}
+
+/**
+ * Determines the time at which the mixer has been continuously generating silence 
+ *
+ * @return the system time in microseconds at which the mixer has been continuously 
+ * producing silence on its output, or zero if the mixer is not producing silence.
+ */
+CODAL_TIMESTAMP Mixer2::getSilenceEndTime()
+{
+    return silenceEndTime;
 }

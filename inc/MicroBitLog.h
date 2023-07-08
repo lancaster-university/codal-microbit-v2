@@ -118,7 +118,7 @@ DEALINGS IN THE SOFTWARE.
 #define CONFIG_MICROBIT_LOG_INVALID_CHAR_VALUE  '_'
 #endif
 
-#define MICROBIT_LOG_VERSION                "UBIT_LOG_FS_V_001\n"           // MUST be 18 characters.
+#define MICROBIT_LOG_VERSION                "UBIT_LOG_FS_V_002\n"           // MUST be 18 characters.
 #define MICROBIT_LOG_JOURNAL_ENTRY_SIZE     8
 
 #define MICROBIT_LOG_STATUS_INITIALIZED     0x0001
@@ -134,8 +134,9 @@ namespace codal
     struct MicroBitLogMetaData
     {
         char        version[18];             // MICROBIT_LOG_VERSION
-        char        logEnd[11];              // 32 bit HEX representation containing end address of available storage (e.g. "0x0000FFFF\n")
-        char        dataStart[11];           // 32 bit HEX representation of logical start address of data file (e.g. "0x00000200\n")
+        char        logEnd[11];              // 32 bit HEX representation containing end address of available storage (e.g. "0x0000FFFF\0")
+        char        dataStart[11];           // 32 bit HEX representation of logical start address of data file (e.g. "0x00000200\0")
+        char        daplinkVersion[5];       // 4 ASCII characters for the DAPLink version (e.g. "0255\0")
     };
 
     class ColumnEntry
@@ -182,6 +183,14 @@ namespace codal
         }
     };
 
+
+    enum class DataFormat
+    {
+        HTMLHeader = 0,   // The HTML header without the data
+        HTML = 1,         // The entire HTML file
+        CSV = 2           // CSV data
+    };
+
     /**
      * Class definition for MicroBitLog. A simple text only, append only, single file log file system.
      * Also contains a key/value pair abstraction to enable dynamic creation of CSV based logfiles.
@@ -189,7 +198,8 @@ namespace codal
     class MicroBitLog 
     {
         private:
-        MicroBitUSBFlashManager         &flash;             // Non-volatile memory contorller to use for storage.
+        MicroBitUSBFlashManager         &flash;             // Non-volatile memory controller to use for storage.
+        MicroBitPowerManager            &power;             // To obtain the Interface chip firmware (DAPLink) version.
         NRF52Serial                     &serial;            // Reference to serial port used for data mirroring.
         FSCache                         cache;              // Write through RAM cache.
         uint32_t                        status;             // Status flags.
@@ -220,7 +230,7 @@ namespace codal
         /**
          * Constructor.
          */
-        MicroBitLog(MicroBitUSBFlashManager &flash, NRF52Serial &serial);
+        MicroBitLog(MicroBitUSBFlashManager &flash, MicroBitPowerManager &power, NRF52Serial &serial);
 
         /**
          * Destructor.
@@ -326,6 +336,30 @@ namespace codal
          * @param s the string to inject.
          */
         int logString(ManagedString s);
+        
+        /**
+         * Get the length of the recorded data
+         * @param format the data format
+         *          DataFormat::HTMLHeader = 0,   - The HTML header without the data
+         *          DataFormat::HTML = 1,               - The entire HTML file
+         *          DataFormat::CSV = 2                   - CSV data
+         * @return the length of the recorded data
+         */
+        uint32_t getDataLength(DataFormat format);
+        
+        /**
+         * Read the recorded data
+         * @param data pointer to memory to store the data
+         * @param index  the index into the data
+         * @param len length of the data to fetch
+         * @param format the data format
+         *          DataFormat::HTMLHeader = 0,   - The HTML header without data
+         *          DataFormat::HTML = 1,               - The entire HTML file with data
+         *          DataFormat::CSV = 2                   - CSV data
+         * @param length expected complete length returned from getDataLength
+         * @return DEVICE_OK on success; DEVICE_INVALID_PARAMETER if data is not available for the request
+         */
+        int readData(void *data, uint32_t index, uint32_t len, DataFormat format, uint32_t length);
 
     private:
 
@@ -349,6 +383,21 @@ namespace codal
         int _logString(const char *s);
         int _logString(ManagedString s);
 
+        int _readData(uint8_t *data, uint32_t index, uint32_t len, DataFormat format, uint32_t length);
+        
+        /**
+         * Read the source data from local memory or interface flash
+         * @param data pointer reference to memory to store the data
+         * @param index  reference to the index into the data
+         * @param len reference to the length of the data to fetch
+         * @param srcIndex reference to the index where the source data should begin
+         * @param srcPtr pointer to  source data in local memory. NULL to use srcAddress
+         * @param srcAddress address of source data in interface flash. Ignored if srcPtr is not NULL.
+         * @param srcLen the length of the source data
+         * @return DEVICE_OK on success; DEVICE_INVALID_PARAMETER if data is not available for the request
+         * @note On success, the referenced pointers, indices and lengths are updated ready for the next call
+         */
+        int _readSource( uint8_t *&data, uint32_t &index, uint32_t &len, uint32_t &srcIndex, const void *srcPtr, uint32_t srcAddress, uint32_t srcLen);
 
         /**
          * Add the given heading to the list of headings in use. If the heading already exists,

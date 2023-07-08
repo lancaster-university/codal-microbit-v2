@@ -26,7 +26,6 @@ DEALINGS IN THE SOFTWARE.
 #include "Synthesizer.h"
 #include "CodalFiber.h"
 #include "CodalUtil.h"
-#include "CodalDmesg.h"
 #include "ErrorNo.h"
 #include "MicroBitAudio.h"
 
@@ -42,6 +41,9 @@ SoundEmojiSynthesizer::SoundEmojiSynthesizer(uint16_t id, int sampleRate) : Coda
     this->bufferSize = EMOJI_SYNTHESIZER_BUFFER_SIZE;
     this->position = 0.0f;
     this->effect = NULL;
+    this->partialBuffer = NULL;
+    this->playbackCompleteIn = 0;
+    this->buffer2 = ManagedBuffer(bufferSize);
 
     this->samplesToWrite = 0;
     this->samplesWritten = 0;
@@ -67,6 +69,11 @@ SoundEmojiSynthesizer::~SoundEmojiSynthesizer()
 void SoundEmojiSynthesizer::connect(DataSink &sink)
 {
 	this->downStream = &sink;
+}
+
+bool SoundEmojiSynthesizer::isConnected()
+{
+    return this->downStream != NULL;
 }
 
 /**
@@ -163,7 +170,6 @@ bool SoundEmojiSynthesizer::nextSoundEffect()
             effectBuffer = emptyBuffer;
             samplesWritten = 0;
             samplesToWrite = 0;
-            position = 0.0f;
             return hadEffect;
         }
     }
@@ -189,6 +195,39 @@ bool SoundEmojiSynthesizer::nextSoundEffect()
  */
 ManagedBuffer SoundEmojiSynthesizer::pull()
 {
+    ManagedBuffer output = buffer2;
+
+    // If the last DMA buffer was only partially filled, try to fill it.
+    if (partialBuffer)
+        fillOutputBuffer();
+
+    // We only allow one chance at filling a DMA buffer, so that we don't stall the pipeline.
+    partialBuffer = NULL;
+    buffer2 = buffer;
+
+    // Generate another buffer if possible. This may be empty if there is no sound effect scheduled.
+    fillOutputBuffer();
+
+    // Issue a Pull Request so that we are always receiver driven, and we're done.
+    downStream->pullRequest();
+
+    // Issue a deferred DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_PLAYBACK_COMPLETE event if requested.
+    if (playbackCompleteIn > 0)
+    {
+        playbackCompleteIn--;
+
+        if (playbackCompleteIn == 0)
+            Event(id, DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_PLAYBACK_COMPLETE);
+    }
+
+    return output;
+}
+
+/**
+ * Provide the next available ManagedBuffer to our downstream caller, if available.
+ */
+ManagedBuffer SoundEmojiSynthesizer::fillOutputBuffer()
+{
     // Generate a buffer on demand. This is likely to be in interrupt context, so
     // the receiver driven nature reduces glitching on audio output.
     bool done = false;
@@ -208,7 +247,12 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
                 done = true;
                 if (renderComplete || status & EMOJI_SYNTHESIZER_STATUS_STOPPING)
                 {
+                    if (renderComplete)
+                        partialBuffer = sample;
+
+                    // Flip our status bit and fire the event
                     status &= ~EMOJI_SYNTHESIZER_STATUS_STOPPING;
+                    playbackCompleteIn = CONFIG_EMOJI_SYNTHESIZER_OUTPUT_BUFFER_DEPTH+2;
                     Event(id, DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_DONE);
                     lock.notify();
                 }
@@ -219,8 +263,18 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
         // We defer creation to avoid unecessary heap allocation when genertaing silence.
         if (((samplesWritten < samplesToWrite) || !(status & EMOJI_SYNTHESIZER_STATUS_OUTPUT_SILENCE_AS_EMPTY)) && sample == NULL)
         {
-            buffer = ManagedBuffer(bufferSize);
-            sample = (uint16_t *) &buffer[0];
+            // If we completed the last sound effect in the middl eof a DMA buffer, continue from where we left off
+            if (partialBuffer)
+            {
+                sample = partialBuffer;
+                partialBuffer = NULL;
+            }
+            else
+            {
+                buffer = ManagedBuffer(bufferSize);
+                sample = (uint16_t *) &buffer[0];
+            }
+
             bufferEnd = (uint16_t *) (&buffer[0] + buffer.length());
         }
 
@@ -249,10 +303,7 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
             {
                 // Stop processing when we've filled the requested buffer
                 if (sample == bufferEnd)
-                {
-                    downStream->pullRequest();
                     return buffer;
-                }
 
                 // Synthesize a sample
                 float s = effect->tone.tonePrint(effect->tone.parameter, (int) position);
@@ -303,8 +354,6 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
         }
     }
 
-    // Issue a Pull Request so that we are always receiver driven, and we're done.
-    downStream->pullRequest();
     return buffer;
 }
 
@@ -312,18 +361,23 @@ ManagedBuffer SoundEmojiSynthesizer::pull()
  * Determine the sample rate currently in use by this Synthesizer.
  * @return the current sample rate, in Hz.
  */
-int SoundEmojiSynthesizer::getSampleRate()
+float SoundEmojiSynthesizer::getSampleRate()
 {
     return sampleRate;
 }
 
 /**
- * Change the sample rate used by this Synthesizer,
+ * Change the sample rate used by this Synthesizer.
+ * 
+ * This will prohibit updates if the requested sampleRate is less than 1, to safeguard processing later.
+ * 
  * @param frequency The new sample rate, in Hz.
- * @return DEVICE_OK on success.
+ * @return DEVICE_OK on success or ErrorCode::DEVICE_INVALID_STATUS if the sample rate is out of range.
  */
 int SoundEmojiSynthesizer::setSampleRate(int sampleRate)
 {
+    if( sampleRate < 1 )
+        return ErrorCode::DEVICE_INVALID_PARAMETER;
     this->sampleRate = sampleRate;
     return DEVICE_OK;
 }

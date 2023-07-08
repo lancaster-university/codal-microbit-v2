@@ -30,7 +30,6 @@ DEALINGS IN THE SOFTWARE.
 #include "CodalComponent.h"
 #include "MicroBitCompat.h"
 #include "Mixer2.h"
-#include "SoundEmojiSynthesizer.h"
 
 #ifndef CONFIG_SOUND_OUTPUT_PIN_PERIOD
 #define CONFIG_SOUND_OUTPUT_PIN_PERIOD  5
@@ -40,7 +39,24 @@ DEALINGS IN THE SOFTWARE.
 #define CONFIG_SOUND_OUTPUT_PIN_SILENCE_GATE  100
 #endif
 
-#define SOUND_OUTPUT_PIN_STATUS_ACTIVE        0x0001        // Synthesizer is actively generating sound
+#ifndef SOUND_OUTPUT_PIN_SAMPLE_RATE
+#define SOUND_OUTPUT_PIN_SAMPLE_RATE         CONFIG_MIXER_DEFAULT_SAMPLERATE
+#endif
+
+#ifndef SOUND_OUTPUT_PIN_BUFFER_SIZE
+#define SOUND_OUTPUT_PIN_BUFFER_SIZE         512
+#endif
+
+#ifndef CONFIG_SOUND_OUTPUT_PIN_DISCRETE_OUTPUT
+#define CONFIG_SOUND_OUTPUT_PIN_DISCRETE_OUTPUT 1
+#endif
+
+#define SOUND_OUTPUT_PIN_STATUS_ENABLED       0x0001            // Synthesizer has been on demand activate
+#define SOUND_OUTPUT_PIN_STATUS_ACTIVE        0x0002            // Synthesizer is actively generating sound
+
+#ifndef CONFIG_SOUND_OUTPUT_PIN_TONEPRINT
+#define CONFIG_SOUND_OUTPUT_PIN_TONEPRINT     0
+#endif
 
 /**
   * Class definition for a SoundPin.
@@ -49,17 +65,21 @@ DEALINGS IN THE SOFTWARE.
   */
 namespace codal
 {
-    class SoundOutputPin : public codal::Pin, public CodalComponent
+    class SoundOutputPin : public codal::Pin, public CodalComponent, public DataSource
     {
     private:
         Mixer2                  &mixer;
         MixerChannel            *channel;
-        SoundEmojiSynthesizer   synth;
         ManagedBuffer           outputBuffer;
-        SoundEffect             *fx;
         int                     periodUs;
         int                     value;
+        int                     _periodUs;
+        int                     _value;
         uint32_t                timeOfLastUpdate;
+        uint32_t                timeOfLastPull;
+        uint8_t*                bufferWritePos;
+        float                   position;
+        int                     volume;
 
     public:
 
@@ -140,12 +160,34 @@ namespace codal
           */
         virtual void idleCallback() override;
 
+        /**
+          * Relevant DataSource operations
+          */
+        virtual ManagedBuffer pull();
+        virtual int getFormat();
+        
+        /**
+         * Determines if this source is connected to a downstream component
+         * 
+         * @return true If a downstream is connected
+         * @return false If a downstream is not connected
+         */
+        bool isConnected();
+
         private:
 
         /**
          * Update the sound being played to match that requested.
          */
         void update();
+
+        /**
+         * Backfill samples into the output buffer based on the currnet time, and the previously defined
+         * frequency and volume settings.
+         *
+         * @param all true if the entre buffer is to be filled, false to fill the nuffer to the current timepoint
+         */
+        void updateOutputBuffer(bool all = false);
     };
 }
 

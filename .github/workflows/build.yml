@@ -1,0 +1,95 @@
+name: Build Samples
+
+on:
+  push:
+    branches: '*'
+  pull_request:
+    branches: '*'
+
+jobs:
+  build-microbit-v2-samples:
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, macos-11, windows-2019]
+        gcc: ['7-2017-q4', 'latest']
+        cmake: ['3.6.0', '']  # Empty string installs the latest CMake release
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }}, gcc ${{ matrix.gcc }}, cmake ${{ matrix.cmake || 'latest'}}
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+      - name: Setup arm-none-eabi-gcc ${{ matrix.gcc }}
+        uses: carlosperate/arm-none-eabi-gcc-action@v1
+        with:
+          release: ${{ matrix.gcc }}
+      - name: Setup CMake ${{ matrix.cmake }}
+        uses: jwlawson/actions-setup-cmake@v1
+        with:
+          cmake-version: ${{ matrix.cmake }}
+      - name: Install latest Ninja release via PyPI
+        run: python -m pip install ninja
+      - name: Check Versions
+        run: |
+          arm-none-eabi-gcc --version
+          cmake --version
+          ninja --version
+          python --version
+      - name: Clone the microbit-v2-samples repository
+        uses: actions/checkout@v3
+        with:
+          repository: 'lancaster-university/microbit-v2-samples'
+      # We need to use the checkout action (instead of build.py cloning the
+      # repository) so that on PRs we can get the commit from the PR merge
+      - name: Clone this repository in the libraries folder
+        uses: actions/checkout@v3
+        with:
+          path: libraries/codal-microbit-v2
+          submodules: 'recursive'
+      # Changing the commit SHA might be unnecessary, as we've already cloned this
+      # repo, but could be useful to ensure codal.json points to the same commit
+      - name: Modify codal.json files to use this codal-microbit-v2 commit
+        shell: bash
+        run: |
+          echo "codal.json before:"
+          cat codal.json
+          python - << EOF
+          import pathlib
+          for codal_file in ['codal.json', 'codal.ble.json']:
+              f = pathlib.Path(codal_file)
+              f.write_text(f.read_text() \
+                  .replace('lancaster-university/codal-microbit-v2', '${GITHUB_REPOSITORY}') \
+                  .replace('master', '${GITHUB_SHA}') \
+                  .replace(',\n        \"dev\": true', ''))
+          EOF
+          echo "codal.json after:"
+          cat codal.json
+      - name: Build default (non-ble) project using build.py
+        run: python build.py
+      - name: Upload non-ble hex file
+        if: runner.os == 'Windows' && matrix.gcc == 'latest' && matrix.cmake == ''
+        uses: actions/upload-artifact@v1
+        with:
+          name: codal-microbit-v2-${{ github.sha }}
+          path: MICROBIT.hex
+      - name: Prepare BLE example
+        run: |
+          rm codal.json
+          mv codal.ble.json codal.json
+          echo "codal.json:"
+          cat codal.json
+          python -c "import pathlib; \
+            f = pathlib.Path('source/main.cpp'); \
+            f.write_text(f.read_text().replace('out_of_box_experience()', 'ble_test()'))"
+          echo "main.cpp:"
+          cat source/main.cpp
+      - name: Build BLE project using build.py
+        run: python build.py --clean
+      - name: Upload BLE hex file
+        if: runner.os == 'Windows' && matrix.gcc == 'latest' && matrix.cmake == ''
+        uses: actions/upload-artifact@v1
+        with:
+          name: codal-microbit-v2-BLE-${{ github.sha }}
+          path: MICROBIT.hex

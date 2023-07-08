@@ -27,6 +27,10 @@ DEALINGS IN THE SOFTWARE.
 
 #include "DataStream.h"
 
+#ifndef CONFIG_EMOJI_SYNTHESIZER_OUTPUT_BUFFER_DEPTH
+#define CONFIG_EMOJI_SYNTHESIZER_OUTPUT_BUFFER_DEPTH  3
+#endif
+
 #define EMOJI_SYNTHESIZER_SAMPLE_RATE         44100
 #define EMOJI_SYNTHESIZER_TONE_WIDTH          1024
 #define EMOJI_SYNTHESIZER_TONE_WIDTH_F        1024.0f
@@ -55,6 +59,8 @@ DEALINGS IN THE SOFTWARE.
 #define DEVICE_ID_SOUND_EMOJI_SYNTHESIZER_9 3019
 
 #define DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_DONE 1
+#define DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_PLAYBACK_COMPLETE 2
+
 
 namespace codal
 {
@@ -114,14 +120,17 @@ namespace codal
         DataSink*               downStream;             // Our downstream component.
         FiberLock               lock;                   // Ingress queue to handle concurrent playback requests.
         ManagedBuffer           buffer;                 // Current playout buffer.
+        ManagedBuffer           buffer2;                // Current playout buffer.
         ManagedBuffer           effectBuffer;           // Current sound effect sequence being generated.
         ManagedBuffer           emptyBuffer;            // Zero length buffer.
         SoundEffect*            effect;                 // The effect within the current EffectBuffer that's being generated.
+        uint16_t*               partialBuffer;          // Reference to a position within a DMA buffer, if a SFX completed mid buffer.
 
         int                     sampleRate;             // The sample rate of our output, measure in samples per second (e.g. 44000).
         float                   sampleRange;            // The maximum sample value that can be output.
         uint16_t                orMask;                 // A bitmask that is logically OR'd with each output sample.
         int                     bufferSize;             // The number of samples to create in a single buffer before scheduling it for playback
+        int                     playbackCompleteIn;     // The number of DMA buffers to generate befor next issuing a DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_PLAYBACK_COMPLETE event
 
         float                   frequency;              // The instantaneous frequency currently being generated within an effect.
         float                   volume;                 // The instantaneous volume currently being generated within an effect.
@@ -150,6 +159,14 @@ namespace codal
          * @sink The component that data will be delivered to, when it is availiable
          */
         virtual void connect(DataSink &sink) override;
+
+        /**
+         * Determines if this source is connected to a downstream component
+         * 
+         * @return true If a downstream is connected
+         * @return false If a downstream is not connected
+         */
+        bool isConnected();
 
         /**
          *  Determine the data format of the buffers streamed out of this component.
@@ -190,7 +207,7 @@ namespace codal
          * Determine the sample rate currently in use by this Synthesizer.
          * @return the current sample rate, in Hz.
          */
-        int getSampleRate();
+        float getSampleRate();
 
         /**
          * Change the sample rate used by this Synthesizer,
@@ -240,6 +257,11 @@ namespace codal
          * (at the currently defined sample rate)
          */
         int determineSampleCount(float playoutTime);
+
+        /**
+        * Provide the next available ManagedBuffer to our downstream caller, if available.
+        */
+        ManagedBuffer fillOutputBuffer();
 
     };
 }

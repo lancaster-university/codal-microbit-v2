@@ -23,7 +23,6 @@ DEALINGS IN THE SOFTWARE.
 */
 
 #include "SoundSynthesizerEffects.h"
-#include "CodalDmesg.h"
 
 using namespace codal;
 
@@ -102,7 +101,16 @@ void SoundSynthesizerEffects::linearInterpolation(SoundEmojiSynthesizer *synth, 
 // parameter[0]: end frequency
 void SoundSynthesizerEffects::logarithmicInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
-    synth->frequency = synth->effect->frequency+(log10(context->step)*(context->parameter[0]-synth->effect->frequency)/1.95);
+    // Original frequency gen here, for reference. -John
+    //synth->frequency = synth->effect->frequency+(log10(context->step)*(context->parameter[0]-synth->effect->frequency)/1.95);
+
+    synth->frequency = synth->effect->frequency+(log10(
+        ( context->step==0 ? 1 : context->step )                 // This is a hack, to prevent step==0 from jumping this to extreme values. -John
+    )*(context->parameter[0]-synth->effect->frequency)/1.95);
+
+    // This is a bit of a hack, but will protect the synth for now until the math here can be fixed properly. -John
+    if( synth->frequency < 0 )
+        synth->frequency = 0;
 }
 
 // Curve interpolate function

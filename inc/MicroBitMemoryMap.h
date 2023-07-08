@@ -37,6 +37,17 @@ DEALINGS IN THE SOFTWARE.
 #define REGION_PYTHON   3 
 
 /**
+ * Structure definition for the reserved, noinit memory segment placed at the end of memory.
+ */
+struct MicroBitNoInitMemoryRegion
+{
+  volatile uint32_t  resetClickCount;
+  volatile uint32_t  reserved1;
+  volatile uint32_t  reserved2;
+  volatile uint32_t  reserved3;
+};
+
+/**
   * Class definition for the MicroBitMemoryMap class.
   * This allows reading and writing of regions within the memory map.
   *

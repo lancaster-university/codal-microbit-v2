@@ -167,7 +167,7 @@ class MicroBitUSBFlashManager : public CodalComponent, public NVMController
         int eraseConfig();
 
         /**
-         * Reads data from the specified location in the USB file staorage area.
+         * Reads data from the specified location in the USB file storage area.
          * 
          * @param address the logical address of the memory to read.
          * @param length the number of 32-bit words to read.
