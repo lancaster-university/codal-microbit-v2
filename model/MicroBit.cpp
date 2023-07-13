@@ -272,6 +272,11 @@ int MicroBit::init()
             // Start the BLE stack, if it isn't already running.
             bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, storage, true);
             
+
+#if CONFIG_ENABLED(MICROBIT_BLE_UTILITY_SERVICE_PAIRING)
+            MICROBIT_DEBUG_DMESG( "UTILITY_SERVICE");
+            MicroBitUtilityService::createShared( *ble, messageBus, storage, log);
+#endif
             // Enter pairing mode, using the LED matrix for any necessary pairing operations
             bleManager.pairingMode(display, buttonA);
         }
@@ -281,6 +286,13 @@ int MicroBit::init()
 #if CONFIG_ENABLED(DEVICE_BLE) && CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
     // Start the BLE stack, if it isn't already running.
     bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, storage, false);
+
+#if CONFIG_ENABLED(MICROBIT_BLE_UTILITY_SERVICE)
+    MICROBIT_DEBUG_DMESG( "UTILITY_SERVICE");
+    MicroBitUtilityService::createShared( *ble, messageBus, storage, log);
+#endif
+
+#endif
 
     // Bring up the 64MHz external oscillator.
     sd_clock_hfclk_request();
