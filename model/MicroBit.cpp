@@ -281,10 +281,8 @@ int MicroBit::init()
 #if CONFIG_ENABLED(DEVICE_BLE) && CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
     // Start the BLE stack, if it isn't already running.
     bleManager.init( ManagedString( microbit_friendly_name()), getSerial(), messageBus, storage, false);
-#endif
 
     // Bring up the 64MHz external oscillator.
-#if CONFIG_ENABLED(DEVICE_BLE) && CONFIG_ENABLED(MICROBIT_BLE_ENABLED)
     sd_clock_hfclk_request();
 #else
     NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
