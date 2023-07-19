@@ -35,10 +35,8 @@ using namespace codal;
 
 MicroBitAudio* MicroBitAudio::instance = NULL;
 
-/**
-  * Default Constructor.
-  */
 MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NRF52Pin &microphone, NRF52Pin &runmic):
+    micEnabled(false),
     speakerEnabled(true),
     pinEnabled(true),
     pin(&pin), 
@@ -97,55 +95,34 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
     }
 }
 
-/**
- * Handle events from splitter
- */
 void MicroBitAudio::onSplitterEvent(MicroBitEvent e){
     if( mic->output.isFlowing() || (e.value == SPLITTER_ACTIVATE || e.value == SPLITTER_CHANNEL_CONNECT) )
-    //if( mic->output.isFlowing() || (e.value == SPLITTER_ACTIVATE) )
         activateMic();
     else
         deactivateMic();
 }
 
-/**
- * Activate Mic and Input Channel
- * 
- * @warning It is no longer recommended that this call be used by users, but has been left here to prevent legacy code from breaking.
- */
 void MicroBitAudio::activateMic(){
     runmic.setDigitalValue(1);
     runmic.setHighDrive(true);
     adc.activateChannel(mic);
+    this->micEnabled = true;
 }
 
-/**
- * Dectivate Mic and Input Channel
- * 
- * @warning It is no longer recommended that this call be used by users, but has been left here to prevent legacy code from breaking.
- */
 void MicroBitAudio::deactivateMic(){
+    this->micEnabled = false;
     runmic.setDigitalValue(0);
     runmic.setHighDrive(false);
 }
 
-/**
- * Dectivate Mic and Input Channel
- */
 void MicroBitAudio::deactivateLevelSPL(){
     levelSPL->activateForEvents( false );
 }
 
-/**
-  * Set normaliser gain
-  */
 void MicroBitAudio::setMicrophoneGain(int gain){
     processor->setGain(gain/100);
 }
 
-/**
- * post-constructor initialisation method
- */
 int MicroBitAudio::enable()
 { 
     if (pwm == NULL)
@@ -175,20 +152,12 @@ int MicroBitAudio::disable()
     return DEVICE_OK;
 }
 
-/**
- * Demand request from a component to enable the default instance of this audio pipeline
- */
 void MicroBitAudio::requestActivation()
 {
     if (MicroBitAudio::instance)
         MicroBitAudio::instance->enable();
 }
 
-/**
- * Set the global mixer volume.
- * @param volume The new output volume, in the range 0..255
- * @return DEVICE_OK on success, or DEVICE_INVALID_PARAMETER
- */
 int MicroBitAudio::setVolume(int volume)
 {
     if (volume < 0 || volume > 255)
@@ -199,18 +168,10 @@ int MicroBitAudio::setVolume(int volume)
     return DEVICE_OK;
 }
 
-/**
- * Get the current global mixer volume.
- * @return The output volume, in the range 0..255.
- */
 int MicroBitAudio::getVolume() {
     return mixer.getVolume() / 4;
 }
 
-/**
- * Enable or disable use of the on-board speaker.
- * @param on New value.
- */
 void MicroBitAudio::setSpeakerEnabled(bool on) {
     speakerEnabled = on;
     
@@ -223,18 +184,14 @@ void MicroBitAudio::setSpeakerEnabled(bool on) {
     }
 }
 
-/**
- * Query whether the speaker is enabled.
- * @return true if enabled, false otherwise.
- */
 bool MicroBitAudio::isSpeakerEnabled() {
     return speakerEnabled;
 }
 
-/**
- * Define which pin on the edge connector is used for audio.
- * @param pin The pin to use for auxiliary audio.
- */
+bool MicroBitAudio::isMicrophoneEnabled() {
+    return micEnabled;
+}
+
 void MicroBitAudio::setPin(NRF52Pin &pin)
 {
     bool wasEnabled = pinEnabled;
@@ -244,10 +201,6 @@ void MicroBitAudio::setPin(NRF52Pin &pin)
     setPinEnabled(wasEnabled);
 }
 
-/**
- * Define if audio is enabled on the edge connector pin.
- * @param on New value.
- */
 void MicroBitAudio::setPinEnabled(bool on)
 {
     pinEnabled = on;
@@ -261,20 +214,11 @@ void MicroBitAudio::setPinEnabled(bool on)
     }
 }
 
-/**
- * Query whether the audio is enabled on the edge connector.
- * @return true if enabled, false otherwise.
- */
 bool MicroBitAudio::isPinEnabled()
 {
     return this->pinEnabled;
 }
 
-/**
-  * Destructor.
-  *
-  * Removes resources held by the instance.
-  */
 MicroBitAudio::~MicroBitAudio()
 {
     if (pwm)
@@ -285,9 +229,6 @@ MicroBitAudio::~MicroBitAudio()
 }
 
 
-/**
- * Puts the component in (or out of) sleep (low power) mode.
- */
 int MicroBitAudio::setSleep(bool doSleep)
 {
     if (doSleep)
@@ -315,10 +256,6 @@ int MicroBitAudio::setSleep(bool doSleep)
     return DEVICE_OK;
 }
 
-/**
- * Determine if any audio is currently being played, from any source.
- * @return true if audio is being played, false otherwise.
- */
 bool MicroBitAudio::isPlaying()
 {
     uint32_t t = system_timer_current_time_us();
