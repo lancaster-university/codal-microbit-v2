@@ -3,6 +3,38 @@
 
 For official release notes, please see Releases.md
 
+The current tag uses the following library versions:
+ - codal-core = https://github.com/lancaster-university/codal-core/tree/763a2d1a916d4db3fe3f3f2b1eaa9947cc8d0a7e
+ - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/84b1aeec870addcfb6027a924dbfe83f1f10c6db
+ - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/ef4662e13875a7b03e7296d7ac24a2b4d231f323
+
+
+## [v0.2.56](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.55...v0.2.56)
+
+Carlos Pereira Atencio (2):
+ - Remove FXOS vestiges. (#302)
+ - CI uPy: Don't checkout submodules recursively. (#351)
+
+Dr John Vidler (11):
+ - Added a little extra to the git changelog generator; it now created a tree-link list for the libraries on the latest tag
+ - Merge branch 'master' of ssh://github.com/lancaster-university/codal-microbit-v2
+ - Merge branch 'master' of ssh://github.com/lancaster-university/codal-microbit-v2
+ - Removed unused include for the old LevelDetector, updated event handling for demand activation
+ - Fixed a whitespace-based merge conflict!
+ - Fixed a very minor merge conflict with the BLE service
+ - Added isMicrophoneEnabled() to MicroBitAudio to match isSpeakerEnabled
+ - Fixed #if logic
+ - Removed spurious duplicate documentation, added support for isMicrophoneEnabled
+ - Merge branch 'master' of ssh://github.com/lancaster-university/codal-microbit-v2
+ - Snapshot v0.2.56
+
+Github Actions (1):
+ - Updated the Changelog
+
+Martin Williams (2):
+ - MicroBitUtilityService - replaces PR 178 (#287)
+ - MicroBitCompassCalibrator avoid using max(int,int) (#290)
+
 ## [v0.2.55](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.54...v0.2.55)
 
 Dr John Vidler (2):
