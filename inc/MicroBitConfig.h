@@ -251,8 +251,10 @@
 
 // Enable/Disable BLE Service in pairing mode: MicroBitUtilityService
 // Set '1' to enable.
+//
+// This is currently **BETA** and will be enabled by default in the future.
 #ifndef MICROBIT_BLE_UTILITY_SERVICE_PAIRING
-#define MICROBIT_BLE_UTILITY_SERVICE_PAIRING 1
+#define MICROBIT_BLE_UTILITY_SERVICE_PAIRING 0
 #endif
 
 // Enable/Disable BLE Service in application mode: MicroBitUtilityService
