@@ -4,10 +4,19 @@
 For official release notes, please see Releases.md
 
 The current tag uses the following library versions:
- - codal-core = https://github.com/lancaster-university/codal-core/tree/763a2d1a916d4db3fe3f3f2b1eaa9947cc8d0a7e
+ - codal-core = https://github.com/lancaster-university/codal-core/tree/2658178aade744af248b116c2e4277b94a242b69
  - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/84b1aeec870addcfb6027a924dbfe83f1f10c6db
  - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/ef4662e13875a7b03e7296d7ac24a2b4d231f323
 
+
+## [v0.2.57](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.56...v0.2.57)
+
+Dr John Vidler (2):
+ - Disbled the MICROBIT_BLE_UTILITY_SERVICE_PAIRING configuration by default, enabled on BETA
+ - Snapshot v0.2.57
+
+Github Actions (1):
+ - Updated the Changelog
 
 ## [v0.2.56](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.55...v0.2.56)
 
