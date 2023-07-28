@@ -66,7 +66,7 @@ MicroBit::MicroBit() :
     capTouchTimer(NRF_TIMER3, TIMER3_IRQn),
     timer(systemTimer),
     messageBus(),
-    adc(adcTimer, 91),
+    adc(adcTimer, MIC_SAMPLE_DELTA),
     touchSensor(capTouchTimer),
     io(adc, touchSensor),
     serial(io.usbTx, io.usbRx, NRF_UARTE0),
