@@ -26,6 +26,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitDevice.h"
 #include "nrf.h"
 #include "hal/nrf_gpio.h"
+#include "cmsis_compiler.h"
 
 #ifdef SOFTDEVICE_PRESENT
 #include "nrf_sdm.h"
@@ -182,10 +183,14 @@ bool ble_running()
 /**
   * Perform a hard reset of the micro:bit.
   */
-void
-microbit_reset()
+__NO_RETURN void microbit_reset()
 {
     NVIC_SystemReset();
+
+    // __NO_RETURN added to NVIC_SystemReset() in CMSIS V5.0.5
+    // Currently using V5.0.3, so this can be removed if updated in the future
+    // Looks like it gets compiled out anyway
+    for (;;);
 }
 
 /**
@@ -386,7 +391,7 @@ void microbit_panic_timeout(int iterations)
     panic_timeout = iterations;
 }
 
-void microbit_panic( int statusCode)
+__NO_RETURN void microbit_panic( int statusCode)
 {
     const microbit_LEDMapStr &mm = microbit_LEDMap;
     uint8_t chr;
