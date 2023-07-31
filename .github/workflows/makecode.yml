@@ -11,7 +11,13 @@ jobs:
     strategy:
       matrix:
         # One job builds with the local toolchain, the other with Docker
-        pxt-flags: ["PXT_NODOCKER=1", ""]
+        # FIXME: The current docker image used by pxt-microbit is not publicly accessible via
+        #        a known public registry, so the builds using docker will fail.
+        #        As a temporary measure, let's only build the "nodocker" version and reneable the
+        #        docker build in the future, once we can access the build image.
+        # https://github.com/lancaster-university/codal-microbit-v2/issues/338#issuecomment-1658767316
+        # pxt-flags: ["PXT_NODOCKER=1", ""]
+        pxt-flags: ["PXT_NODOCKER=1"]
       fail-fast: false
     name: Build MakeCode ${{ matrix.pxt-flags && '(nodocker)' }}
     runs-on: ubuntu-22.04
