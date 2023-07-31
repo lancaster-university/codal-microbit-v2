@@ -14,6 +14,10 @@ on:
         description: '(Optional) New commit to use instead of branch HEAD'
         required: false
         default: ''
+      samples-commit:
+          description: '(Optional) microbit-v2-samples commit to use instead of branch HEAD'
+          required: false
+          default: ''
 
 jobs:
   size-diff:
@@ -41,6 +45,9 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: 'lancaster-university/microbit-v2-samples'
+          # Unless manually triggered via workflow_dispatch this will be an empty
+          # string, checking out the default branch
+          ref: ${{ github.event.inputs.samples-commit }}
       # We need to use the checkout action (instead of build.py cloning the
       # repository) so that on PRs we can get the commit from the PR merge
       - name: Clone this repository in the libraries folder
@@ -101,6 +108,7 @@ jobs:
           echo "# Bloaty comparison with input commit(s)" >> $GITHUB_STEP_SUMMARY
           echo "Old commit: [${{ github.event.inputs.old-commit }}](https://github.com/${GITHUB_REPOSITORY}/commit/${{ github.event.inputs.old-commit }})" >> $GITHUB_STEP_SUMMARY
           echo "New commit: [${{ github.event.inputs.new-commit || github.sha }}](https://github.com/${GITHUB_REPOSITORY}/commit/${{ github.event.inputs.new-commit || github.sha}})" >> $GITHUB_STEP_SUMMARY
+          echo "Samples commit: ${{ github.event.inputs.samples-commit || 'main branch HEAD' }}" >> $GITHUB_STEP_SUMMARY
           echo "Full diff: https://github.com/${GITHUB_REPOSITORY}/compare/${{ github.event.inputs.old-commit }}...${{ github.event.inputs.new-commit || github.sha}}" >> $GITHUB_STEP_SUMMARY
       - name: "Commit only: Get parent commit SHA"
         if: ${{ ! github.event.pull_request.base.sha && github.event_name != 'workflow_dispatch'}}
