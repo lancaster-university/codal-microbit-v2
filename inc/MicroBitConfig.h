@@ -227,6 +227,11 @@
     #define MICROBIT_BLE_ADVERTISING_INTERVAL        50
 #endif
 
+// Define the default maximum number of BLE bonds
+#ifndef MICROBIT_BLE_MAXIMUM_BONDS
+    #define MICROBIT_BLE_MAXIMUM_BONDS              4
+#endif
+
 // Defines default power level of the BLE radio transmitter.
 // Valid values are in the range 0..7 inclusive, with 0 being the lowest power and 7 the highest power.
 // Based on trials undertaken by the BBC, the radio is normally set to a low power level
