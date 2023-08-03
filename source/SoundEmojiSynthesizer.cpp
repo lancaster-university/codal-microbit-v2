@@ -71,6 +71,11 @@ void SoundEmojiSynthesizer::connect(DataSink &sink)
 	this->downStream = &sink;
 }
 
+bool SoundEmojiSynthesizer::isConnected()
+{
+    return this->downStream != NULL;
+}
+
 /**
  *  Determine the data format of the buffers streamed out of this component.
  */

@@ -45,8 +45,7 @@ class MicroBitAccelerometer : public Accelerometer
         static Accelerometer* driver;                     // The instance of an Accelerometer driver.
         static NRF52Pin irq1;                             // IRQ pin for detected acceleromters to use
         static CoordinateSpace coordinateSpace;           // Default coordinate space
-        static CoordinateSpace coordinateSpaceFXOS8700;   // Secondary coordinate space
-    
+
         /**
          * Constructor.
          * Create a software abstraction of an accelerometer.

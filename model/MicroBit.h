@@ -51,7 +51,6 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitDisplay.h"
 #include "CodalFiber.h"
 #include "MessageBus.h"
-#include "FXOS8700.h"
 #include "LSM303Accelerometer.h"
 #include "LSM303Magnetometer.h"
 #include "MicroBitRadio.h"
@@ -84,6 +83,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitTemperatureService.h"
 #include "MicroBitUARTService.h"
 #include "MicroBitPartialFlashingService.h"
+#include "MicroBitUtilityService.h"
 #endif
 
 #include "MicroBitStorage.h"

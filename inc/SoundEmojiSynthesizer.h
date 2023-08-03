@@ -161,6 +161,14 @@ namespace codal
         virtual void connect(DataSink &sink) override;
 
         /**
+         * Determines if this source is connected to a downstream component
+         * 
+         * @return true If a downstream is connected
+         * @return false If a downstream is not connected
+         */
+        bool isConnected();
+
+        /**
          *  Determine the data format of the buffers streamed out of this component.
          */
         virtual int getFormat() override;

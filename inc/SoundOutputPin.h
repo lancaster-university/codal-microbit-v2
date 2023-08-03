@@ -40,15 +40,23 @@ DEALINGS IN THE SOFTWARE.
 #endif
 
 #ifndef SOUND_OUTPUT_PIN_SAMPLE_RATE
-#define SOUND_OUTPUT_PIN_SAMPLE_RATE         44100
+#define SOUND_OUTPUT_PIN_SAMPLE_RATE         CONFIG_MIXER_DEFAULT_SAMPLERATE
 #endif
 
 #ifndef SOUND_OUTPUT_PIN_BUFFER_SIZE
 #define SOUND_OUTPUT_PIN_BUFFER_SIZE         512
 #endif
 
+#ifndef CONFIG_SOUND_OUTPUT_PIN_DISCRETE_OUTPUT
+#define CONFIG_SOUND_OUTPUT_PIN_DISCRETE_OUTPUT 1
+#endif
+
 #define SOUND_OUTPUT_PIN_STATUS_ENABLED       0x0001            // Synthesizer has been on demand activate
 #define SOUND_OUTPUT_PIN_STATUS_ACTIVE        0x0002            // Synthesizer is actively generating sound
+
+#ifndef CONFIG_SOUND_OUTPUT_PIN_TONEPRINT
+#define CONFIG_SOUND_OUTPUT_PIN_TONEPRINT     0
+#endif
 
 /**
   * Class definition for a SoundPin.
@@ -157,6 +165,14 @@ namespace codal
           */
         virtual ManagedBuffer pull();
         virtual int getFormat();
+        
+        /**
+         * Determines if this source is connected to a downstream component
+         * 
+         * @return true If a downstream is connected
+         * @return false If a downstream is not connected
+         */
+        bool isConnected();
 
         private:
 

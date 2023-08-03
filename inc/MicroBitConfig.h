@@ -249,6 +249,20 @@
     #define MICROBIT_BLE_DEVICE_INFORMATION_SERVICE 1
 #endif
 
+// Enable/Disable BLE Service in pairing mode: MicroBitUtilityService
+// Set '1' to enable.
+//
+// This is currently **BETA** and will be enabled by default in the future.
+#ifndef MICROBIT_BLE_UTILITY_SERVICE_PAIRING
+#define MICROBIT_BLE_UTILITY_SERVICE_PAIRING 0
+#endif
+
+// Enable/Disable BLE Service in application mode: MicroBitUtilityService
+// Set '1' to enable.
+#ifndef MICROBIT_BLE_UTILITY_SERVICE
+#define MICROBIT_BLE_UTILITY_SERVICE 0
+#endif
+
 // Enable/Disable Nordic Firmware style BLE based UART implimentation.
 // The default codal implimentation reverses the TX/RX ids  
 // Set to '1' to enable
