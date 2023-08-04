@@ -4,10 +4,23 @@
 For official release notes, please see Releases.md
 
 The current tag uses the following library versions:
- - codal-core = https://github.com/lancaster-university/codal-core/tree/2658178aade744af248b116c2e4277b94a242b69
- - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/84b1aeec870addcfb6027a924dbfe83f1f10c6db
+ - codal-core = https://github.com/lancaster-university/codal-core/tree/32cc87c3298a49663c3b3b7b1881ec7aeb3d73a5
+ - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/2dbf5aa214c7432c0b1b8a19e92a3f9a4fc4b9da
  - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/ef4662e13875a7b03e7296d7ac24a2b4d231f323
 
+
+## [v0.2.58](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.57...v0.2.58)
+
+Carlos Pereira Atencio (3):
+ - CI: Add option to size diff workflow to configure samples repo commit. (#358)
+ - CI: Temporarily disable pxt docker build until image becomes available. (#359)
+ - Snapshot v0.2.58
+
+Github Actions (1):
+ - Updated the Changelog
+
+Martin Williams (1):
+ - MicroBitBLEManager - Move MICROBIT_BLE_MAXIMUM_BONDS to MicroBitConfig (#299)
 
 ## [v0.2.57](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.56...v0.2.57)
 
