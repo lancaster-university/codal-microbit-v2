@@ -242,7 +242,7 @@ int MicroBit::init()
     uint8_t x = 0; uint8_t y = 0;
     bool triple_reset = 0;
 
-#if CONFIG_ENABLED(DEVICE_TRIPLE_RESET_TO_PAIR)
+#if CONFIG_ENABLED(MICROBIT_TRIPLE_RESET_TO_PAIR)
     triple_reset = (microbit_no_init_memory_region.resetClickCount == 3);
 #endif
 
@@ -458,7 +458,7 @@ void MicroBit::eraseUserStorage(bool forceErase)
         f.write((uint32_t) &reflash_status, &zero, 1);
 
     // Determine if our flash contains a recognised file system. If so, invalidate it.
-#if (CONFIG_MICROBIT_ERASE_USER_DATA_ON_REFLASH == 1)
+#if CONFIG_ENABLED(CONFIG_MICROBIT_ERASE_USER_DATA_ON_REFLASH)
     log.invalidate();
 #endif
 }

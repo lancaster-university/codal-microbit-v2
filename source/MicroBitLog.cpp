@@ -910,7 +910,7 @@ void MicroBitLog::_invalidate()
     if (_isPresent())
     {
 
-#if (CONFIG_MICROBIT_LOG_FULL_ERASE_BY_DEFAULT)
+#if CONFIG_ENABLED(CONFIG_MICROBIT_LOG_FULL_ERASE_BY_DEFAULT)
         _clear();
 #endif
         MicroBitLogMetaData m;

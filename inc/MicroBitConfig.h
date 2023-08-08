@@ -175,7 +175,7 @@
 #endif
 
 // Configure for open BLE operation if so configured
-#if (MICROBIT_BLE_OPEN == 1)
+#if CONFIG_ENABLED(MICROBIT_BLE_OPEN)
     #define MICROBIT_BLE_SECURITY_MODE              1
     #define MICROBIT_BLE_WHITELIST                  0
     #define MICROBIT_BLE_ADVERTISING_TIMEOUT        0
@@ -291,4 +291,18 @@
     #define MICROBIT_USB_SERIAL_WAKE 0
 #endif
 
+#endif
+
+// Defines default behaviour of triple-tap-reset-to-pair feature.
+// 0: Feature disabled
+// 1: Feature enabled. Triple tap of reset button enters Bluetooth pairing mode.
+#ifndef MICROBIT_TRIPLE_RESET_TO_PAIR
+    #define MICROBIT_TRIPLE_RESET_TO_PAIR                 1
+#endif
+
+// Defines default behaviour of any stored user data when the micro:bit is reflashed.
+// 0: No action is taken
+// 1: Data is invalidated (any may be hard erased, as per policy of the respective file system used)
+#ifndef CONFIG_MICROBIT_ERASE_USER_DATA_ON_REFLASH
+    #define CONFIG_MICROBIT_ERASE_USER_DATA_ON_REFLASH    1
 #endif
