@@ -9,6 +9,18 @@ The current tag uses the following library versions:
  - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/ef4662e13875a7b03e7296d7ac24a2b4d231f323
 
 
+## [v0.2.59](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.58...v0.2.59)
+
+Carlos Pereira Atencio (2):
+ - Reduce power consumption of LED matrix on power off mode. (#366)
+ - Snapshot v0.2.59
+
+Dr John Vidler (1):
+ - Added an on-release action to grab library builds
+
+Github Actions (1):
+ - Updated the Changelog
+
 ## [v0.2.58](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.57...v0.2.58)
 
 Carlos Pereira Atencio (3):
