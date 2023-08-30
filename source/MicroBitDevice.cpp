@@ -102,8 +102,7 @@ void MicroBitDevice::seedRandom()
   */
 int MicroBitDevice::seedRandom(uint32_t seed)
 {
-    CodalDevice::seedRandom(seed);
-    return DEVICE_OK;
+    return CodalDevice::seedRandom(seed);
 }
 
 
