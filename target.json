@@ -6,6 +6,7 @@
     "post_process":"",
     "generate_bin":true,
     "generate_hex":true,
+    "show_size":true,
     "config":{
         "MBED_CONF_NORDIC_NRF_LF_CLOCK_SRC": "NRF_LF_SRC_XTAL",
         "CONFIG_GPIO_AS_PINRESET": 1,
