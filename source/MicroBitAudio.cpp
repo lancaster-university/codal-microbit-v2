@@ -228,6 +228,11 @@ MicroBitAudio::~MicroBitAudio()
     }
 }
 
+int MicroBitAudio::deepSleepCallback( deepSleepCallbackReason reason, deepSleepCallbackData *data)
+{
+    deactivateMic();
+}
+
 
 int MicroBitAudio::setSleep(bool doSleep)
 {
