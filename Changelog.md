@@ -4,9 +4,9 @@
 For official release notes, please see Releases.md
 
 The current tag uses the following library versions:
- - codal-core = https://github.com/lancaster-university/codal-core/tree/c2bc323334e95bd7fc7e91bf64d782b575ce98ae
- - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/4b2d8342ea37a4fd13de340c0fff63526ea5465d
- - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/ef4662e13875a7b03e7296d7ac24a2b4d231f323
+ - codal-core = https://github.com/lancaster-university/codal-core/tree/a1163541d10c0a0d3dd9b2e8ac1b8906100449ad
+ - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/2d77a3c89d14c5f4344e73511ca32086a0fcc8ad
+ - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/f98e1a9325acef9de52416b3e30cc820531b6699
 
 
 ## [v0.2.60](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.59...v0.2.60)
