@@ -9,6 +9,21 @@ The current tag uses the following library versions:
  - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/f98e1a9325acef9de52416b3e30cc820531b6699
 
 
+## [v0.2.61](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.60...v0.2.61)
+
+Dr John Vidler (4):
+ - Added a hook to manually deactivate the microphone when we deep sleep
+ - Snapshot v0.2.60-master.0
+ - Snapshot v0.2.60-master.1
+ - Snapshot v0.2.61
+
+Github Actions (2):
+ - Updated the Changelog
+ - Updated the Changelog
+
+Martin Williams (1):
+ - Shorter reset to Bluetooth mode animation (#368)
+
 ## [v0.2.60](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.59...v0.2.60)
 
 Carlos Pereira Atencio (5):
