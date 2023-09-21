@@ -50,7 +50,7 @@
     "generate_hex": true,
     "libraries": [
         {
-            "branch": "a1163541d10c0a0d3dd9b2e8ac1b8906100449ad",
+            "branch": "3ab40c3c176605314164c92580d62bf32a80266c",
             "name": "codal-core",
             "type": "git",
             "url": "https://github.com/lancaster-university/codal-core"
@@ -71,6 +71,6 @@
     "linker_flags": "-Wl,--no-wchar-size-warning -Wl,--gc-sections -Wl,--wrap,atexit -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -Wl,--start-group -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys -Wl,--end-group",
     "post_process": "",
     "processor": "NRF52833",
-    "snapshot_version": "v0.2.61",
+    "snapshot_version": "v0.2.61-master.0",
     "toolchain": "ARM_GCC"
 }
