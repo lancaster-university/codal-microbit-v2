@@ -184,7 +184,7 @@ class MicroBitBLEManager : public CodalComponent
      * Periodic callback in thread context.
      * We use this here purely to safely issue a disconnect operation after a pairing operation is complete.
 	 */
-    void idleCallback();
+    virtual void idleCallback() override;
 
     /**
 	* Stops any currently running BLE advertisements

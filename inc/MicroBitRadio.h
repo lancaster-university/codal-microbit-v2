@@ -205,7 +205,7 @@ namespace codal
          * A background, low priority callback that is triggered whenever the processor is idle.
          * Here, we empty our queue of received packets, and pass them onto higher level protocol handlers.
          */
-        virtual void idleCallback();
+        virtual void idleCallback() override;
 
         /**
          * Determines the number of packets ready to be processed.

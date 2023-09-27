@@ -166,7 +166,7 @@ namespace codal
          * @return true If a downstream is connected
          * @return false If a downstream is not connected
          */
-        bool isConnected();
+        virtual bool isConnected() override;
 
         /**
          *  Determine the data format of the buffers streamed out of this component.
@@ -207,7 +207,7 @@ namespace codal
          * Determine the sample rate currently in use by this Synthesizer.
          * @return the current sample rate, in Hz.
          */
-        float getSampleRate();
+        virtual float getSampleRate() override;
 
         /**
          * Change the sample rate used by this Synthesizer,

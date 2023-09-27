@@ -163,8 +163,8 @@ namespace codal
         /**
           * Relevant DataSource operations
           */
-        virtual ManagedBuffer pull();
-        virtual int getFormat();
+        virtual ManagedBuffer pull() override;
+        virtual int getFormat() override;
         
         /**
          * Determines if this source is connected to a downstream component
@@ -172,7 +172,7 @@ namespace codal
          * @return true If a downstream is connected
          * @return false If a downstream is not connected
          */
-        bool isConnected();
+        virtual bool isConnected() override;
 
         private:
 

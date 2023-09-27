@@ -193,7 +193,7 @@ namespace codal
         /**
          * Hook deep sleep events so we can manually turn off/on the microphone power pin.
          */
-        int deepSleepCallback( deepSleepCallbackReason reason, deepSleepCallbackData *data);
+        virtual int deepSleepCallback( deepSleepCallbackReason reason, deepSleepCallbackData *data) override;
 
         /**
           * Puts the component in (or out of) sleep (low power) mode.

@@ -78,7 +78,7 @@ public:
     /**
      * Deliver the next available ManagedBuffer to our downstream caller.
      */
-    virtual int pullRequest();
+    virtual int pullRequest() override;
     virtual ~MixerChannel() {};
 
     /**
@@ -169,14 +169,14 @@ public:
     /**
      * Provide the next available ManagedBuffer to our downstream caller, if available.
      */
-    virtual ManagedBuffer pull();
+    virtual ManagedBuffer pull() override;
 
     /**
      * Define a downstream component for data stream.
      *
      * @sink The component that data will be delivered to, when it is availiable
      */
-    virtual void connect(DataSink &sink);
+    virtual void connect(DataSink &sink) override;
 
     /**
      * Determines if this source is connected to a downstream component
@@ -184,12 +184,12 @@ public:
      * @return true If a downstream is connected
      * @return false If a downstream is not connected
      */
-    bool isConnected();
+    virtual bool isConnected() override;
 
     /**
      * Determines the output format for the Mixer.
      */
-    virtual int getFormat();
+    virtual int getFormat() override;
 
     /**
      * Defines the output format for the Mixer.
@@ -199,7 +199,7 @@ public:
      * DATASTREAM_FORMAT_8BIT_UNSIGNED
      * DATASTREAM_FORMAT_8BIT_SIGNED
      */
-    virtual int setFormat(int format);
+    virtual int setFormat(int format) override;
 
 
     /**
@@ -241,7 +241,7 @@ public:
      * Determine the sample rate output of this Mixer.
      * @return The sample rate (samples per second) of the mixer output.
      */
-    float getSampleRate();
+    virtual float getSampleRate() override;
 
     /**
      * Defines an optional bit mask to logical OR with each sample.

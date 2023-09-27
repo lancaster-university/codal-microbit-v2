@@ -80,7 +80,7 @@ class MicroBitIOPinService : public MicroBitBLEService, MicroBitComponent
      * Check if any of the pins we're watching need updating. Notify any connected
      * device with any changes.
      */
-    virtual void idleCallback();
+    virtual void idleCallback() override;
 
     private:
 

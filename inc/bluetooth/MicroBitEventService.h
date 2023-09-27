@@ -63,7 +63,7 @@ class MicroBitEventService : public MicroBitBLEService, MicroBitComponent
      * Periodic callback from MicroBit scheduler.
      * If we're no longer connected, remove any registered Message Bus listeners.
      */
-    virtual void idleCallback();
+    virtual void idleCallback() override;
 
     /**
       * Callback. Invoked when any of our attributes are written via BLE.

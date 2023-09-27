@@ -123,7 +123,7 @@ namespace codal
         /**
          * Periodic callback from MicroBit idle thread.
          */
-        virtual void idleCallback();
+        virtual void idleCallback() override;
 
         private:
 

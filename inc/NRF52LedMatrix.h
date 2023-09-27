@@ -122,7 +122,7 @@ namespace codal
          *
          * @note Only enables the display if the display is currently disabled.
          */
-        virtual void enable();
+        virtual void enable() override;
 
         /**
          * Disables the display, which releases control of the GPIO pins used by the display,
@@ -134,7 +134,7 @@ namespace codal
          *
          * @note Only disables the display if the display is currently enabled.
          */
-        virtual void disable();
+        virtual void disable() override;
 
         /**
          * Clears the display of any remaining pixels.
@@ -154,7 +154,7 @@ namespace codal
          *
          * @return DEVICE_OK, or DEVICE_INVALID_PARAMETER
          */
-        int setBrightness(int b);
+        virtual int setBrightness(int b) override;
 
         /**
          * Determines the last ambient light level sensed.
