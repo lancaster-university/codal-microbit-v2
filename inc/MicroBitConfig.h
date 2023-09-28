@@ -313,3 +313,12 @@
 #ifndef CONFIG_MICROBIT_ERASE_USER_DATA_ON_REFLASH
     #define CONFIG_MICROBIT_ERASE_USER_DATA_ON_REFLASH    1
 #endif
+
+
+// Defines the MicrobitLog HTML header used
+// 0: data.microbit.org data logging experience
+// 1: basic experience supported by dl.js in this repository hosted on microbit.org
+// 2: "BBC micro:bit - the next gen" playground survey experience (this requires a specific HEX to generate the relevant data format)
+#ifndef MICROBIT_LOG_MODE
+    #define MICROBIT_LOG_MODE    0
+#endif
