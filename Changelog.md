@@ -4,10 +4,27 @@
 For official release notes, please see Releases.md
 
 The current tag uses the following library versions:
- - codal-core = https://github.com/lancaster-university/codal-core/tree/d7ea466ffe92856eaec941d309e0a45747feeaca
- - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/2d77a3c89d14c5f4344e73511ca32086a0fcc8ad
+ - codal-core = https://github.com/lancaster-university/codal-core/tree/b06b6031df2f3e9fd9459fbe13a0db95a5cc47f0
+ - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/099f15ab7932ca902976262b989890f0edb3b1ce
  - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/f98e1a9325acef9de52416b3e30cc820531b6699
 
+
+## [v0.2.62](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.61...v0.2.62)
+
+Carlos Pereira Atencio (1):
+ - Update target-locked.json codal-core commit to fix builds.
+
+Dr John Vidler (5):
+ - Snapshot v0.2.61-master.0
+ - Snapshot v0.2.61-master.1
+ - Snapshot v0.2.61-master.2
+ - Merge branch 'master' of ssh://github.com/lancaster-university/codal-microbit-v2
+ - Snapshot v0.2.62
+
+Github Actions (3):
+ - Updated the Changelog
+ - Updated the Changelog
+ - Updated the Changelog
 
 ## [v0.2.61](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.60...v0.2.61)
 
