@@ -9,13 +9,7 @@
       }
     </style>
     <script>
-      // These help significantly to save bytes.
       let w = window;
-      let d = document;
-      let l = w.location;
-      let n = null;
-      let csv = "";
-      let tag = d.createElement.bind(d);
       // Allow external JS to override these actions if we managed to load it.
       // This script block is first so external JS can override individual functions.
       w.dl = {
@@ -30,7 +24,7 @@
     <script src="bootstrap.js"></script>
     <title>micro:bit data log</title>
   </head>
-  <body onload="dl.load()">
+  <body>
     <div id="w">
       <h1>micro:bit data log</h1>
       <p id="v">
