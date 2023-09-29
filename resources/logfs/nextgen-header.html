@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 1em;
+      }
+    </style>
+    <script>
+      // These help significantly to save bytes.
+      let w = window;
+      let d = document;
+      let l = w.location;
+      let n = null;
+      let csv = "";
+      let tag = d.createElement.bind(d);
+      // Allow external JS to override these actions if we managed to load it.
+      // This script block is first so external JS can override individual functions.
+      w.dl = {
+        mode: "nextgen",
+        load: function () {},
+      };
+      // Required as the code that grabs the data expects a prior occurence of
+      // FS_START
+      const a = "FS_START";
+    </script>
+    <base href="https://stage-data.microbit.org" />
+    <script src="bootstrap.js"></script>
+    <title>micro:bit data log</title>
+  </head>
+  <body onload="dl.load()">
+    <div id="w">
+      <h1>micro:bit data log</h1>
+      <p id="v">
+        You are offline. Check your internet connection and reopen the file.
+      </p>
+    </div>
+  </body>
+</html>
