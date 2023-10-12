@@ -113,11 +113,6 @@ namespace codal
         void deactivateMic();
 
         /**
-          * Dectivate level detector SPL
-          */
-        void deactivateLevelSPL();
-
-        /**
           * Set normaliser gain
           * @param gain value to set the microphone gain to
           */

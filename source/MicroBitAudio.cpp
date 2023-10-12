@@ -115,10 +115,6 @@ void MicroBitAudio::deactivateMic(){
     runmic.setHighDrive(false);
 }
 
-void MicroBitAudio::deactivateLevelSPL(){
-    levelSPL->activateForEvents( false );
-}
-
 void MicroBitAudio::setMicrophoneGain(int gain){
     processor->setGain(gain/100);
 }
