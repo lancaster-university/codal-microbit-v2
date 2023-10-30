@@ -35,6 +35,7 @@ namespace codal
 #include "CodalConfig.h"
 #include "codal-core/inc/types/Event.h"
 #include "PacketBuffer.h"
+#include "MicroBitConfig.h"
 #include "MicroBitRadioDatagram.h"
 #include "MicroBitRadioEvent.h"
 
@@ -71,10 +72,16 @@ namespace codal
 #define MICROBIT_RADIO_DEFAULT_GROUP            0
 #define MICROBIT_RADIO_DEFAULT_TX_POWER         6
 #define MICROBIT_RADIO_DEFAULT_FREQUENCY        7
-#define MICROBIT_RADIO_MAX_PACKET_SIZE          32
 #define MICROBIT_RADIO_HEADER_SIZE              4
 #define MICROBIT_RADIO_MAXIMUM_RX_BUFFERS       4
 #define MICROBIT_RADIO_POWER_LEVELS             8
+
+// Max packet size is configurable, so ensure maximum value is not exceeded
+// TODO: Update this value once issue codal-microbit-v2#383 is resolved
+// https://github.com/lancaster-university/codal-microbit-v2/issues/383
+#if MICROBIT_RADIO_MAX_PACKET_SIZE > 250
+    #error "MICROBIT_RADIO_MAX_PACKET_SIZE cannot be larger than 250 bytes"
+#endif
 
 // Known Protocol Numbers
 #define MICROBIT_RADIO_PROTOCOL_DATAGRAM        1       // A simple, single frame datagram. a little like UDP but with smaller packets. :-)
