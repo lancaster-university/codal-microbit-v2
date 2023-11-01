@@ -186,11 +186,6 @@ namespace codal
         bool isPinEnabled();
 
         /**
-         * Hook deep sleep events so we can manually turn off/on the microphone power pin.
-         */
-        int deepSleepCallback( deepSleepCallbackReason reason, deepSleepCallbackData *data);
-
-        /**
           * Puts the component in (or out of) sleep (low power) mode.
           */
         virtual int setSleep(bool doSleep) override;

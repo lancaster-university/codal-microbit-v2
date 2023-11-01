@@ -224,12 +224,6 @@ MicroBitAudio::~MicroBitAudio()
     }
 }
 
-int MicroBitAudio::deepSleepCallback( deepSleepCallbackReason reason, deepSleepCallbackData *data)
-{
-    deactivateMic();
-}
-
-
 int MicroBitAudio::setSleep(bool doSleep)
 {
     if (doSleep)
@@ -244,6 +238,7 @@ int MicroBitAudio::setSleep(bool doSleep)
           delete pwm;
           pwm = NULL;
       }
+      deactivateMic();
     }
     else
     {
@@ -252,6 +247,7 @@ int MicroBitAudio::setSleep(bool doSleep)
           status &= ~MICROBIT_AUDIO_STATUS_DEEPSLEEP;
           enable();
       }
+      activateMic();
     }
    
     return DEVICE_OK;
