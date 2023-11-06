@@ -4,10 +4,22 @@
 For official release notes, please see Releases.md
 
 The current tag uses the following library versions:
- - codal-core = https://github.com/lancaster-university/codal-core/tree/b06b6031df2f3e9fd9459fbe13a0db95a5cc47f0
- - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/099f15ab7932ca902976262b989890f0edb3b1ce
- - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/f98e1a9325acef9de52416b3e30cc820531b6699
+ - codal-core = https://github.com/lancaster-university/codal-core/tree/63f017fdcd12aca769264c36fe47e6071a40e502
+ - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/0643733703b4f8f788af81a996f40d1f1a1527bc
+ - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/5714cbe338c3544793bbb841a7ae81708a3ffae1
 
+
+## [v0.2.63](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.62...v0.2.63)
+
+Dr John Vidler (5):
+ - Removed deactivateLevelSPL entirely as per codal-microbit-v2 issue #222
+ - Fix for the microphone failing to wake after a sleep event
+ - Commented out a temporary alias for the face/logo touch button, staged for removal
+ - Revert for the face alias removal, for v0.2.63 release
+ - Snapshot v0.2.63
+
+Github Actions (1):
+ - Updated the Changelog
 
 ## [v0.2.62](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.61...v0.2.62)
 
