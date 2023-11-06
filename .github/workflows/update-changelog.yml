@@ -26,7 +26,7 @@ jobs:
       - name: Generate a new Changelog
         run: |
           git checkout master
-          python3 .github/tools/gitchanges.py > Changelog.md
+          python3 .github/tools/gitchanges.py --input Changelog.md
       
       - name: Commit the new Changelog
         run: |
