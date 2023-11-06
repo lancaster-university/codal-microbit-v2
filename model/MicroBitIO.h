@@ -413,7 +413,7 @@ namespace codal
             NRF52Pin&         col5;
             NRF52Pin&         buttonA;
             NRF52Pin&         buttonB;
-            //NRF52Pin&         face;         // Temporary compat for MakeCode extension. Delete ASAP.
+            NRF52Pin&         face;         // Temporary compat for MakeCode extension. Delete ASAP.
 
 
             /**
