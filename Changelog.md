@@ -9,26 +9,22 @@ The current tag uses the following library versions:
  - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/5714cbe338c3544793bbb841a7ae81708a3ffae1
 
 
-## [v0.2.64](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.63...v0.2.64)
-
-Dr John Vidler (3):
- - Reverted the power saving for the LED Matrix to avoid strange issues with Pins.
- - Merge branch 'master' of ssh://github.com/lancaster-university/codal-microbit-v2
- - Snapshot v0.2.64
-
-Github Actions (1):
- - Updated the Changelog
-
 ## [v0.2.63](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.62...v0.2.63)
 
-Dr John Vidler (5):
+Dr John Vidler (9):
  - Removed deactivateLevelSPL entirely as per codal-microbit-v2 issue #222
  - Fix for the microphone failing to wake after a sleep event
  - Commented out a temporary alias for the face/logo touch button, staged for removal
  - Revert for the face alias removal, for v0.2.63 release
  - Snapshot v0.2.63
+ - Reverted the power saving for the LED Matrix to avoid strange issues with Pins.
+ - Merge branch 'master' of ssh://github.com/lancaster-university/codal-microbit-v2
+ - Snapshot v0.2.64
+ - Updated target-locked with the corrected tag version
 
-Github Actions (1):
+Github Actions (3):
+ - Updated the Changelog
+ - Updated the Changelog
  - Updated the Changelog
 
 ## [v0.2.62](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.61...v0.2.62)
