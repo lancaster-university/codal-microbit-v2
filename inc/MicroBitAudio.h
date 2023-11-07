@@ -113,11 +113,6 @@ namespace codal
         void deactivateMic();
 
         /**
-          * Dectivate level detector SPL
-          */
-        void deactivateLevelSPL();
-
-        /**
           * Set normaliser gain
           * @param gain value to set the microphone gain to
           */
@@ -189,11 +184,6 @@ namespace codal
          * @return true if enabled, false otherwise.
          */
         bool isPinEnabled();
-
-        /**
-         * Hook deep sleep events so we can manually turn off/on the microphone power pin.
-         */
-        int deepSleepCallback( deepSleepCallbackReason reason, deepSleepCallbackData *data);
 
         /**
           * Puts the component in (or out of) sleep (low power) mode.

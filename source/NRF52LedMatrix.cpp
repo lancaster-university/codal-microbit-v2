@@ -189,13 +189,14 @@ void NRF52LEDMatrix::disable()
 
     // Disable the timer that drivers the display
     timer.disable();
+    timer.disableIRQ();
 
     // Disable GPIOTE control of the display pins
     // FIXME: When GPIOTE is disabled here "system off" consumes almost 1mA @ 3V
     // It's unclear how changing this peripheral causes the additional power consumption
     // https://github.com/lancaster-university/codal-microbit-v2/issues/30
-    // for (int column = 0; column < matrixMap.columns; column++)
-    //    NRF_GPIOTE->CONFIG[gpiote[column]] = 0;
+    for (int column = 0; column < matrixMap.columns; column++)
+        NRF_GPIOTE->CONFIG[gpiote[column]] = 0;
 
 
     // Put all pins into high impedance mode.

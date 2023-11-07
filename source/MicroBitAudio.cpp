@@ -115,10 +115,6 @@ void MicroBitAudio::deactivateMic(){
     runmic.setHighDrive(false);
 }
 
-void MicroBitAudio::deactivateLevelSPL(){
-    levelSPL->activateForEvents( false );
-}
-
 void MicroBitAudio::setMicrophoneGain(int gain){
     processor->setGain(gain/100);
 }
@@ -228,12 +224,6 @@ MicroBitAudio::~MicroBitAudio()
     }
 }
 
-int MicroBitAudio::deepSleepCallback( deepSleepCallbackReason reason, deepSleepCallbackData *data)
-{
-    deactivateMic();
-}
-
-
 int MicroBitAudio::setSleep(bool doSleep)
 {
     if (doSleep)
@@ -248,6 +238,7 @@ int MicroBitAudio::setSleep(bool doSleep)
           delete pwm;
           pwm = NULL;
       }
+      deactivateMic();
     }
     else
     {
@@ -256,6 +247,7 @@ int MicroBitAudio::setSleep(bool doSleep)
           status &= ~MICROBIT_AUDIO_STATUS_DEEPSLEEP;
           enable();
       }
+      activateMic();
     }
    
     return DEVICE_OK;
