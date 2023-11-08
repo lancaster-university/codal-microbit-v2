@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -30,7 +31,6 @@
         display: none;
       }
     </style>
-    <link rel="stylesheet" href="https://microbit.org/dl/2/dl.css" />
     <script>
       // These help significantly to save bytes.
       let w = window;
@@ -42,6 +42,7 @@
       // Allow external JS to override these actions if we managed to load it.
       // This script block is first so external JS can override individual functions.
       w.dl = {
+        mode: "default",
         download: function () {
           let a = tag("a");
           a.download = "microbit.csv";
@@ -67,10 +68,6 @@
           // See MicroBitLog.h/cpp for the format.
           if (/^UBIT_LOG_FS_V_002/.test(raw)) {
             let parseInteger = parseInt;
-            // To save bytes we could remove the DAPLink version as it's unused
-            // offline and the online js file could reparse the raw data
-            this.dapVer = parseInteger(raw.substr(40, 4), 10);
-
             let dataStart = parseInteger(raw.substr(29, 10), 16) - 2048;
             let dataSize = 0;
             while (raw.charCodeAt(dataStart + dataSize) != 0xfffd) {
@@ -129,7 +126,8 @@
         },
       };
     </script>
-    <script src="https://microbit.org/dl/2/dl.js"></script>
+    <base href="https://stage-data.microbit.org" />
+    <script src="bootstrap.js"></script>
     <title>micro:bit data log</title>
   </head>
   <body onload="dl.load()">

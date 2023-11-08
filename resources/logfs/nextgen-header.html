@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 1em;
+      }
+    </style>
+    <script>
+      let w = window;
+      // Allow external JS to override these actions if we managed to load it.
+      // This script block is first so external JS can override individual functions.
+      w.dl = {
+        mode: "nextgen",
+        load: function () {},
+      };
+      // Required as the code that grabs the data expects a prior occurence of
+      // the quoted string
+      const a = "FS_START";
+    </script>
+    <base href="https://stage-data.microbit.org" />
+    <script src="bootstrap.js"></script>
+    <title>micro:bit data log</title>
+  </head>
+  <body>
+    <div id="w">
+      <h1>micro:bit data log</h1>
+      <p id="v">
+        You are offline. Please check your internet connection and reopen this
+        file.
+      </p>
+    </div>
+  </body>
+</html>
