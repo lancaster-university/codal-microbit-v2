@@ -45,7 +45,7 @@
         download: function () {
           let a = tag("a");
           a.download = "microbit.csv";
-          a.href = URL.createObjectURL(new Blob([csv], { type: "text/plain" }));
+          a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
           a.click();
           a.remove();
         },
