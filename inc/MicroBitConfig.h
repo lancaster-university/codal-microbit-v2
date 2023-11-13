@@ -273,7 +273,14 @@
 // Set to '1' to enable
 #ifndef MICROBIT_BLE_NORDIC_STYLE_UART
     #define MICROBIT_BLE_NORDIC_STYLE_UART 0
-#endif 
+#endif
+
+// Configure the radio maximum packet size
+// TODO: Update the range here once issue codal-microbit-v2#383 has been resolved
+// https://github.com/lancaster-university/codal-microbit-v2/issues/383
+#ifndef MICROBIT_RADIO_MAX_PACKET_SIZE
+    #define MICROBIT_RADIO_MAX_PACKET_SIZE          32
+#endif
 
 // Versioning options.
 // We use semantic versioning (http://semver.org/) to identify differnet versions of the micro:bit runtime.
