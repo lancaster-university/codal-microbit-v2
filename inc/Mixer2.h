@@ -39,6 +39,15 @@ DEALINGS IN THE SOFTWARE.
 #define CONFIG_MIXER_DEFAULT_SAMPLERATE 44100
 #endif
 
+// The default sample rate, for when the user does not supply us with anything
+// This applies to both ADC input rates and mixer output rates.
+//
+// This is distinct from CONFIG_MIXER_DEFAULT_SAMPLERATE which sets the mixer's absolute maximum rate
+// whereas this is simply the 'normal' operating rate for audio peripherals.
+#ifndef CONFIG_MIXER_DEFAULT_CHANNEL_SAMPLERATE
+#define CONFIG_MIXER_DEFAULT_CHANNEL_SAMPLERATE  11000
+#endif
+
 #define DEVICE_ID_MIXER 3030
 
 #define DEVICE_MIXER_EVT_SILENCE 1
@@ -156,7 +165,7 @@ public:
      * @param sampleRate (samples per second) - if set to zero, defaults to the output sample rate of the Mixer
      * @param sampleRange (quantization levels) the difference between the maximum and minimum sample level on the input channel
      */
-    MixerChannel *addChannel(DataSource &stream, float sampleRate = 0, int sampleRange = CONFIG_MIXER_INTERNAL_RANGE);
+    MixerChannel *addChannel(DataSource &stream, float sampleRate = CONFIG_MIXER_DEFAULT_CHANNEL_SAMPLERATE, int sampleRange = CONFIG_MIXER_INTERNAL_RANGE);
 
     /**
      * Removes a channel from the mixer
