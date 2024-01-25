@@ -5,6 +5,7 @@
  */
 const minify = require("html-minifier").minify;
 const fs = require("fs");
+const path = require("path");
 
 const main = (mode) => {
   const inputFile = `${mode}-header.html`;
@@ -52,16 +53,25 @@ const main = (mode) => {
   }
 
   if (process.argv[2] === "test") {
+    const sampleTrailersDir = "sample-trailers";
+    // default/basic headers use the same samples
+    const trailerPrefix = `${mode === "basic" ? "default" : mode}-`;
     const trailers = fs
-      .readdirSync(".")
-      .filter((f) => /^sample-.+\.txt$/.test(f));
-    // Enable local testing of included CSS/JS. Do it after byte count.
-    result = result.replace(/https:\/\/microbit.org\/dl\/\d\//g, "./");
+      .readdirSync(sampleTrailersDir)
+      .filter((f) => f.startsWith(trailerPrefix) && f.endsWith(".txt"));
+    // Enable testing of included CSS/JS for the basic experience against the dl.js/css files in this repo
+    if (mode === "basic") {
+      result = result.replace(/https:\/\/microbit.org\/dl\/\d\//g, "../");
+    }
     for (const trailerName of trailers) {
-      const trailer = fs.readFileSync(trailerName);
-      const htmlName = trailerName.replace(/\.txt$/, `-${mode}.html`);
+      const trailer = fs.readFileSync(
+        path.join(sampleTrailersDir, trailerName)
+      );
+      const htmlName = `${mode}-${trailerName
+        .slice(trailerPrefix.length)
+        .replace(/\.txt$/, ".html")}`;
       fs.writeFileSync(
-        htmlName,
+        path.join("samples", htmlName),
         Buffer.concat([Buffer.from(result, { encoding: "utf-8" }), trailer])
       );
     }
