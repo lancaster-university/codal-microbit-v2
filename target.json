@@ -25,7 +25,7 @@
         "DEVICE_COMPONENT_COUNT":60,
         "DEVICE_DEFAULT_PULLMODE":"PullMode::Down",
         "DEVICE_PANIC_HEAP_FULL":1,
-        "DMESG_SERIAL_DEBUG":0,
+        "DMESG_SERIAL_DEBUG":1,
         "CODAL_DEBUG":"CODAL_DEBUG_DISABLED",
         "DEVICE_USB":0,
         "CODAL_TIMESTAMP":"uint64_t",
