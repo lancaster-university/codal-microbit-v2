@@ -95,7 +95,7 @@ MicroBit::MicroBit() :
     // Clear our status
     status = 0;
 
-    /*
+    
     // Ensure NFC pins are configured as GPIO. If not, update the non-volatile UICR.
     if (NRF_UICR->NFCPINS)
     {
@@ -114,7 +114,6 @@ MicroBit::MicroBit() :
         // Reset, so the changes can take effect.
         NVIC_SystemReset();
     }
-    */
 
     // Configure serial port for debugging
 
