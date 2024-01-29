@@ -149,8 +149,6 @@ MicroBit::MicroBit() :
 {
     // Clear our status
     status = 0;
-    
-    disableNFConPins();
 
     // Configure serial port for debugging
 
