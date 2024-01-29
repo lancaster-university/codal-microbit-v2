@@ -104,6 +104,11 @@ DEALINGS IN THE SOFTWARE.
  */
 namespace codal
 {
+    class NFConPins {
+        public: 
+            NFConPins();
+    }
+
     class MicroBit : public MicroBitDevice, public CodalComponent
     {
         private:
@@ -132,7 +137,7 @@ namespace codal
             MicroBitBLEManager          bleManager;
             BLEDevice                  *ble;
 #endif
-
+            NFConPins                   nfc;
             NRFLowLevelTimer            systemTimer;
             NRFLowLevelTimer            adcTimer;
             NRFLowLevelTimer            capTouchTimer;

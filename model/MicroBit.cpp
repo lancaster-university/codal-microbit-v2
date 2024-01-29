@@ -49,11 +49,11 @@ static volatile MicroBitNoInitMemoryRegion __attribute__ ((section (".noinit")))
 
 #define IS_3_3_V() ((NRF_UICR->REGOUT0 & 7) == 5)
 
-static void disableNFConPins() {
-    // DMESG("disableNFConPins\n");
+void NFConPins::NFConPins() {
+    DMESG("disableNFConPins\n");
     // Ensure NFC pins are configured as GPIO. If not, update the non-volatile UICR.
     if (NRF_UICR->NFCPINS || !IS_3_3_V()) {
-        // DMESG("RESET UICR\n");
+        DMESG("RESET UICR\n");
         // Enable Flash Writes
         NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos);
         while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
@@ -113,7 +113,7 @@ MicroBit::MicroBit() :
     bleManager(),
     ble( &bleManager),
 #endif
-
+    nfc(),
     systemTimer(NRF_TIMER1, TIMER1_IRQn),
     adcTimer(NRF_TIMER2, TIMER2_IRQn),
 
