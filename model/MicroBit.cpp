@@ -131,8 +131,6 @@ MicroBit::MicroBit() :
 {
     // Clear our status
     status = 0;
-
-    disableNFConPins();
     
     /*
     // Ensure NFC pins are configured as GPIO. If not, update the non-volatile UICR.
@@ -267,6 +265,8 @@ int MicroBit::init()
     NVIC_SetPriority(RADIO_IRQn, 4);          // Packet radio
     NVIC_SetPriority(UARTE0_UART0_IRQn, 2);   // Serial port
     NVIC_SetPriority(GPIOTE_IRQn, 2);         // Pin interrupt events
+
+    disableNFConPins();
 
     power.readInterfaceRequest();
 
