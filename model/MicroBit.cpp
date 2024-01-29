@@ -47,11 +47,7 @@ static const uint32_t reflash_status = 0xffffffff;
 
 static volatile MicroBitNoInitMemoryRegion __attribute__ ((section (".noinit"))) microbit_no_init_memory_region;
 
-#if defined(NRF52840) || defined(NRF52833)
 #define IS_3_3_V() ((NRF_UICR->REGOUT0 & 7) == 5)
-#else
-#define IS_3_3_V() 1
-#endif
 
 static void disableNFConPins() {
     // DMESG("disableNFConPins\n");
@@ -67,11 +63,9 @@ static void disableNFConPins() {
         if (NRF_UICR->NFCPINS)
             NRF_UICR->NFCPINS = 0;
 
-#if defined(NRF52840) || defined(NRF52833)
         // Set VDD to 3.3V
         if ((NRF_UICR->REGOUT0 & 7) != 5)
             NRF_UICR->REGOUT0 = (NRF_UICR->REGOUT0 & ~7) | 5;
-#endif
 
         // Disable Flash Writes
         NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos);
