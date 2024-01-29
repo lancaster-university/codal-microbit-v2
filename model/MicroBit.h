@@ -107,7 +107,7 @@ namespace codal
     class NFConPins {
         public: 
             NFConPins();
-    }
+    };
 
     class MicroBit : public MicroBitDevice, public CodalComponent
     {
