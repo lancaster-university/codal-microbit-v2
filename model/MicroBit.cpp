@@ -56,28 +56,6 @@ static volatile MicroBitNoInitMemoryRegion __attribute__ ((section (".noinit")))
 static void disableNFConPins() {
     // DMESG("disableNFConPins\n");
     // Ensure NFC pins are configured as GPIO. If not, update the non-volatile UICR.
-
-    if (NRF_UICR->NFCPINS)
-    {
-        DMESG("RESET UICR\n");
-        // Enable Flash Writes
-        NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos);
-        while (NRF_NVMC->READY == NVMC_READY_READY_Busy);
-
-        // Configure PINS for GPIO use.
-        NRF_UICR->NFCPINS = 0;
-
-        // Disable Flash Writes
-        NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos);
-        while (NRF_NVMC->READY == NVMC_READY_READY_Busy);
-
-        // Reset, so the changes can take effect.
-        NVIC_SystemReset();
-    }
-}
-
-    /*
-        // Ensure NFC pins are configured as GPIO. If not, update the non-volatile UICR.
     if (NRF_UICR->NFCPINS || !IS_3_3_V()) {
         // DMESG("RESET UICR\n");
         // Enable Flash Writes
@@ -103,7 +81,30 @@ static void disableNFConPins() {
         // Reset, so the changes can take effect.
         NVIC_SystemReset();
     }
+}
 
+    /*
+        // Ensure NFC pins are configured as GPIO. If not, update the non-volatile UICR.
+
+
+
+    if (NRF_UICR->NFCPINS)
+    {
+        DMESG("RESET UICR\n");
+        // Enable Flash Writes
+        NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos);
+        while (NRF_NVMC->READY == NVMC_READY_READY_Busy);
+
+        // Configure PINS for GPIO use.
+        NRF_UICR->NFCPINS = 0;
+
+        // Disable Flash Writes
+        NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos);
+        while (NRF_NVMC->READY == NVMC_READY_READY_Busy);
+
+        // Reset, so the changes can take effect.
+        NVIC_SystemReset();
+    }
 */
 
 /**
