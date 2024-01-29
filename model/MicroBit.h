@@ -105,8 +105,7 @@ DEALINGS IN THE SOFTWARE.
 namespace codal
 {
     class NFConPins {
-        public: 
-            NFConPins();
+        public: NFConPins();
     };
 
     class MicroBit : public MicroBitDevice, public CodalComponent
