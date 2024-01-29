@@ -54,10 +54,10 @@ static volatile MicroBitNoInitMemoryRegion __attribute__ ((section (".noinit")))
 #endif
 
 static void disableNFConPins() {
-    DMESG("disableNFConPins\n");
+    // DMESG("disableNFConPins\n");
     // Ensure NFC pins are configured as GPIO. If not, update the non-volatile UICR.
     if (NRF_UICR->NFCPINS || !IS_3_3_V()) {
-        DMESG("RESET UICR\n");
+        // DMESG("RESET UICR\n");
         // Enable Flash Writes
         NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos);
         while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
@@ -83,6 +83,26 @@ static void disableNFConPins() {
     }
 }
 
+    /*
+    // Ensure NFC pins are configured as GPIO. If not, update the non-volatile UICR.
+    if (NRF_UICR->NFCPINS)
+    {
+        DMESG("RESET UICR\n");
+        // Enable Flash Writes
+        NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos);
+        while (NRF_NVMC->READY == NVMC_READY_READY_Busy);
+
+        // Configure PINS for GPIO use.
+        NRF_UICR->NFCPINS = 0;
+
+        // Disable Flash Writes
+        NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos);
+        while (NRF_NVMC->READY == NVMC_READY_READY_Busy);
+
+        // Reset, so the changes can take effect.
+        NVIC_SystemReset();
+    }
+*/
 
 /**
   * Constructor.
@@ -133,26 +153,7 @@ MicroBit::MicroBit() :
     // Clear our status
     status = 0;
     
-    /*
-    // Ensure NFC pins are configured as GPIO. If not, update the non-volatile UICR.
-    if (NRF_UICR->NFCPINS)
-    {
-        DMESG("RESET UICR\n");
-        // Enable Flash Writes
-        NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos);
-        while (NRF_NVMC->READY == NVMC_READY_READY_Busy);
-
-        // Configure PINS for GPIO use.
-        NRF_UICR->NFCPINS = 0;
-
-        // Disable Flash Writes
-        NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos);
-        while (NRF_NVMC->READY == NVMC_READY_READY_Busy);
-
-        // Reset, so the changes can take effect.
-        NVIC_SystemReset();
-    }
-*/
+    disableNFConPins();
 
     // Configure serial port for debugging
 
@@ -266,8 +267,6 @@ int MicroBit::init()
     NVIC_SetPriority(RADIO_IRQn, 4);          // Packet radio
     NVIC_SetPriority(UARTE0_UART0_IRQn, 2);   // Serial port
     NVIC_SetPriority(GPIOTE_IRQn, 2);         // Pin interrupt events
-
-    disableNFConPins();
 
     power.readInterfaceRequest();
 
