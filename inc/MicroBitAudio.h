@@ -63,7 +63,8 @@ namespace codal
         LowPassFilter           *micFilter;     // Low pass filter to remove high frequency noise on the mic
 
         private:
-        bool micEnabled;                        // State of on board mic
+        volatile bool micEnabled;               // State of on board mic
+        volatile bool micSleepState;            // State of on board mic when we went to sleep last
         bool speakerEnabled;                    // State of on board speaker
         bool pinEnabled;                        // State of on auxiliary output pin
         NRF52Pin *pin;                          // Auxiliary pin to route audio to
