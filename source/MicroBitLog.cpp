@@ -1139,6 +1139,21 @@ int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, ui
     return r;
 }
 
+
+/**
+ * New function to facilitate reading logged data from the uBit directly
+ * 
+*/
+String MicroBitLog::readRow(uint8_t rowIndex) 
+{
+    // return ManagedString("0");
+    ManagedString s = ManagedString("0");
+    // return mkString(s.toCharArray(), s.length());
+    return PSTR(s)
+}
+
+
+
 /**
  * Destructor.
  */

@@ -418,6 +418,12 @@ namespace codal
          * @return a cleaned version of the string supplied, if any changes are necessary. Otherwise, an empty string is returned.
          */
         ManagedString cleanBuffer(const char *s, int len, bool removeSeparators = true);
+
+
+        /**
+        * New function to facilitate reading logged data from the uBit directly
+        */
+        ManagedString MicroBitLog::readRow(uint8_t rowIndex);
     };
 }
 
