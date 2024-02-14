@@ -1149,7 +1149,8 @@ String MicroBitLog::readRow(uint8_t rowIndex)
     // return ManagedString("0");
     ManagedString s = ManagedString("0");
     // return mkString(s.toCharArray(), s.length());
-    return PSTR(s)
+    return s
+    // return PSTR(s)
 }
 
 
