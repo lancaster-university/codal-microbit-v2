@@ -14,7 +14,7 @@ Carlos Pereira Atencio (1):
  - Set MICROBIT_RADIO_MAX_PACKET_SIZE as a configurable value. (#387)
 
 Dr John Vidler (10):
- - Merge branch 'master' of ssh://github.com/lancaster-university/codal-microbit-v2 t push# Please enter a commit message to explain why this merge is necessary,
+ - Merged patch to fix the various sample rate issues
  - Corrected Changelog.md after my tag snarfu
  - Refined the changelog script to only update the head of the log under normal cases
  - Resolved conflict in the manual updates to the ChangeLog
