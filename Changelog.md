@@ -4,9 +4,35 @@
 For official release notes, please see Releases.md
 
 The current tag uses the following library versions:
- - codal-core = https://github.com/lancaster-university/codal-core/tree/63f017fdcd12aca769264c36fe47e6071a40e502
+ - codal-core = https://github.com/lancaster-university/codal-core/tree/7b6f9df3b586f8dd9bede4bd0baa0cdc212b6ba2
  - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/0643733703b4f8f788af81a996f40d1f1a1527bc
- - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/5714cbe338c3544793bbb841a7ae81708a3ffae1
+ - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/d41d5c7ebe53a1d01935e61d4ffa891e5112e119
+
+## [v0.2.65](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.63...v0.2.65)
+
+Carlos Pereira Atencio (1):
+ - Set MICROBIT_RADIO_MAX_PACKET_SIZE as a configurable value. (#387)
+
+Dr John Vidler (10):
+ - Merge branch 'master' of ssh://github.com/lancaster-university/codal-microbit-v2 t push# Please enter a commit message to explain why this merge is necessary,
+ - Corrected Changelog.md after my tag snarfu
+ - Refined the changelog script to only update the head of the log under normal cases
+ - Resolved conflict in the manual updates to the ChangeLog
+ - Added a new CONFIG_MIXER_DEFAULT_CHANNEL_SAMPLERATE constant for channels with no defined rate to use
+ - Fixed a bug where in some conditions the microphone would not auto-start
+ - Added MicroBitButton.h to the required includes for MicroBitCompat.h so its still included in the build when not using bluetooth
+ - Moved the MicroBitButton inclusion to the tail of MicroBitCompat to avoid circular dependencies or a bunch of needless forward declarations
+ - Bumped the default Mixer2 channel sample rate back up to 44100
+ - Snapshot v0.2.65
+
+Github Actions (1):
+ - Updated the Changelog
+
+Martin Williams (1):
+ - Change datalog CSV download mime type from text/plain to text/csv (#339)
+
+Matt Hillsdon (1):
+ - Update MicroBitLog to support 3 header formats (#399)
 
 ## [v0.2.63](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.62...v0.2.63)
 
