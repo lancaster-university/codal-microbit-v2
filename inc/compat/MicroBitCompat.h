@@ -42,6 +42,7 @@ DEALINGS IN THE SOFTWARE.
 #include "codal-core/inc/driver-models/I2C.h"
 #include "codal-core/inc/drivers/KeyValueStorage.h"
 
+#include "MicroBitButton.h"
 #include "MicroBitIO.h"
 #include "NRF52Pin.h"
 #include "NRF52I2C.h"
