@@ -42,7 +42,6 @@ DEALINGS IN THE SOFTWARE.
 #include "codal-core/inc/driver-models/I2C.h"
 #include "codal-core/inc/drivers/KeyValueStorage.h"
 
-#include "MicroBitButton.h"
 #include "MicroBitIO.h"
 #include "NRF52Pin.h"
 #include "NRF52I2C.h"
@@ -406,5 +405,14 @@ namespace codal
 };
 
 using namespace codal;
+
+//
+// MicroBitButton has dependencies on the definitions here, so needs to be included
+// after these are defined to avoid having to redeclare everything needlessly or have
+// user code manually include this after MicroBitCompat.h
+//
+// Without this, we end up with circular dependencies.
+//
+#include "MicroBitButton.h"
 
 #endif
