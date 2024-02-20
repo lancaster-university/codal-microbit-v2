@@ -50,7 +50,7 @@
     "generate_hex": true,
     "libraries": [
         {
-            "branch": "63f017fdcd12aca769264c36fe47e6071a40e502",
+            "branch": "7b6f9df3b586f8dd9bede4bd0baa0cdc212b6ba2",
             "name": "codal-core",
             "type": "git",
             "url": "https://github.com/lancaster-university/codal-core"
@@ -62,7 +62,7 @@
             "url": "https://github.com/lancaster-university/codal-nrf52"
         },
         {
-            "branch": "5714cbe338c3544793bbb841a7ae81708a3ffae1",
+            "branch": "d41d5c7ebe53a1d01935e61d4ffa891e5112e119",
             "name": "codal-microbit-nrf5sdk",
             "type": "git",
             "url": "https://github.com/microbit-foundation/codal-microbit-nrf5sdk"
@@ -71,6 +71,6 @@
     "linker_flags": "-Wl,--no-wchar-size-warning -Wl,--gc-sections -Wl,--wrap,atexit -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -Wl,--start-group -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys -Wl,--end-group",
     "post_process": "",
     "processor": "NRF52833",
-    "snapshot_version": "v0.2.63",
+    "snapshot_version": "v0.2.65",
     "toolchain": "ARM_GCC"
 }
