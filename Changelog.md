@@ -11,6 +11,7 @@ The current tag uses the following library versions:
 ## [v0.2.66](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.65...v0.2.66)
 
 Dr John Vidler (2):
+ - Applying the patch suggested by @dpgeorge to handle large receiving buffers for pullInto()
  - Update Changelog.md
  - Snapshot v0.2.66
 
