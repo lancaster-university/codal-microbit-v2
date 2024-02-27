@@ -18,7 +18,7 @@ jobs:
     name: ${{ matrix.os }}, gcc ${{ matrix.gcc }}, cmake ${{ matrix.cmake || 'latest'}}
     steps:
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.8'
       - name: Setup arm-none-eabi-gcc ${{ matrix.gcc }}
@@ -26,7 +26,7 @@ jobs:
         with:
           release: ${{ matrix.gcc }}
       - name: Setup CMake ${{ matrix.cmake }}
-        uses: jwlawson/actions-setup-cmake@v1
+        uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: ${{ matrix.cmake }}
       - name: Install latest Ninja release via PyPI
@@ -38,13 +38,13 @@ jobs:
           ninja --version
           python --version
       - name: Clone the microbit-v2-samples repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: 'lancaster-university/microbit-v2-samples'
       # We need to use the checkout action (instead of build.py cloning the
       # repository) so that on PRs we can get the commit from the PR merge
       - name: Clone this repository in the libraries folder
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: libraries/codal-microbit-v2
           submodules: 'recursive'
@@ -70,7 +70,7 @@ jobs:
         run: python build.py
       - name: Upload non-ble hex file
         if: runner.os == 'Windows' && matrix.gcc == 'latest' && matrix.cmake == ''
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: codal-microbit-v2-${{ github.sha }}
           path: MICROBIT.hex
@@ -89,7 +89,7 @@ jobs:
         run: python build.py --clean
       - name: Upload BLE hex file
         if: runner.os == 'Windows' && matrix.gcc == 'latest' && matrix.cmake == ''
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: codal-microbit-v2-BLE-${{ github.sha }}
           path: MICROBIT.hex
