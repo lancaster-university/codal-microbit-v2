@@ -11,21 +11,15 @@ jobs:
     strategy:
       matrix:
         # One job builds with the local toolchain, the other with Docker
-        # FIXME: The current docker image used by pxt-microbit is not publicly accessible via
-        #        a known public registry, so the builds using docker will fail.
-        #        As a temporary measure, let's only build the "nodocker" version and reneable the
-        #        docker build in the future, once we can access the build image.
-        # https://github.com/lancaster-university/codal-microbit-v2/issues/338#issuecomment-1658767316
-        # pxt-flags: ["PXT_NODOCKER=1", ""]
-        pxt-flags: ["PXT_NODOCKER=1"]
+        pxt-flags: ["PXT_NODOCKER=1", ""]
       fail-fast: false
     name: Build MakeCode ${{ matrix.pxt-flags && '(nodocker)' }}
     runs-on: ubuntu-22.04
     steps:
-      - name: Setup Python 3.7
-        uses: actions/setup-python@v4
+      - name: Setup Python 3.9
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.7'
+          python-version: '3.9'
       - name: Setup arm-none-eabi-gcc v10.3
         if: ${{ matrix.pxt-flags }}
         uses: carlosperate/arm-none-eabi-gcc-action@v1
@@ -45,11 +39,11 @@ jobs:
           sudo apt update
           sudo apt install srecord
       - name: Setup Node.js v16
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 16.x
       - name: Clone the pxt-microbit repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: 'microsoft/pxt-microbit'
       - name: Install MakeCode dependencies
