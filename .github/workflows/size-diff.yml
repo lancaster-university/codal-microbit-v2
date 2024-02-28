@@ -28,7 +28,7 @@ jobs:
       # Install the toolchain #
       #########################
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.8'
       - name: Setup arm-none-eabi-gcc 10.3
@@ -42,7 +42,7 @@ jobs:
       # Set up the CODAL project and build it #
       #########################################
       - name: Clone the microbit-v2-samples repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: 'lancaster-university/microbit-v2-samples'
           # Unless manually triggered via workflow_dispatch this will be an empty
@@ -51,7 +51,7 @@ jobs:
       # We need to use the checkout action (instead of build.py cloning the
       # repository) so that on PRs we can get the commit from the PR merge
       - name: Clone this repository in the libraries folder
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: libraries/codal-microbit-v2
           fetch-depth: '0'
@@ -157,7 +157,7 @@ jobs:
       - name: "PR only: Add comment to PR with the bloaty diff"
         if: ${{ github.event.pull_request }}
         continue-on-error: true
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             let prComment = '## Build diff\n' +
