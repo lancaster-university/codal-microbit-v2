@@ -288,7 +288,11 @@
 // if this isn't available, it can be defined manually as a configuration option.
 //
 #ifndef MICROBIT_DAL_VERSION
-    #define MICROBIT_DAL_VERSION                    "unknown"
+    #ifdef DEVICE_DAL_VERSION
+        #define MICROBIT_DAL_VERSION                DEVICE_DAL_VERSION
+    #else
+        #define MICROBIT_DAL_VERSION                "unknown"
+    #endif
 #endif
 
 // Allow USB serial events to wake the board from deep sleep.

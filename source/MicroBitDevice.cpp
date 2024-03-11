@@ -192,6 +192,10 @@ __NO_RETURN void microbit_reset()
     for (;;);
 }
 
+const char * microbit_dal_version() {
+    return MICROBIT_DAL_VERSION;
+}
+
 /**
   * Seed the random number generator (RNG).
   *
