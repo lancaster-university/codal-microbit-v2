@@ -245,9 +245,6 @@ typedef enum {
 #define MICROBIT_PIN_BUTTON_B                       P0_23
 #define MICROBIT_PIN_LOGO_TOUCH                     P1_04
 
-// FOR MakeCode extension compat. Delete ASAP.
-#define MICROBIT_PIN_FACE_TOUCH                     MICROBIT_PIN_LOGO_TOUCH
-
 // Audio
 #define MICROBIT_PIN_RUN_MIC                        P0_20
 #define MICROBIT_PIN_MIC_IN                         P0_05
@@ -338,9 +335,6 @@ typedef enum {
 #define ID_PIN_P46       (DEVICE_ID_IO_P0 + 46)
 #define ID_PIN_P47       (DEVICE_ID_IO_P0 + 47)
 
-// For MakeCode extension compat. Delete ASAP.
-#define ID_PIN_FACE      (ID_PIN_LOGO)
-
 //
 // Saved status values to restore GPIO configurations after deep sleep
 //
@@ -413,7 +407,6 @@ namespace codal
             NRF52Pin&         col5;
             NRF52Pin&         buttonA;
             NRF52Pin&         buttonB;
-            NRF52Pin&         face;         // Temporary compat for MakeCode extension. Delete ASAP.
 
 
             /**
