@@ -259,13 +259,13 @@
 //
 // This is currently **BETA** and will be enabled by default in the future.
 #ifndef MICROBIT_BLE_UTILITY_SERVICE_PAIRING
-#define MICROBIT_BLE_UTILITY_SERVICE_PAIRING 0
+    #define MICROBIT_BLE_UTILITY_SERVICE_PAIRING 1
 #endif
 
 // Enable/Disable BLE Service in application mode: MicroBitUtilityService
 // Set '1' to enable.
 #ifndef MICROBIT_BLE_UTILITY_SERVICE
-#define MICROBIT_BLE_UTILITY_SERVICE 0
+    #define MICROBIT_BLE_UTILITY_SERVICE 1
 #endif
 
 // Enable/Disable Nordic Firmware style BLE based UART implimentation.
