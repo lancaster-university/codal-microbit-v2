@@ -10,39 +10,38 @@ The current tag uses the following library versions:
 
 ## [v0.2.66](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.65...v0.2.66)
 
-Dr John Vidler (2):
- - Applying the patch suggested by @dpgeorge to handle large receiving buffers for pullInto()
- - Update Changelog.md
- - Snapshot v0.2.66
+ - Updated the Changelog (by Github Actions)
+ - Update Changelog.md (by Dr John Vidler)
+ - Snapshot v0.2.66 (by Dr John Vidler)
 
-Github Actions (1):
- - Updated the Changelog
+### codal-core ([7b6f9df...992c0b1](https://github.com/lancaster-university/codal-core/compare/7b6f9df3b586f8dd9bede4bd0baa0cdc212b6ba2...992c0b11a0eb2a1edca9c2f76821f89a99a3acec))
+
+ - Applying the patch suggested by @dpgeorge to handle large receiving buffers for pullInto() (by Dr John Vidler)
 
 ## [v0.2.65](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.63...v0.2.65)
 
-Carlos Pereira Atencio (1):
- - Set MICROBIT_RADIO_MAX_PACKET_SIZE as a configurable value. (#387)
+ - Updated the Changelog (by Github Actions)
+ - Corrected Changelog.md after my tag snarfu (by Dr John Vidler)
+ - Refined the changelog script to only update the head of the log under normal cases (by Dr John Vidler)
+ - Set MICROBIT_RADIO_MAX_PACKET_SIZE as a configurable value. (#387) (by Carlos Pereira Atencio)
+ - Change datalog CSV download mime type from text/plain to text/csv (#339) (by Martin Williams)
+ - Added a new CONFIG_MIXER_DEFAULT_CHANNEL_SAMPLERATE constant for channels with no defined rate to use (by Dr John Vidler)
+ - Fixed a bug where in some conditions the microphone would not auto-start (by Dr John Vidler)
+ - Update MicroBitLog to support 3 header formats (#399) (by Matt Hillsdon)
+ - Added MicroBitButton.h to the required includes for MicroBitCompat.h so its still included in the build when not using bluetooth (by Dr John Vidler)
+ - Moved the MicroBitButton inclusion to the tail of MicroBitCompat to avoid circular dependencies or a bunch of needless forward declarations (by Dr John Vidler)
+ - Bumped the default Mixer2 channel sample rate back up to 44100 (by Dr John Vidler)
+ - Snapshot v0.2.65 (by Dr John Vidler)
 
-Dr John Vidler (10):
- - Merged patch to fix the various sample rate issues
- - Corrected Changelog.md after my tag snarfu
- - Refined the changelog script to only update the head of the log under normal cases
- - Resolved conflict in the manual updates to the ChangeLog
- - Added a new CONFIG_MIXER_DEFAULT_CHANNEL_SAMPLERATE constant for channels with no defined rate to use
- - Fixed a bug where in some conditions the microphone would not auto-start
- - Added MicroBitButton.h to the required includes for MicroBitCompat.h so its still included in the build when not using bluetooth
- - Moved the MicroBitButton inclusion to the tail of MicroBitCompat to avoid circular dependencies or a bunch of needless forward declarations
- - Bumped the default Mixer2 channel sample rate back up to 44100
- - Snapshot v0.2.65
+### codal-core ([63f017f...7b6f9df](https://github.com/lancaster-university/codal-core/compare/63f017fdcd12aca769264c36fe47e6071a40e502...7b6f9df3b586f8dd9bede4bd0baa0cdc212b6ba2))
 
-Github Actions (1):
- - Updated the Changelog
+ - Updated to correctly restore mic state on returning from a deep sleep (by Dr John Vidler)
+ - Typo (by Dr John Vidler)
+ - Working audio resampling rates if requested by downstream components of a SplitterChannel (by Dr John Vidler)
 
-Martin Williams (1):
- - Change datalog CSV download mime type from text/plain to text/csv (#339)
+### codal-microbit-nrf5sdk ([5714cbe...d41d5c7](https://github.com/microbit-foundation/codal-microbit-nrf5sdk/compare/5714cbe338c3544793bbb841a7ae81708a3ffae1...d41d5c7ebe53a1d01935e61d4ffa891e5112e119))
 
-Matt Hillsdon (1):
- - Update MicroBitLog to support 3 header formats (#399)
+ - Revert "Quieted a warning on fallthrough, as this is intended behaviour" (by Dr John Vidler)
 
 ## [v0.2.63](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.62...v0.2.63)
 
