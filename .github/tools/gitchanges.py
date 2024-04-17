@@ -49,9 +49,14 @@ def getTags():
     tags = filter(lambda x: "-" not in x, tags)
     return natsorted(tags,reverse=True)
 
-def getCommitsBetween( tagA, tagB = "HEAD" ):
-    commits = os.popen(f"git -P shortlog {tagA}..{tagB}").read().strip().splitlines()
-    return "\n".join(map( lambda x: x.replace("      ", " - "), commits ))
+def getCommitsBetween( tagA, tagB = "HEAD", dir=None):
+    if dir:
+        original_dir = os.getcwd()
+        os.chdir(dir)
+    commits = os.popen(f'git log --format="%s (by %an)" --no-merges --reverse {tagA}..{tagB}').read().strip().splitlines()
+    if dir:
+        os.chdir(original_dir)
+    return "\n - ".join([""] + commits)
 
 def getRepoURL():
     origin = os.popen("git remote get-url origin").read().strip().split( "github.com/", maxsplit=1 )
@@ -61,6 +66,22 @@ def printLibraryLinks():
     config = json.loads(open( 'target-locked.json' ).read())
     for lib in config['libraries']:
         output( F" - {lib['name']} = {lib['url']}/tree/{lib['branch']}" )
+
+def getOldAndNewLibCommits(old_commit, new_commit):
+    old_target_locked = json.loads(os.popen(f"git show {old_commit}:target-locked.json").read())
+    new_target_locked = json.loads(os.popen(f"git show {new_commit}:target-locked.json").read())
+    lib_versions = {}
+    # We only have a handful of libraries in the list, okay to be inefficient
+    for old_lib in old_target_locked["libraries"]:
+        for new_lib in new_target_locked["libraries"]:
+            if old_lib["name"] == new_lib["name"]:
+                lib_versions[old_lib["name"]] = {
+                    "old": old_lib["branch"],
+                    "new": new_lib["branch"],
+                    "url": old_lib["url"]
+                }
+    return lib_versions
+
 
 tags = getTags()
 
@@ -109,12 +130,23 @@ if options.inFile != None:
                             print( "Nothing to do, Stop." )
                             exit( 0 )
 
+                        # Target commits
                         logURL = f"{url}compare/{lastTag}...{options.tag}"
-                    
                         output( f"## [{options.tag}]({logURL})", forcePrint=True )
-                        output( '', forcePrint=True )
                         output( getCommitsBetween( lastTag, options.tag ), forcePrint=True )
+
+                        # Library commits
+                        libInfo = getOldAndNewLibCommits( lastTag, options.tag )
+                        for libName, lib in libInfo.items():
+                            libCommits = getCommitsBetween(lib['old'], lib['new'], dir=f"../{libName}")
+                            if libCommits:
+                                diffUrl = f"{lib['url']}/compare/{lib['old']}...{lib['new']}"
+                                diffUrlMarkdown = f"[{lib['old'][:7]}...{lib['new'][:7]}]({diffUrl})"
+                                output(f"\n### {libName} ({diffUrlMarkdown})", forcePrint=True)
+                                output(libCommits, forcePrint=True)
+
                         output( '', forcePrint=True )
+
                         output( line )
                 else:
                     output( line )

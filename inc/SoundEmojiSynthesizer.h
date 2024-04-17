@@ -61,6 +61,22 @@ DEALINGS IN THE SOFTWARE.
 #define DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_DONE 1
 #define DEVICE_SOUND_EMOJI_SYNTHESIZER_EVT_PLAYBACK_COMPLETE 2
 
+//
+// Sensible defaults (For effects)
+//
+// Taken from the work over in Makecode:
+// https://github.com/microsoft/pxt/blob/5e2ff19c7d44bc659b997530c96b7ac9ad6a6551/webapp/src/components/soundEffectEditor/soundUtil.ts#L24-L42
+//
+// Mostly included here so downstream languages can pick similar-sounding effects to Makecode to maintain user expectations.
+//
+#define SFX_DEFAULT_VIBRATO_STEPS 512
+#define SFX_DEFAULT_VIBRATO_PARAM 2
+
+#define SFX_DEFAULT_TREMOLO_STEPS 900
+#define SFX_DEFAULT_TREMOLO_PARAM 3
+
+#define SFX_DEFAULT_WARBLE_STEPS 700
+#define SFX_DEFAULT_WARBLE_PARAM 2
 
 namespace codal
 {

@@ -4,9 +4,44 @@
 For official release notes, please see Releases.md
 
 The current tag uses the following library versions:
- - codal-core = https://github.com/lancaster-university/codal-core/tree/63f017fdcd12aca769264c36fe47e6071a40e502
+ - codal-core = https://github.com/lancaster-university/codal-core/tree/992c0b11a0eb2a1edca9c2f76821f89a99a3acec
  - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/0643733703b4f8f788af81a996f40d1f1a1527bc
- - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/5714cbe338c3544793bbb841a7ae81708a3ffae1
+ - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/d41d5c7ebe53a1d01935e61d4ffa891e5112e119
+
+## [v0.2.66](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.65...v0.2.66)
+
+ - Updated the Changelog (by Github Actions)
+ - Update Changelog.md (by Dr John Vidler)
+ - Snapshot v0.2.66 (by Dr John Vidler)
+
+### codal-core ([7b6f9df...992c0b1](https://github.com/lancaster-university/codal-core/compare/7b6f9df3b586f8dd9bede4bd0baa0cdc212b6ba2...992c0b11a0eb2a1edca9c2f76821f89a99a3acec))
+
+ - Applying the patch suggested by @dpgeorge to handle large receiving buffers for pullInto() (by Dr John Vidler)
+
+## [v0.2.65](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.63...v0.2.65)
+
+ - Updated the Changelog (by Github Actions)
+ - Corrected Changelog.md after my tag snarfu (by Dr John Vidler)
+ - Refined the changelog script to only update the head of the log under normal cases (by Dr John Vidler)
+ - Set MICROBIT_RADIO_MAX_PACKET_SIZE as a configurable value. (#387) (by Carlos Pereira Atencio)
+ - Change datalog CSV download mime type from text/plain to text/csv (#339) (by Martin Williams)
+ - Added a new CONFIG_MIXER_DEFAULT_CHANNEL_SAMPLERATE constant for channels with no defined rate to use (by Dr John Vidler)
+ - Fixed a bug where in some conditions the microphone would not auto-start (by Dr John Vidler)
+ - Update MicroBitLog to support 3 header formats (#399) (by Matt Hillsdon)
+ - Added MicroBitButton.h to the required includes for MicroBitCompat.h so its still included in the build when not using bluetooth (by Dr John Vidler)
+ - Moved the MicroBitButton inclusion to the tail of MicroBitCompat to avoid circular dependencies or a bunch of needless forward declarations (by Dr John Vidler)
+ - Bumped the default Mixer2 channel sample rate back up to 44100 (by Dr John Vidler)
+ - Snapshot v0.2.65 (by Dr John Vidler)
+
+### codal-core ([63f017f...7b6f9df](https://github.com/lancaster-university/codal-core/compare/63f017fdcd12aca769264c36fe47e6071a40e502...7b6f9df3b586f8dd9bede4bd0baa0cdc212b6ba2))
+
+ - Updated to correctly restore mic state on returning from a deep sleep (by Dr John Vidler)
+ - Typo (by Dr John Vidler)
+ - Working audio resampling rates if requested by downstream components of a SplitterChannel (by Dr John Vidler)
+
+### codal-microbit-nrf5sdk ([5714cbe...d41d5c7](https://github.com/microbit-foundation/codal-microbit-nrf5sdk/compare/5714cbe338c3544793bbb841a7ae81708a3ffae1...d41d5c7ebe53a1d01935e61d4ffa891e5112e119))
+
+ - Revert "Quieted a warning on fallthrough, as this is intended behaviour" (by Dr John Vidler)
 
 ## [v0.2.63](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.62...v0.2.63)
 

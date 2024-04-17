@@ -45,7 +45,7 @@ DEALINGS IN THE SOFTWARE.
 // This is distinct from CONFIG_MIXER_DEFAULT_SAMPLERATE which sets the mixer's absolute maximum rate
 // whereas this is simply the 'normal' operating rate for audio peripherals.
 #ifndef CONFIG_MIXER_DEFAULT_CHANNEL_SAMPLERATE
-#define CONFIG_MIXER_DEFAULT_CHANNEL_SAMPLERATE  11000
+#define CONFIG_MIXER_DEFAULT_CHANNEL_SAMPLERATE  44100
 #endif
 
 #define DEVICE_ID_MIXER 3030
