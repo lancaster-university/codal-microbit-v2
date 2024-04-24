@@ -423,7 +423,7 @@ namespace codal
         /**
          * New function to facilitate reading logged data from the uBit directly
          */
-        ManagedString MicroBitLog::readRow(uint32_t rowIndex);
+        String readRow(uint32_t rowIndex);
     };
 }
 

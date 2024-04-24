@@ -23,6 +23,7 @@ DEALINGS IN THE SOFTWARE.
 */
 
 #include "MicroBitLog.h"
+#include "pxt.h"
 #include "CodalDmesg.h"
 #include <new>
 
@@ -1143,7 +1144,7 @@ int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, ui
 /**
  * New function to facilitate reading logged data from the uBit directly
  */
-ManagedString MicroBitLog::readRow(uint32_t rowIndex) 
+String MicroBitLog::readRow(uint32_t rowIndex) 
 {
     return PSTR("Testing");
 }
