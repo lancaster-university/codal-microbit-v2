@@ -423,7 +423,7 @@ namespace codal
         /**
          * New function to facilitate reading logged data from the uBit directly
          */
-        String readRow(uint32_t rowIndex);
+        ManagedString readRow(uint32_t rowIndex);
     };
 }
 
