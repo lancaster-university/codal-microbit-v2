@@ -361,6 +361,11 @@ namespace codal
          */
         int readData(void *data, uint32_t index, uint32_t len, DataFormat format, uint32_t length);
 
+        /**
+         * New function to facilitate reading logged data from the uBit directly
+         */
+        ManagedString readRow(uint32_t rowIndex);
+
     private:
 
         /**
@@ -418,12 +423,6 @@ namespace codal
          * @return a cleaned version of the string supplied, if any changes are necessary. Otherwise, an empty string is returned.
          */
         ManagedString cleanBuffer(const char *s, int len, bool removeSeparators = true);
-
-
-        /**
-         * New function to facilitate reading logged data from the uBit directly
-         */
-        ManagedString readRow(uint32_t rowIndex);
     };
 }
 
