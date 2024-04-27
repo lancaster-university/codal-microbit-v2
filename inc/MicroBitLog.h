@@ -364,7 +364,7 @@ namespace codal
         /**
          * New function to facilitate reading logged data from the uBit directly
          */
-        ManagedString readRow(uint32_t rowIndex);
+        ManagedString getRow(uint32_t rowIndex);
 
     private:
 
