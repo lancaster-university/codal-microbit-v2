@@ -1149,7 +1149,6 @@ ManagedString MicroBitLog::readRow(uint32_t rowIndex)
 }
 
 
-
 /**
  * Destructor.
  */
