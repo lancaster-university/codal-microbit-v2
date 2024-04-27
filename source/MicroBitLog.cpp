@@ -74,7 +74,7 @@ MicroBitLog::MicroBitLog(MicroBitUSBFlashManager &flash, MicroBitPowerManager &p
 }
 
 /**
- * Attempt to load an exisitng filesystem, or format a new one if not found.
+ * Attempt to load an existing filesystem, or format a new one if not found.
  */
 void MicroBitLog::init()
 {
@@ -1145,7 +1145,7 @@ int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, ui
  */
 ManagedString MicroBitLog::getRow(uint32_t rowIndex) 
 {
-    return "getRow" + ((ManagedString) rowIndex);
+    return readData(this->startAddress, rowIndex, 2, DataFormat::CSV, getDataLength(DataFormat::CSV));
 }
 
 
