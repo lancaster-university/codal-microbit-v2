@@ -1141,11 +1141,17 @@ int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, ui
 
 
 /**
- * New function to facilitate reading logged data from the uBit directly
+ * Get the data from a row as a string seperated by columns.
  */
 ManagedString MicroBitLog::getRow(uint32_t rowIndex) 
 {
-    return rowData[0].value + " " + rowData[1].value;
+    ManagedString row = "";
+
+    for (int i = 0; i < headingCount; i++) {
+        row += rowData[rowIndex].value
+    }
+
+    return row;
 }
 
 
