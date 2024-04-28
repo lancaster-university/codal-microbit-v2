@@ -1147,8 +1147,8 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
 {
     ManagedString row = "";
 
-    for (int i = 0; i < headingCount; i++) {
-        row += rowData[rowIndex].value
+    for (uint32_t i = 0; i < headingCount; i++) {
+        row = row + rowData[rowIndex].value
     }
 
     return row;
