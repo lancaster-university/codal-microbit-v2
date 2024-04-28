@@ -1145,7 +1145,7 @@ int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, ui
  */
 ManagedString MicroBitLog::getRow(uint32_t rowIndex) 
 {
-    return _readData(this->startAddress, rowIndex, 2, DataFormat::CSV, getDataLength(DataFormat::CSV));
+    return rowData[0].value + " " + rowData[1].value;
 }
 
 
