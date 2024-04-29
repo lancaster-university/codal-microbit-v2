@@ -1147,9 +1147,10 @@ ManagedString MicroBitLog::getHeaders()
 {
     ManagedString headers = "";
 
-    for (uint32_t i = 0; i < headingCount; i++) {
-        headers = headers + ", " + rowData[i].key;
+    for (uint32_t i = 0; i < headingCount - 1; i++) {
+        headers = headers + rowData[i].key + ", ";
     }
+    headers = headers + rowData[headingCount - 1].key;
 
     return headers;
 }
@@ -1162,9 +1163,10 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
 {
     ManagedString row = "";
 
-    for (uint32_t i = 0; i < headingCount; i++) {
-        row = row + ", " + rowData[i].value;
+    for (uint32_t i = 0; i < headingCount - 1; i++) {
+        row = row + rowData[i].value + ", ";
     }
+    row = row + rowData[headingCount - 1].value;
 
     return row;
 }
