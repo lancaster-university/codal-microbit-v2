@@ -362,7 +362,12 @@ namespace codal
         int readData(void *data, uint32_t index, uint32_t len, DataFormat format, uint32_t length);
 
         /**
-         * New function to facilitate reading logged data from the uBit directly
+         * Get the row of Headers used by the DataLogger
+         */
+        ManagedString getHeaders();
+
+        /**
+         * Get a row of data (seperated by ", ") from the Datalogger directly.
          */
         ManagedString getRow(uint32_t rowIndex);
 

@@ -1139,6 +1139,21 @@ int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, ui
     return r;
 }
 
+/**
+ * Get the headers in use.
+ * Return them seperated by ", "
+ */
+ManagedString MicroBitLog::getHeaders() 
+{
+    ManagedString headers = "";
+
+    for (uint32_t i = 0; i < headingCount; i++) {
+        headers = headers + ", " + rowData[i].key;
+    }
+
+    return headers;
+}
+
 
 /**
  * Get the data from a row as a string seperated by columns.
