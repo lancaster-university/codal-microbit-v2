@@ -1160,8 +1160,9 @@ ManagedString MicroBitLog::getHeaders()
  */
 ManagedString MicroBitLog::getRow(uint32_t rowIndex) 
 {
-    // void *rowData = (void *) malloc(5 * sizeof(void*));
-    static const char hello[] __attribute__ ((aligned (4))) = "\xff\xff\x05\x00" "Hello"; 
+    void *rowData = (void *) malloc(5 * sizeof(void*));
+    rowData = "hello";
+    static const char hello[] __attribute__ ((aligned (4))) = "\xff\xff\x05\x00" + rowData; 
     ManagedString s((StringData*)(void*)hello); 
     // cache.read(dataStart, rowData, 19);
     // ManagedString data((StringData*) rowData);
