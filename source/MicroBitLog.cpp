@@ -1150,9 +1150,8 @@ ManagedString MicroBitLog::getHeaders()
     for (uint32_t i = 0; i < headingCount - 1; i++) {
         headers = headers + rowData[i].key + ", ";
     }
-    headers = headers + rowData[headingCount - 1].key;
 
-    return headers;
+    return headers + rowData[headingCount - 1].key;
 }
 
 
@@ -1161,18 +1160,17 @@ ManagedString MicroBitLog::getHeaders()
  */
 ManagedString MicroBitLog::getRow(uint32_t rowIndex) 
 {
-    void *rowData = (void *) malloc(20 * sizeof(void*));
-    cache.read(dataStart, rowData, 19);
-    ManagedString data((StringData*) rowData);
-    return data;
+    // void *rowData = (void *) malloc(5 * sizeof(void*));
+    // cache.read(dataStart, rowData, 19);
+    // ManagedString data((StringData*) rowData);
+    // return data;
 
-    // ManagedString row = "";
-    // for (uint32_t i = 0; i < headingCount - 1; i++) {
-    //     row = row + rowData[(rowIndex * headingCount) + i].value + ", ";
-    // }
-    // row = row + rowData[headingCount - 1].value;
+    ManagedString row = "";
+    for (uint32_t i = 0; i < headingCount - 1; i++) {
+        row = row + rowData[(rowIndex * headingCount) + i].value + ", ";
+    }
 
-    // return row;
+    return row + rowData[headingCount - 1].value;
 
 }
 
