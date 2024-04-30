@@ -1167,9 +1167,9 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
     // memcpy(hello, "hello", 5);
 
     void *rowData = malloc(4 * sizeof(void*));
-    cache.read(dataStart, rowData, 3);
+    cache.read(dataStart, rowData, 4);
     char *rowString = (char*) rowData;
-    rowString[4] = '\0';
+    // rowString[4] = '\0';
     // ManagedString s((StringData*)(void*)hello); 
     // cache.read(dataStart, rowData, 19);
     // ManagedString data((StringData*) rowData);
