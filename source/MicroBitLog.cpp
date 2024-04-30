@@ -1163,15 +1163,15 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
     // char *rowData = (char *) malloc(5 * sizeof(char*));
     // memcpy(rowData, "hello", 5);
 
+    // static char hello[] __attribute__ ((aligned (4))) = "\xff\xff\x05\x00"; 
+    // memcpy(hello, "hello", 5);
 
-    static char hello[] __attribute__ ((aligned (4))) = "\xff\xff\x05\x00"; 
-    memcpy(hello, "hello", 5);
-
-    // cache.read(dataStart, rowData, 19);
-    ManagedString s((StringData*)(void*)hello); 
+    void *rowData = malloc(2 * sizeof(void*));
+    cache.read(dataStart, rowData, 2);
+    // ManagedString s((StringData*)(void*)hello); 
     // cache.read(dataStart, rowData, 19);
     // ManagedString data((StringData*) rowData);
-    return s;
+    return (char*) rowData;
 
     // ManagedString row = "";
     // for (uint32_t i = 0; i < headingCount - 1; i++) {
