@@ -1161,9 +1161,9 @@ ManagedString MicroBitLog::getHeaders()
  */
 ManagedString MicroBitLog::getRow(uint32_t rowIndex) 
 {
-    data = (void *) malloc(20 * sizeof(void*));
-    cache.read(dataStart, data, 19);
-    ManagedString data((StringData*) data);
+    void *rowData = (void *) malloc(20 * sizeof(void*));
+    cache.read(dataStart, rowData, 19);
+    ManagedString data((StringData*) rowData);
     return data;
 
     // ManagedString row = "";
