@@ -1161,14 +1161,19 @@ ManagedString MicroBitLog::getHeaders()
  */
 ManagedString MicroBitLog::getRow(uint32_t rowIndex) 
 {
-    ManagedString row = "";
+    data = (void *) malloc(20 * sizeof(void*));
+    cache.read(dataStart, data, 19);
+    ManagedString data((StringData*) data);
+    return data;
 
-    for (uint32_t i = 0; i < headingCount - 1; i++) {
-        row = row + rowData[(rowIndex * headingCount) + i].value + ", ";
-    }
-    row = row + rowData[headingCount - 1].value;
+    // ManagedString row = "";
+    // for (uint32_t i = 0; i < headingCount - 1; i++) {
+    //     row = row + rowData[(rowIndex * headingCount) + i].value + ", ";
+    // }
+    // row = row + rowData[headingCount - 1].value;
 
-    return row;
+    // return row;
+
 }
 
 
