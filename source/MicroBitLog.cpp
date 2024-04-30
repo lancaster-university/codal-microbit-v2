@@ -1170,10 +1170,10 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
     cache.read(dataStart, rowData, 4);
     char *rowString = (char*) rowData;
     rowString[4] = '\0';
-    // ManagedString s((StringData*)(void*)hello); 
+    // ManagedString s((StringData*)(void*)hello);
     // cache.read(dataStart, rowData, 19);
     // ManagedString data((StringData*) rowData);
-    return rowString;
+    return ManagedString(rowString);
 
     // ManagedString row = "";
     // for (uint32_t i = 0; i < headingCount - 1; i++) {
