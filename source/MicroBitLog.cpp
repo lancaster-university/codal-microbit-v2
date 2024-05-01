@@ -1164,13 +1164,13 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
 {
     // Specified in https://lancaster-university.github.io/microbit-docs/data-types/string/#constructor:
     // x00 needs to be the string's length
-    char prefix[]  __attribute__ ((aligned (4))) = "\xff\xff\x00";
+    char prefix[]  __attribute__ ((aligned (4))) = "\xff\xff\x00\00";
     const int length = dataEnd - dataStart; // 2nd byte needs to contain string length
     
     char custom_length[20];
     sprintf(custom_length, "\\x%02x", length); // Hex
 
-    const size_t str_length_position = 2; // Position of the '\x00' in the initial string
+    size_t str_length_position = 2; // Position of the '\x00' in the initial string
 
     // Replace:
     memcpy(prefix + str_length_position, custom_length, strlen(custom_length));
