@@ -1167,7 +1167,7 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
     // memcpy(hello, "hello", 5);
 
     char *rowData __attribute__ ((aligned (4))) = (char *) malloc(5 * sizeof(char*));
-    memcpy(rowData, "TEST", 5);
+    memcpy(rowData, "TEST", 4); 
     // char *rowString = (char*) rowData;
     rowData[4] = '\0';
 
