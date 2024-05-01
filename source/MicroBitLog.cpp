@@ -1158,61 +1158,28 @@ ManagedString MicroBitLog::getHeaders()
 
 /**
  * Get the data from a row as a string seperated by columns.
+ * Build a ManagedString containing all of the data in the log
  */
 ManagedString MicroBitLog::getRow(uint32_t rowIndex) 
 {
-    // char *rowData = (char *) malloc(5 * sizeof(char*));
-    // memcpy(rowData, "hello", 5);
-
-    // static char hello[] __attribute__ ((aligned (4))) = "\xff\xff\x05\x00"; 
-    // memcpy(hello, "hello", 5);
-
-    // char *rowData __attribute__ ((aligned (4))) = (char *) malloc(5 * sizeof(char*));
-    // memcpy(rowData, "TEST", 4); 
-    // // char *rowString = (char*) rowData;
-    // rowData[4] = '\0';
-
-    // cache.read(dataStart, rowData, 4);
-    // char *rowString = (char*) rowData;
-    
-    // ManagedString s((StringData*)(void*)hello);
-    // cache.read(dataStart, rowData, 19);
-    // ManagedString data((StringData*) rowData);
-
-    // return ManagedString(rowData, 5);
-
-    // ManagedString row = "";
-    // for (uint32_t i = 0; i < headingCount - 1; i++) {
-    //     row = row + rowData[(rowIndex * headingCount) + i].value + ", ";
-    // }
-
-    // return row + rowData[headingCount - 1].value;
-
-    // const char *text  __attribute__ ((aligned (4))) = "Test";
-
-
-
-    // Build a ManagedString containing all of the data in the log:
-    // https://lancaster-university.github.io/microbit-docs/data-types/string/#constructor
-
-    // 2nd byte needs to contain string length:
-    const int length = dataEnd - dataStart;
+    // Specified in https://lancaster-university.github.io/microbit-docs/data-types/string/#constructor:
+    // x00 needs to be the string's length
     char prefix[]  __attribute__ ((aligned (4))) = "\xff\xff\x00\00";
-    char custom_prefix[20];
-    sprintf(custom_prefix, "%d", length);
-
-    size_t custom_prefix_len = strlen(custom_prefix);
-    size_t length_position = 2; // Position of the '\x00' in the initial string
-
-    // Shift the data after the replacement string:
-    memmove(prefix + length_position + custom_prefix_len, prefix + length_position + 1, strlen(prefix) - length_position);
+    const int length = dataEnd - dataStart; // 2nd byte needs to contain string length
     
-    // 
-    memcpy(prefix + length_position, custom_prefix, custom_prefix_len);
+    char custom_length[20];
+    sprintf(custom_length, "\\x%02x", length); // Hex
 
+    size_t str_length_position = 2; // Position of the '\x00' in the initial string
+
+    // Replace:
+    memcpy(prefix + str_length_position, custom_length, strlen(custom_length));
+
+    // Get the row data from the cache:
     void *rowData = malloc(length * sizeof(char*));
     cache.read(dataStart, rowData, length);
 
+    // Convert back to char*, make buffer wide enough for prefix + data that has 4 byte alignment:
     const char *rowString = (char*) rowData;
     char data[strlen(prefix) + strlen(rowString) + 1] __attribute__ ((aligned (4))); // +1 for the null terminator
     strcpy(data, prefix);
