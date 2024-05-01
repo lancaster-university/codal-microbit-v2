@@ -1163,8 +1163,8 @@ ManagedString MicroBitLog::getHeaders()
 ManagedString MicroBitLog::getRow(uint32_t rowIndex) 
 {
     // Specified in https://lancaster-university.github.io/microbit-docs/data-types/string/#constructor:
-    // x00 needs to be the string's length
-    char prefix[]  __attribute__ ((aligned (4))) = "\xff\xff\x00\00";
+    // 3rd byte x00 needs to be the string's length
+    char prefix[]  __attribute__ ((aligned (4))) = "\xff\xff\x00\x00";
     const int length = dataEnd - dataStart; // 2nd byte needs to contain string length
     
     char custom_length[20];
