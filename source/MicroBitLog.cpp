@@ -1168,7 +1168,7 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
     const int length = dataEnd - dataStart; // 2nd byte needs to contain string length
     
     char custom_length[20];
-    sprintf(custom_length, "\\x%02x", length); // Hex
+    sprintf(custom_length, "\\x%02x", 4); // Hex
 
     size_t str_length_position = 2; // Position of the '\x00' in the initial string
 
