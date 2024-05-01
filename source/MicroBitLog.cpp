@@ -1188,17 +1188,30 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
     // return row + rowData[headingCount - 1].value;
 
     // const char *text  __attribute__ ((aligned (4))) = "Test";
-    const char prefix[]  __attribute__ ((aligned (4))) = "\xff\xff\x05\00";
 
-    void *rowData = malloc((dataEnd - dataStart) * sizeof(char*));
-    cache.read(dataStart, rowData, dataEnd - dataStart);
-    char *rowString = (char*) rowData;
+    const int length = dataEnd - dataStart;
+    const char prefix[]  __attribute__ ((aligned (4))) = "\xff\xff\x00\00";
 
-    char result[strlen(prefix) + strlen(rowString) + 1] __attribute__ ((aligned (4))); // +1 for the null terminator
-    strcpy(result, prefix);
-    strcat(result, rowString);
+    char custom_prefix[20];
+    sprintf(custom_prefix, "%d", length);
+
+    // Calculate the length of the replacement string
+    size_t custom_prefix_len = strlen(custom_prefix);
+
+    size_t length_position = 2; // Position of the '\x00' in the initial string
+
+    memmove(prefix + length_position + custom_prefix_len, prefix + length_position + 1, strlen(prefix) - length_position);
+    memcpy(prefix + length_position, custom_prefix, custom_prefix_len);
+
+    void *rowData = malloc(length * sizeof(char*));
+    cache.read(dataStart, rowData, length);
+
+    const char *rowString = (char*) rowData;
+    char data[strlen(prefix) + strlen(rowString) + 1] __attribute__ ((aligned (4))); // +1 for the null terminator
+    strcpy(data, prefix);
+    strcat(data, rowString);
     
-    return ManagedString(result);
+    return ManagedString(data);
 }
 
 
