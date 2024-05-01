@@ -1190,7 +1190,7 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
     const char prefix[] = "\xff\xff\x05\x00";
     const char *text = "Hello";
 
-    char result[strlen(prefix) + strlen(text) + 1]; // +1 for the null terminator
+    char result[strlen(prefix) + strlen(text) + 1] __attribute__ ((aligned (4))); // +1 for the null terminator
     strcpy(result, prefix);
     strcat(result, text);
     
