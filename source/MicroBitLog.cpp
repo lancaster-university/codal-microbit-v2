@@ -25,6 +25,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitLog.h"
 #include "CodalDmesg.h"
 #include <new>
+#include <cstdio>
 
 #define ARRAY_LEN(array)    (sizeof(array) / sizeof(array[0]))
 
@@ -1189,21 +1190,24 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
 
     // const char *text  __attribute__ ((aligned (4))) = "Test";
 
+
+
     // Build a ManagedString containing all of the data in the log:
     // https://lancaster-university.github.io/microbit-docs/data-types/string/#constructor
 
-    // 2nd 
+    // 2nd byte needs to contain string length:
     const int length = dataEnd - dataStart;
     char prefix[]  __attribute__ ((aligned (4))) = "\xff\xff\x00\00";
     char custom_prefix[20];
     sprintf(custom_prefix, "%d", length);
 
-    // Calculate the length of the replacement string
     size_t custom_prefix_len = strlen(custom_prefix);
-
     size_t length_position = 2; // Position of the '\x00' in the initial string
 
+    // Shift the data after the replacement string:
     memmove(prefix + length_position + custom_prefix_len, prefix + length_position + 1, strlen(prefix) - length_position);
+    
+    // 
     memcpy(prefix + length_position, custom_prefix, custom_prefix_len);
 
     void *rowData = malloc(length * sizeof(char*));
