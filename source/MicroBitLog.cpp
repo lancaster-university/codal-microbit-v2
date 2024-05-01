@@ -1166,10 +1166,10 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
     // static char hello[] __attribute__ ((aligned (4))) = "\xff\xff\x05\x00"; 
     // memcpy(hello, "hello", 5);
 
-    char *rowData __attribute__ ((aligned (4))) = (char *) malloc(5 * sizeof(char*));
-    memcpy(rowData, "TEST", 4); 
-    // char *rowString = (char*) rowData;
-    rowData[4] = '\0';
+    // char *rowData __attribute__ ((aligned (4))) = (char *) malloc(5 * sizeof(char*));
+    // memcpy(rowData, "TEST", 4); 
+    // // char *rowString = (char*) rowData;
+    // rowData[4] = '\0';
 
     // cache.read(dataStart, rowData, 4);
     // char *rowString = (char*) rowData;
@@ -1178,7 +1178,7 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
     // cache.read(dataStart, rowData, 19);
     // ManagedString data((StringData*) rowData);
 
-    return ManagedString(rowData, 5);
+    // return ManagedString(rowData, 5);
 
     // ManagedString row = "";
     // for (uint32_t i = 0; i < headingCount - 1; i++) {
@@ -1186,6 +1186,15 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
     // }
 
     // return row + rowData[headingCount - 1].value;
+
+    const char prefix[] = "\xff\xff\x05\x00";
+    const char *text = "Hello";
+
+    char result[strlen(prefix) + strlen(text) + 1]; // +1 for the null terminator
+    strcpy(result, initial);
+    strcat(result, suffix);
+    
+    return ManagedString(result);
 }
 
 
