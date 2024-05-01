@@ -1191,8 +1191,8 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
     const char *text = "Hello";
 
     char result[strlen(prefix) + strlen(text) + 1]; // +1 for the null terminator
-    strcpy(result, initial);
-    strcat(result, suffix);
+    strcpy(result, prefix);
+    strcat(result, text);
     
     return ManagedString(result);
 }
