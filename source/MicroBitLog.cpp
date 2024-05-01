@@ -1189,9 +1189,12 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
 
     // const char *text  __attribute__ ((aligned (4))) = "Test";
 
-    const int length = dataEnd - dataStart;
-    const char prefix[]  __attribute__ ((aligned (4))) = "\xff\xff\x00\00";
+    // Build a ManagedString containing all of the data in the log:
+    // https://lancaster-university.github.io/microbit-docs/data-types/string/#constructor
 
+    // 2nd 
+    const int length = dataEnd - dataStart;
+    char prefix[]  __attribute__ ((aligned (4))) = "\xff\xff\x00\00";
     char custom_prefix[20];
     sprintf(custom_prefix, "%d", length);
 
