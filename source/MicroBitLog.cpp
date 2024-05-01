@@ -1164,10 +1164,10 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
 {
     // Specified in https://lancaster-university.github.io/microbit-docs/data-types/string/#constructor:
     // x00 needs to be the string's length
-    char prefix[]  __attribute__ ((aligned (4))) = "\xff\xff\x00";
+    char prefix[]  __attribute__ ((aligned (4))) = "\xff\xff\x00\00";
     const int length = dataEnd - dataStart; // 2nd byte needs to contain string length
     
-    char custom_length[20];
+    char custom_length[4];
     sprintf(custom_length, "\\x%02x", length); // Hex
 
     size_t str_length_position = 8; // Position of the '\x00' in the initial string
@@ -1181,9 +1181,9 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
 
     // Convert back to char*, make buffer wide enough for prefix + data that has 4 byte alignment:
     const char *rowString = (char*) rowData;
-    char data[strlen(prefix) + strlen(rowString) - 2 + 1] __attribute__ ((aligned (4))); // +1 for the null terminator
+    char data[strlen(prefix) + strlen(rowString) + 1] __attribute__ ((aligned (4))); // +1 for the null terminator
     strcpy(data, prefix);
-    strcat(data, rowString + 2);
+    strcat(data, rowString);
     
     return ManagedString(data);
 }
