@@ -1187,12 +1187,17 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
 
     // return row + rowData[headingCount - 1].value;
 
-    const char prefix[] = "\xff\xff\x05\x00";
-    const char *text = "Hello";
+    // const char *text  __attribute__ ((aligned (4))) = "Test";
+    const char prefix[]  __attribute__ ((aligned (4))) = "\xff\xff\x05\00";
 
-    char result[strlen(prefix) + strlen(text) + 1] __attribute__ ((aligned (4))); // +1 for the null terminator
+    void *rowData = malloc(20 * sizeof(char*));
+    memcpy(rowData, "                    ", 20);
+    cache.read(dataStart, rowData, 20);
+    char *rowString = (char*) rowData;
+
+    char result[strlen(prefix) + strlen(rowString) + 1] __attribute__ ((aligned (4))); // +1 for the null terminator
     strcpy(result, prefix);
-    strcat(result, text);
+    strcat(result, rowString);
     
     return ManagedString(result);
 }
