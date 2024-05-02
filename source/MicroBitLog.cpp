@@ -1167,8 +1167,8 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
     char prefix[]  __attribute__ ((aligned (4))) = "\xff\xff\x00\x00";
     const int length = dataEnd - dataStart; // 2nd byte needs to contain string length
     
-    char custom_length[20];
-    sprintf(custom_length, "\\x%02x", 4); // Hex
+    char custom_length[4];
+    sprintf(custom_length, "\\x%02x", length); // Hex
 
     size_t str_length_position = 2; // Position of the '\x00' in the initial string
 
