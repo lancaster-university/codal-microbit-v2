@@ -1180,11 +1180,13 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
     cache.read(dataStart, rowData, length);
 
     // Convert back to char*, make buffer wide enough for prefix + data that has 4 byte alignment:
-    const char *rowString = (char*) rowData;
-    char data[strlen(prefix) + strlen(rowString) + 1] __attribute__ ((aligned (4))); // +1 for the null terminator
-    strcpy(data, prefix);
-    strcat(data, rowString);
-    
+    // const char *rowString = (char*) rowData;
+    // char data[strlen(prefix) + strlen(rowString) + 1] __attribute__ ((aligned (4))); // +1 for the null terminator
+    // strcpy(data, prefix);
+    // strcat(data, rowString);
+    char data[length + 1] __attribute__ ((aligned (4))); // +1 for the null terminator
+    strcpy(data, rowData);
+
     return ManagedString(data);
 }
 
