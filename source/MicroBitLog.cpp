@@ -1185,7 +1185,7 @@ ManagedString MicroBitLog::getRow(uint32_t rowIndex)
     // strcpy(data, prefix);
     // strcat(data, rowString);
     char data[length + 1] __attribute__ ((aligned (4))); // +1 for the null terminator
-    strcpy(data, rowData);
+    strcpy(data, (char*) rowData);
 
     return ManagedString(data);
 }
