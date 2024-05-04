@@ -1141,26 +1141,10 @@ int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, ui
 }
 
 /**
- * Get the headers in use.
- * Return them seperated by ", "
+ * Get all the logged data as a ManagedString.
+ * Each row seperated by a new line, each column by a comma
  */
-ManagedString MicroBitLog::getHeaders() 
-{
-    ManagedString headers = "";
-
-    for (uint32_t i = 0; i < headingCount - 1; i++) {
-        headers = headers + rowData[i].key + ", ";
-    }
-
-    return headers + rowData[headingCount - 1].key;
-}
-
-
-/**
- * Get the data from a row as a string seperated by columns.
- * Build a ManagedString containing all of the data in the log
- */
-ManagedString MicroBitLog::getRow(uint32_t rowIndex) 
+ManagedString MicroBitLog::getData() 
 {
     // Specified in https://lancaster-university.github.io/microbit-docs/data-types/string/#constructor:
     // 3rd byte x00 needs to be the string's length

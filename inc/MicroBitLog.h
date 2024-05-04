@@ -362,14 +362,10 @@ namespace codal
         int readData(void *data, uint32_t index, uint32_t len, DataFormat format, uint32_t length);
 
         /**
-         * Get the row of Headers used by the DataLogger
-         */
-        ManagedString getHeaders();
-
-        /**
-         * Get a row of data (seperated by ", ") from the Datalogger directly.
-         */
-        ManagedString getRow(uint32_t rowIndex);
+        * Get all the logged data as a ManagedString.
+        * Each row seperated by a new line, each column by a comma
+        */
+        ManagedString getData();
 
     private:
 
