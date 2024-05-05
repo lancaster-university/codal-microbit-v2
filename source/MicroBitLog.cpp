@@ -1140,11 +1140,12 @@ int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, ui
     return r;
 }
 
+
 /**
  * Get all the logged data as a ManagedString.
  * Each row seperated by a new line, each column by a comma
  */
-ManagedString MicroBitLog::getData() 
+ManagedString MicroBitLog::getBatchedData(uint32_t fromIndex) 
 {
     // Specified in https://lancaster-university.github.io/microbit-docs/data-types/string/#constructor:
     // 3rd byte x00 needs to be the string's length
@@ -1170,6 +1171,46 @@ ManagedString MicroBitLog::getData()
     strcat(data, rowString);
 
     return ManagedString(data);
+}
+
+/**
+ * Get all the logged data as a ManagedString.
+ * Each row seperated by a new line, each column by a comma
+ */
+ManagedString MicroBitLog::getData() 
+{
+    // Specified in https://lancaster-university.github.io/microbit-docs/data-types/string/#constructor:
+    // 3rd byte x00 needs to be the string's length
+    // char prefix[]  __attribute__ ((aligned (4))) = "\xff\xff\x00\x00";
+    // const int length = dataEnd - dataStart; // 2nd byte needs to contain string length
+    
+    // char custom_length[20];
+    // sprintf(custom_length, "\\x%02x", length); // Hex
+
+    // size_t str_length_position = 2; // Position of the '\x00' in the initial string
+
+    // // Replace:
+    // memcpy(prefix + str_length_position, custom_length, strlen(custom_length));
+
+    // // Get the row data from the cache:
+    // void *rowData = malloc(length * sizeof(char*));
+    // cache.read(dataStart, rowData, length);
+
+    // // Convert back to char*, make buffer wide enough for prefix + data that has 4 byte alignment:
+    // const char *rowString = (char*) rowData;
+    // char data[strlen(prefix) + strlen(rowString) + 1] __attribute__ ((aligned (4))); // +1 for the null terminator
+    // strcpy(data, prefix);
+    // strcat(data, rowString);
+
+    // Get the row data from the cache:
+    const int length = dataEnd - dataStart; // 2nd byte needs to contain string length
+    void *rowData = malloc(length * sizeof(char*));
+    cache.read(dataStart, rowData, length);
+
+    const char *rowString = (char*) rowData;
+    ManagedString rowData = cleanBuffer(rowString, length);
+
+    return rowData;
 }
 
 

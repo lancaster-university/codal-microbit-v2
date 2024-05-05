@@ -365,6 +365,13 @@ namespace codal
         * Get all the logged data as a ManagedString.
         * Each row seperated by a new line, each column by a comma
         */
+        ManagedString getBatchedData(uint32_t fromIndex);
+
+
+        /**
+        * Get all the logged data as a ManagedString.
+        * Each row seperated by a new line, each column by a comma
+        */
         ManagedString getData();
 
     private:
