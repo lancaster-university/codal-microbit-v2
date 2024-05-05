@@ -1142,74 +1142,27 @@ int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, ui
 
 
 /**
- * Get all the logged data as a ManagedString.
- * Each row seperated by a new line, each column by a comma
+ * Get n rows worth of logged data as a ManagedString
+ * Each element is seperated by a _
  */
 ManagedString MicroBitLog::getBatchedData(uint32_t fromIndex) 
 {
-    // Specified in https://lancaster-university.github.io/microbit-docs/data-types/string/#constructor:
-    // 3rd byte x00 needs to be the string's length
-    char prefix[]  __attribute__ ((aligned (4))) = "\xff\xff\x00\x00";
-    const int length = dataEnd - dataStart; // 2nd byte needs to contain string length
-    
-    char custom_length[20];
-    sprintf(custom_length, "\\x%02x", length); // Hex
-
-    size_t str_length_position = 2; // Position of the '\x00' in the initial string
-
-    // Replace:
-    memcpy(prefix + str_length_position, custom_length, strlen(custom_length));
-
-    // Get the row data from the cache:
+    const int length = dataEnd - dataStart;
     void *rowData = malloc(length * sizeof(char*));
     cache.read(dataStart, rowData, length);
-
-    // Convert back to char*, make buffer wide enough for prefix + data that has 4 byte alignment:
-    const char *rowString = (char*) rowData;
-    char data[strlen(prefix) + strlen(rowString) + 1] __attribute__ ((aligned (4))); // +1 for the null terminator
-    strcpy(data, prefix);
-    strcat(data, rowString);
-
-    return ManagedString(data);
+    return cleanBuffer((char*) rowData, length);
 }
 
 /**
  * Get all the logged data as a ManagedString.
- * Each row seperated by a new line, each column by a comma
+ * Each element is seperated by a _
  */
 ManagedString MicroBitLog::getData() 
 {
-    // Specified in https://lancaster-university.github.io/microbit-docs/data-types/string/#constructor:
-    // 3rd byte x00 needs to be the string's length
-    // char prefix[]  __attribute__ ((aligned (4))) = "\xff\xff\x00\x00";
-    // const int length = dataEnd - dataStart; // 2nd byte needs to contain string length
-    
-    // char custom_length[20];
-    // sprintf(custom_length, "\\x%02x", length); // Hex
-
-    // size_t str_length_position = 2; // Position of the '\x00' in the initial string
-
-    // // Replace:
-    // memcpy(prefix + str_length_position, custom_length, strlen(custom_length));
-
-    // // Get the row data from the cache:
-    // void *rowData = malloc(length * sizeof(char*));
-    // cache.read(dataStart, rowData, length);
-
-    // // Convert back to char*, make buffer wide enough for prefix + data that has 4 byte alignment:
-    // const char *rowString = (char*) rowData;
-    // char data[strlen(prefix) + strlen(rowString) + 1] __attribute__ ((aligned (4))); // +1 for the null terminator
-    // strcpy(data, prefix);
-    // strcat(data, rowString);
-
-    // Get the row data from the cache:
-    const int length = dataEnd - dataStart; // 2nd byte needs to contain string length
+    const int length = dataEnd - dataStart;
     void *rowData = malloc(length * sizeof(char*));
     cache.read(dataStart, rowData, length);
-
-    ManagedString rowString = cleanBuffer((char*) rowData, length);
-
-    return rowString;
+    return cleanBuffer((char*) rowData, length);
 }
 
 
