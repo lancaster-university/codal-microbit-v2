@@ -1207,10 +1207,9 @@ ManagedString MicroBitLog::getData()
     void *rowData = malloc(length * sizeof(char*));
     cache.read(dataStart, rowData, length);
 
-    const char *rowString = (char*) rowData;
-    ManagedString rowData = cleanBuffer(rowString, length);
+    ManagedString rowString = cleanBuffer((char*) rowData, length);
 
-    return rowData;
+    return rowString;
 }
 
 
