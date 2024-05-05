@@ -1145,7 +1145,7 @@ int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, ui
  * Get n rows worth of logged data as a ManagedString
  * Each element is seperated by a _
  */
-ManagedString MicroBitLog::getBatchedData(uint32_t fromIndex) 
+ManagedString MicroBitLog::getNRows(uint32_t fromIndex) 
 {
     const int length = dataEnd - dataStart;
     void *rowData = malloc(length * sizeof(char*));
