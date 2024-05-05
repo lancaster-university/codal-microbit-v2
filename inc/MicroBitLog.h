@@ -361,16 +361,17 @@ namespace codal
          */
         int readData(void *data, uint32_t index, uint32_t len, DataFormat format, uint32_t length);
 
+
         /**
-        * Get all the logged data as a ManagedString.
-        * Each row seperated by a new line, each column by a comma
+        * Get n rows worth of logged data as a ManagedString
+        * Each element is seperated by a _
         */
-        ManagedString getBatchedData(uint32_t fromIndex);
+        ManagedString getNRows(uint32_t fromIndex);
 
 
         /**
         * Get all the logged data as a ManagedString.
-        * Each row seperated by a new line, each column by a comma
+        * Each element is seperated by a _
         */
         ManagedString getData();
 
