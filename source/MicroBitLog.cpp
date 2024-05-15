@@ -1182,7 +1182,7 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
 
             if (!startFound && rowSeparatorQty == fromRowIndex) 
             {
-                startFound = true
+                startFound = true;
                 fromRowNOffset = i;
             }
 
