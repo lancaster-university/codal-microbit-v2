@@ -1173,9 +1173,9 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
         const uint32_t chunkSize = std::min(dataEnd, (numberOfLoops + 1) * stdCharChunkSize) - dataStart;
 
         // Load the chunk:
-        void *rowData = malloc(chunkSize * sizeof(char*));
-        cache.read(dataStart, rowData, chunkSize);
-        ManagedString cleanedChunk = cleanBuffer((char*) rowData, chunkSize);
+        void *searchChunk = malloc(chunkSize * sizeof(char*));
+        cache.read(dataStart, searchChunk, chunkSize);
+        ManagedString cleanedChunk = cleanBuffer((char*) searchChunk, chunkSize);
 
     //     uint32_t colSeparatorQty = 0;
     //     for(int i = 0; i < cleanedChunk.length(); i++) 
