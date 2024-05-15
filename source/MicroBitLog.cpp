@@ -1172,16 +1172,16 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
         // If the chunk is exhausted then expand the chunk
         uint32_t chunkSize = dataEnd;
         
-        if ((numberOfLoops + 1) * stdCharChunkSize < chunkSize) {
-            chunkSize = (numberOfLoops + 1) * stdCharChunkSize;
-        }
+        // if ((numberOfLoops + 1) * stdCharChunkSize < chunkSize) {
+        //     chunkSize = (numberOfLoops + 1) * stdCharChunkSize;
+        // }
         
         chunkSize -= dataStart;
 
         // Load the chunk:
         void *searchChunk = malloc(chunkSize * sizeof(char*));
         cache.read(dataStart, searchChunk, chunkSize);
-        // ManagedString cleanedChunk = cleanBuffer((char*) searchChunk, chunkSize);
+        ManagedString cleanedChunk = cleanBuffer((char*) searchChunk, chunkSize);
 
     //     uint32_t colSeparatorQty = 0;
     //     for(int i = 0; i < cleanedChunk.length(); i++) 
