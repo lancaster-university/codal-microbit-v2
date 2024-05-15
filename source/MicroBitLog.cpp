@@ -1170,12 +1170,18 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
     // while (!foundAllRows) {
         // Get a chunk of data and search it for the target number of colSeparator's
         // If the chunk is exhausted then expand the chunk
-        const uint32_t chunkSize = std::min(dataEnd, (numberOfLoops + 1) * stdCharChunkSize) - dataStart;
+        uint32_t chunkSize = dataEnd;
+        
+        if ((numberOfLoops + 1) * stdCharChunkSize < chunkSize) {
+            chunkSize = (numberOfLoops + 1) * stdCharChunkSize;
+        }
+        
+        chunkSize -= dataStart;
 
         // Load the chunk:
         void *searchChunk = malloc(chunkSize * sizeof(char*));
-        cache.read(dataStart, searchChunk, chunkSize);
-        ManagedString cleanedChunk = cleanBuffer((char*) searchChunk, chunkSize);
+        // cache.read(dataStart, searchChunk, chunkSize);
+        // ManagedString cleanedChunk = cleanBuffer((char*) searchChunk, chunkSize);
 
     //     uint32_t colSeparatorQty = 0;
     //     for(int i = 0; i < cleanedChunk.length(); i++) 
