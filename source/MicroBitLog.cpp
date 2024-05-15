@@ -1157,7 +1157,7 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
     // Number of columns ('_' separators) to find:
     constexpr uint32_t colQty = 4;
     constexpr char colSeparator = '_';
-    const uint32_t colTargetQty = nRows * colQty;
+    const uint32_t colTargetQty = 3 * colQty;
 
     constexpr uint32_t stdCharChunkSize = 32;
     const uint32_t length = dataEnd - dataStart;
