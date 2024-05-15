@@ -1167,15 +1167,13 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
     uint32_t lastColIndex = 0;
 
     // // This algorithm can be optimised by tracking the number of col's in the prior chunk:
-    // while (!foundAllRows) {
+    while (!foundAllRows) {
         // Get a chunk of data and search it for the target number of colSeparator's
         // If the chunk is exhausted then expand the chunk
         uint32_t chunkSize = dataEnd;
-        
         // if ((numberOfLoops + 1) * stdCharChunkSize < chunkSize) {
         //     chunkSize = (numberOfLoops + 1) * stdCharChunkSize;
         // }
-        
         chunkSize -= dataStart;
 
         // Load the chunk:
@@ -1183,21 +1181,21 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
         cache.read(dataStart, searchChunk, chunkSize);
         ManagedString cleanedChunk = cleanBuffer((char*) searchChunk, chunkSize);
 
-    //     uint32_t colSeparatorQty = 0;
-    //     for(int i = 0; i < cleanedChunk.length(); i++) 
-    //     {    
-    //         if(cleanedChunk.charAt(i) == colSeparator) {
-    //             colSeparatorQty++;
+        uint32_t colSeparatorQty = 0;
+        for(int i = 0; i < cleanedChunk.length(); i++) 
+        {    
+            if(cleanedChunk.charAt(i) == colSeparator) {
+                colSeparatorQty++;
 
-    //             if (colSeparatorQty == colTargetQty) {
-    //                 foundAllRows = true;
-    //                 lastColIndex = i;
-    //             }
-    //         }
-    //     }
+                if (colSeparatorQty == colTargetQty) {
+                    foundAllRows = true;
+                    lastColIndex = i;
+                }
+            }
+        }
 
-    //     numberOfLoops++;
-    // }
+        numberOfLoops++;
+    }
 
     const uint32_t finalLength = length;
     void *rowData = malloc(finalLength * sizeof(char*));
