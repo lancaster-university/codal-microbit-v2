@@ -1180,7 +1180,7 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
 
         // Load the chunk:
         void *searchChunk = malloc(chunkSize * sizeof(char*));
-        // cache.read(dataStart, searchChunk, chunkSize);
+        cache.read(dataStart, searchChunk, chunkSize);
         // ManagedString cleanedChunk = cleanBuffer((char*) searchChunk, chunkSize);
 
     //     uint32_t colSeparatorQty = 0;
