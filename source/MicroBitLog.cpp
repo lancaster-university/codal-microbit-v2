@@ -1144,9 +1144,7 @@ int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, ui
 
 /**
  * Get n rows worth of logged data as a ManagedString
- * Each element is seperated by a _
- * Presumes 4 columns of data
- * This algorithm has optimisation potential
+ * Each element is seperated by a newline
  */
 ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
 {
@@ -1155,10 +1153,10 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
     }
 
     constexpr uint8_t rowSeparator = 10; // newline char
-    const uint32_t rowTargetEndQty = fromRowIndex + nRows;
+    const uint32_t rowTargetEndQty = fromRowIndex + nRows + 1;
 
     uint8_t startOfRowN = dataStart + 1;
-    uint8_t endOfRowN = dataEnd;
+    uint8_t endOfRowN = logEnd;
     uint32_t rowSeparatorIterator = 0;
 
     bool startRowFound = false;
@@ -1166,7 +1164,7 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
     uint8_t d = 0;
     uint32_t i = dataStart + 1;
 
-    while(i < dataEnd)
+    while(i < logEnd)
     {
         cache.read(i, &d, 1);
         if (d == rowSeparator)
