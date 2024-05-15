@@ -1154,39 +1154,32 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
         return cleanBuffer("", 0);
     }
 
-    // Number of columns ('_' separators) to find:
-    // constexpr uint32_t colQty = 4;
-    // constexpr uint8_t colSeparator = 95; // '_'
     constexpr uint8_t rowSeparator = 10; // newline char
-
-    // Number of columns expected before the start of the data
-    // const uint32_t colTargetStartQty = fromRowIndex * colQty;
-    // const uint32_t colTargetEndQty = colTargetStartQty + (nRows * colQty);
     const uint32_t rowTargetEndQty = fromRowIndex + nRows;
 
-    uint8_t fromRowNOffset = 0;
-    uint8_t endOfRowN = 0;
-    // uint32_t colSeparatorQty = 0;
-    uint32_t rowSeparatorQty = 0;
-    bool startFound = false;
+    uint8_t startOfRowN = dataStart + 1;
+    uint8_t endOfRowN = dataEnd;
+    uint32_t rowSeparatorIterator = 0;
+
+    bool startRowFound = false;
 
     uint8_t d = 0;
-    uint32_t i = dataStart;
+    uint32_t i = dataStart + 1;
 
     while(i < dataEnd)
     {
         cache.read(i, &d, 1);
         if (d == rowSeparator)
         {
-            rowSeparatorQty++;
+            rowSeparatorIterator++;
 
-            if (!startFound && rowSeparatorQty == fromRowIndex) 
+            if (!startRowFound && rowSeparatorIterator == fromRowIndex) 
             {
-                startFound = true;
-                fromRowNOffset = i;
+                startRowFound = true;
+                startOfRowN = i;
             }
 
-            else if (rowSeparatorQty == rowTargetEndQty) 
+            else if (rowSeparatorIterator == rowTargetEndQty) 
             {
                 endOfRowN = i;
                 break;
@@ -1196,10 +1189,10 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
         i++;
     }
 
-    const uint32_t finalLength = endOfRowN - fromRowNOffset;
-    void *rowData = malloc(finalLength * sizeof(char*));
-    cache.read(dataStart, rowData, finalLength);
-    return cleanBuffer((char*) rowData, finalLength);
+    const uint32_t dataLength = endOfRowN - startOfRowN;
+    void *rowData = malloc(dataLength * sizeof(char*));
+    cache.read(dataStart, rowData, dataLength);
+    return cleanBuffer((char*) rowData, dataLength);
 }
 
 /**
