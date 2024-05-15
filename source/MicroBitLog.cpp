@@ -1216,7 +1216,6 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
 
             if (!startFound && colSeparatorQty == colTargetStartQty) 
             {
-                foundAllRows = startFound;
                 fromRowNOffset = start;
             }
 
