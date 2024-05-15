@@ -1163,11 +1163,11 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
     const uint32_t colTargetEndQty = colTargetStartQty + (nRows * colQty);
 
     // constexpr uint32_t stdCharChunkSize = 32;
-    const uint32_t length = dataEnd - dataStart;
+    // const uint32_t length = dataEnd - dataStart;
     
     // bool foundAllRows = false;
-    uint32_t numberOfLoops = 0;
-    uint32_t lastColIndex = 0;
+    // uint32_t numberOfLoops = 0;
+    // uint32_t lastColIndex = 0;
 
     // // This algorithm can be optimised by tracking the number of col's in the prior chunk:
     // while (!foundAllRows) {
@@ -1202,6 +1202,7 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
 
     uint8_t fromRowNOffset = 0;
     uint8_t endOfRowN = 0;
+    uint32_t colSeparatorQty = 0;
     bool startFound = false;
 
     uint8_t d = 0;
@@ -1209,19 +1210,19 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
     while(start < dataEnd)
     {
         cache.read(start, &d, 1);
-        if (d == 0xFF)
+        if (d == colSeparator)
         {
             colSeparatorQty++;
 
             if (!startFound && colSeparatorQty == colTargetStartQty) 
             {
                 foundAllRows = startFound;
-                fromRowNOffset = i;
+                fromRowNOffset = start;
             }
 
             else if (colSeparatorQty == colTargetEndQty) 
             {
-                endOfRowN = i;
+                endOfRowN = start;
                 break;
             }
         }
