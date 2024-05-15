@@ -1155,78 +1155,45 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
     }
 
     // Number of columns ('_' separators) to find:
-    constexpr uint32_t colQty = 4;
-    constexpr uint8_t colSeparator = 95; // '_'
+    // constexpr uint32_t colQty = 4;
+    // constexpr uint8_t colSeparator = 95; // '_'
+    constexpr uint8_t rowSeparator = 10; // newline char
 
     // Number of columns expected before the start of the data
-    const uint32_t colTargetStartQty = fromRowIndex * colQty;
-    const uint32_t colTargetEndQty = colTargetStartQty + (nRows * colQty);
-
-    // constexpr uint32_t stdCharChunkSize = 32;
-    // const uint32_t length = dataEnd - dataStart;
-    
-    // bool foundAllRows = false;
-    // uint32_t numberOfLoops = 0;
-    // uint32_t lastColIndex = 0;
-
-    // // This algorithm can be optimised by tracking the number of col's in the prior chunk:
-    // while (!foundAllRows) {
-    //     // Get a chunk of data and search it for the target number of colSeparator's
-    //     // If the chunk is exhausted then expand the chunk
-    //     uint32_t chunkSize = dataEnd;
-    //     // if ((numberOfLoops + 1) * stdCharChunkSize < chunkSize) {
-    //     //     chunkSize = (numberOfLoops + 1) * stdCharChunkSize;
-    //     // }
-    //     chunkSize -= dataStart;
-
-    //     // Load the chunk:
-    //     void *searchChunk = malloc(chunkSize * sizeof(char*));
-    //     cache.read(dataStart, searchChunk, chunkSize);
-    //     ManagedString cleanedChunk = cleanBuffer((char*) searchChunk, chunkSize);
-
-    //     uint32_t colSeparatorQty = 0;
-    //     for(int i = 0; i < cleanedChunk.length(); i++) 
-    //     {    
-    //         if(cleanedChunk.charAt(i) == colSeparator) {
-    //             colSeparatorQty++;
-
-    //             if (colSeparatorQty == colTargetQty) {
-    //                 foundAllRows = true;
-    //                 lastColIndex = i;
-    //             }
-    //         }
-    //     }
-
-    //     numberOfLoops++;
-    // }
+    // const uint32_t colTargetStartQty = fromRowIndex * colQty;
+    // const uint32_t colTargetEndQty = colTargetStartQty + (nRows * colQty);
+    const uint32_t rowTargetEndQty = fromRowIndex + nRows;
 
     uint8_t fromRowNOffset = 0;
     uint8_t endOfRowN = 0;
-    uint32_t colSeparatorQty = 0;
+    // uint32_t colSeparatorQty = 0;
+    uint32_t rowSeparatorQty = 0;
     bool startFound = false;
 
     uint8_t d = 0;
-    uint32_t start = dataStart;
-    while(start < dataEnd)
-    {
-        cache.read(start, &d, 1);
-        if (d == colSeparator)
-        {
-            colSeparatorQty++;
+    uint32_t i = dataStart;
 
-            if (!startFound && colSeparatorQty == colTargetStartQty) 
+    while(i < dataEnd)
+    {
+        cache.read(i, &d, 1);
+        if (d == rowSeparator)
+        {
+            rowSeparatorQty++;
+
+            if (!startFound && rowSeparatorQty == fromRowIndex) 
             {
-                fromRowNOffset = start;
+                startFound = true
+                fromRowNOffset = i;
             }
 
-            else if (colSeparatorQty == colTargetEndQty) 
+            else if (rowSeparatorQty == rowTargetEndQty) 
             {
-                endOfRowN = start;
+                endOfRowN = i;
                 break;
             }
         }
 
-        start++;
+        i++;
     }
 
     const uint32_t finalLength = endOfRowN - fromRowNOffset;
