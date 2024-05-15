@@ -1197,7 +1197,7 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
         numberOfLoops++;
     }
 
-    const uint32_t finalLength = lastColIndex - dataStart;
+    const uint32_t finalLength = dataEnd - dataStart;
     void *rowData = malloc(finalLength * sizeof(char*));
     cache.read(dataStart, rowData, finalLength);
     return cleanBuffer((char*) rowData, finalLength);
