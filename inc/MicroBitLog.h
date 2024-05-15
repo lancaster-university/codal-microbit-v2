@@ -366,8 +366,8 @@ namespace codal
         * Get n rows worth of logged data as a ManagedString
         * Each element is seperated by a _
         */
-        ManagedString getNRows(uint32_t fromIndex);
-
+        ManagedString getNRows(uint32_t fromRowIndex, uint32_t nRows);
+        
 
         /**
         * Get all the logged data as a ManagedString.
