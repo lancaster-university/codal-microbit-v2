@@ -1166,34 +1166,34 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
     uint32_t numberOfLoops = 0;
     uint32_t lastColIndex = 0;
 
-    // This algorithm can be optimised by tracking the number of col's in the prior chunk:
-    while (!foundAllRows) {
-        // Get a chunk of data and search it for the target number of colSeparator's
-        // If the chunk is exhausted then expand the chunk
-        const uint32_t chunkSize = std::min(length, (numberOfLoops + 1) * stdCharChunkSize) - dataStart;
+    // // This algorithm can be optimised by tracking the number of col's in the prior chunk:
+    // while (!foundAllRows) {
+    //     // Get a chunk of data and search it for the target number of colSeparator's
+    //     // If the chunk is exhausted then expand the chunk
+    //     const uint32_t chunkSize = std::min(length, (numberOfLoops + 1) * stdCharChunkSize) - dataStart;
 
-        // Load the chunk:
-        void *rowData = malloc(chunkSize * sizeof(char*));
-        cache.read(dataStart, rowData, chunkSize);
-        ManagedString cleanedChunk = cleanBuffer((char*) rowData, chunkSize);
+    //     // Load the chunk:
+    //     void *rowData = malloc(chunkSize * sizeof(char*));
+    //     cache.read(dataStart, rowData, chunkSize);
+    //     ManagedString cleanedChunk = cleanBuffer((char*) rowData, chunkSize);
 
-        uint32_t colSeparatorQty = 0;
-        for(int i = 0; i < cleanedChunk.length(); i++) 
-        {    
-            if(cleanedChunk.charAt(i) == colSeparator) {
-                colSeparatorQty++;
+    //     uint32_t colSeparatorQty = 0;
+    //     for(int i = 0; i < cleanedChunk.length(); i++) 
+    //     {    
+    //         if(cleanedChunk.charAt(i) == colSeparator) {
+    //             colSeparatorQty++;
 
-                if (colSeparatorQty == colTargetQty) {
-                    foundAllRows = true;
-                    lastColIndex = i;
-                }
-            }
-        }
+    //             if (colSeparatorQty == colTargetQty) {
+    //                 foundAllRows = true;
+    //                 lastColIndex = i;
+    //             }
+    //         }
+    //     }
 
-        numberOfLoops++;
-    }
+    //     numberOfLoops++;
+    // }
 
-    const uint32_t finalLength = lastColIndex - dataStart;
+    const uint32_t finalLength = length;
     void *rowData = malloc(finalLength * sizeof(char*));
     cache.read(dataStart, rowData, finalLength);
     return cleanBuffer((char*) rowData, finalLength);
