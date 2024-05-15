@@ -1156,48 +1156,80 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
 
     // Number of columns ('_' separators) to find:
     constexpr uint32_t colQty = 4;
-    constexpr char colSeparator = '_';
-    const uint32_t colTargetQty = 3 * colQty;
+    constexpr uint8_t colSeparator = 95; // '_'
 
-    constexpr uint32_t stdCharChunkSize = 32;
+    // Number of columns expected before the start of the data
+    const uint32_t colTargetStartQty = fromRowIndex * colQty;
+    const uint32_t colTargetEndQty = colTargetStartQty + (nRows * colQty);
+
+    // constexpr uint32_t stdCharChunkSize = 32;
     const uint32_t length = dataEnd - dataStart;
     
-    bool foundAllRows = false;
+    // bool foundAllRows = false;
     uint32_t numberOfLoops = 0;
     uint32_t lastColIndex = 0;
 
     // // This algorithm can be optimised by tracking the number of col's in the prior chunk:
-    while (!foundAllRows) {
-        // Get a chunk of data and search it for the target number of colSeparator's
-        // If the chunk is exhausted then expand the chunk
-        uint32_t chunkSize = dataEnd;
-        // if ((numberOfLoops + 1) * stdCharChunkSize < chunkSize) {
-        //     chunkSize = (numberOfLoops + 1) * stdCharChunkSize;
-        // }
-        chunkSize -= dataStart;
+    // while (!foundAllRows) {
+    //     // Get a chunk of data and search it for the target number of colSeparator's
+    //     // If the chunk is exhausted then expand the chunk
+    //     uint32_t chunkSize = dataEnd;
+    //     // if ((numberOfLoops + 1) * stdCharChunkSize < chunkSize) {
+    //     //     chunkSize = (numberOfLoops + 1) * stdCharChunkSize;
+    //     // }
+    //     chunkSize -= dataStart;
 
-        // Load the chunk:
-        void *searchChunk = malloc(chunkSize * sizeof(char*));
-        cache.read(dataStart, searchChunk, chunkSize);
-        ManagedString cleanedChunk = cleanBuffer((char*) searchChunk, chunkSize);
+    //     // Load the chunk:
+    //     void *searchChunk = malloc(chunkSize * sizeof(char*));
+    //     cache.read(dataStart, searchChunk, chunkSize);
+    //     ManagedString cleanedChunk = cleanBuffer((char*) searchChunk, chunkSize);
 
-        uint32_t colSeparatorQty = 0;
-        for(int i = 0; i < cleanedChunk.length(); i++) 
-        {    
-            if(cleanedChunk.charAt(i) == colSeparator) {
-                colSeparatorQty++;
+    //     uint32_t colSeparatorQty = 0;
+    //     for(int i = 0; i < cleanedChunk.length(); i++) 
+    //     {    
+    //         if(cleanedChunk.charAt(i) == colSeparator) {
+    //             colSeparatorQty++;
 
-                if (colSeparatorQty == colTargetQty) {
-                    foundAllRows = true;
-                    lastColIndex = i;
-                }
+    //             if (colSeparatorQty == colTargetQty) {
+    //                 foundAllRows = true;
+    //                 lastColIndex = i;
+    //             }
+    //         }
+    //     }
+
+    //     numberOfLoops++;
+    // }
+
+    uint8_t fromRowNOffset = 0;
+    uint8_t endOfRowN = 0;
+    bool startFound = false;
+
+    uint8_t d = 0;
+    uint32_t start = dataStart;
+    while(start < dataEnd)
+    {
+        cache.read(start, &d, 1);
+        if (d == 0xFF)
+        {
+            colSeparatorQty++;
+
+            if (!startFound && colSeparatorQty == colTargetStartQty) 
+            {
+                foundAllRows = startFound;
+                fromRowNOffset = i;
+            }
+
+            else if (colSeparatorQty == colTargetEndQty) 
+            {
+                endOfRowN = i;
+                break;
             }
         }
 
-        numberOfLoops++;
+        start++;
     }
 
-    const uint32_t finalLength = dataEnd - dataStart;
+    const uint32_t finalLength = endOfRowN - fromRowNOffset;
     void *rowData = malloc(finalLength * sizeof(char*));
     cache.read(dataStart, rowData, finalLength);
     return cleanBuffer((char*) rowData, finalLength);
