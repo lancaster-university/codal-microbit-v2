@@ -1159,7 +1159,7 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
     constexpr char colSeparator = '_';
     const uint32_t colTargetQty = nRows * colQty;
 
-    constexpr uint32_t stdCharChunkSize = 512;
+    constexpr uint32_t stdCharChunkSize = 32;
     const uint32_t length = dataEnd - dataStart;
     
     bool foundAllRows = false;
@@ -1173,9 +1173,9 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
         const uint32_t chunkSize = std::min(dataEnd, (numberOfLoops + 1) * stdCharChunkSize) - dataStart;
 
         // Load the chunk:
-        // void *searchChunk = malloc(chunkSize * sizeof(char*));
-        // cache.read(dataStart, searchChunk, chunkSize);
-        // ManagedString cleanedChunk = cleanBuffer((char*) searchChunk, chunkSize);
+        void *searchChunk = malloc(chunkSize * sizeof(char*));
+        cache.read(dataStart, searchChunk, chunkSize);
+        ManagedString cleanedChunk = cleanBuffer((char*) searchChunk, chunkSize);
 
     //     uint32_t colSeparatorQty = 0;
     //     for(int i = 0; i < cleanedChunk.length(); i++) 
