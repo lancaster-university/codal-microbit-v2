@@ -1170,12 +1170,12 @@ uint32_t MicroBitLog::getNumberOfRows()
  */
 ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
 {
-    if (fromRowIndex >= dataEnd) {
+    if (fromRowIndex >= dataEnd || nRows == 0) {
         return cleanBuffer("", 0);
     }
 
     constexpr uint8_t rowSeparator = 10; // newline char
-    const uint32_t rowSeparatorTargetCount = fromRowIndex + nRows;
+    const uint32_t rowSeparatorTargetCount = fromRowIndex + nRows + 1;
 
     uint8_t startOfRowN = dataStart;
     uint8_t endOfDataChunk = logEnd;
@@ -1195,7 +1195,7 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
             if (!startRowFound && rowSeparatorCount == fromRowIndex) 
             {
                 startRowFound = true;
-                startOfRowN = end;
+                startOfRowN = dataStart + end;
             }
 
             else if (rowSeparatorCount == rowSeparatorTargetCount) 
