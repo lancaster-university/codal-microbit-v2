@@ -1182,9 +1182,6 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
 
     bool startRowFound = false;
 
-    uint8_t d = 0;
-    uint32_t i = dataStart + 1;
-
     // Read read until we see a 0xFF character (unused memory)
     uint32_t end = dataStart;
     uint32_t rowSeparatorCount = 0;
@@ -1198,12 +1195,12 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
             if (!startRowFound && rowSeparatorCount == fromRowIndex) 
             {
                 startRowFound = true;
-                startOfRowN = end;
+                startOfRowN = rowSeparatorCount;
             }
 
             else if (rowSeparatorCount == rowSeparatorTargetCount) 
             {
-                endOfDataChunk = end;
+                endOfDataChunk = rowSeparatorCount;
                 break;
             }
         }
