@@ -1174,8 +1174,8 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
         return cleanBuffer("", 0);
     }
 
-    // constexpr uint8_t rowSeparator = 10; // newline char
-    constexpr uint8_t rowSeparator = 0x2C; // ','
+    constexpr uint8_t rowSeparator = 10; // newline char
+    // constexpr uint8_t rowSeparator = 0x2C; // ','
     const uint32_t rowSeparatorTargetCount = fromRowIndex + nRows + 1;
 
     uint8_t startOfRowN = dataStart;
@@ -1209,7 +1209,7 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
         end++;
     }
 
-    // startOfRowN = 10;
+    startOfRowN = 8;
     const uint32_t dataLength = endOfDataChunk - startOfRowN;
     void *rowData = malloc(dataLength * sizeof(char*));
     cache.read(startOfRowN, rowData, dataLength);
