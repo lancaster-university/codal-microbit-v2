@@ -1175,9 +1175,9 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
     }
 
     constexpr uint8_t rowSeparator = 10; // newline char
-    const uint32_t rowSeparatorTargetCount = fromRowIndex + nRows + 1;
+    const uint32_t rowSeparatorTargetCount = fromRowIndex + nRows;
 
-    uint8_t startOfRowN = dataStart + 1;
+    uint8_t startOfRowN = dataStart;
     uint8_t endOfDataChunk = logEnd;
 
     bool startRowFound = false;
