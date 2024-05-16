@@ -1187,27 +1187,28 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
     uint32_t end = dataStart;
     uint32_t rowSeparatorCount = 0;
     uint8_t c = 0;
-    // while(c != 0xff)
-    // {
-    //     cache.read(end, &c, 1);
+    while(c != 0xff)
+    {
+        cache.read(end, &c, 1);
 
-    //     if (c == rowSeparator) {
-    //         rowSeparatorCount++;
-    //         if (!startRowFound && rowSeparatorCount == fromRowIndex) 
-    //         {
-    //             startRowFound = true;
-    //             startOfRowN = end;
-    //         }
+        if (c == rowSeparator) {
+            rowSeparatorCount++;
+            if (!startRowFound && rowSeparatorCount == fromRowIndex) 
+            {
+                startRowFound = true;
+                startOfRowN = end;
+                break;
+            }
 
-    //         else if (rowSeparatorCount == rowSeparatorTargetCount) 
-    //         {
-    //             endOfDataChunk = end;
-    //             break;
-    //         }
-    //     }
+            // else if (rowSeparatorCount == rowSeparatorTargetCount) 
+            // {
+            //     endOfDataChunk = end;
+            //     break;
+            // }
+        }
 
-    //     end++;
-    // }
+        end++;
+    }
 
     // startOfRowN = dataStart + 8;
     const int dataLength = endOfDataChunk - startOfRowN;
