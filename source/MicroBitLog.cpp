@@ -1195,7 +1195,7 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
             if (!startRowFound && rowSeparatorCount == fromRowIndex) 
             {
                 startRowFound = true;
-                startOfRowN = dataStart + end;
+                startOfRowN = end;
             }
 
             else if (rowSeparatorCount == rowSeparatorTargetCount) 
@@ -1210,7 +1210,7 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
 
     const uint32_t dataLength = endOfDataChunk - startOfRowN;
     void *rowData = malloc(dataLength * sizeof(char*));
-    cache.read(dataStart, rowData, dataLength);
+    cache.read(startOfRowN, rowData, dataLength);
     return cleanBuffer((char*) rowData, dataLength);
 }
 
