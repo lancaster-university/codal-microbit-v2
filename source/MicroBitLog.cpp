@@ -1142,7 +1142,6 @@ int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, ui
 }
 
 
-
 uint32_t MicroBitLog::getNumberOfRows()
 {
     constexpr uint8_t rowSeparator = 10; // newline char
@@ -1180,33 +1179,34 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
 
     uint8_t startOfRowN = dataStart + 1;
     uint8_t endOfDataChunk = logEnd;
-    uint32_t rowSeparatorIterator = 0;
 
     bool startRowFound = false;
 
     uint8_t d = 0;
     uint32_t i = dataStart + 1;
 
-    while(i < logEnd)
+    // Read read until we see a 0xFF character (unused memory)
+    uint32_t end = dataStart;
+    uint8_t c = 0;
+    while(c != 0xff)
     {
-        cache.read(i, &d, 1);
-        if (d == rowSeparator)
-        {
-            rowSeparatorIterator++;
+        cache.read(end, &c, 1);
 
-            if (!startRowFound && rowSeparatorIterator == fromRowIndex) 
+        if (c == rowSeparator) {
+            if (!startRowFound && end == fromRowIndex) 
             {
                 startRowFound = true;
-                startOfRowN = i;
+                startOfRowN = end;
             }
 
-            else if (rowSeparatorIterator == rowSeparatorTargetCount) 
+            else if (end == rowSeparatorTargetCount) 
             {
-                endOfDataChunk = i;
+                endOfDataChunk = end;
                 break;
             }
         }
-        i++;
+
+        end++;
     }
 
     const uint32_t dataLength = endOfDataChunk - startOfRowN;
