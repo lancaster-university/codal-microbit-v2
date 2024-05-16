@@ -1149,7 +1149,7 @@ uint32_t MicroBitLog::getNumberOfRows()
     uint32_t rowCount = 0;
 
     // Read read until we see a 0xFF character (unused memory)
-    uint32_t end = start;
+    uint32_t end = dataStart;
     uint8_t c = 0;
     while(c != 0xff)
     {
