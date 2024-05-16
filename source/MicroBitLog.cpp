@@ -1142,6 +1142,29 @@ int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, ui
 }
 
 
+
+uint32_t MicroBitLog::getNumberOfRows()
+{
+    constexpr uint8_t rowSeparator = 10; // newline char
+    uint32_t rowCount = 0;
+
+    // Read read until we see a 0xFF character (unused memory)
+    uint32_t end = start;
+    uint8_t c = 0;
+    while(c != 0xff)
+    {
+        cache.read(end, &c, 1);
+
+        if (c == rowSeparator) {
+            rowCount++;
+        }
+
+        end++;
+    }
+
+    return rowCount;
+}
+
 /**
  * Get n rows worth of logged data as a ManagedString
  * Each element is seperated by a newline

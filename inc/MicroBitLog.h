@@ -361,6 +361,7 @@ namespace codal
          */
         int readData(void *data, uint32_t index, uint32_t len, DataFormat format, uint32_t length);
 
+        uint32_t getNumberOfRows();
 
         /**
         * Get n rows worth of logged data as a ManagedString
@@ -371,7 +372,7 @@ namespace codal
 
         /**
         * Get all the logged data as a ManagedString.
-        * Each element is seperated by a _
+        * Each element is seperated by a newline
         */
         ManagedString getData();
 
