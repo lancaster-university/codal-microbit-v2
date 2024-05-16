@@ -361,13 +361,17 @@ namespace codal
          */
         int readData(void *data, uint32_t index, uint32_t len, DataFormat format, uint32_t length);
 
+        /**
+        * Get the number of rows (including the header) that exist in the datalog.
+        */
         uint32_t getNumberOfRows();
 
         /**
         * Get n rows worth of logged data as a ManagedString
-        * Each element is seperated by a _
+        * 
+        * Each element in the returned string is seperated by a _
         */
-        ManagedString getNRows(uint32_t fromRowIndex, uint32_t nRows);
+        ManagedString getRows(uint32_t fromRowIndex, uint32_t nRows);
         
 
         /**

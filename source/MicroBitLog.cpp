@@ -24,7 +24,6 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitLog.h"
 #include "CodalDmesg.h"
-#include <algorithm> // for std::min
 #include <new>
 #include <cstdio>
 
@@ -1141,7 +1140,9 @@ int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, ui
     return r;
 }
 
-
+/**
+* Get the number of rows (including the header) that exist in the datalog.
+*/
 uint32_t MicroBitLog::getNumberOfRows()
 {
     constexpr uint8_t rowSeparator = 10; // newline char
@@ -1168,24 +1169,23 @@ uint32_t MicroBitLog::getNumberOfRows()
  * Get n rows worth of logged data as a ManagedString
  * Each element is seperated by a newline
  */
-ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
+ManagedString MicroBitLog::getRows(uint32_t fromRowIndex, uint32_t nRows)
 {
-    if (fromRowIndex >= dataEnd || nRows == 0) {
+    if (fromRowIndex >= dataEnd || nRows == 0)
         return cleanBuffer("", 0);
-    }
 
     constexpr uint8_t rowSeparator = 10; // newline char in asci
     const uint32_t rowSeparatorTargetCount = fromRowIndex + nRows + 1;
 
     uint32_t startOfRowN = dataStart;
     uint32_t endOfDataChunk = dataEnd;
-
-    bool startRowFound = false;
-
-    // Read read until we see a 0xFF character (unused memory)
+    
     uint32_t end = dataStart;
     uint32_t rowSeparatorCount = 0;
+    bool startRowFound = false;
     uint8_t c = 0;
+
+    // Read read until we see a 0xFF character (unused memory)
     while(c != 0xff)
     {
         cache.read(end, &c, 1);
