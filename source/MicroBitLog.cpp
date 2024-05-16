@@ -1187,19 +1187,21 @@ ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
 
     // Read read until we see a 0xFF character (unused memory)
     uint32_t end = dataStart;
+    uint32_t rowSeparatorCount = 0;
     uint8_t c = 0;
     while(c != 0xff)
     {
         cache.read(end, &c, 1);
 
         if (c == rowSeparator) {
-            if (!startRowFound && end == fromRowIndex) 
+            rowSeparatorCount++;
+            if (!startRowFound && rowSeparatorCount == fromRowIndex) 
             {
                 startRowFound = true;
                 startOfRowN = end;
             }
 
-            else if (end == rowSeparatorTargetCount) 
+            else if (rowSeparatorCount == rowSeparatorTargetCount) 
             {
                 endOfDataChunk = end;
                 break;
