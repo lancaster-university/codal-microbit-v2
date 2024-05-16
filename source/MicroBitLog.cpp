@@ -1170,9 +1170,9 @@ uint32_t MicroBitLog::getNumberOfRows()
  */
 ManagedString MicroBitLog::getNRows(uint32_t fromRowIndex, uint32_t nRows)
 {
-    if (fromRowIndex >= dataEnd || nRows == 0) {
-        return cleanBuffer("", 0);
-    }
+    // if (fromRowIndex >= dataEnd || nRows == 0) {
+    //     return cleanBuffer("", 0);
+    // }
 
     constexpr uint8_t rowSeparator = 10; // newline char
     // constexpr uint8_t rowSeparator = 0x2C; // ','
