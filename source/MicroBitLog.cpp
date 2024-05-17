@@ -1140,8 +1140,10 @@ int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, ui
     return r;
 }
 
+
 /**
 * Get the number of rows (including the header) that exist in the datalog.
+* @return number of rows + header
 */
 uint32_t MicroBitLog::getNumberOfRows()
 {
@@ -1166,9 +1168,11 @@ uint32_t MicroBitLog::getNumberOfRows()
 }
 
 /**
- * Get n rows worth of logged data as a ManagedString
- * Each element is seperated by a newline
- */
+* Get n rows worth of logged data as a ManagedString
+* @param fromRowIndex 0-based index of starting row
+* @param nRows number of rows to get from fromRowIndex
+* @return ManagedString of all data in these rows, each column separated by a '_'
+*/
 ManagedString MicroBitLog::getRows(uint32_t fromRowIndex, uint32_t nRows)
 {
     if (fromRowIndex >= dataEnd || nRows == 0)
@@ -1215,9 +1219,9 @@ ManagedString MicroBitLog::getRows(uint32_t fromRowIndex, uint32_t nRows)
 }
 
 /**
- * Get all the logged data as a ManagedString.
- * Each element is seperated by a _
- */
+* Get all the logged data as a ManagedString.
+* Each element is seperated by a '_'
+*/
 ManagedString MicroBitLog::getData() 
 {
     const int length = dataEnd - dataStart;
