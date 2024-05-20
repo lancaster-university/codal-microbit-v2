@@ -1187,9 +1187,9 @@ ManagedString MicroBitLog::getRows(uint32_t fromRowIndex, uint32_t nRows)
     uint32_t end = dataStart;
     uint32_t rowSeparatorCount = 0;
     bool startRowFound = false;
-    uint8_t c = 0;
-
+    
     // Read read until we see a 0xFF character (unused memory)
+    uint8_t c = 0;
     while(c != 0xff)
     {
         cache.read(end, &c, 1);
@@ -1217,19 +1217,6 @@ ManagedString MicroBitLog::getRows(uint32_t fromRowIndex, uint32_t nRows)
     cache.read(startOfRowN, rowData, dataLength);
     return cleanBuffer((char*) rowData, dataLength);
 }
-
-/**
-* Get all the logged data as a ManagedString.
-* Each element is seperated by a '_'
-*/
-ManagedString MicroBitLog::getData() 
-{
-    const int length = dataEnd - dataStart;
-    void *rowData = malloc(length * sizeof(char*));
-    cache.read(dataStart, rowData, length);
-    return cleanBuffer((char*) rowData, length);
-}
-
 
 /**
  * Destructor.

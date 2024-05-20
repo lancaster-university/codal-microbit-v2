@@ -374,12 +374,6 @@ namespace codal
         * @return ManagedString of all data in these rows, each column separated by a '_'
         */
         ManagedString getRows(uint32_t fromRowIndex, uint32_t nRows);
-        
-        /**
-        * Get all the logged data as a ManagedString.
-        * Each element is seperated by a '_'
-        */
-        ManagedString getData();
 
     private:
 
