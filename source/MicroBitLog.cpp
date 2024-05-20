@@ -1143,22 +1143,28 @@ int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, ui
 
 /**
 * Get the number of rows (including the header) that exist in the datalog.
+* @param fromRowIndex 0-based index of starting row
 * @return number of rows + header
 */
-uint32_t MicroBitLog::getNumberOfRows()
+uint32_t MicroBitLog::getNumberOfRows(uint32_t fromRowIndex)
 {
     constexpr uint8_t rowSeparator = 10; // newline char
     uint32_t rowCount = 0;
 
-    // Read read until we see a 0xFF character (unused memory)
     uint32_t end = dataStart;
+    bool startFound = false;
+
+    // Read read until we see a 0xFF character (unused memory)
     uint8_t c = 0;
     while(c != 0xff)
     {
         cache.read(end, &c, 1);
-
         if (c == rowSeparator) {
             rowCount++;
+            if (!startFound && fromRowIndex == rowCount) {
+                startFound = true;
+                rowCount = 0;
+            }
         }
 
         end++;
@@ -1188,7 +1194,7 @@ ManagedString MicroBitLog::getRows(uint32_t fromRowIndex, uint32_t nRows)
     uint32_t rowSeparatorCount = 0;
     bool startRowFound = false;
     
-    // Read read until we see a 0xFF character (unused memory)
+    // Read until we see a 0xFF character (unused memory)
     uint8_t c = 0;
     while(c != 0xff)
     {
