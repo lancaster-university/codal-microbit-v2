@@ -24,8 +24,6 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitLog.h"
 #include "CodalDmesg.h"
-#include <new>
-#include <cstdio>
 
 #define ARRAY_LEN(array)    (sizeof(array) / sizeof(array[0]))
 
@@ -1177,12 +1175,12 @@ uint32_t MicroBitLog::getNumberOfRows(uint32_t fromRowIndex)
 * Get n rows worth of logged data as a ManagedString
 * @param fromRowIndex 0-based index of starting row
 * @param nRows number of rows to get from fromRowIndex
-* @return ManagedString of all data in these rows, each column separated by a '_'
+* @return ManagedString of all data in these rows, each column separated by a newline
 */
 ManagedString MicroBitLog::getRows(uint32_t fromRowIndex, uint32_t nRows)
 {
-    if (fromRowIndex >= dataEnd || nRows == 0)
-        return cleanBuffer("", 0);
+    if (fromRowIndex >= dataEnd || nRows <= 0)
+        return ManagedString("");
 
     constexpr uint8_t rowSeparator = 10; // newline char in asci
     const uint32_t rowSeparatorTargetCount = fromRowIndex + nRows + 1;
@@ -1219,9 +1217,9 @@ ManagedString MicroBitLog::getRows(uint32_t fromRowIndex, uint32_t nRows)
     }
 
     const int dataLength = endOfDataChunk - startOfRowN;
-    void *rowData = malloc(dataLength * sizeof(char*));
-    cache.read(startOfRowN, rowData, dataLength);
-    return cleanBuffer((char*) rowData, dataLength);
+    ManagedBuffer rowData(dataLength);
+    cache.read(startOfRowN, rowData.toCharArray(), dataLength);
+    return rowData;
 }
 
 /**
