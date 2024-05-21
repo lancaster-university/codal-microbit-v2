@@ -366,7 +366,7 @@ namespace codal
         * @param fromRowIndex 0-based index of starting row
         * @return number of rows + header from fromRowIndex
         */
-        uint32_t getNumberOfRows(uint32_t fromRowIndex = 0);
+        uint32_t getNumberOfRows(uint32_t fromRowIndex);
 
         /**
         * Get n rows (first row is header) worth of logged data as a ManagedString
