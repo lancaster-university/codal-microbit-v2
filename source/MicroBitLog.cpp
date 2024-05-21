@@ -1185,14 +1185,13 @@ ManagedString MicroBitLog::getRows(uint32_t fromRowIndex, int nRows)
 
     constexpr uint8_t rowSeparator = 10; // newline char in asci
     const uint32_t rowSeparatorTargetCount = fromRowIndex + nRows;
-    fromRowIndex++; // First rowSeparator found == first row (1 != 0) -> increment
 
     uint32_t startOfRowN = dataStart;
     uint32_t endOfDataChunk = dataEnd;
     
     uint32_t end = dataStart;
     uint32_t rowSeparatorCount = 0;
-    bool startRowFound = false;
+    bool startRowFound = (fromRowIndex == 0) ? true : false;
     
     // Read until we see a 0xFF character (unused memory)
     uint8_t c = 0;
