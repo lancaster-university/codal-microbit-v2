@@ -1217,6 +1217,10 @@ ManagedString MicroBitLog::getRows(uint32_t fromRowIndex, int nRows)
         end++;
     }
 
+    // fromRowIndex was beyond the datalogger:
+    if (!startFound)
+        return ManagedString("", 0);
+
     const int dataLength = endOfDataChunk - startOfRowN;
     char rows[dataLength];
     cache.read(startOfRowN, rows, dataLength);
