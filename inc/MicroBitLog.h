@@ -363,10 +363,10 @@ namespace codal
 
         /**
         * Get the number of rows (including the header) that exist in the datalog.
-        * @param fromRowIndex 0-based index of starting row
+        * @param fromRowIndex 0-based index of starting row: bumped up to 0 if negative
         * @return number of rows + header from fromRowIndex
         */
-        uint32_t getNumberOfRows(uint32_t fromRowIndex);
+        uint32_t getNumberOfRows(uint32_t fromRowIndex = 0);
 
         /**
         * Get n rows (first row is header) worth of logged data as a ManagedString
