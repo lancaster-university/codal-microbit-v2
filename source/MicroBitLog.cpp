@@ -1176,7 +1176,7 @@ uint32_t MicroBitLog::getNumberOfRows(uint32_t fromRowIndex)
 * Get n rows worth of logged data as a ManagedString
 * @param fromRowIndex 0-based index of starting row
 * @param nRows number of rows to get from fromRowIndex
-* @return ManagedString of all data in these rows, each column separated by a newline
+* @return ManagedString between the parameter range, each row separated by a newline, each column by a comma
 */
 ManagedString MicroBitLog::getRows(uint32_t fromRowIndex, int nRows)
 {
