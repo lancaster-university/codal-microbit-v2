@@ -1218,7 +1218,7 @@ ManagedString MicroBitLog::getRows(uint32_t fromRowIndex, int nRows)
     }
 
     // fromRowIndex was beyond the datalogger:
-    if (!startFound)
+    if (!startRowFound)
         return ManagedString("", 0);
 
     const int dataLength = endOfDataChunk - startOfRowN;
