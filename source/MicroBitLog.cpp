@@ -1217,15 +1217,15 @@ ManagedString MicroBitLog::getRows(uint32_t fromRowIndex, uint32_t nRows)
         end++;
     }
 
-    // const int dataLength = endOfDataChunk - startOfRowN;
-    // ManagedString rows(dataLength);
-    // cache.read(startOfRowN, (char *)(rows.toCharArray()), dataLength);
-    // return rows;
-
     const int dataLength = endOfDataChunk - startOfRowN;
-    void *rowData = malloc(dataLength * sizeof(char*));
-    cache.read(startOfRowN, rowData, dataLength);
-    return cleanBuffer((char*) rowData, dataLength);
+    ManagedString rows(dataLength);
+    cache.read(startOfRowN, (char *)(rows.toCharArray()), dataLength);
+    return rows;
+
+    // const int dataLength = endOfDataChunk - startOfRowN;
+    // void *rowData = malloc(dataLength * sizeof(char*));
+    // cache.read(startOfRowN, rowData, dataLength);
+    // return cleanBuffer((char*) rowData, dataLength);
 }
 
 /**
