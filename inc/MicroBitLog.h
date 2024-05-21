@@ -374,7 +374,7 @@ namespace codal
         * @param nRows number of rows to get from fromRowIndex
         * @return ManagedString of all data in these rows, each column separated by a newline
         */
-        ManagedString getRows(uint32_t fromRowIndex, uint32_t nRows);
+        ManagedString getRows(uint32_t fromRowIndex, int nRows);
 
     private:
 
