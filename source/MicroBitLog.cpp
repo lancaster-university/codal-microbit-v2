@@ -1218,7 +1218,7 @@ ManagedString MicroBitLog::getRows(uint32_t fromRowIndex, uint32_t nRows)
     }
 
     const int dataLength = endOfDataChunk - startOfRowN;
-    ManagedString rows(dataLength);
+    ManagedString rows("", dataLength);
     cache.read(startOfRowN, (char *)(rows.toCharArray()), dataLength);
     return rows;
 
