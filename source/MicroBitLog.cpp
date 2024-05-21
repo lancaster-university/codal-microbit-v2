@@ -1146,10 +1146,6 @@ int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, ui
 */
 uint32_t MicroBitLog::getNumberOfRows(uint32_t fromRowIndex)
 {
-    if (fromRowIndex < 0) {
-        fromRowIndex = 0;
-    }
-
     constexpr uint8_t rowSeparator = 10; // newline char
     uint32_t rowCount = 0;
 
@@ -1184,7 +1180,7 @@ uint32_t MicroBitLog::getNumberOfRows(uint32_t fromRowIndex)
 ManagedString MicroBitLog::getRows(uint32_t fromRowIndex, uint32_t nRows)
 {
     if (fromRowIndex >= dataEnd || nRows <= 0)
-        return ManagedString("", 0);
+        return cleanBuffer("", 0);
 
     constexpr uint8_t rowSeparator = 10; // newline char in asci
     const uint32_t rowSeparatorTargetCount = fromRowIndex + nRows + 1;
