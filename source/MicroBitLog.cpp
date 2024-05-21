@@ -1141,11 +1141,15 @@ int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, ui
 
 /**
 * Get the number of rows (including the header) that exist in the datalog.
-* @param fromRowIndex 0-based index of starting row
+* @param fromRowIndex 0-based index of starting row: bumped up to 0 if negative
 * @return number of rows + header
 */
 uint32_t MicroBitLog::getNumberOfRows(uint32_t fromRowIndex)
 {
+    if (fromRowIndex < 0) {
+        fromRowIndex = 0;
+    }
+
     constexpr uint8_t rowSeparator = 10; // newline char
     uint32_t rowCount = 0;
 
@@ -1180,7 +1184,7 @@ uint32_t MicroBitLog::getNumberOfRows(uint32_t fromRowIndex)
 ManagedString MicroBitLog::getRows(uint32_t fromRowIndex, uint32_t nRows)
 {
     if (fromRowIndex >= dataEnd || nRows <= 0)
-        return ManagedString("");
+        return ManagedString("", 0);
 
     constexpr uint8_t rowSeparator = 10; // newline char in asci
     const uint32_t rowSeparatorTargetCount = fromRowIndex + nRows + 1;
@@ -1216,10 +1220,15 @@ ManagedString MicroBitLog::getRows(uint32_t fromRowIndex, uint32_t nRows)
         end++;
     }
 
+    // const int dataLength = endOfDataChunk - startOfRowN;
+    // ManagedString rows(dataLength);
+    // // cache.read(startOfRowN, (char *)(rows.toCharArray()), dataLength);
+    // return rows;
+
     const int dataLength = endOfDataChunk - startOfRowN;
-    ManagedString rows(dataLength);
-    // cache.read(startOfRowN, (char *)(rows.toCharArray()), dataLength);
-    return rows;
+    void *rowData = malloc(dataLength * sizeof(char*));
+    cache.read(startOfRowN, rowData, dataLength);
+    return cleanBuffer((char*) rowData, dataLength);
 }
 
 /**
