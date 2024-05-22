@@ -1150,7 +1150,7 @@ uint32_t MicroBitLog::getNumberOfRows(uint32_t fromRowIndex)
     uint32_t rowCount = 0;
 
     uint32_t end = dataStart;
-    bool startFound = false;
+    bool startRowFound = (fromRowIndex == 0) ? true : false;
 
     // Read read until we see a 0xFF character (unused memory)
     uint8_t c = 0;
@@ -1170,7 +1170,6 @@ uint32_t MicroBitLog::getNumberOfRows(uint32_t fromRowIndex)
 
     if (!startFound)
         return 0;
-
     return rowCount;
 }
 
