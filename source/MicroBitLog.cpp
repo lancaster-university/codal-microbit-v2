@@ -1141,9 +1141,9 @@ int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, ui
 
 
 /**
-* Get the number of rows (including the header) that exist in the datalog.
-* @param fromRowIndex 0-based index of starting row: bumped up to 0 if negative
-* @return number of rows + header
+* Get the number of rows (including the header) in the datalogger.
+* @param fromRowIndex 0-based index of starting row: bumped up to 0 if negative.
+* @return number of rows + header.
 */
 uint32_t MicroBitLog::getNumberOfRows(uint32_t fromRowIndex)
 {
@@ -1156,7 +1156,7 @@ uint32_t MicroBitLog::getNumberOfRows(uint32_t fromRowIndex)
     // Read read until we see a 0xFF character (unused memory)
     uint8_t c = 0;
     while(c != 0xff)
-    {
+    { 
         cache.read(end, &c, 1);
         if (c == rowSeparator) {
             rowCount++;
@@ -1173,10 +1173,10 @@ uint32_t MicroBitLog::getNumberOfRows(uint32_t fromRowIndex)
 }
 
 /**
-* Get n rows worth of logged data as a ManagedString
-* @param fromRowIndex 0-based index of starting row
-* @param nRows number of rows to get from fromRowIndex
-* @return ManagedString between the parameter range, each row separated by a newline, each column by a comma
+* Get n rows worth of logged data as a ManagedString.
+* @param fromRowIndex 0-based index of starting row.
+* @param nRows number of rows to get from fromRowIndex.
+* @return ManagedString between the parameter range, each row separated by a newline, each column by a comma.
 */
 ManagedString MicroBitLog::getRows(uint32_t fromRowIndex, int nRows)
 {
