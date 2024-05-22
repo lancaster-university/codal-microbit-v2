@@ -1160,7 +1160,7 @@ uint32_t MicroBitLog::getNumberOfRows(uint32_t fromRowIndex)
         if (c == rowSeparator) {
             rowCount++;
             if (!startRowFound && fromRowIndex == rowCount) {
-                startFound = true;
+                startRowFound = true;
                 rowCount = 0;
             }
         }
