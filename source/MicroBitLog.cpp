@@ -1159,16 +1159,16 @@ uint32_t MicroBitLog::getNumberOfRows(uint32_t fromRowIndex)
         cache.read(end, &c, 1);
         if (c == rowSeparator) {
             rowCount++;
-            if (!startFound && fromRowIndex == rowCount) {
+            if (!startRowFound && fromRowIndex == rowCount) {
                 startFound = true;
                 rowCount = 0;
             }
         }
-
         end++;
     }
 
-    if (!startFound)
+    // Will be the case if fromRowIndex is beyond the number of rows:
+    if (!startRowFound)
         return 0;
     return rowCount;
 }
