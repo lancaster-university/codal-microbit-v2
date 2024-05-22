@@ -1168,6 +1168,9 @@ uint32_t MicroBitLog::getNumberOfRows(uint32_t fromRowIndex)
         end++;
     }
 
+    if (!startFound)
+        return 0;
+
     return rowCount;
 }
 
