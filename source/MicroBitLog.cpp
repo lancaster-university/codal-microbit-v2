@@ -1140,6 +1140,93 @@ int MicroBitLog::_readSource( uint8_t *&data, uint32_t &index, uint32_t &len, ui
 }
 
 /**
+* Get the number of rows (including the header) in the datalogger.
+* @param fromRowIndex 0-based index of starting row: bumped up to 0 if negative.
+* @return number of rows + header.
+*/
+uint32_t MicroBitLog::getNumberOfRows(uint32_t fromRowIndex)
+{
+    constexpr uint8_t rowSeparator = 10; // newline char
+    uint32_t rowCount = 0;
+
+    uint32_t end = dataStart;
+    bool startFound = false;
+
+    // Read read until we see a 0xFF character (unused memory)
+    uint8_t c = 0;
+    while(c != 0xff)
+    { 
+        cache.read(end, &c, 1);
+        if (c == rowSeparator) {
+            rowCount++;
+            if (!startFound && fromRowIndex == rowCount) {
+                startFound = true;
+                rowCount = 0;
+            }
+        }
+
+        end++;
+    }
+
+    return rowCount;
+}
+
+/**
+* Get n rows worth of logged data as a ManagedString.
+* @param fromRowIndex 0-based index of starting row.
+* @param nRows number of rows to get from fromRowIndex.
+* @return ManagedString between the parameter range, each row separated by a newline, each column by a comma.
+*/
+ManagedString MicroBitLog::getRows(uint32_t fromRowIndex, int nRows)
+{
+    if (fromRowIndex >= dataEnd || nRows <= 0)
+        return ManagedString("", 0);
+
+    constexpr uint8_t rowSeparator = 10; // newline char in asci
+    const uint32_t rowSeparatorTargetCount = fromRowIndex + nRows;
+
+    uint32_t startOfRowN = dataStart;
+    uint32_t endOfDataChunk = dataEnd;
+    
+    uint32_t end = dataStart;
+    uint32_t rowSeparatorCount = 0;
+    bool startRowFound = (fromRowIndex == 0) ? true : false;
+    
+    // Read until we see a 0xFF character (unused memory)
+    uint8_t c = 0;
+    while(c != 0xff)
+    {
+        cache.read(end, &c, 1);
+
+        if (c == rowSeparator) {
+            rowSeparatorCount++;
+            if (!startRowFound && rowSeparatorCount == fromRowIndex) 
+            {
+                startRowFound = true;
+                startOfRowN = end + 1;
+            }
+
+            else if (rowSeparatorCount == rowSeparatorTargetCount) 
+            {
+                endOfDataChunk = end;
+                break;
+            }
+        }
+
+        end++;
+    }
+
+    // fromRowIndex was beyond the datalogger:
+    if (!startRowFound)
+        return ManagedString("", 0);
+
+    const int dataLength = endOfDataChunk - startOfRowN;
+    char rows[dataLength];
+    cache.read(startOfRowN, rows, dataLength);
+    return ManagedString(rows, dataLength);
+}
+
+/**
  * Destructor.
  */
 MicroBitLog::~MicroBitLog()
