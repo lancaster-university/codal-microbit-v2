@@ -283,12 +283,15 @@
 #endif
 
 // Versioning options.
-// We use semantic versioning (http://semver.org/) to identify differnet versions of the micro:bit runtime.
-// Where possible we use yotta (an ARM mbed build tool) to help us track versions.
-// if this isn't available, it can be defined manually as a configuration option.
+// We use semantic versioning (http://semver.org/) to identify different versions of the micro:bit runtime.
+// If this isn't available, it can be defined manually as a configuration option.
 //
 #ifndef MICROBIT_DAL_VERSION
-    #define MICROBIT_DAL_VERSION                    "unknown"
+    #ifdef DEVICE_DAL_VERSION
+        #define MICROBIT_DAL_VERSION                DEVICE_DAL_VERSION
+    #else
+        #define MICROBIT_DAL_VERSION                "unknown"
+    #endif
 #endif
 
 // Allow USB serial events to wake the board from deep sleep.
