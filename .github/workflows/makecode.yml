@@ -85,6 +85,17 @@ jobs:
               f.write(json.dumps(pxt_target, indent=4))
           EOF
           git diff pxtarget.json
+      # https://github.com/microsoft/pxt-microbit/issues/5721
+      # https://docs.docker.com/engine/deprecated/#pushing-and-pulling-with-image-manifest-v2-schema-1
+      # https://stackoverflow.com/a/51357915/775259
+      - name: Workaround for issue with pext/yotta:latest docker image type being deprecated
+        run: |
+          echo "[Service]" > docker-service-override.conf
+          echo 'Environment="DOCKER_ENABLE_DEPRECATED_PULL_SCHEMA_1_IMAGE=1"' >> docker-service-override.conf
+          sudo mkdir -p /etc/systemd/system/docker.service.d
+          sudo mv docker-service-override.conf /etc/systemd/system/docker.service.d/docker-service-override.conf
+          sudo systemctl daemon-reload
+          sudo systemctl restart docker
       - name: Build MakeCode targets
         # Because pxt runs docker with "--user build" it doesn't have write access to some mounted files,
         # so we need to force all files created by the pxt cli to have write/execute rights for everyone
