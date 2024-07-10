@@ -193,6 +193,15 @@ __NO_RETURN void microbit_reset()
 }
 
 /**
+  * For DAL compatibility, determine the version of DAL/CODAL currently running.
+  * @return a pointer to a character buffer containing a representation of the semantic version number.
+  */
+const char * microbit_dal_version()
+{
+    return MICROBIT_DAL_VERSION;
+}
+
+/**
   * Seed the random number generator (RNG).
   *
   * This function uses the NRF52833's in built cryptographic random number generator to seed a Galois LFSR.
