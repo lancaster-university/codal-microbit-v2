@@ -361,6 +361,21 @@ namespace codal
          */
         int readData(void *data, uint32_t index, uint32_t len, DataFormat format, uint32_t length);
 
+        /**
+        * Get the number of rows (including the header) in the datalogger.
+        * @param fromRowIndex 0-based index of starting row: bumped up to 0 if negative.
+        * @return number of rows + header.
+        */
+        uint32_t getNumberOfRows(uint32_t fromRowIndex = 0);
+
+        /**
+        * Get n rows worth of logged data as a ManagedString.
+        * @param fromRowIndex 0-based index of starting row.
+        * @param nRows number of rows to get from fromRowIndex.
+        * @return ManagedString between the parameter range, each row separated by a newline, each column by a comma.
+        */
+        ManagedString getRows(uint32_t fromRowIndex, int nRows);
+
     private:
 
         /**
