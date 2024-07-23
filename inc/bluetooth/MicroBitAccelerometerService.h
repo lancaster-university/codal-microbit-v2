@@ -35,6 +35,8 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitAccelerometer.h"
 #include "EventModel.h"
 
+namespace codal
+{
 
 /**
   * Class definition for a MicroBit BLE Accelerometer Service.
@@ -110,6 +112,7 @@ class MicroBitAccelerometerService : public MicroBitBLEService
     MicroBitBLEChar *characteristicPtr( int idx)    { return &chars[ idx]; };
 };
 
+} // namespace codal
 
-#endif
-#endif
+#endif // CONFIG_ENABLED(DEVICE_BLE)
+#endif // MICROBIT_ACCELEROMETER_SERVICE_H

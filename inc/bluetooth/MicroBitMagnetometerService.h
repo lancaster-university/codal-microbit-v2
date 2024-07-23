@@ -40,6 +40,8 @@ DEALINGS IN THE SOFTWARE.
 #define COMPASS_CALIBRATION_COMPLETED_OK   2
 #define COMPASS_CALIBRATION_COMPLETED_ERR  3
 
+namespace codal
+{
 
 /**
   * Class definition for the MicroBit BLE Magnetometer Service.
@@ -138,5 +140,7 @@ class MicroBitMagnetometerService : public MicroBitBLEService
     MicroBitBLEChar *characteristicPtr( int idx)    { return &chars[ idx]; };
 };
 
-#endif
-#endif
+} // namespace codal
+
+#endif // CONFIG_ENABLED(DEVICE_BLE)
+#endif // MICROBIT_MAGNETOMETER_SERVICE_H

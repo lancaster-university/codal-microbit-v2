@@ -5,27 +5,27 @@
 
 class DigitalOut: public codal::NRF52Pin {
     public:
-        DigitalOut(PinName pin) : codal::NRF52Pin(pin, pin, PIN_CAPABILITY_DIGITAL) 
+        DigitalOut(PinName pin) : codal::NRF52Pin(pin, pin, codal::PIN_CAPABILITY_DIGITAL) 
         {
         }
 
-        void mode(PullMode pull) {
+        void mode(codal::PullMode pull) {
             this->setPull(pull);
         }
 
         void mode(int pull) {
             switch(pull) {
                 case PullNone:
-                    this->setPull(PullMode::None);
+                    this->setPull(codal::PullMode::None);
                     break;
                 case PullDown:
-                    this->setPull(PullMode::Down);
+                    this->setPull(codal::PullMode::Down);
                     break;
                 case PullUp:
-                    this->setPull(PullMode::Up);
+                    this->setPull(codal::PullMode::Up);
                     break;
                 default:
-                    this->setPull(PullMode::Up);
+                    this->setPull(codal::PullMode::Up);
                     break;
             }
         }

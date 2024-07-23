@@ -24,6 +24,9 @@ DEALINGS IN THE SOFTWARE.
 
 #include "nrf.h"
 
+namespace codal
+{
+
 class MicroBitFlash
 {
     private:
@@ -85,5 +88,7 @@ class MicroBitFlash
     void flash_burn(uint32_t* page_address, uint32_t* buffer, int len);
 
 };
+
+} // namespace codal
 
 #endif

@@ -40,6 +40,9 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_UART_S_EVT_HEAD_MATCH      2
 #define MICROBIT_UART_S_EVT_RX_FULL         3
 
+namespace codal
+{
+
 /**
   * Class definition for the custom MicroBit UART Service.
   * Provides a BLE service that acts as a UART port, enabling the reception and transmission
@@ -341,5 +344,7 @@ class MicroBitUARTService : public MicroBitBLEService
     MicroBitBLEChar *characteristicPtr( int idx)    { return &chars[ idx]; };
 };
 
-#endif
-#endif
+} // namespace codal
+
+#endif // CONFIG_ENABLED(DEVICE_BLE)
+#endif // MICROBIT_UART_SERVICE_H

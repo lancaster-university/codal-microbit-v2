@@ -36,6 +36,7 @@ DEALINGS IN THE SOFTWARE.
 #include "ExternalEvents.h"
 #include "MicroBitFiber.h"
 
+using namespace codal;
 
 const uint16_t MicroBitEventService::serviceUUID               = 0x93af;
 const uint16_t MicroBitEventService::charUUID[ mbbs_cIdxCOUNT] = { 0x9775, 0xb84c, 0x5404, 0x23c4 };

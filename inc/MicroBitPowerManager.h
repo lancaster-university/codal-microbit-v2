@@ -164,6 +164,8 @@ typedef struct {
 #define CONFIG_MINIMUM_POWER_ON_TIME  500
 #endif
 
+namespace codal
+{
 
 /**
  * Class definition for MicroBitPowerManager.
@@ -479,4 +481,7 @@ class MicroBitPowerManager : public CodalComponent
          */
         int simpleDeepSleep( bool wakeOnTime, CODAL_TIMESTAMP wakeUpTime, bool wakeUpSources, NRF52Pin *wakeUpPin);
 };
+
+} // namespace codal
+
 #endif

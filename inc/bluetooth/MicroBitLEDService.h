@@ -38,6 +38,8 @@ DEALINGS IN THE SOFTWARE.
 // the maximum string length that can be scrolled via the BLE service.
 #define MICROBIT_BLE_MAXIMUM_SCROLLTEXT         20
 
+namespace codal
+{
 
 /**
   * Class definition for the custom MicroBit LED Service.
@@ -98,6 +100,7 @@ class MicroBitLEDService : public MicroBitBLEService
     MicroBitBLEChar *characteristicPtr( int idx)    { return &chars[ idx]; };
 };
 
+} // namespace codal
 
-#endif
-#endif
+#endif // CONFIG_ENABLED(DEVICE_BLE)
+#endif // MICROBIT_LED_SERVICE_H

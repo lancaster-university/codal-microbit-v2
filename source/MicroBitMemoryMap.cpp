@@ -40,6 +40,8 @@ DEALINGS IN THE SOFTWARE.
 #include "app_util.h"
 #include "crc32.h"
 
+using namespace codal;
+
 #define MAX_STRING_LENGTH 100
 
 /**

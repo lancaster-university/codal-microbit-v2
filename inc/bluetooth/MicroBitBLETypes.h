@@ -95,6 +95,9 @@ DEALINGS IN THE SOFTWARE.
 #include "ble.h"
 #include "ble_gatts.h"
 
+namespace codal
+{
+
 typedef uint32_t                     microbit_ble_ret_code_t;
 typedef uint16_t                     microbit_gaphandle_t;
 typedef uint16_t                     microbit_servicehandle_t;
@@ -142,6 +145,8 @@ extern microbit_ble_ret_code_t microbit_ble_on_error( microbit_ble_ret_code_t er
 #define MICROBIT_BLE_ECHK( err) (err)
 #endif
 
-#endif
+} // namespace codal
 
-#endif
+#endif // CONFIG_ENABLED(DEVICE_BLE)
+
+#endif // MICROBIT_BLE_TYPES_H

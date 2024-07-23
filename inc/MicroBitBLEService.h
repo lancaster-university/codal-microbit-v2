@@ -32,6 +32,9 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitBLEChar.h"
 
+namespace codal
+{
+
 /**
   * Class definition for MicroBitBLEService.
   * Provides a base class for the BLE sevices.
@@ -141,6 +144,7 @@ class MicroBitBLEService
     static const uint8_t        bs_base_uuid[16];
 };
 
+} // namespace codal
 
-#endif
-#endif
+#endif // CONFIG_ENABLED(DEVICE_BLE)
+#endif // MICROBIT_BLE_SERVICE_H

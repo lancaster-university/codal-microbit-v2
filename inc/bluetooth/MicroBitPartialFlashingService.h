@@ -51,6 +51,8 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_STATUS 0xEE
 #define MICROBIT_RESET  0xFF
 
+namespace codal
+{
 
 /**
   * Class definition for the custom MicroBit Partial Flash Service.
@@ -129,6 +131,7 @@ class MicroBitPartialFlashingService : public MicroBitBLEService
     MicroBitBLEChar *characteristicPtr( int idx)    { return &chars[ idx]; };
 };
 
+} // namespace
 
-#endif
-#endif
+#endif // CONFIG_ENABLED(DEVICE_BLE)
+#endif // MICROBIT_PARTIAL_FLASH_SERVICE_H

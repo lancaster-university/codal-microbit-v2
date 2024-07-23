@@ -34,6 +34,8 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitIOPinService.h"
 #include "MicroBitFiber.h"
 
+using namespace codal;
+
 const uint16_t MicroBitIOPinService::serviceUUID               = 0x127b;
 const uint16_t MicroBitIOPinService::charUUID[ mbbs_cIdxCOUNT] = { 0x5899, 0xb9fe, 0xd822, 0x8d00 };
 

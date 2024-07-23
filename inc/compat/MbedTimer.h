@@ -7,22 +7,22 @@ class MbedTimer {
         uint32_t _stop = 0;
     public:
         void start() {
-            _start = system_timer_current_time_us();
+            _start = codal::system_timer_current_time_us();
         }
         
         void stop() {
-            _stop = system_timer_current_time_us();
+            _stop = codal::system_timer_current_time_us();
         }
         
         void reset() {
-            _start = system_timer_current_time_us();
+            _start = codal::system_timer_current_time_us();
         }
 
         float read() {
             if(_stop > 0) {
                 return (_stop - _start) / 1000000.0;
             } else {
-                return (system_timer_current_time_us() - _start) / 1000000.0;
+                return (codal::system_timer_current_time_us() - _start) / 1000000.0;
             }
             
         }
@@ -31,15 +31,15 @@ class MbedTimer {
             if(_stop > 0) {
                 return (_stop - _start) / 1000;
             } else {
-                return (system_timer_current_time_us() - _start) / 1000;
+                return (codal::system_timer_current_time_us() - _start) / 1000;
             }
         }
 
         int read_us() {
             if(_stop > 0) {
-                return system_timer_current_time_us() - _start;
+                return codal::system_timer_current_time_us() - _start;
             } else {
-                return system_timer_current_time_us() - _start;
+                return codal::system_timer_current_time_us() - _start;
             }
         }
 

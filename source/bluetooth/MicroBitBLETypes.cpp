@@ -31,6 +31,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "nrf_log_ctrl.h"
 
+using namespace codal;
 
 #if ( MICROBIT_DMESG_LEVEL >= MICROBIT_DMESG_LEVEL_DEBUG)
 microbit_ble_ret_code_t microbit_ble_on_error( microbit_ble_ret_code_t err, const char *msg)

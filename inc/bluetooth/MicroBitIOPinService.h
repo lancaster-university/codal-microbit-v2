@@ -38,6 +38,9 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_IO_PIN_SERVICE_DATA_SIZE      10
 #define MICROBIT_PWM_PIN_SERVICE_DATA_SIZE     2
 
+namespace codal
+{
+
 /**
   * Name value pair definition, as used to read and write pin values over BLE.
   */
@@ -172,5 +175,7 @@ class MicroBitIOPinService : public MicroBitBLEService, MicroBitComponent
     MicroBitBLEChar *characteristicPtr( int idx)    { return &chars[ idx]; };
 };
 
-#endif
-#endif
+} // namespace codal
+
+#endif // CONFIG_ENABLED(DEVICE_BLE)
+#endif // MICROBIT_IO_PIN_SERVICE_H

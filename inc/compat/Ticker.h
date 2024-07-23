@@ -6,7 +6,7 @@
 #ifdef MICROBIT_DAL_FIBER_USER_DATA
 #include "pxt.h"
 #else
-extern MicroBit uBit;
+extern codal::MicroBit uBit;
 #endif
 
 #include "MicroBitCompat.h"
@@ -17,7 +17,7 @@ extern MicroBit uBit;
 class Ticker {
     private:
         uint32_t interval;
-        MbedMemberFunctionCallback *func;
+        codal::MbedMemberFunctionCallback *func;
 
     public:
 
@@ -30,23 +30,23 @@ class Ticker {
 
         template<typename T>
         void attach(T* tptr, void (T::*mptr)(void), float s) {
-            this->func = new MbedMemberFunctionCallback(tptr, mptr);
+            this->func = new codal::MbedMemberFunctionCallback(tptr, mptr);
             this->interval = (s * 1000000.0f);
             uBit.messageBus.listen(MICROBIT_ID_MBED_TICKER, 0x0, this, &Ticker::onTick);
-            system_timer_event_every_us(interval, MICROBIT_ID_MBED_TICKER, 0x0);
+            codal::system_timer_event_every_us(interval, MICROBIT_ID_MBED_TICKER, 0x0);
         }
         
         template<typename T>
         void attach_us(T* tptr, void (T::*mptr)(void), int us) {
-            this->func = new MbedMemberFunctionCallback(tptr, mptr);
+            this->func = new codal::MbedMemberFunctionCallback(tptr, mptr);
             this->interval = (us * 1000);
 
             uBit.messageBus.listen(MICROBIT_ID_MBED_TICKER, 0x0, this, &Ticker::onTick);
-            system_timer_event_every_us(interval, MICROBIT_ID_MBED_TICKER, 0x0);
+            codal::system_timer_event_every_us(interval, MICROBIT_ID_MBED_TICKER, 0x0);
         }
 
         void detach() {
-            system_timer_cancel_event(MICROBIT_ID_MBED_TICKER, 0x0);
+            codal::system_timer_cancel_event(MICROBIT_ID_MBED_TICKER, 0x0);
         }
 };
 

@@ -33,6 +33,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitAccelerometerService.h"
 
+using namespace codal;
 
 const uint16_t MicroBitAccelerometerService::serviceUUID               = 0x0753;
 const uint16_t MicroBitAccelerometerService::charUUID[ mbbs_cIdxCOUNT] = { 0xca4b, 0xfb24 };

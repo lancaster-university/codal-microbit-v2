@@ -31,7 +31,6 @@ DEALINGS IN THE SOFTWARE.
 #include "CodalDevice.h"
 #include "ErrorNo.h"
 #include "NRFLowLevelTimer.h"
-#include "Matrix4.h"
 #include "CodalCompat.h"
 #include "CodalComponent.h"
 #include "CodalDmesg.h"
@@ -317,7 +316,9 @@ namespace codal
 
 void microbit_dmesg_flush();
 
+#if CONFIG_ENABLED(CODAL_USE_GLOBAL_NAMESPACE)
 using namespace codal;
+#endif
 
 #define DEVICE_ID_MICROPHONE 3001
 

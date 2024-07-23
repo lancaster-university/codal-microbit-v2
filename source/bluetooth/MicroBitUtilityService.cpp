@@ -35,22 +35,19 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitUtilityTypes.h"
 
 using namespace codal;
-using namespace MicroBitUtility;
+using namespace codal::MicroBitUtility;
 
 #define MICROBIT_ID_UTILITY_PROCESS 0
 
 #define MicroBitUtilityService_SLEEP 10
 #define MicroBitUtilityService_TIMEOUT 10
 
-namespace MicroBitUtility
+typedef enum replyState_t
 {
-    typedef enum replyState_t
-    {
-        replyStateClear,
-        replyStateReady,                // reply has been prepared but not sent
-        replyStateError
-    } replyState_t;
-};
+    replyStateClear,
+    replyStateReady,                // reply has been prepared but not sent
+    replyStateError
+} replyState_t;
 
 
 //TODO How to choose service and characteristic IDs?
@@ -66,7 +63,7 @@ MicroBitUtilityService *MicroBitUtilityService::shared = NULL;
  * Provides simple BLE request/response
  * See MicroBitUtilityTypes.h
  */
-class MicroBitUtilityWorkspace
+class codal::MicroBitUtilityWorkspace
 {
     public:
 

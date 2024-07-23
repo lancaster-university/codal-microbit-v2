@@ -33,6 +33,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitTemperatureService.h"
 
+using namespace codal;
 
 const uint16_t MicroBitTemperatureService::serviceUUID               = 0x6100;
 const uint16_t MicroBitTemperatureService::charUUID[ mbbs_cIdxCOUNT] = { 0x9250, 0x1b25 };

@@ -25,6 +25,8 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitPowerManager.h"
 #include "MicroBit.h"
 
+using namespace codal;
+
 static const uint8_t UIPM_I2C_NOP[3] = {0,0,0};
 
 // Developer note - if any of these get longer than 8 bytes of payload, MICROBIT_UIPM_MAX_BUFFER_SIZE will also have to be updated
