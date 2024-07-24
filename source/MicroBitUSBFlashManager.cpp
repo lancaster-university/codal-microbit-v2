@@ -24,6 +24,8 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitUSBFlashManager.h"
 
+using namespace codal;
+
 static const KeyValueTableEntry usbFlashPropertyLengthData[] = {
     {MICROBIT_USB_FLASH_FILENAME_CMD, 12},
     {MICROBIT_USB_FLASH_FILESIZE_CMD, 5},

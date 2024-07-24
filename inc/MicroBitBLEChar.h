@@ -32,6 +32,8 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitBLETypes.h"
 
+namespace codal
+{
 
 /**
   * Class definition for MicroBitBLEChar.
@@ -67,6 +69,7 @@ class MicroBitBLEChar
     uint16_t                cccd;
 };
 
+} // namespace codal
 
-#endif
-#endif
+#endif // CONFIG_ENABLED(DEVICE_BLE)
+#endif // MICROBIT_BLE_CHAR_H

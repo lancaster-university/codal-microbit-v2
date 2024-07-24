@@ -34,6 +34,8 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitButtonService.h"
 #include "MicroBitButton.h"
 
+using namespace codal;
+
 const uint16_t MicroBitButtonService::serviceUUID               = 0x9882;
 const uint16_t MicroBitButtonService::charUUID[ mbbs_cIdxCOUNT] = { 0xda90, 0xda91 };
 

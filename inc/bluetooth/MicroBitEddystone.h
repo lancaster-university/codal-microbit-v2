@@ -40,6 +40,9 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitBLEManager.h"
 
+namespace codal
+{
+
 /**
   * Class definition for the MicroBitEddystone.
   *
@@ -109,5 +112,7 @@ class MicroBitEddystone
     static MicroBitEddystone *_instance;
 };
 
-#endif
-#endif
+} // namespace codal
+
+#endif // CONFIG_ENABLED(DEVICE_BLE)
+#endif // MICROBIT_EDDYSTONE_H

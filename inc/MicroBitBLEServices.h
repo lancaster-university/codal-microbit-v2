@@ -41,6 +41,8 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_BLE_SERVICES_OBSERVER_PRIO 2
 #endif
 
+namespace codal
+{
 
 /**
   * Class definition for MicroBitBLEServices.
@@ -74,6 +76,7 @@ class MicroBitBLEServices
     MicroBitBLEService   *bs_services[ MICROBIT_BLE_SERVICES_MAX];
 };
 
+} // namespace codal
 
-#endif
-#endif
+#endif // CONFIG_ENABLED(DEVICE_BLE)
+#endif // MICROBIT_BLE_SERVICES_H

@@ -36,6 +36,9 @@ DEALINGS IN THE SOFTWARE.
 #define REGION_MAKECODE 2
 #define REGION_PYTHON   3 
 
+namespace codal
+{
+
 /**
  * Structure definition for the reserved, noinit memory segment placed at the end of memory.
  */
@@ -141,5 +144,7 @@ class MicroBitMemoryMap
      */
     int processRecord(uint32_t *address);
 };
+
+} // namespace codal
 
 #endif

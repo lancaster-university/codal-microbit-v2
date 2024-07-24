@@ -35,6 +35,8 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitThermometer.h"
 #include "EventModel.h"
 
+namespace codal
+{
 
 /**
   * Class definition for the custom MicroBit Temperature Service.
@@ -106,6 +108,7 @@ class MicroBitTemperatureService : public MicroBitBLEService
     MicroBitBLEChar *characteristicPtr( int idx)    { return &chars[ idx]; };
 };
 
+} // namespace codal
 
-#endif
-#endif
+#endif // CONFIG_ENABLED(DEVICE_BLE)
+#endif // MICROBIT_TEMPERATURE_SERVICE_H

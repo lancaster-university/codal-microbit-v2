@@ -62,6 +62,9 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_MODE_PAIRING                   0
 #define MICROBIT_MODE_APPLICATION               1
 
+namespace codal
+{
+
 class MicroBitBLEManager;
 typedef MicroBitBLEManager BLEDevice;
 
@@ -322,6 +325,8 @@ class MicroBitBLEManager : public CodalComponent
     bool advertiseOnDisconnect = true;
 };
 
-#endif
+} // namespace codal
 
-#endif
+#endif // CONFIG_ENABLED(DEVICE_BLE)
+
+#endif // MICROBIT_BLE_MANAGER_H

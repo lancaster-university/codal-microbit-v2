@@ -401,8 +401,6 @@ namespace codal
     uint16_t htons(uint16_t v);
 };
 
-using namespace codal;
-
 //
 // MicroBitButton has dependencies on the definitions here, so needs to be included
 // after these are defined to avoid having to redeclare everything needlessly or have

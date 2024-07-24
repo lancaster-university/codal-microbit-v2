@@ -22,6 +22,8 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitFile.h"
 #include "ErrorNo.h"
 
+using namespace codal;
+
 /**
   * Creates an instance of a MicroBitFile and creates a new file if required.
   *

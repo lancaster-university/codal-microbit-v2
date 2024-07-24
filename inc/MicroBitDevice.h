@@ -170,6 +170,4 @@ namespace codal
 
 extern codal::MicroBitDevice *microbit_device_instance;
 
-using namespace codal;
-
 #endif

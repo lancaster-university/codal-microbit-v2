@@ -41,6 +41,8 @@ DEALINGS IN THE SOFTWARE.
 #include "EventModel.h"
 #include "MicroBitLog.h"
 
+namespace codal
+{
 
 class MicroBitUtilityWorkspace;
 
@@ -172,6 +174,7 @@ class MicroBitUtilityService : public MicroBitBLEService
     int processLogRead();
 };
 
+} // namespace codal
 
-#endif
-#endif
+#endif // CONFIG_ENABLED(DEVICE_BLE)
+#endif // MICROBIT_UTILITY_SERVICE_H

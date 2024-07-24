@@ -29,6 +29,8 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitEddystone.h"
 
+using namespace codal;
+
 MicroBitEddystone *MicroBitEddystone::_instance = NULL;
 
 

@@ -8,10 +8,10 @@
 class PwmOut {
 
     private: 
-        NRF52Pin p;
+        codal::NRF52Pin p;
 
     public:
-        PwmOut(PinName pin) : p(MICROBIT_ID_MBED_PWM, pin, PIN_CAPABILITY_ANALOG) {
+        PwmOut(PinName pin) : p(MICROBIT_ID_MBED_PWM, pin, codal::PIN_CAPABILITY_ANALOG) {
             return;
         }
 

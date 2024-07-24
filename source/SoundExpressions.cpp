@@ -34,6 +34,8 @@ DEALINGS IN THE SOFTWARE.
 
 #define CLAMP(lo, v, hi) ((v) = ((v) < (lo) ? (lo) : (v) > (hi) ? (hi) : (v)))
 
+using namespace codal;
+
 /**
   * Default Constructor.
   */

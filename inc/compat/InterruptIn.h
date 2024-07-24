@@ -6,7 +6,7 @@
 #ifdef MICROBIT_DAL_FIBER_USER_DATA
 #include "pxt.h"
 #else
-extern MicroBit uBit;
+extern codal::MicroBit uBit;
 #endif
 
 #include "MicroBitCompat.h"
@@ -16,13 +16,13 @@ extern MicroBit uBit;
 
 class InterruptIn {
     
-    MbedMemberFunctionCallback *_rise;
-    MbedMemberFunctionCallback *_fall;
-    NRF52Pin *p;
+    codal::MbedMemberFunctionCallback *_rise;
+    codal::MbedMemberFunctionCallback *_fall;
+    codal::NRF52Pin *p;
 
     public:
         InterruptIn(PinName pin) {
-            p = new NRF52Pin(MICROBIT_ID_MBED_INTERRUPT_IN, pin, PIN_CAPABILITY_DIGITAL);
+            p = new codal::NRF52Pin(MICROBIT_ID_MBED_INTERRUPT_IN, pin, codal::PIN_CAPABILITY_DIGITAL);
             p->eventOn(MICROBIT_PIN_EVENT_ON_EDGE);
             return;
         }
@@ -30,16 +30,16 @@ class InterruptIn {
         void mode(int pull) {
             switch(pull) {
                 case PullNone:
-                    p->setPull(PullMode::None);
+                    p->setPull(codal::PullMode::None);
                     break;
                 case PullDown:
-                    p->setPull(PullMode::Down);
+                    p->setPull(codal::PullMode::Down);
                     break;
                 case PullUp:
-                    p->setPull(PullMode::Up);
+                    p->setPull(codal::PullMode::Up);
                     break;
                 default:
-                    p->setPull(PullMode::Up);
+                    p->setPull(codal::PullMode::Up);
                     break;
             }
         }
@@ -50,7 +50,7 @@ class InterruptIn {
 
         template<typename T>
         void fall(T* tptr, void (T::*mptr)(void)) {
-            this->_fall = new MbedMemberFunctionCallback(tptr, mptr);
+            this->_fall = new codal::MbedMemberFunctionCallback(tptr, mptr);
             uBit.messageBus.listen(MICROBIT_ID_MBED_INTERRUPT_IN, MICROBIT_PIN_EVT_FALL, this, &InterruptIn::onFall);
         }
 
@@ -60,7 +60,7 @@ class InterruptIn {
 
         template<typename T>
         void rise(T* tptr, void (T::*mptr)(void)) {
-            this->_rise = new MbedMemberFunctionCallback(tptr, mptr);
+            this->_rise = new codal::MbedMemberFunctionCallback(tptr, mptr);
             uBit.messageBus.listen(MICROBIT_ID_MBED_INTERRUPT_IN, MICROBIT_PIN_EVT_RISE, this, &InterruptIn::onRise);
         }
     

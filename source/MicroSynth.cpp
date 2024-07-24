@@ -29,6 +29,8 @@ SOFTWARE.
 #include <limits>
 #include <cstring>
 
+using namespace codal;
+
 bool SynthTables::inited_ = false;
 float SynthTables::notetab_[129];
 

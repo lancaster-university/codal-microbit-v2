@@ -39,6 +39,8 @@ DEALINGS IN THE SOFTWARE.
 #include "ble_srv_common.h"
 #include "ble_conn_state.h"
 
+using namespace codal;
+
 /**
   * Constructor.
   * Create a representation of a BLEService

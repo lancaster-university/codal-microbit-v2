@@ -73,6 +73,7 @@ DEALINGS IN THE SOFTWARE.
 #include "CodalDmesg.h"
 #include "nrf_log_backend_dmesg.h"
 
+using namespace codal;
 
 #define MICROBIT_PAIRING_FADE_SPEED 4
 

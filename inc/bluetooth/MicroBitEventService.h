@@ -35,6 +35,8 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitEvent.h"
 #include "EventModel.h"
 
+namespace codal
+{
 
 struct EventServiceEvent
 {
@@ -121,6 +123,7 @@ class MicroBitEventService : public MicroBitBLEService, MicroBitComponent
     MicroBitBLEChar *characteristicPtr( int idx)    { return &chars[ idx]; };
 };
 
+} // namespace codal
 
-#endif
-#endif
+#endif // CONFIG_ENABLED(DEVICE_BLE)
+#endif // MICROBIT_EVENT_SERVICE_H

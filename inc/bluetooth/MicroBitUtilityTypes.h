@@ -59,7 +59,7 @@ DEALINGS IN THE SOFTWARE.
  * reply        data      (up to 19 bytes)  - 1 or more reply packets, to total batchlen bytes
  *
  */
-namespace MicroBitUtility
+namespace codal::MicroBitUtility
 {
     typedef enum requestType_t
     {

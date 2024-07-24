@@ -74,6 +74,9 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_USB_FLASH_WRITE_CMD                0x0B            // Perform a WRITE operation from applicaiton FLASH memory.
 #define MICROBIT_USB_FLASH_ERASE_CMD                0x0C            // Perform a ERASE operation from applicaiton FLASH memory.
 
+namespace codal
+{
+
 typedef struct
 {
     ManagedString       fileName;                                   // MUST be in 8.3 format
@@ -290,4 +293,7 @@ class MicroBitUSBFlashManager : public CodalComponent, public NVMController
         bool isValidChar(char c);
 
 };
+
+} // namespace codal
+
 #endif

@@ -38,6 +38,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "nrf_sdh_ble.h"
 
+using namespace codal;
 
 /**
  * getShared

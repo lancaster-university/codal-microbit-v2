@@ -50,13 +50,13 @@
     "generate_hex": true,
     "libraries": [
         {
-            "branch": "c46d62943bc05a1b8296663ac4c643475a3e8a4c",
+            "branch": "509086cc8590465041b15493ab52b56e7071c110",
             "name": "codal-core",
             "type": "git",
             "url": "https://github.com/lancaster-university/codal-core"
         },
         {
-            "branch": "0643733703b4f8f788af81a996f40d1f1a1527bc",
+            "branch": "8802eb49140e0389e535cb6160d9080efd951ba7",
             "name": "codal-nrf52",
             "type": "git",
             "url": "https://github.com/lancaster-university/codal-nrf52"

@@ -26,6 +26,8 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitCompat.h"
 #include "ErrorNo.h"
 
+using namespace codal;
+
 static uint32_t *defaultScratchPage = (uint32_t *)MICROBIT_DEFAULT_SCRATCH_PAGE;
 
 MicroBitFileSystem* MicroBitFileSystem::defaultFileSystem = NULL;

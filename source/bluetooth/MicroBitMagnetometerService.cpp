@@ -34,6 +34,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitMagnetometerService.h"
 
+using namespace codal;
 
 const uint16_t MicroBitMagnetometerService::serviceUUID               = 0xf2d8;
 const uint16_t MicroBitMagnetometerService::charUUID[ mbbs_cIdxCOUNT] = { 0xfb11, 0x9715, 0x386c, 0xB358 };

@@ -61,6 +61,8 @@ DEALINGS IN THE SOFTWARE.
 #define MBFS_BLOCK_TYPE_DIRECTORY         2
 #define MBFS_BLOCK_TYPE_FILETABLE         3
 
+namespace codal
+{
 
 //
 // Every file in the file system has a file descriptor.
@@ -516,5 +518,7 @@ class MicroBitFileSystem
     */
     int createDirectory(char const *name);
 };
+
+} // namespace codal
 
 #endif

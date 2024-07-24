@@ -34,6 +34,8 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitBLEService.h"
 #include "EventModel.h"
 
+namespace codal
+{
 
 /**
   * Class definition for a MicroBit BLE Button Service.
@@ -102,6 +104,7 @@ class MicroBitButtonService : public MicroBitBLEService
     MicroBitBLEChar *characteristicPtr( int idx)  { return &chars[ idx]; };
 };
 
+} // namespace codal
 
-#endif
-#endif
+#endif // CONFIG_ENABLED(DEVICE_BLE)
+#endif // MICROBIT_BUTTON_SERVICE_H

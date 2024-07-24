@@ -33,6 +33,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitLEDService.h"
 
+using namespace codal;
 
 const uint16_t MicroBitLEDService::serviceUUID               = 0xd91d;
 const uint16_t MicroBitLEDService::charUUID[ mbbs_cIdxCOUNT] = { 0x7b77, 0x93ee, 0x0d2d };
