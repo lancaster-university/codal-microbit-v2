@@ -4,9 +4,41 @@
 For official release notes, please see Releases.md
 
 The current tag uses the following library versions:
- - codal-core = https://github.com/lancaster-university/codal-core/tree/992c0b11a0eb2a1edca9c2f76821f89a99a3acec
- - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/0643733703b4f8f788af81a996f40d1f1a1527bc
+ - codal-core = https://github.com/lancaster-university/codal-core/tree/509086cc8590465041b15493ab52b56e7071c110
+ - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/8802eb49140e0389e535cb6160d9080efd951ba7
  - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/d41d5c7ebe53a1d01935e61d4ffa891e5112e119
+
+## [v0.2.67](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.66...v0.2.67)
+
+ - Updated the Changelog (by Github Actions)
+ - Update Changelog.md (by Dr John Vidler)
+ - CI: Restore building MakeCode with Docker. (#407) (by Carlos Pereira Atencio)
+ - CI: Update versions of actions to remove warnings about node 16. (#408) (by Carlos Pereira Atencio)
+ - Remove uBit.io.face as it was a temp additional that is no longer needed. (#410) (by Carlos Pereira Atencio)
+ - Added definitions to match the Makecode effects parameters (#417) (by Dr John Vidler)
+ - CI:Update Changelog script to include changes in lib dependencies. (#420) (by Carlos Pereira Atencio)
+ - Set uBit.io.logo to capacitive touch mode by default. (#418) (by Carlos Pereira Atencio)
+ - CI: PXT build workaround due to deprecated PXT docker image type. (#435) (by Carlos Pereira Atencio)
+ - CI: Update macOS runner version as 11 is deprecated. (#436) (by Carlos Pereira Atencio)
+ - Populate MICROBIT_DAL_VERSION and add microbit_dal_version(). (#434) (by Carlos Pereira Atencio)
+ - Addition of getRows(n, k) and getNumberOfRows(n) to the datalogger.  (#431) (by KierPalin)
+ - Ensure header files and .cpp files use the codal namespace appropriately. (#437) (by Carlos Pereira Atencio)
+ - Snapshot v0.2.67 (by Carlos Pereira Atencio)
+
+### codal-core ([992c0b1...509086c](https://github.com/lancaster-university/codal-core/compare/992c0b11a0eb2a1edca9c2f76821f89a99a3acec...509086cc8590465041b15493ab52b56e7071c110))
+
+ - Update docstrings for LevelDetector threshold methods. (#167) (by Carlos Pereira Atencio)
+ - Display scroll an empty char if the requested char is out-of-range. (#168) (by Carlos Pereira Atencio)
+ - Better version support symbols for user applications (#169) (by Dr John Vidler)
+ - Ensure .cpp files are `using namespace codal`. (#170) (by Carlos Pereira Atencio)
+ - Add config flag to enable/disable adding codal to the global namespace. (#171) (by Carlos Pereira Atencio)
+
+### codal-nrf52 ([0643733...8802eb4](https://github.com/lancaster-university/codal-nrf52/compare/0643733703b4f8f788af81a996f40d1f1a1527bc...8802eb49140e0389e535cb6160d9080efd951ba7))
+
+ - NRF52Pin::wasTouched() default w/o args to use current pin touch mode state. (#53) (by Carlos Pereira Atencio)
+ - Ensure all .cpp files have `using namespace codal`. (#54) (by Carlos Pereira Atencio)
+ - Set neopixel functions inside the codal namespace. (by Carlos Pereira Atencio)
+ - Wrap `using namespace` in headers with codal config flag. (#43) (by Carlos Pereira Atencio)
 
 ## [v0.2.66](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.65...v0.2.66)
 
