@@ -84,7 +84,7 @@ int FSCache::read(uint32_t address, const void *data, int len)
 	int bytesCopied = 0;
 
 	// Ensure that the operation is within the limits of the device
-	if (address < flash.getFlashStart() || address + len >= flash.getFlashEnd())
+	if (address < flash.getFlashStart() || address + len > flash.getFlashEnd())
 		return DEVICE_INVALID_PARAMETER;
 
 	// Read operation may span multiple cache boundaries... so we iterate over blocks as necessary.
@@ -116,7 +116,7 @@ int FSCache::write(uint32_t address, const void *data, int len)
 	int bytesCopied = 0;
 
 	// Ensure that the operation is within the limits of the device
-	if (address < flash.getFlashStart() || address + len >= flash.getFlashEnd())
+	if (address < flash.getFlashStart() || address + len > flash.getFlashEnd())
 		return DEVICE_INVALID_PARAMETER;
 
 #ifdef CODAL_FS_CACHE_VALIDATE
