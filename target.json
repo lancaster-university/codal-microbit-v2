@@ -7,7 +7,6 @@
     "generate_bin":true,
     "generate_hex":true,
     "config":{
-
         "MBED_CONF_NORDIC_NRF_LF_CLOCK_SRC": "NRF_LF_SRC_XTAL",
         "CONFIG_GPIO_AS_PINRESET": 1,
         "CONFIG_NFCT_PINS_AS_GPIOS": 1,
@@ -42,7 +41,8 @@
         "CAPTOUCH_DEFAULT_CALIBRATION" : 3500,
         "HARDWARE_NEOPIXEL": 1,
         "CODAL_TIMER_32BIT": 1,
-        "DEVICE_BLE": 1
+        "DEVICE_BLE": 1,
+        "CODAL_VERSION": "unknown"
     },
     "definitions":"-DAPP_TIMER_V2 -DAPP_TIMER_V2_RTC1_ENABLED -DNRF_DFU_TRANSPORT_BLE=1 -DNRF52833_XXAA -DNRF52833 -DTARGET_MCU_NRF52833 -DNRF5 -DNRF52833 -D__CORTEX_M4 -DS113 -DTOOLCHAIN_GCC -D__START=target_start",
 
