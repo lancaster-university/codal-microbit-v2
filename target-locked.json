@@ -11,6 +11,7 @@
         "CODAL_PROVIDE_PRINTF": 1,
         "CODAL_TIMER_32BIT": 1,
         "CODAL_TIMESTAMP": "uint64_t",
+        "CODAL_VERSION": "\"unknown\"",
         "CONFIG_GPIO_AS_PINRESET": 1,
         "CONFIG_NFCT_PINS_AS_GPIOS": 1,
         "DEVICE_BLE": 1,
