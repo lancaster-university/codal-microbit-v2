@@ -27,11 +27,11 @@ jobs:
         run: |
           git checkout master
           python3 .github/tools/gitchanges.py --input Changelog.md
-      
+
       - name: Commit the new Changelog
         run: |
           git config --global user.name 'Github Actions'
           git config --global user.email 'actions+git@johnvidler.co.uk'
           git add --force Changelog.md
-          git commit -m "Updated the Changelog"
+          git commit -m "Updated the Changelog (${{ github.ref_name || 'unknown ref'}})"
           git push
