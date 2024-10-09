@@ -4,9 +4,24 @@
 For official release notes, please see Releases.md
 
 The current tag uses the following library versions:
- - codal-core = https://github.com/lancaster-university/codal-core/tree/509086cc8590465041b15493ab52b56e7071c110
+ - codal-core = https://github.com/lancaster-university/codal-core/tree/c43b89936ed72c022f2649f5540a9a74ef48fd04
  - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/8802eb49140e0389e535cb6160d9080efd951ba7
  - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/d41d5c7ebe53a1d01935e61d4ffa891e5112e119
+
+## [v0.2.69](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.67...v0.2.69)
+
+ - Updated the Changelog (by Carlos Pereira Atencio)
+ - Allow log full FUL to be written to last byte (#438) (by Martin Williams)
+ - Temporarily set CODAL_VERSION back to "unknown". (#445) (by Carlos Pereira Atencio)
+ - Snapshot v0.2.68 (by Carlos Pereira Atencio)
+ - Fix CODAL_VERSION config value defined in target.json (by Carlos Pereira Atencio)
+ - CI: Changelog script to also include libs when created from scratch. (by Carlos Pereira Atencio)
+ - CI: Update Changelog script to clone libs in tmp dir to get history. (by Carlos Pereira Atencio)
+ - Snapshot v0.2.69 (by Carlos Pereira Atencio)
+
+### codal-core ([509086c...c43b899](https://github.com/lancaster-university/codal-core/compare/509086cc8590465041b15493ab52b56e7071c110...c43b89936ed72c022f2649f5540a9a74ef48fd04))
+
+ - StreamRecording - calculate memory overhead of buffers (#175) (by Martin Williams)
 
 ## [v0.2.67](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.66...v0.2.67)
 
