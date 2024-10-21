@@ -263,5 +263,10 @@ bool MicroBitAudio::isPlaying()
     uint32_t start = mixer.getSilenceStartTime();
     uint32_t end = mixer.getSilenceEndTime();
 
-    return !((start && t >= (start + CONFIG_AUDIO_MIXER_OUTPUT_LATENCY_US)) && (end == 0 || t < (end + CONFIG_AUDIO_MIXER_OUTPUT_LATENCY_US - 100)));
+    return !(
+        (start == 0 && end == 0) || (
+            (start && t >= (start + CONFIG_AUDIO_MIXER_OUTPUT_LATENCY_US)) &&
+            (end == 0 || t < (end + CONFIG_AUDIO_MIXER_OUTPUT_LATENCY_US - 100))
+        )
+    );
 }
