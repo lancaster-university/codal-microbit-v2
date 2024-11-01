@@ -98,12 +98,6 @@ namespace codal
         static void requestActivation();
 
         /**
-          * Catch events from the splitter
-          * @param MicroBitEvent
-          */
-        void onSplitterEvent(MicroBitEvent);
-
-        /**
           * Activate Mic
           */
         void activateMic();
