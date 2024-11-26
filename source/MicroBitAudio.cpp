@@ -55,6 +55,9 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
     if (MicroBitAudio::instance == NULL)
         MicroBitAudio::instance = this;
 
+    // Request a periodic callback
+    status |= DEVICE_COMPONENT_STATUS_SYSTEM_TICK;
+
     synth.allowEmptyBuffers(true);
 
     mic = adc.getChannel(microphone, false);
@@ -83,6 +86,15 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
 
     //Initilise stream splitter
     splitter = new StreamSplitter(processor->output, DEVICE_ID_SPLITTER);
+}
+
+void MicroBitAudio::periodicCallback()
+{
+    if (mic->isEnabled() && !micEnabled)
+        activateMic();
+
+    if (!mic->isEnabled() && micEnabled)
+        deactivateMic();
 }
 
 void MicroBitAudio::activateMic(){

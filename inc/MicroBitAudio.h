@@ -55,7 +55,7 @@ namespace codal
         public:
         static MicroBitAudio    *instance;      // Primary instance of MicroBitAudio, on demand activated.
         Mixer2                  mixer;          // Multi channel audio mixer
-        NRF52ADCChannel *mic;                   // Microphone ADC Channel from uBit.IO
+        NRF52ADCChannel         *mic;           // Microphone ADC Channel from uBit.IO
         StreamNormalizer        *processor;     // Stream Normaliser instance
         StreamSplitter          *splitter;      // Stream Splitter instance (8bit normalized output)
         StreamSplitter          *rawSplitter;   // Stream Splitter instance (raw input)
@@ -184,6 +184,8 @@ namespace codal
           * Puts the component in (or out of) sleep (low power) mode.
           */
         virtual int setSleep(bool doSleep) override;
+
+        virtual void periodicCallback();
     };
 }
 
