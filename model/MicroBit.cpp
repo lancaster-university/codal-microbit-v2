@@ -301,7 +301,6 @@ int MicroBit::init()
     // before any user code begins running.
     
     sleep(10);
-
     return DEVICE_OK;
 }
 
