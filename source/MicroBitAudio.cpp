@@ -91,10 +91,16 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
 void MicroBitAudio::periodicCallback()
 {
     if (mic->isEnabled() && !micEnabled)
+    {
+        DMESG("MicroBitAudio::periodicCallback: activateMic()...");
         activateMic();
+    }
 
     if (!mic->isEnabled() && micEnabled)
+    {
+        DMESG("MicroBitAudio::periodicCallback: deactivateMic()...");
         deactivateMic();
+    }
 }
 
 void MicroBitAudio::activateMic(){
@@ -106,7 +112,6 @@ void MicroBitAudio::activateMic(){
 
 void MicroBitAudio::deactivateMic(){
     this->micEnabled = false;
-    //mic->disable();
     runmic.setDigitalValue(0);
     runmic.setHighDrive(false);
 }
