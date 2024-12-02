@@ -64,6 +64,8 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
     adc.setSamplePeriod( 1e6 / CONFIG_MIXER_DEFAULT_CHANNEL_SAMPLERATE );
     mic->setGain(7, 0);
 
+    activateMic();
+
     // Implementers note: The order that the pipeline comes up here is quite sensitive. If we connect up to splitters after starting to
     // listen for events from them, we'll see channel startup events (which are valid!) that we don't want. So roughly always follow
     // the following schema:
@@ -82,7 +84,7 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
 
     //Initilise level detector SPL and attach to splitter
     //levelSPL = new LevelDetectorSPL(*rawSplitter->createChannel(), 85.0, 65.0, 16.0, 0, DEVICE_ID_MICROPHONE, false);
-    levelSPL = new LevelDetectorSPL(*rawSplitter->createChannel(), 85.0, 65.0, 16.0, 52.0, DEVICE_ID_SYSTEM_LEVEL_DETECTOR, false);
+    levelSPL = new LevelDetectorSPL(*rawSplitter->createChannel(), 85.0, 65.0, 16.0, 52.0, DEVICE_ID_SYSTEM_LEVEL_DETECTOR);
 
     //Initilise stream splitter
     splitter = new StreamSplitter(processor->output, DEVICE_ID_SPLITTER);
