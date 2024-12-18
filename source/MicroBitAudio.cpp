@@ -55,11 +55,16 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
     if (MicroBitAudio::instance == NULL)
         MicroBitAudio::instance = this;
 
+    // Request a periodic callback
+    status |= DEVICE_COMPONENT_STATUS_SYSTEM_TICK;
+
     synth.allowEmptyBuffers(true);
 
     mic = adc.getChannel(microphone, false);
     adc.setSamplePeriod( 1e6 / CONFIG_MIXER_DEFAULT_CHANNEL_SAMPLERATE );
     mic->setGain(7, 0);
+
+    activateMic();
 
     // Implementers note: The order that the pipeline comes up here is quite sensitive. If we connect up to splitters after starting to
     // listen for events from them, we'll see channel startup events (which are valid!) that we don't want. So roughly always follow
@@ -79,28 +84,25 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
 
     //Initilise level detector SPL and attach to splitter
     //levelSPL = new LevelDetectorSPL(*rawSplitter->createChannel(), 85.0, 65.0, 16.0, 0, DEVICE_ID_MICROPHONE, false);
-    levelSPL = new LevelDetectorSPL(*rawSplitter->createChannel(), 85.0, 65.0, 16.0, 52.0, DEVICE_ID_SYSTEM_LEVEL_DETECTOR, false);
-
-    // Connect to the rawSplitter. This must come AFTER the processor, to prevent the processor's channel activation starting the microphone
-    if(EventModel::defaultEventBus)
-        EventModel::defaultEventBus->listen(rawSplitter->id, DEVICE_EVT_ANY, this, &MicroBitAudio::onSplitterEvent, MESSAGE_BUS_LISTENER_IMMEDIATE);
+    levelSPL = new LevelDetectorSPL(*rawSplitter->createChannel(), 85.0, 65.0, 16.0, 52.0, DEVICE_ID_SYSTEM_LEVEL_DETECTOR);
 
     //Initilise stream splitter
     splitter = new StreamSplitter(processor->output, DEVICE_ID_SPLITTER);
-
-    // Connect to the splitter - this COULD come after we create it, before we add any stages, as these are dynamic and will only connect on-demand, but just in case
-    // we're going to follow the schema set out above, to be 100% sure.
-    if(EventModel::defaultEventBus) {
-        EventModel::defaultEventBus->listen(DEVICE_ID_SPLITTER, DEVICE_EVT_ANY, this, &MicroBitAudio::onSplitterEvent, MESSAGE_BUS_LISTENER_IMMEDIATE);
-        EventModel::defaultEventBus->listen(DEVICE_ID_NOTIFY, mic->output.emitFlowEvents(), this, &MicroBitAudio::onSplitterEvent, MESSAGE_BUS_LISTENER_IMMEDIATE);
-    }
 }
 
-void MicroBitAudio::onSplitterEvent(MicroBitEvent e){
-    if( mic->output.isFlowing() || (e.value == SPLITTER_ACTIVATE || e.value == SPLITTER_CHANNEL_CONNECT) )
+void MicroBitAudio::periodicCallback()
+{
+    if (mic->isEnabled() && !micEnabled)
+    {
+        DMESG("MicroBitAudio::periodicCallback: activateMic()...");
         activateMic();
-    else
+    }
+
+    if (!mic->isEnabled() && micEnabled)
+    {
+        DMESG("MicroBitAudio::periodicCallback: deactivateMic()...");
         deactivateMic();
+    }
 }
 
 void MicroBitAudio::activateMic(){
@@ -112,7 +114,6 @@ void MicroBitAudio::activateMic(){
 
 void MicroBitAudio::deactivateMic(){
     this->micEnabled = false;
-    //mic->disable();
     runmic.setDigitalValue(0);
     runmic.setHighDrive(false);
 }
