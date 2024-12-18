@@ -117,7 +117,7 @@ void SoundSynthesizerEffects::logarithmicInterpolation(SoundEmojiSynthesizer *sy
 // parameter[0]: end frequency
 void SoundSynthesizerEffects::curveInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
-    synth->frequency = (sin(context->step*3.12159f/180.0f)*(context->parameter[0]-synth->effect->frequency)+synth->effect->frequency);
+    synth->frequency = (sin(context->step*3.14159f/180.0f)*(context->parameter[0]-synth->effect->frequency)+synth->effect->frequency);
 }
 
 // Cosine interpolate function
