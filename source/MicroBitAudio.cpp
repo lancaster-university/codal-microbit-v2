@@ -61,7 +61,7 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
     synth.allowEmptyBuffers(true);
 
     mic = adc.getChannel(microphone, false);
-    adc.setSamplePeriod( 1e6 / CONFIG_MIXER_DEFAULT_CHANNEL_SAMPLERATE );
+    adc.setSamplePeriod( 1e6 / 11000 );
     mic->setGain(7, 0);
 
     activateMic();
