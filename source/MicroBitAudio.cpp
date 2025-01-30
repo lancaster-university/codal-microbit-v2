@@ -109,7 +109,7 @@ void MicroBitAudio::activateMic(){
     runmic.setDigitalValue(1);
     runmic.setHighDrive(true);
     adc.activateChannel(mic);
-    adc.getChannel(microphone, false)->setStartDelay(2);
+    adc.getChannel(microphone, false)->setStartDelay(3);
     this->micEnabled = true;
 }
 
