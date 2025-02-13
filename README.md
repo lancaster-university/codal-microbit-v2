@@ -15,5 +15,5 @@ Releases are selected tags intended to be stable and production-ready; and are t
 Each GitHub Release changelog will include the changes since the previous Release (not for just that specific tag only), and the changelog will also include changes in the project dependencies (codal-core, codal-nrf52, codal-nrf-sdk) as these don't have individual changelogs.
 
 ## Target Properties
-# CONFIG_NFCT_PINS_AS_GPIOS
+### CONFIG_NFCT_PINS_AS_GPIOS
 Controls the NFC functionality of the nRF52833, Comment/remove the line to enable the antenna and NFC capabilities.
