@@ -84,7 +84,7 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
 
     //Initilise level detector SPL and attach to splitter
     //levelSPL = new LevelDetectorSPL(*rawSplitter->createChannel(), 85.0, 65.0, 16.0, 0, DEVICE_ID_MICROPHONE, false);
-    levelSPL = new LevelDetectorSPL(*rawSplitter->createChannel(), 85.0, 65.0, 16.0, 52.0, DEVICE_ID_SYSTEM_LEVEL_DETECTOR);
+    levelSPL = new LevelDetectorSPL(*rawSplitter->createChannel(), 85.0, 65.0, 4.0, 35.0, DEVICE_ID_SYSTEM_LEVEL_DETECTOR);
 
     //Initilise stream splitter
     splitter = new StreamSplitter(processor->output, DEVICE_ID_SPLITTER);
@@ -94,13 +94,13 @@ void MicroBitAudio::periodicCallback()
 {
     if (mic->isEnabled() && !micEnabled)
     {
-        DMESG("MicroBitAudio::periodicCallback: activateMic()...");
+        //DMESG("MicroBitAudio::periodicCallback: activateMic()...");
         activateMic();
     }
 
     if (!mic->isEnabled() && micEnabled)
     {
-        DMESG("MicroBitAudio::periodicCallback: deactivateMic()...");
+        //DMESG("MicroBitAudio::periodicCallback: deactivateMic()...");
         deactivateMic();
     }
 }
@@ -109,7 +109,7 @@ void MicroBitAudio::activateMic(){
     runmic.setDigitalValue(1);
     runmic.setHighDrive(true);
     adc.activateChannel(mic);
-    adc.getChannel(microphone, false)->setStartDelay(3);
+    adc.getChannel(microphone, false)->setStartDelay(1);
     this->micEnabled = true;
 }
 
