@@ -269,7 +269,7 @@
 #endif
 
 // Enable/Disable Nordic Firmware style BLE based UART implimentation.
-// The default codal implimentation reverses the TX/RX ids  
+// The default codal implementation reverses the TX/RX ids  
 // Set to '1' to enable
 #ifndef MICROBIT_BLE_NORDIC_STYLE_UART
     #define MICROBIT_BLE_NORDIC_STYLE_UART 0
@@ -299,6 +299,10 @@
 // Set to '1' to enable
 #ifndef MICROBIT_USB_SERIAL_WAKE
     #define MICROBIT_USB_SERIAL_WAKE 0
+#endif
+
+#ifndef MICROBIT_SW_VERSION
+#define MICROBIT_SW_VERSION                     "unknown"
 #endif
 
 #endif
