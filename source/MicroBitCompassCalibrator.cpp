@@ -168,7 +168,7 @@ CompassCalibration MicroBitCompassCalibrator::spherify(Sample3D centre, Sample3D
 
     for (int i = 0; i < samples; i++)
     {
-        int d = sqrt((float)centre.dSquared(data[i]));
+        int d = sqrtf((float)centre.dSquared(data[i]));
 
         if (d > radius)
             radius = d;
@@ -179,7 +179,7 @@ CompassCalibration MicroBitCompassCalibrator::spherify(Sample3D centre, Sample3D
     for (int i = 0; i < samples; i++)
     {
         // Calculate the distance from this point to the centre of the sphere
-        float d = sqrt(centre.dSquared(data[i]));
+        float d = sqrtf(centre.dSquared(data[i]));
 
         // Now determine a scalar multiplier that, when applied to the vector to the centre,
         // will place this point on the surface of the sphere.
@@ -198,11 +198,11 @@ CompassCalibration MicroBitCompassCalibrator::spherify(Sample3D centre, Sample3D
         weightZ += s * fabsf(dz / d);
     }
 
-    float wmag = sqrt((weightX * weightX) + (weightY * weightY) + (weightZ * weightZ));
+    float wmag = sqrtf((weightX * weightX) + (weightY * weightY) + (weightZ * weightZ));
 
-    scaleX = 1.0 + scale * (weightX / wmag);
-    scaleY = 1.0 + scale * (weightY / wmag);
-    scaleZ = 1.0 + scale * (weightZ / wmag);
+    scaleX = 1.0f + scale * (weightX / wmag);
+    scaleY = 1.0f + scale * (weightY / wmag);
+    scaleZ = 1.0f + scale * (weightZ / wmag);
 
     result.scale.x = (int)(1024 * scaleX);
     result.scale.y = (int)(1024 * scaleY);

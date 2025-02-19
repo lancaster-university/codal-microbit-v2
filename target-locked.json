@@ -51,7 +51,7 @@
     "generate_hex": true,
     "libraries": [
         {
-            "branch": "c43b89936ed72c022f2649f5540a9a74ef48fd04",
+            "branch": "b395ae364d00597c10b90e0b45aaad0ff15c8495",
             "name": "codal-core",
             "type": "git",
             "url": "https://github.com/lancaster-university/codal-core"
