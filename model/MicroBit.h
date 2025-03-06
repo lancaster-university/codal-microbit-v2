@@ -67,6 +67,7 @@ DEALINGS IN THE SOFTWARE.
 #include "StreamNormalizer.h"
 #include "LevelDetector.h"
 #include "LevelDetectorSPL.h"
+#include "SampleSource.h"
 #include "PulseIn.h"
 #include "neopixel.h"
 

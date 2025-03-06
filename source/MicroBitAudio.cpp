@@ -88,6 +88,10 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
 
     //Initilise stream splitter
     splitter = new StreamSplitter(processor->output, DEVICE_ID_SPLITTER);
+
+    // Create audio input channels
+    for (int i=0; i<CONFIG_AUDIO_INPUT_CHANNELS; i++)
+        sampleSource[i] = new SampleSource(mixer, 11000, 255);
 }
 
 void MicroBitAudio::periodicCallback()
