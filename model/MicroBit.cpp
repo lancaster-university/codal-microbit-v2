@@ -474,3 +474,8 @@ void microbit_dmesg_flush()
 #endif
 }
 
+uint32_t *microbit_top_of_flash()
+{
+    return (uint32_t *) MICROBIT_TOP_OF_FLASH;
+}
+
