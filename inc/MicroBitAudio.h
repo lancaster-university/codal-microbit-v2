@@ -28,6 +28,7 @@ DEALINGS IN THE SOFTWARE.
 #include "NRF52PWM.h"
 #include "SoundEmojiSynthesizer.h"
 #include "SoundExpressions.h"
+#include "SampleSource.h"
 #include "Mixer2.h"
 #include "SoundOutputPin.h"
 #include "StreamNormalizer.h"
@@ -39,10 +40,13 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_AUDIO_STATUS_DEEPSLEEP       0x0001
 #define CONFIG_DEFAULT_MICROPHONE_GAIN        0.1f
 
-
 // Configurable options
 #ifndef CONFIG_AUDIO_MIXER_OUTPUT_LATENCY_US
 #define CONFIG_AUDIO_MIXER_OUTPUT_LATENCY_US              (uint32_t) ((CONFIG_MIXER_BUFFER_SIZE/2) * (1000000.0f/44100.0f))
+#endif
+
+#ifndef CONFIG_AUDIO_INPUT_CHANNELS
+#define CONFIG_AUDIO_INPUT_CHANNELS                       4
 #endif
 
 namespace codal
@@ -61,6 +65,7 @@ namespace codal
         StreamSplitter          *rawSplitter;   // Stream Splitter instance (raw input)
         LevelDetectorSPL        *levelSPL;      // Level Detector SPL instance
         LowPassFilter           *micFilter;     // Low pass filter to remove high frequency noise on the mic
+        SampleSource            *sampleSource[CONFIG_AUDIO_INPUT_CHANNELS]; // multichannel sample playback capability
 
         private:
         volatile bool micEnabled;               // State of on board mic
