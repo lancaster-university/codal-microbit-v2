@@ -59,7 +59,7 @@
     #ifdef SOFTDEVICE_PRESENT
         #define MICROBIT_STORAGE_PAGE           ( MICROBIT_BOOTLOADER_ADDRESS - MICROBIT_CODEPAGESIZE * 3)
     #else
-        #define MICROBIT_STORAGE_PAGE           ( 0x7F000 )
+        #define MICROBIT_STORAGE_PAGE           ( 0x0007F000 )
     #endif
 #endif
 
@@ -71,7 +71,7 @@
     #ifdef SOFTDEVICE_PRESENT
         #define MICROBIT_DEFAULT_SCRATCH_PAGE   ( MICROBIT_BOOTLOADER_ADDRESS - MICROBIT_CODEPAGESIZE * 4)
     #else
-        #define MICROBIT_DEFAULT_SCRATCH_PAGE   ( 0x7E000 )
+        #define MICROBIT_DEFAULT_SCRATCH_PAGE   ( 0x0007E000 )
     #endif
 #endif
 
