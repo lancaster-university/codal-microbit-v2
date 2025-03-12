@@ -92,7 +92,11 @@
 #endif
 
 #ifndef MICROBIT_TOP_OF_FLASH
-    #define MICROBIT_TOP_OF_FLASH           ( MICROBIT_DEFAULT_SCRATCH_PAGE )
+    #ifdef SOFTDEVICE_PRESENT
+        #define MICROBIT_TOP_OF_FLASH   ( 0x00073000 )
+    #else
+        #define MICROBIT_TOP_OF_FLASH   ( 0x0007E000 )
+    #endif
 #endif
 
 #ifndef MICROBIT_APP_REGION_END
