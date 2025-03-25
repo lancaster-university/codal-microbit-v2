@@ -1,9 +1,9 @@
 name: Build MakeCode
 
-# MakeCode has to git clone/checkout this repo commit SHA, so only run this
-# workflow on pushes, as PRs generate a "merge commit" that is not clonable.
 on:
   push:
+    branches: '*'
+  pull_request:
     branches: '*'
 
 jobs:
@@ -50,6 +50,20 @@ jobs:
         run: |
           npm install -g pxt
           npm install
+      # MakeCode has to git clone/checkout this repo commit SHA, the GITHUB_SHA env
+      # variable from a PR represents the "merge commit" of that PR against main,
+      # and so that commit is not reachable by MakeCode because it's not pushed anywhere
+      - name: Set CODAL_MICROBIT_V2_SHA
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            CODAL_MICROBIT_V2_SHA=$(jq -r .pull_request.head.sha < $GITHUB_EVENT_PATH)
+          else
+            CODAL_MICROBIT_V2_SHA=${GITHUB_SHA}
+          fi
+          echo "CODAL_MICROBIT_V2_SHA=$CODAL_MICROBIT_V2_SHA" >> $GITHUB_ENV
+          echo "CODAL_MICROBIT_V2_SHA=$CODAL_MICROBIT_V2_SHA"
+        env:
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
       - name: Edit pxtarget.json to use this repository and commit
         shell: bash
         run: |
@@ -79,7 +93,7 @@ jobs:
               mbcodal['compileService']['codalTarget']['url'] = mbcodal['compileService']['codalTarget']['url'].replace(
                   'lancaster-university/codal-microbit-v2', '${GITHUB_REPOSITORY}'
               )
-              mbcodal['compileService']['codalTarget']['branch'] = '${GITHUB_SHA}'
+              mbcodal['compileService']['codalTarget']['branch'] = '${{ env.CODAL_MICROBIT_V2_SHA }}'
 
           with open('pxtarget.json', 'w') as f:
               f.write(json.dumps(pxt_target, indent=4))
