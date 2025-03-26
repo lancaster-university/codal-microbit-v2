@@ -110,7 +110,7 @@ namespace codal
      * microbit_panic(20);
      * @endcode
      */
-    void microbit_panic(int statusCode);
+    [[noreturn]] void microbit_panic(int statusCode);
 
     /**
      * Defines the length of time that the device will remain in a error state before resetting.

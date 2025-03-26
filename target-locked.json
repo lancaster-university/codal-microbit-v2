@@ -1,7 +1,7 @@
 {
     "architecture": "CORTEX_M4F",
     "asm_flags": "-fno-exceptions -fno-unwind-tables --specs=nosys.specs -mcpu=cortex-m4 -mthumb",
-    "c_flags": "-std=c99 --specs=nosys.specs -Warray-bounds",
+    "c_flags": "-std=c99 --specs=nosys.specs -Warray-bounds --param=min-pagesize=0",
     "cmake_definitions": {
         "MBED_LEGACY_TOOLCHAIN": "GCC_ARM;"
     },
