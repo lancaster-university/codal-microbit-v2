@@ -67,6 +67,7 @@ DEALINGS IN THE SOFTWARE.
 #include "StreamNormalizer.h"
 #include "LevelDetector.h"
 #include "LevelDetectorSPL.h"
+#include "SampleSource.h"
 #include "PulseIn.h"
 #include "neopixel.h"
 
@@ -315,6 +316,7 @@ namespace codal
 }
 
 void microbit_dmesg_flush();
+uint32_t *microbit_top_of_flash();
 
 #if CONFIG_ENABLED(CODAL_USE_GLOBAL_NAMESPACE)
 using namespace codal;

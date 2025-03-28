@@ -301,7 +301,6 @@ int MicroBit::init()
     // before any user code begins running.
     
     sleep(10);
-
     return DEVICE_OK;
 }
 
@@ -365,7 +364,7 @@ void MicroBit::onListenerRegisteredEvent(Event evt)
             // The level detector uses lazy instantiation, we just need to read the data once to start it running.
             //audio.level->getValue();
             // The level detector requires that we enable constant listening, otherwise no events will be emitted.
-            audio.levelSPL->activateForEvents( true );
+            audio.levelSPL->listenerAdded();
             break;
 
         case DEVICE_ID_MICROPHONE:
@@ -473,5 +472,10 @@ void microbit_dmesg_flush()
     }
 #endif
 #endif
+}
+
+uint32_t *microbit_top_of_flash()
+{
+    return (uint32_t *) MICROBIT_TOP_OF_FLASH;
 }
 
