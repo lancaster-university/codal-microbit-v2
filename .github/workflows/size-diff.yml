@@ -47,7 +47,9 @@ jobs:
           repository: 'lancaster-university/microbit-v2-samples'
           # Unless manually triggered via workflow_dispatch this will be an empty
           # string, checking out the default branch
-          ref: ${{ github.event.inputs.samples-commit }}
+          # FIXME: Temporarily check out the audio-refactor branch for testing
+          # ref: ${{ github.event.inputs.samples-commit }}
+          ref: 'audio-refactor'
       # We need to use the checkout action (instead of build.py cloning the
       # repository) so that on PRs we can get the commit from the PR merge
       - name: Clone this repository in the libraries folder
