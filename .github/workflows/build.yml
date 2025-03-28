@@ -45,6 +45,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'lancaster-university/microbit-v2-samples'
+          # FIXME: Temporarily check out the audio-refactor branch for testing
+          ref: 'audio-refactor'
       # We need to use the checkout action (instead of build.py cloning the
       # repository) so that on PRs we can get the commit from the PR merge
       - name: Clone this repository in the libraries folder
