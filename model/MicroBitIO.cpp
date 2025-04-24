@@ -42,6 +42,7 @@ using namespace codal;
   * by MicroBitPin instances on the default EventModel.
   */
 MicroBitIO::MicroBitIO(NRF52ADC &a, TouchSensor &s) :
+    pins(MICROBIT_PINS_TOTAL),
 
     // Edge Connector Pins
     P0(ID_PIN_P0, P0_02, PIN_CAPABILITY_AD),
@@ -91,7 +92,6 @@ MicroBitIO::MicroBitIO(NRF52ADC &a, TouchSensor &s) :
     buttonA(P5),
     buttonB(P11)
 {
-    pins = 33;
     NRF52Pin::adc = &a;
     NRF52Pin::touchSensor = &s;
 
@@ -99,16 +99,7 @@ MicroBitIO::MicroBitIO(NRF52ADC &a, TouchSensor &s) :
     for (int i=19; i<pins; i++)
         pin[i].setPull(PullMode::None);
 
-    // Ensure all internal multiplexed pins are configured with no pull resistors.
-    col1.setPull(PullMode::None);
-    col2.setPull(PullMode::None);
-    col3.setPull(PullMode::None);
-    col4.setPull(PullMode::None);
-    col5.setPull(PullMode::None);
-    buttonA.setPull(PullMode::None);
-    buttonB.setPull(PullMode::None);
-
-    savedStatus = ManagedBuffer(pins + 1);
+    // Last array entry stores the saved/not-saved status
     savedStatus[pins] = 0;
 }
 
