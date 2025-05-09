@@ -4,9 +4,34 @@
 For official release notes, please see Releases.md
 
 The current tag uses the following library versions:
- - codal-core = https://github.com/lancaster-university/codal-core/tree/c43b89936ed72c022f2649f5540a9a74ef48fd04
+ - codal-core = https://github.com/lancaster-university/codal-core/tree/238e93846b434b730d4d0bfde99b43ccfde29cef
  - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/8802eb49140e0389e535cb6160d9080efd951ba7
  - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/d41d5c7ebe53a1d01935e61d4ffa891e5112e119
+
+## [v0.2.70](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.69...v0.2.70)
+
+ - Updated the Changelog (v0.2.69) (by Github Actions)
+ - CI: Update mac runner version to macOS 13, as 12 is deprecated. (by Carlos Pereira Atencio)
+ - Fix Pi value typo in SoundSynthesizerEffects. (#456) (by Carlos Pereira Atencio)
+ - CI: Reduce the min GCC version used to match what MakeCode (PXT) uses. (#461) (by Carlos Pereira Atencio)
+ - Update MicroBitAudio.isPlaying() to take into account initial silence. (#452) (by Carlos Pereira Atencio)
+ - Add 'show_size' option to target.json file to print build size info. (#372) (by Carlos Pereira Atencio)
+ - ci: Also build MakeCode & MicroPython on PRs. (#473) (by Carlos Pereira Atencio)
+ - Eliminate noreturn compiler warnings (#467) (by Kevin Walsh)
+ - CI: Update deprecated GH Actions runner image ubuntu-20.4 to 22.04. (by Carlos Pereira Atencio)
+ - Ensure float operations in Sound Expression/Synth & Compass cal. (#454) (by Carlos Pereira Atencio)
+ - Overwrite default CODAL `uBit.audio.levelSPL` 8-bit conversion range. (#481) (by Carlos Pereira Atencio)
+ - Snapshot v0.2.70 (by Carlos Pereira Atencio)
+
+### codal-core ([c43b899...238e938](https://github.com/lancaster-university/codal-core/compare/c43b89936ed72c022f2649f5540a9a74ef48fd04...238e93846b434b730d4d0bfde99b43ccfde29cef))
+
+ - Ensure float literals and float versions of math functions are used. (#176) (by Carlos Pereira Atencio)
+ - Fix MemorySource::playAsync for ManagedBuffer (#180) (by Martin Williams)
+ - Fix TouchSensor::removeTouchButton (#179) (by Martin Williams)
+ - Fix SerialStreamer::duration() (#172) (by Martin Williams)
+ - Add compiler specific attributes for FORCE_RAM_FUNC. (#166) (by Carlos Pereira Atencio)
+ - Fix Compass::init() warning and array delete bug (#181) (by Kevin Walsh)
+ - LevelDetectorSPL: Cast `LEVEL_DETECTOR_SPL_8BIT_X_POINT` to floats. (#182) (by Carlos Pereira Atencio)
 
 ## [v0.2.69](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.67...v0.2.69)
 
