@@ -7,7 +7,7 @@ on:
 
 jobs:
   cppcheck:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     name: Build against Ubuntu-20.04 for release assets
     steps:
       - uses: actions/checkout@v4
