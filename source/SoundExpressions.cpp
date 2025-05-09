@@ -276,8 +276,8 @@ bool SoundExpressions::parseSoundExpression(const char *soundChars, SoundEffect 
     }
 
     // Volume envelope
-    float effectVolumeFloat = (float) CLAMP(0, effectVolume, 1023) / 1023.0;
-    float endVolumeFloat = (float) CLAMP(0, endVolume, 1023) / 1023.0;
+    float effectVolumeFloat = (float) CLAMP(0, effectVolume, 1023) / 1023.0f;
+    float endVolumeFloat = (float) CLAMP(0, endVolume, 1023) / 1023.0f;
     fx->volume = volumeScaleFactor * effectVolumeFloat;
     fx->effects[1].effect = SoundSynthesizerEffects::volumeRampEffect;
     fx->effects[1].steps = 36;

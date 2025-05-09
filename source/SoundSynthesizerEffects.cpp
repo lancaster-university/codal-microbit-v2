@@ -102,11 +102,11 @@ void SoundSynthesizerEffects::linearInterpolation(SoundEmojiSynthesizer *synth, 
 void SoundSynthesizerEffects::logarithmicInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
     // Original frequency gen here, for reference. -John
-    //synth->frequency = synth->effect->frequency+(log10(context->step)*(context->parameter[0]-synth->effect->frequency)/1.95);
+    //synth->frequency = synth->effect->frequency+(log10f(context->step)*(context->parameter[0]-synth->effect->frequency)/1.95);
 
-    synth->frequency = synth->effect->frequency+(log10(
+    synth->frequency = synth->effect->frequency+(log10f(
         ( context->step==0 ? 1 : context->step )                 // This is a hack, to prevent step==0 from jumping this to extreme values. -John
-    )*(context->parameter[0]-synth->effect->frequency)/1.95);
+    )*(context->parameter[0]-synth->effect->frequency)/1.95f);
 
     // This is a bit of a hack, but will protect the synth for now until the math here can be fixed properly. -John
     if( synth->frequency < 0 )
@@ -117,39 +117,39 @@ void SoundSynthesizerEffects::logarithmicInterpolation(SoundEmojiSynthesizer *sy
 // parameter[0]: end frequency
 void SoundSynthesizerEffects::curveInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
-    synth->frequency = (sin(context->step*3.14159f/180.0f)*(context->parameter[0]-synth->effect->frequency)+synth->effect->frequency);
+    synth->frequency = (sinf(context->step*3.14159f/180.0f)*(context->parameter[0]-synth->effect->frequency)+synth->effect->frequency);
 }
 
 // Cosine interpolate function
 // parameter[0]: end frequency
 void SoundSynthesizerEffects::slowVibratoInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context){
-    synth->frequency = sin(context->step/10)*context->parameter[0]+synth->effect->frequency;
+    synth->frequency = sinf(context->step/10)*context->parameter[0]+synth->effect->frequency;
 }
 
 //warble function
 // parameter[0]: end frequency
 void SoundSynthesizerEffects::warbleInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
-    synth->frequency = (sin(context->step)*(context->parameter[0]-synth->effect->frequency)+synth->effect->frequency);
+    synth->frequency = (sinf(context->step)*(context->parameter[0]-synth->effect->frequency)+synth->effect->frequency);
 }
 
 // Vibrato function
 // parameter[0]: end frequency
 void SoundSynthesizerEffects::vibratoInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context){
-    synth->frequency = synth->effect->frequency + sin(context->step)*context->parameter[0];
+    synth->frequency = synth->effect->frequency + sinf(context->step)*context->parameter[0];
 }
 
 // Exponential rising function
 // parameter[0]: end frequency
 void SoundSynthesizerEffects::exponentialRisingInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
-    synth->frequency = synth->effect->frequency + sin(0.01745329f*context->step)*context->parameter[0];
+    synth->frequency = synth->effect->frequency + sinf(0.01745329f*context->step)*context->parameter[0];
 }
 
 // Exponential falling function
 void SoundSynthesizerEffects::exponentialFallingInterpolation(SoundEmojiSynthesizer *synth, ToneEffect *context)
 {
-    synth->frequency = synth->effect->frequency + cos(0.01745329f*context->step)*context->parameter[0];
+    synth->frequency = synth->effect->frequency + cosf(0.01745329f*context->step)*context->parameter[0];
 }
 
 // Argeppio functions
