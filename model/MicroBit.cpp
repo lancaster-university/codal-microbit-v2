@@ -122,7 +122,7 @@ MicroBit::MicroBit() :
     #endif
 
     // uBit.logo is a Capacitive TouchButton, ensure the io pin is set capacitive as well
-    io.logo.status |= IO_STATUS_CAPACITATIVE_TOUCH;
+    io.logo.isTouched(TouchMode::Capacitative);
 
     // Add pullup resisitor to IRQ line (it's floating ACTIVE LO)
     io.irq1.getDigitalValue();
