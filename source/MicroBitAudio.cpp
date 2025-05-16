@@ -78,6 +78,7 @@ MicroBitAudio::MicroBitAudio(NRF52Pin &pin, NRF52Pin &speaker, NRF52ADC &adc, NR
 
     //Initilise input splitter
     rawSplitter = new StreamSplitter(mic->output);
+    rawSplitter->filterOn(&micEnabled);
 
     //Initilise stream normalizer
     processor = new StreamNormalizer(*rawSplitter->createChannel(), 0.08f, true, DATASTREAM_FORMAT_8BIT_SIGNED, 10);
