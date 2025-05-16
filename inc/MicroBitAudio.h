@@ -28,6 +28,7 @@ DEALINGS IN THE SOFTWARE.
 #include "NRF52PWM.h"
 #include "SoundEmojiSynthesizer.h"
 #include "SoundExpressions.h"
+#include "SampleSource.h"
 #include "Mixer2.h"
 #include "SoundOutputPin.h"
 #include "StreamNormalizer.h"
@@ -39,10 +40,17 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_AUDIO_STATUS_DEEPSLEEP       0x0001
 #define CONFIG_DEFAULT_MICROPHONE_GAIN        0.1f
 
-
 // Configurable options
 #ifndef CONFIG_AUDIO_MIXER_OUTPUT_LATENCY_US
 #define CONFIG_AUDIO_MIXER_OUTPUT_LATENCY_US              (uint32_t) ((CONFIG_MIXER_BUFFER_SIZE/2) * (1000000.0f/44100.0f))
+#endif
+
+#ifndef CONFIG_AUDIO_INPUT_CHANNELS
+#define CONFIG_AUDIO_INPUT_CHANNELS                       4
+#endif
+
+#ifndef CONFIG_AUDIO_DEFAULT_MICROPHONE_SAMPLERATE
+#define CONFIG_AUDIO_DEFAULT_MICROPHONE_SAMPLERATE        11000
 #endif
 
 namespace codal
@@ -55,12 +63,13 @@ namespace codal
         public:
         static MicroBitAudio    *instance;      // Primary instance of MicroBitAudio, on demand activated.
         Mixer2                  mixer;          // Multi channel audio mixer
-        NRF52ADCChannel *mic;                   // Microphone ADC Channel from uBit.IO
+        NRF52ADCChannel         *mic;           // Microphone ADC Channel from uBit.IO
         StreamNormalizer        *processor;     // Stream Normaliser instance
         StreamSplitter          *splitter;      // Stream Splitter instance (8bit normalized output)
         StreamSplitter          *rawSplitter;   // Stream Splitter instance (raw input)
         LevelDetectorSPL        *levelSPL;      // Level Detector SPL instance
         LowPassFilter           *micFilter;     // Low pass filter to remove high frequency noise on the mic
+        SampleSource            *sampleSource[CONFIG_AUDIO_INPUT_CHANNELS]; // multichannel sample playback capability
 
         private:
         volatile bool micEnabled;               // State of on board mic
@@ -96,12 +105,6 @@ namespace codal
          * Demand request from a component to enable the default instance of this audio pipeline
          */
         static void requestActivation();
-
-        /**
-          * Catch events from the splitter
-          * @param MicroBitEvent
-          */
-        void onSplitterEvent(MicroBitEvent);
 
         /**
           * Activate Mic
@@ -190,6 +193,8 @@ namespace codal
           * Puts the component in (or out of) sleep (low power) mode.
           */
         virtual int setSleep(bool doSleep) override;
+
+        virtual void periodicCallback();
     };
 }
 

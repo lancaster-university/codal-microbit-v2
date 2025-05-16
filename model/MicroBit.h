@@ -67,6 +67,7 @@ DEALINGS IN THE SOFTWARE.
 #include "StreamNormalizer.h"
 #include "LevelDetector.h"
 #include "LevelDetectorSPL.h"
+#include "SampleSource.h"
 #include "PulseIn.h"
 #include "neopixel.h"
 
@@ -120,6 +121,11 @@ namespace codal
              * A callback listener to disable default audio streaming to P0 if an event handler is registered on that pin.
              */
             void onP0ListenerRegisteredEvent(Event evt);
+
+            /**
+             * A callback listener to disable default audio streaming to P0 if an event handler is registered on that pin.
+             */
+            void onListenerRemovedEvent(Event evt);
 
             // Pin ranges used for LED matrix display.
 
@@ -315,6 +321,7 @@ namespace codal
 }
 
 void microbit_dmesg_flush();
+uint32_t *microbit_top_of_flash();
 
 #if CONFIG_ENABLED(CODAL_USE_GLOBAL_NAMESPACE)
 using namespace codal;

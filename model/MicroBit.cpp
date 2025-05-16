@@ -201,6 +201,7 @@ int MicroBit::init()
     // which saves processor time, memeory and battery life.
     messageBus.listen(DEVICE_ID_MESSAGE_BUS_LISTENER, DEVICE_EVT_ANY, this, &MicroBit::onListenerRegisteredEvent);
     messageBus.listen(DEVICE_ID_MESSAGE_BUS_LISTENER, ID_PIN_P0, this, &MicroBit::onP0ListenerRegisteredEvent, MESSAGE_BUS_LISTENER_IMMEDIATE);
+    messageBus.listen(DEVICE_ID_MESSAGE_BUS_IGNORED, DEVICE_EVT_ANY, this, &MicroBit::onListenerRemovedEvent);
 
 #if CONFIG_ENABLED(DMESG_SERIAL_DEBUG) && DEVICE_DMESG_BUFFER_SIZE > 0
     codal_dmesg_set_flush_fn(microbit_dmesg_flush);
@@ -301,7 +302,6 @@ int MicroBit::init()
     // before any user code begins running.
     
     sleep(10);
-
     return DEVICE_OK;
 }
 
@@ -365,7 +365,7 @@ void MicroBit::onListenerRegisteredEvent(Event evt)
             // The level detector uses lazy instantiation, we just need to read the data once to start it running.
             //audio.level->getValue();
             // The level detector requires that we enable constant listening, otherwise no events will be emitted.
-            audio.levelSPL->activateForEvents( true );
+            audio.levelSPL->listenerAdded();
             break;
 
         case DEVICE_ID_MICROPHONE:
@@ -376,6 +376,22 @@ void MicroBit::onListenerRegisteredEvent(Event evt)
     }
 }
 
+/**
+  * A listener to perform actions as a result of Message Bus reflection.
+  *
+  * This callback is triggered upon a MessageBus listneer being removed.
+  * We may wish to perform cleanup operations as a result, etc.
+  *
+  */
+void MicroBit::onListenerRemovedEvent(Event evt)
+{
+    switch(evt.value)
+    {
+        case DEVICE_ID_SYSTEM_LEVEL_DETECTOR:
+        audio.levelSPL->listenerRemoved();
+        break;
+    }
+}
 
 /**
  * Perfom scheduler idle
@@ -473,5 +489,10 @@ void microbit_dmesg_flush()
     }
 #endif
 #endif
+}
+
+uint32_t *microbit_top_of_flash()
+{
+    return (uint32_t *) MICROBIT_TOP_OF_FLASH;
 }
 
