@@ -49,6 +49,10 @@ DEALINGS IN THE SOFTWARE.
 #define CONFIG_AUDIO_INPUT_CHANNELS                       4
 #endif
 
+#ifndef CONFIG_AUDIO_DEFAULT_MICROPHONE_SAMPLERATE
+#define CONFIG_AUDIO_DEFAULT_MICROPHONE_SAMPLERATE        11000
+#endif
+
 namespace codal
 {
     /**
