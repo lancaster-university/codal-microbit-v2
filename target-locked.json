@@ -75,6 +75,6 @@
     "post_process": "",
     "processor": "NRF52833",
     "show_size": true,
-    "snapshot_version": "v0.2.70",
+    "snapshot_version": "v0.2.71",
     "toolchain": "ARM_GCC"
 }
