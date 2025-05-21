@@ -53,19 +53,19 @@
     "generate_hex": true,
     "libraries": [
         {
-            "branch": "238e93846b434b730d4d0bfde99b43ccfde29cef",
+            "branch": "e659bf3a19716453dc75a0090ad00f89bb2bcb16",
             "name": "codal-core",
             "type": "git",
             "url": "https://github.com/lancaster-university/codal-core"
         },
         {
-            "branch": "8802eb49140e0389e535cb6160d9080efd951ba7",
+            "branch": "03370108dec7310eed9a2cf0b072d869bec3b353",
             "name": "codal-nrf52",
             "type": "git",
             "url": "https://github.com/lancaster-university/codal-nrf52"
         },
         {
-            "branch": "d41d5c7ebe53a1d01935e61d4ffa891e5112e119",
+            "branch": "4b8abc690f6c9fca6132e6db5ee13a795a263f88",
             "name": "codal-microbit-nrf5sdk",
             "type": "git",
             "url": "https://github.com/microbit-foundation/codal-microbit-nrf5sdk"

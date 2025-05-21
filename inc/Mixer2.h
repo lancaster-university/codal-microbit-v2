@@ -165,7 +165,7 @@ public:
      * @param sampleRate (samples per second) - if set to zero, defaults to the output sample rate of the Mixer
      * @param sampleRange (quantization levels) the difference between the maximum and minimum sample level on the input channel
      */
-    MixerChannel *addChannel(DataSource &stream, float sampleRate = CONFIG_MIXER_DEFAULT_CHANNEL_SAMPLERATE, int sampleRange = CONFIG_MIXER_INTERNAL_RANGE);
+    MixerChannel *addChannel(DataSource &stream, float sampleRate = 0.0f, int sampleRange = CONFIG_MIXER_INTERNAL_RANGE);
 
     /**
      * Removes a channel from the mixer

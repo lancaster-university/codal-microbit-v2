@@ -94,7 +94,7 @@ MixerChannel *Mixer2::addChannel(DataSource &stream, float sampleRate, int sampl
     MixerChannel *c = new MixerChannel();
     c->stream = &stream;
     c->range = sampleRange;
-    c->rate = sampleRate ? sampleRate : outputRate;
+    c->rate = sampleRate ? sampleRate : stream.getSampleRate();
     c->pullRequests = 0;
     c->in = NULL;
     c->end = NULL;
