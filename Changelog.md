@@ -4,9 +4,75 @@
 For official release notes, please see Releases.md
 
 The current tag uses the following library versions:
- - codal-core = https://github.com/lancaster-university/codal-core/tree/238e93846b434b730d4d0bfde99b43ccfde29cef
- - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/8802eb49140e0389e535cb6160d9080efd951ba7
- - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/d41d5c7ebe53a1d01935e61d4ffa891e5112e119
+ - codal-core = https://github.com/lancaster-university/codal-core/tree/e659bf3a19716453dc75a0090ad00f89bb2bcb16
+ - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/03370108dec7310eed9a2cf0b072d869bec3b353
+ - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/4b8abc690f6c9fca6132e6db5ee13a795a263f88
+
+## [v0.3.0](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.71...v0.3.0)
+
+ - Remove legacy code relater to runtime reconfiguration of audio pipeline (by Joe Finney)
+ - Chnages ito support audio-refactor. (by Joe Finney)
+ - Bugfix minor errors in pipeline (by Joe Finney)
+ - bugfix (by Joe Finney)
+ - Set default sample rate back to 11000 (by Joe Finney)
+ - Reduce clicking noise on microphone acivation (by Joe Finney)
+ - Increase start up delay to 3 frames, to avoid occasional clicks. (by Joe Finney)
+ - Reduce sensitivity of microphone to permit detection of 35db (by Joe Finney)
+ - Introduce multitrack audio playback capability (by Joe Finney)
+ - Expose address that marks the usable top of flash memory (by Joe Finney)
+ - Update target-locked to allow for a fake tagged-released for micromusic testing (by Joe Finney)
+ - Use 32 bit addressing for limit macros (by Joe Finney)
+ - Update target-locked hashes (by Joe Finney)
+ - Add static definitions of TOP_OF_FLASH (by Joe Finney)
+ - Update target-locked hashes. (by Carlos Pereira Atencio)
+ - ci: Run CI workslflows with projects using the latest audio refactor. (by Carlos Pereira Atencio)
+ - Add message bus listener removal handler for LevelDetectorSPL instance (by Joe Finney)
+ - Update target-locked hashes. (by Carlos Pereira Atencio)
+ - Return levelDetectorSPL settings to previous values (bug #472) (by Joe Finney)
+ - Default Mixerchannel rate to upstream default on creation. (by Joe Finney)
+ - Set default microphone samplerate by a CONFIG option (by Joe Finney)
+ - Update target-locked to latest revision (by Joe Finney)
+ - Filter audio data that can arrive when hardware is disabled (#478) (by Joe Finney)
+ - bump version (by Joe Finney)
+
+### codal-core ([238e938...e659bf3](https://github.com/lancaster-university/codal-core/compare/238e93846b434b730d4d0bfde99b43ccfde29cef...e659bf3a19716453dc75a0090ad00f89bb2bcb16))
+
+ - Remove runtime configuration of bitrate for StreamSplitter (by Joe Finney)
+ - Remove legacy code. (by Joe Finney)
+ - Introduce DataSourceSink base class (by Joe Finney)
+ - More refactoring. (by Joe Finney)
+ - Bugfix minor errors (by Joe Finney)
+ - Add tri-state for connectedness of audio filters (by Joe Finney)
+ - Refactored stream recording class (by Joe Finney)
+ - Bugfix for smaller packets being received from the microphone (by Joe Finney)
+ - Enable back to back recordAsync / playbackAsync (by Joe Finney)
+ - Fix typo in test expression. classic! (by Joe Finney)
+ - Introduce (optional) StreamAnalyzer class (by Joe Finney)
+ - Update LevelDetectorSPL to always wake sleeping fibers. (by Joe Finney)
+ - Fix bug relating to reset of LevelDetectorSPL state (by Joe Finney)
+ - Add support for detecting removal of MessageBus listeners (by Joe Finney)
+ - Fix synchronous playback bug via SerialStreamer API (bug #477) (by Joe Finney)
+ - Introduce SerialStreamer class into codal-core (by Joe Finney)
+ - Register SerialStreamer component as always wantingData (by Joe Finney)
+ - Remove stale data stored in DataStream (by Joe Finney)
+ - Add noise gate to level detector SPL (by Joe Finney)
+ - Add optional support to filter unwanted packets at source (by Joe Finney)
+ - Create tailored dataWanted() behaviour for SerialStremaer (#485) (by Joe Finney)
+
+### codal-nrf52 ([8802eb4...0337010](https://github.com/lancaster-university/codal-nrf52/compare/8802eb49140e0389e535cb6160d9080efd951ba7...03370108dec7310eed9a2cf0b072d869bec3b353))
+
+ - Minor change to support debugging (by Joe Finney)
+ - Changes to support audio-refactor. (by Joe Finney)
+ - Bugfix minor errors (by Joe Finney)
+ - Bugfix (by Joe Finney)
+ - Add configurable startup delay to ADC channels (by Joe Finney)
+ - Fix audio channel release (bug #476) (by Joe Finney)
+ - Add interface to allow sample rate of microphone to be defined (#474) (by Joe Finney)
+ - Add basic validation for defining microphone ADC samplerate (by Joe Finney)
+
+### codal-microbit-nrf5sdk ([d41d5c7...4b8abc6](https://github.com/microbit-foundation/codal-microbit-nrf5sdk/compare/d41d5c7ebe53a1d01935e61d4ffa891e5112e119...4b8abc690f6c9fca6132e6db5ee13a795a263f88))
+
+ - Suppress all warnings from this target as it's 3rd party code. (#18) (by Carlos Pereira Atencio)
 
 ## [v0.2.71](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.70...v0.2.71)
 
