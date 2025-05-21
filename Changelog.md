@@ -8,6 +8,12 @@ The current tag uses the following library versions:
  - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/8802eb49140e0389e535cb6160d9080efd951ba7
  - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/d41d5c7ebe53a1d01935e61d4ffa891e5112e119
 
+## [v0.2.71](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.70...v0.2.71)
+
+ - Updated the Changelog (v0.2.70) (by Github Actions)
+ - Fix first use of io.logo.isTouched() (#480) (by Martin Williams)
+ - Save a bit of memory from MicroBitIO. (#466) (by Carlos Pereira Atencio)
+
 ## [v0.2.70](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.69...v0.2.70)
 
  - Updated the Changelog (v0.2.69) (by Github Actions)
