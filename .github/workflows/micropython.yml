@@ -24,8 +24,6 @@ jobs:
           path: lib/codal/libraries/codal-microbit-v2
           fetch-depth: '0'
           submodules: 'recursive'
-          # FIXME: Temporarily check out the audio-recording branch for testing
-          ref: 'audio-refactor'
       - name: Setup arm-none-eabi-gcc v10.3
         uses: carlosperate/arm-none-eabi-gcc-action@v1
         with:
