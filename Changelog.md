@@ -4,9 +4,20 @@
 For official release notes, please see Releases.md
 
 The current tag uses the following library versions:
- - codal-core = https://github.com/lancaster-university/codal-core/tree/e659bf3a19716453dc75a0090ad00f89bb2bcb16
- - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/03370108dec7310eed9a2cf0b072d869bec3b353
+ - codal-core = https://github.com/lancaster-university/codal-core/tree/a2f5051dc60f89276546517f1077e75659ae6741
+ - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/1fbb7240290fe36a55c61378f5cdeb7640f3ec4a
  - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/4b8abc690f6c9fca6132e6db5ee13a795a263f88
+
+## [v0.3.1](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.3.0...v0.3.1)
+
+ - CI: Now that all audio-refactor branches are merged, revert CI temp changes. (by Carlos Pereira Atencio)
+ - Snapshot v0.3.1 (by Carlos Pereira Atencio)
+
+### codal-core ([24f1284...a2f5051](https://github.com/lancaster-university/codal-core/compare/24f1284018657fd01a276ef554d16f9550d65d7f...a2f5051dc60f89276546517f1077e75659ae6741))
+
+ - Ensure LevelDetectorSPL::getValue() waits for valid data before returning (#486) (by Joe Finney)
+ - Fix bug related to quiet received buffer (by Joe Finney)
+ - Fix bug #487 (by Joe Finney)
 
 ## [v0.3.0](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.71...v0.3.0)
 
