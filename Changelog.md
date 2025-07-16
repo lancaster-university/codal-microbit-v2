@@ -4,9 +4,21 @@
 For official release notes, please see Releases.md
 
 The current tag uses the following library versions:
- - codal-core = https://github.com/lancaster-university/codal-core/tree/a2f5051dc60f89276546517f1077e75659ae6741
+ - codal-core = https://github.com/lancaster-university/codal-core/tree/8c8366f9a1e92da69f90fe816456c4b9c42ffd13
  - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/1fbb7240290fe36a55c61378f5cdeb7640f3ec4a
  - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/4b8abc690f6c9fca6132e6db5ee13a795a263f88
+
+## [v0.3.2](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.3.1...v0.3.2)
+
+ - Updated the Changelog (v0.3.1) (by Github Actions)
+ - CI: Update Windows runner from deprecated 2019 to oldest available 2022. (by Carlos Pereira Atencio)
+ - Make writes to mManagedBuffer safe (by Joe Finney)
+ - Snapshot v0.3.2 (by Carlos Pereira Atencio)
+
+### codal-core ([a2f5051...8c8366f](https://github.com/lancaster-university/codal-core/compare/a2f5051dc60f89276546517f1077e75659ae6741...8c8366f9a1e92da69f90fe816456c4b9c42ffd13))
+
+ - Prevent microphone LED from being onn all the time (bug #499) (by Joe Finney)
+ - Smooth values in the 35..56dB range (by Joe Finney)
 
 ## [v0.3.1](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.3.0...v0.3.1)
 
