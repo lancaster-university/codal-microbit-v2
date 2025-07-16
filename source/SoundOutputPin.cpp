@@ -190,6 +190,8 @@ void SoundOutputPin::update()
   */
 void SoundOutputPin::updateOutputBuffer(bool all)
 {
+    target_disable_irq();
+
     uint8_t *bufferEnd = outputBuffer.getBytes() + outputBuffer.length();
     uint8_t *endPosition = all ? bufferEnd : outputBuffer.getBytes() + min(outputBuffer.length(), (int) ((1000.0f / SOUND_OUTPUT_PIN_SAMPLE_RATE) * (timeOfLastUpdate - timeOfLastPull)));
 
@@ -229,6 +231,8 @@ void SoundOutputPin::updateOutputBuffer(bool all)
     // Snapshot the current sound parameters in case they are changed in flight
     _periodUs = periodUs;
     _value = value;
+
+    target_enable_irq();
 }
 
 /**
