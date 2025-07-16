@@ -53,7 +53,7 @@
     "generate_hex": true,
     "libraries": [
         {
-            "branch": "a2f5051dc60f89276546517f1077e75659ae6741",
+            "branch": "8c8366f9a1e92da69f90fe816456c4b9c42ffd13",
             "name": "codal-core",
             "type": "git",
             "url": "https://github.com/lancaster-university/codal-core"
@@ -75,6 +75,6 @@
     "post_process": "",
     "processor": "NRF52833",
     "show_size": true,
-    "snapshot_version": "v0.3.1",
+    "snapshot_version": "v0.3.2",
     "toolchain": "ARM_GCC"
 }
