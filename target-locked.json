@@ -53,16 +53,16 @@
     "generate_hex": true,
     "libraries": [
         {
-            "branch": "8c8366f9a1e92da69f90fe816456c4b9c42ffd13",
+            "branch": "kjwpwmfix",
             "name": "codal-core",
             "type": "git",
-            "url": "https://github.com/lancaster-university/codal-core"
+            "url": "https://github.com/kevinjwalters/codal-core"
         },
         {
-            "branch": "1fbb7240290fe36a55c61378f5cdeb7640f3ec4a",
+            "branch": "kjwpwmfix",
             "name": "codal-nrf52",
             "type": "git",
-            "url": "https://github.com/lancaster-university/codal-nrf52"
+            "url": "https://github.com/kevinjwalters/codal-nrf52"
         },
         {
             "branch": "4b8abc690f6c9fca6132e6db5ee13a795a263f88",
