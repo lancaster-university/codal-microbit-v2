@@ -109,11 +109,14 @@ int SoundEmojiSynthesizer::play(ManagedBuffer sound)
     MicroBitAudio::requestActivation();
 
     // Validate inputs
-    if (sound.length() < (int) sizeof(SoundEffect))
+    SoundEffect *fx = (SoundEffect *) &sound[0];
+    if (sound.length() < (int) sizeof(SoundEffect) || fx->frequency < 0)
         return DEVICE_INVALID_PARAMETER;
 
     // If a playout is already in progress, block until it has been scheduled.
     lock.wait();
+
+    target_disable_irq();
 
     // Store the requested sequence of sound effects.
     effectBuffer = sound;
@@ -121,6 +124,8 @@ int SoundEmojiSynthesizer::play(ManagedBuffer sound)
     // Scheduled this sound effect for playout. 
     // Generation will start the next time a pull() operation is called from downstream.
     nextSoundEffect();
+
+    target_enable_irq();
 
     // Perform on demand activiation if this is the first time this compoennt has been used.
     // Simply issue a pull request to start the process.
