@@ -4,9 +4,19 @@
 For official release notes, please see Releases.md
 
 The current tag uses the following library versions:
- - codal-core = https://github.com/lancaster-university/codal-core/tree/8c8366f9a1e92da69f90fe816456c4b9c42ffd13
+ - codal-core = https://github.com/lancaster-university/codal-core/tree/1bc6d4d10c47f4fe34e2a54004530d5071e892d4
  - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/1fbb7240290fe36a55c61378f5cdeb7640f3ec4a
  - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/4b8abc690f6c9fca6132e6db5ee13a795a263f88
+
+## [v0.3.3](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.3.2...v0.3.3)
+
+ - Updated the Changelog (v0.3.2) (by Github Actions)
+ - Add additional validation checks around SoundEmjiSynthesizer, and guarantee mutual exclusion when IRQ triggers (by Joe Finney)
+ - Bump to head of codal-core (by Joe Finney)
+
+### codal-core ([8c8366f...1bc6d4d](https://github.com/lancaster-university/codal-core/compare/8c8366f9a1e92da69f90fe816456c4b9c42ffd13...1bc6d4d10c47f4fe34e2a54004530d5071e892d4))
+
+ - ST7735 driver fix for screen hanging. (#186) (by KierPalin)
 
 ## [v0.3.2](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.3.1...v0.3.2)
 
