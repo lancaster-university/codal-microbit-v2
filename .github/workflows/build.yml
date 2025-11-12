@@ -10,13 +10,16 @@ jobs:
   build-microbit-v2-samples:
     strategy:
       matrix:
-        os: [ubuntu-22.04, macos-13, windows-2022]
+        # macos-13 is Intel and macos-15 is arm64
+        os: [ubuntu-22.04, macos-13, macos-15, windows-2022]
         gcc: ['6-2016-q4', 'latest']  # Min version 6.2 as used in pext/yotta:latest docker image
         cmake: ['3.6.0', '']  # Empty string installs the latest CMake release
         exclude:
           # This old version of CMake doesn't run un Ubuntu 22.04
           - os: ubuntu-22.04
             cmake: '3.6.0'
+          - os: macos-13
+            gcc: 'latest'
       fail-fast: false
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.os }}, gcc ${{ matrix.gcc }}, cmake ${{ matrix.cmake || 'latest'}}
