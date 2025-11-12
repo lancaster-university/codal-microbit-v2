@@ -72,6 +72,8 @@ def getCommitsBetween( tagA, tagB = "HEAD", clone=None):
             print(f"Cannot access repo: {e}")
             return "\n - Unable to find commits"
     commits = os.popen(f'git log --format="%s (by %an)" --no-merges --reverse {tagA}..{tagB}').read().strip().splitlines()
+    # Filter out changelog commits created by CI (.github/workflows/update-changelog.yml)
+    commits = [c for c in commits if not c.startswith("Updated the Changelog")]
     if clone:
         os.chdir(original_path)
         shutil.rmtree(clone_path)

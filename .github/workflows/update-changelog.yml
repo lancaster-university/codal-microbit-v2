@@ -29,6 +29,7 @@ jobs:
           python3 .github/tools/gitchanges.py --input Changelog.md
 
       - name: Commit the new Changelog
+        # If the commit message is changed, also update the gitchanges.py script to match
         run: |
           git config --global user.name 'Github Actions'
           git config --global user.email 'actions+git@johnvidler.co.uk'

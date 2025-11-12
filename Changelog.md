@@ -10,7 +10,6 @@ The current tag uses the following library versions:
 
 ## [v0.3.3](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.3.2...v0.3.3)
 
- - Updated the Changelog (v0.3.2) (by Github Actions)
  - Add additional validation checks around SoundEmjiSynthesizer, and guarantee mutual exclusion when IRQ triggers (by Joe Finney)
  - Bump to head of codal-core (by Joe Finney)
 
@@ -20,7 +19,6 @@ The current tag uses the following library versions:
 
 ## [v0.3.2](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.3.1...v0.3.2)
 
- - Updated the Changelog (v0.3.1) (by Github Actions)
  - CI: Update Windows runner from deprecated 2019 to oldest available 2022. (by Carlos Pereira Atencio)
  - Make writes to mManagedBuffer safe (by Joe Finney)
  - Snapshot v0.3.2 (by Carlos Pereira Atencio)
@@ -109,13 +107,11 @@ The current tag uses the following library versions:
 
 ## [v0.2.71](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.70...v0.2.71)
 
- - Updated the Changelog (v0.2.70) (by Github Actions)
  - Fix first use of io.logo.isTouched() (#480) (by Martin Williams)
  - Save a bit of memory from MicroBitIO. (#466) (by Carlos Pereira Atencio)
 
 ## [v0.2.70](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.69...v0.2.70)
 
- - Updated the Changelog (v0.2.69) (by Github Actions)
  - CI: Update mac runner version to macOS 13, as 12 is deprecated. (by Carlos Pereira Atencio)
  - Fix Pi value typo in SoundSynthesizerEffects. (#456) (by Carlos Pereira Atencio)
  - CI: Reduce the min GCC version used to match what MakeCode (PXT) uses. (#461) (by Carlos Pereira Atencio)
@@ -140,7 +136,6 @@ The current tag uses the following library versions:
 
 ## [v0.2.69](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.67...v0.2.69)
 
- - Updated the Changelog (by Carlos Pereira Atencio)
  - Allow log full FUL to be written to last byte (#438) (by Martin Williams)
  - Temporarily set CODAL_VERSION back to "unknown". (#445) (by Carlos Pereira Atencio)
  - Snapshot v0.2.68 (by Carlos Pereira Atencio)
@@ -155,7 +150,6 @@ The current tag uses the following library versions:
 
 ## [v0.2.67](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.66...v0.2.67)
 
- - Updated the Changelog (by Github Actions)
  - Update Changelog.md (by Dr John Vidler)
  - CI: Restore building MakeCode with Docker. (#407) (by Carlos Pereira Atencio)
  - CI: Update versions of actions to remove warnings about node 16. (#408) (by Carlos Pereira Atencio)
@@ -187,7 +181,6 @@ The current tag uses the following library versions:
 
 ## [v0.2.66](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.65...v0.2.66)
 
- - Updated the Changelog (by Github Actions)
  - Update Changelog.md (by Dr John Vidler)
  - Snapshot v0.2.66 (by Dr John Vidler)
 
@@ -197,7 +190,6 @@ The current tag uses the following library versions:
 
 ## [v0.2.65](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.63...v0.2.65)
 
- - Updated the Changelog (by Github Actions)
  - Corrected Changelog.md after my tag snarfu (by Dr John Vidler)
  - Refined the changelog script to only update the head of the log under normal cases (by Dr John Vidler)
  - Set MICROBIT_RADIO_MAX_PACKET_SIZE as a configurable value. (#387) (by Carlos Pereira Atencio)
@@ -229,9 +221,6 @@ Dr John Vidler (9):
  - Reverted the power saving for the LED Matrix to avoid strange issues with Pins.
  - Snapshot v0.2.63
 
-Github Actions (3):
- - Updated the Changelog
-
 ## [v0.2.62](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.61...v0.2.62)
 
 Carlos Pereira Atencio (1):
@@ -244,11 +233,6 @@ Dr John Vidler (5):
  - Merge branch 'master' of ssh://github.com/lancaster-university/codal-microbit-v2
  - Snapshot v0.2.62
 
-Github Actions (3):
- - Updated the Changelog
- - Updated the Changelog
- - Updated the Changelog
-
 ## [v0.2.61](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.60...v0.2.61)
 
 Dr John Vidler (4):
@@ -256,10 +240,6 @@ Dr John Vidler (4):
  - Snapshot v0.2.60-master.0
  - Snapshot v0.2.60-master.1
  - Snapshot v0.2.61
-
-Github Actions (2):
- - Updated the Changelog
- - Updated the Changelog
 
 Martin Williams (1):
  - Shorter reset to Bluetooth mode animation (#368)
@@ -276,9 +256,6 @@ Carlos Pereira Atencio (5):
 Dr John Vidler (1):
  - Snapshot v0.2.60
 
-Github Actions (1):
- - Updated the Changelog
-
 ## [v0.2.59](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.58...v0.2.59)
 
 Carlos Pereira Atencio (2):
@@ -288,18 +265,12 @@ Carlos Pereira Atencio (2):
 Dr John Vidler (1):
  - Added an on-release action to grab library builds
 
-Github Actions (1):
- - Updated the Changelog
-
 ## [v0.2.58](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.57...v0.2.58)
 
 Carlos Pereira Atencio (3):
  - CI: Add option to size diff workflow to configure samples repo commit. (#358)
  - CI: Temporarily disable pxt docker build until image becomes available. (#359)
  - Snapshot v0.2.58
-
-Github Actions (1):
- - Updated the Changelog
 
 Martin Williams (1):
  - MicroBitBLEManager - Move MICROBIT_BLE_MAXIMUM_BONDS to MicroBitConfig (#299)
@@ -309,9 +280,6 @@ Martin Williams (1):
 Dr John Vidler (2):
  - Disbled the MICROBIT_BLE_UTILITY_SERVICE_PAIRING configuration by default, enabled on BETA
  - Snapshot v0.2.57
-
-Github Actions (1):
- - Updated the Changelog
 
 ## [v0.2.56](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.55...v0.2.56)
 
@@ -332,9 +300,6 @@ Dr John Vidler (11):
  - Merge branch 'master' of ssh://github.com/lancaster-university/codal-microbit-v2
  - Snapshot v0.2.56
 
-Github Actions (1):
- - Updated the Changelog
-
 Martin Williams (2):
  - MicroBitUtilityService - replaces PR 178 (#287)
  - MicroBitCompassCalibrator avoid using max(int,int) (#290)
@@ -345,9 +310,6 @@ Dr John Vidler (2):
  - Added additional workflow status badges
  - Snapshot v0.2.55
 
-Github Actions (1):
- - Updated the Changelog
-
 Martin Williams (1):
  - Fix BLE panic 071 (#334)
 
@@ -356,9 +318,6 @@ Martin Williams (1):
 Dr John Vidler (2):
  - Update update-changelog.yml
  - Snapshot v0.2.54
-
-Github Actions (1):
- - Updated the Changelog
 
 ## [v0.2.53](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.2.52...v0.2.53)
 
@@ -371,10 +330,6 @@ Dr John Vidler (5):
  - Merged with minor conflict against the autogenerated Changelog.md
  - !!BREAKING CHANGE!! - The old level detector is now removed, in favour of the SPL level detector. Users who need the old one must create their own
  - Snapshot v0.2.53
-
-Github Actions (2):
- - Updated the Changelog
- - Updated the Changelog
 
 Joe Finney (1):
  - Improve sound quality of virtual sound pin (#312)
