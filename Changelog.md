@@ -8,6 +8,12 @@ The current tag uses the following library versions:
  - codal-nrf52 = https://github.com/lancaster-university/codal-nrf52/tree/1fbb7240290fe36a55c61378f5cdeb7640f3ec4a
  - codal-microbit-nrf5sdk = https://github.com/microbit-foundation/codal-microbit-nrf5sdk/tree/4b8abc690f6c9fca6132e6db5ee13a795a263f88
 
+## [v0.3.4](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.3.3...v0.3.4)
+
+ - CI: Update Changelog script to skip listing changelog edit commits. (by Carlos Pereira Atencio)
+ - CI: Updates due to latest arm compiler not supporting Intel Mac. (by Carlos Pereira Atencio)
+ - Snapshot v0.3.4 (by Carlos Pereira Atencio)
+
 ## [v0.3.3](https://github.com/lancaster-university/codal-microbit-v2/compare/v0.3.2...v0.3.3)
 
  - Add additional validation checks around SoundEmjiSynthesizer, and guarantee mutual exclusion when IRQ triggers (by Joe Finney)
