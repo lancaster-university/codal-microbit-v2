@@ -60,6 +60,13 @@ NRF52LEDMatrix::NRF52LEDMatrix(NRFLowLevelTimer &displayTimer, const MatrixMap &
     strobeRow = 0;
     instance = this;
     lightLevel = 0;
+    is_dirty_ = true;
+    image_checksum_ = 0xFFFFFFFF;
+    display_active_ = true;
+
+    for (int i = 0; i < 5; i++)
+        for (int j = 0; j < NRF52_LED_MATRIX_MAXIMUM_COLUMNS; j++)
+            rendered_image_[i][j] = 0;
     this->mode = mode;
 
     // Validate that we can deliver the requested display.
@@ -140,6 +147,7 @@ DisplayMode NRF52LEDMatrix::getDisplayMode()
 void NRF52LEDMatrix::rotateTo(DisplayRotation rotation)
 {
     this->rotation = rotation;
+    is_dirty_ = true;
 }
 
 /**
@@ -216,87 +224,115 @@ void NRF52LEDMatrix::disable()
  */
 void NRF52LEDMatrix::render()
 {
-    uint8_t *screenBuffer = image.getBitmap();
-    uint32_t value;
+    if (strobeRow == 0)
+    {
+        uint32_t checksum = calculate_checksum();
+
+        if (checksum == 0)
+        {
+            if (display_active_)
+            {
+                timer.disable();
+                timer.disableIRQ();
+                display_active_ = false;
+
+                // also turn off the last row, as we may be mid-frame.
+                matrixMap.rowPins[matrixMap.rows-1]->setDigitalValue(0);
+            }
+        }
+        else
+        {
+            if (!display_active_)
+            {
+                timer.enable();
+                timer.enableIRQ();
+                display_active_ = true;
+            }
+        }
+
+        if (checksum != image_checksum_)
+        {
+            is_dirty_ = true;
+            image_checksum_ = checksum;
+        }
+    }
+
+    if (!display_active_)
+        return;
+
+    if (is_dirty_)
+    {
+        uint8_t *screenBuffer = image.getBitmap();
+        uint32_t value;
+
+        for (int row = 0; row < matrixMap.rows; row++)
+        {
+            MatrixPoint *p = (MatrixPoint *)matrixMap.map + row;
+
+            for (int column = 0; column < matrixMap.columns; column++)
+            {
+                switch (this->rotation)
+                {
+                    case MATRIX_DISPLAY_ROTATION_0:
+                        value = screenBuffer[p->y * width + p->x];
+                        break;
+                    case MATRIX_DISPLAY_ROTATION_90:
+                        value = screenBuffer[p->x * width + width - 1 - p->y];
+                        break;
+                    case MATRIX_DISPLAY_ROTATION_180:
+                        value = screenBuffer[(height - 1 - p->y) * width + width - 1 - p->x];
+                        break;
+                    case MATRIX_DISPLAY_ROTATION_270:
+                        value = screenBuffer[(height - 1 - p->x) * width + p->y];
+                        break;
+                    default:
+                        value = screenBuffer[p->y * width + p->x];
+                        break;
+                }
+
+                if (mode == DISPLAY_MODE_BLACK_AND_WHITE || mode == DISPLAY_MODE_BLACK_AND_WHITE_LIGHT_SENSE)
+                    value = value ? 255 : 0;
+
+                rendered_image_[row][column] = value * quantum;
+                p += matrixMap.rows;
+            }
+        }
+        is_dirty_ = false;
+    }
 
     if (strobeRow < matrixMap.rows)
     {
-        // We just completed a normal diplay strobe. 
-        // Turn off the LED drive to the row that was completed.
         matrixMap.rowPins[strobeRow]->setDigitalValue(0);
     }
     else
     {
-        // We just completed a light sense strobe. Record the light level sensed.
         lightLevel = 255 - ((255 * timer.timer->CC[1]) / (timerPeriod * NRF52_LED_MATRIX_LIGHTSENSE_STROBES));
         status |= NRF52_LEDMATRIX_STATUS_LIGHTREADY;
-
-        // Restore the hardware configuration into LED drive mode.
         status |= NRF52_LEDMATRIX_STATUS_RESET;
         setDisplayMode(mode);
     }
     
-    // Stop the timer temporarily, to avoid possible race conditions.
     timer.timer->TASKS_STOP = 1;
-
-    // Move on to the next row.
     strobeRow = (strobeRow + 1) % timeslots;
 
     if(strobeRow < matrixMap.rows)
     {
-        // Common case - configure timer values.
-        MatrixPoint *p = (MatrixPoint *)matrixMap.map + strobeRow;
-
         for (int column = 0; column < matrixMap.columns; column++)
         {
-            switch ( this->rotation)
-            {
-              case MATRIX_DISPLAY_ROTATION_0:
-                value = screenBuffer[ p->y * width + p->x];
-                break;
-              case MATRIX_DISPLAY_ROTATION_90:
-                value = screenBuffer[ p->x * width + width - 1 - p->y];
-                break;
-              case MATRIX_DISPLAY_ROTATION_180:
-                value = screenBuffer[ (height - 1 - p->y) * width + width - 1 - p->x];
-                break;
-              case MATRIX_DISPLAY_ROTATION_270:
-                value = screenBuffer[ ( height - 1 - p->x) * width + p->y];
-                break;
-              default:
-                value = screenBuffer[ p->y * width + p->x];
-                break;
-            }
-
-            // Clip pixels to full or zero brightness if in black and white mode.
-            if (mode == DISPLAY_MODE_BLACK_AND_WHITE || mode == DISPLAY_MODE_BLACK_AND_WHITE_LIGHT_SENSE)
-                value = value ? 255 : 0;
-
-            value = value * quantum;
+            uint32_t value = rendered_image_[strobeRow][column];
             timer.timer->CC[column+1] = value;
 
-            // Set the initial polarity of the column output to HIGH if the pixel brightness is >0. LOW otherwise.
             if (value)
                 NRF_GPIOTE->CONFIG[gpiote[column]] &= ~0x00100000;
             else
                 NRF_GPIOTE->CONFIG[gpiote[column]] |= 0x00100000;
-            
-            p += matrixMap.rows;
         }
-
-        // Enable the drive pin, and start the timer.
         matrixMap.rowPins[strobeRow]->setDigitalValue(1);
     }
     else
     {
-        // Perform Light sensing. This is tricky, as we need to reconfigure the timer, PPI and GPIOTE channels to
-        // sense and capture the voltage on the LED rows, rather than drive them.
-        
-        // Extend the refresh period to allow for reasonable accuracy.
         timer.setCompare(0, timerPeriod * NRF52_LED_MATRIX_LIGHTSENSE_STROBES);
        
-        // Disable GPIOTE control on the columns pins, and set all column pins to HIGH.
-        // n.b. we don't use GPIOTE to do this drive as we need to reuse the channels anyway...
         for (int column = 0; column < matrixMap.columns; column++)
         {
             NRF_GPIOTE->CONFIG[gpiote[column]] = 0;
@@ -304,10 +340,7 @@ void NRF52LEDMatrix::render()
             matrixMap.columnPins[column]->setDigitalValue(1);
         }
 
-        // Pull the sense pin low 
         matrixMap.rowPins[0]->setDigitalValue(0);
-
-        // Configure GPIOTE and PPI to measure the sense pin rise time.
         NRF_GPIOTE->CONFIG[gpiote[0]] = 0x00010001 | (matrixMap.rowPins[0]->name << 8);
         NRF_PPI->CH[ppi[0]].EEP = (uint32_t) &NRF_GPIOTE->EVENTS_IN[gpiote[0]];
         NRF_PPI->CH[ppi[0]].TEP = (uint32_t) &timer.timer->TASKS_CAPTURE[1];
@@ -329,6 +362,7 @@ void NRF52LEDMatrix::render()
 void NRF52LEDMatrix::clear()
 {
     image.clear();
+    is_dirty_ = true;
 }
 
 /**
@@ -347,6 +381,8 @@ int NRF52LEDMatrix::setBrightness(int b)
 
     // Recalculate our quantum based on the new brightness setting.
     quantum = (timerPeriod * brightness) / (256 * 255);
+
+    is_dirty_ = true;
 
     return DEVICE_OK;
 }
@@ -398,6 +434,23 @@ int NRF52LEDMatrix::setSleep(bool doSleep)
     }
    
     return DEVICE_OK;
+}
+
+/**
+ * Calculates a checksum of the image buffer.
+ */
+uint32_t NRF52LEDMatrix::calculate_checksum()
+{
+    uint32_t checksum = 0;
+    uint8_t *buffer = image.getBitmap();
+
+    for (int i = 0; i < width * height; i++)
+    {
+        checksum = (checksum >> 1) | (checksum << 31);
+        checksum += buffer[i];
+    }
+
+    return checksum;
 }
 
 /**

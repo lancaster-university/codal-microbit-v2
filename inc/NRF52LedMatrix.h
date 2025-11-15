@@ -63,6 +63,16 @@ namespace codal
         
         int8_t              gpiote[NRF52_LED_MATRIX_MAXIMUM_COLUMNS];            // GPIOTE channels used by output columns.
         int8_t              ppi[NRF52_LED_MATRIX_MAXIMUM_COLUMNS];               // PPI channels used by output columns.
+        bool                is_dirty_;
+        uint32_t            image_checksum_;
+        bool                display_active_;
+        uint32_t            rendered_image_[5][NRF52_LED_MATRIX_MAXIMUM_COLUMNS];
+
+        private:
+        /**
+         * Calculates a checksum of the image buffer.
+         */
+        uint32_t calculate_checksum();
 
         public:
         /**
