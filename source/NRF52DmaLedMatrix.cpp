@@ -23,8 +23,7 @@ DEALINGS IN THE SOFTWARE.
 */
 
 #include "NRF52DmaLedMatrix.h"
-#include "nrf.h"
-#include "ErrorNo.h"
+#include "codal-core/inc/core/ErrorNo.h"
 
 #define NRF52_LED_MATRIX_FREQUENCY          100
 #define NRF52_LED_MATRIX_MAX_COLUMNS      5
