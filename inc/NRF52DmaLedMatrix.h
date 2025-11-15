@@ -25,10 +25,10 @@ DEALINGS IN THE SOFTWARE.
 #ifndef NRF52_DMA_LED_MATRIX_H
 #define NRF52_DMA_LED_MATRIX_H
 
-#include "codal-core/inc/core/CodalConfig.h"
-#include "codal-core/inc/driver-models/Display.h"
-#include "codal-core/inc/driver-models/MatrixMap.h"
-#include "codal-nrf52/inc/NRFLowLevelTimer.h"
+#include "CodalConfig.h"
+#include "Display.h"
+#include "MatrixMap.h"
+#include "NRFLowLevelTimer.h"
 
 namespace codal
 {
