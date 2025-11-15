@@ -28,7 +28,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "CodalConfig.h"
 #include "codal-core/inc/types/Event.h"
-#include "NRF52LedMatrix.h"
+#include "NRF52DmaLedMatrix.h"
 #include "AnimatedDisplay.h"
 
 namespace codal
@@ -36,7 +36,7 @@ namespace codal
     /**
      * Class definition for MicroBitDisplay
      */
-    class MicroBitDisplay : public NRF52LEDMatrix, public AnimatedDisplay
+    class MicroBitDisplay : public NRF52DmaLEDMatrix, public AnimatedDisplay
     {
         public:
 

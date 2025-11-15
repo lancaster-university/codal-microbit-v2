@@ -40,7 +40,7 @@ using namespace codal;
   * @param map The mapping information that relates pin inputs/outputs to physical screen coordinates.
   * @param id The id the display should use when sending events on the MessageBus. Defaults to DEVICE_ID_DISPLAY.
   */
-MicroBitDisplay::MicroBitDisplay(const MatrixMap &map, uint16_t id) : NRF52LEDMatrix(*new NRFLowLevelTimer(NRF_TIMER4, TIMER4_IRQn), map, id, DisplayMode::DISPLAY_MODE_GREYSCALE), AnimatedDisplay(*this, id)
+MicroBitDisplay::MicroBitDisplay(const MatrixMap &map, uint16_t id) : NRF52DmaLEDMatrix(map, *new NRFLowLevelTimer(NRF_TIMER4, TIMER4_IRQn), id), AnimatedDisplay(*this, id)
 {
 }
 
