@@ -47,7 +47,11 @@ DEALINGS IN THE SOFTWARE.
 #include "NRF52TouchSensor.h"
 
 #include "MicroBitIO.h"
+#if CONFIG_ENABLED(USE_DMA_DISPLAY_DRIVER)
+#include "NRF52DmaLedMatrix.h"
+#else
 #include "MicroBitDisplay.h"
+#endif
 #include "CodalFiber.h"
 #include "MessageBus.h"
 #include "LSM303Accelerometer.h"
@@ -156,7 +160,11 @@ namespace codal
             NRF52Pin*                   ledRowPins[5];
             NRF52Pin*                   ledColPins[5];
             const MatrixMap             ledMatrixMap;
+#if CONFIG_ENABLED(USE_DMA_DISPLAY_DRIVER)
+            NRF52DmaLEDMatrix           display;
+#else
             MicroBitDisplay             display;
+#endif
             Button                      buttonA;
             Button                      buttonB;
             MultiButton                 buttonAB;
