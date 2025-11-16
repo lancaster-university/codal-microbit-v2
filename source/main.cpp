@@ -37,4 +37,3 @@ main()
         uBit.display.scroll("Hello World");
     }
 }
-

@@ -18,7 +18,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
 THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+LIABILITY, WHETHER IN an ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 */
@@ -28,7 +28,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "CodalConfig.h"
 #include "codal-core/inc/types/Event.h"
-#include "NRF52LedMatrix.h"
+#include "NRF52DmaLedMatrix.h"
 #include "AnimatedDisplay.h"
 
 namespace codal
@@ -36,7 +36,7 @@ namespace codal
     /**
      * Class definition for MicroBitDisplay
      */
-    class MicroBitDisplay : public NRF52LEDMatrix, public AnimatedDisplay
+    class MicroBitDisplay : public NRF52DmaLEDMatrix, public AnimatedDisplay
     {
         public:
 

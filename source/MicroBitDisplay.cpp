@@ -18,7 +18,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
 THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+LIABILITY, WHETHER IN an ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 */
@@ -40,7 +40,7 @@ using namespace codal;
   * @param map The mapping information that relates pin inputs/outputs to physical screen coordinates.
   * @param id The id the display should use when sending events on the MessageBus. Defaults to DEVICE_ID_DISPLAY.
   */
-MicroBitDisplay::MicroBitDisplay(const MatrixMap &map, uint16_t id) : NRF52LEDMatrix(*new NRFLowLevelTimer(NRF_TIMER4, TIMER4_IRQn), map, id, DisplayMode::DISPLAY_MODE_GREYSCALE), AnimatedDisplay(*this, id)
+MicroBitDisplay::MicroBitDisplay(const MatrixMap &map, uint16_t id) : NRF52DmaLEDMatrix(*new NRFLowLevelTimer(NRF_TIMER4, TIMER4_IRQn), map, id, DisplayMode::DISPLAY_MODE_GREYSCALE), AnimatedDisplay(*this, id)
 {
 }
 
