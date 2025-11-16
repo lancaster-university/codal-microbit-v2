@@ -1,4 +1,17 @@
+cmake_minimum_required(VERSION 3.6)
+include(utils/cmake/util.cmake)
+
 project(codal-microbit-v2)
+
+# Add the libraries subdirectory
+add_subdirectory(libraries)
+
+# Add include directories for dependencies
+include_directories(libraries/codal-core/inc)
+include_directories(libraries/codal-nrf52/inc)
+include_directories(libraries/codal-microbit-nrf5sdk/inc)
+include_directories(libraries/codal-microbit-nrf5sdk/source)
+
 
 # Actually merge our multiple configs into a single set of values so we can query them easily.
 # Note: This will be removed when we move to a library-ified version of the build system
