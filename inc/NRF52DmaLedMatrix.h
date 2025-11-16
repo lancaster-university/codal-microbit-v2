@@ -27,7 +27,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "CodalConfig.h"
 #include "Display.h"
-#include "MatrixMap.h"
+#include "LEDMatrix.h"
 #include "NRFLowLevelTimer.h"
 
 namespace codal
