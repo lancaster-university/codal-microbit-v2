@@ -141,7 +141,9 @@ namespace codal
             NRFLowLevelTimer            systemTimer;
             NRFLowLevelTimer            adcTimer;
             NRFLowLevelTimer            capTouchTimer;
+            NRFLowLevelTimer            displayTimer;
             Timer                       timer;
+			
             MessageBus                  messageBus;
             NRF52ADC                    adc;
             NRF52TouchSensor            touchSensor;
