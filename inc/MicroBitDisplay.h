@@ -30,6 +30,7 @@ DEALINGS IN THE SOFTWARE.
 #include "codal-core/inc/types/Event.h"
 #include "NRF52LedMatrix.h"
 #include "AnimatedDisplay.h"
+#include "NRFLowLevelTimer.h"
 
 namespace codal
 {
@@ -49,8 +50,23 @@ namespace codal
          * @param map The mapping information that relates pin inputs/outputs to physical screen coordinates.
          * @param id The id the display should use when sending events on the MessageBus. Defaults to DEVICE_ID_DISPLAY.
          *
+         * @note This constructor is deprecated. Please use MicroBitDisplay(NRFLowLevelTimer&, const MatrixMap, uint16_t), which provides better handling of the timer used to update the display.
          */
+        [[deprecated("Replaced by MicroBitDisplay(NRFLowLevelTimer&, const MatrixMap, uint16_t), which provides better handling of the timer used to update the display.")]]
         MicroBitDisplay(const MatrixMap &map, uint16_t id = DEVICE_ID_DISPLAY);
+
+        /**
+         * Constructor.
+         *
+         * Create a software representation of the micro:bit's 5x5 LED matrix.
+         * The display is initially blank.
+         *
+         * @param t The timer to be used for display refresh.
+         * @param map The mapping information that relates pin inputs/outputs to physical screen coordinates.
+         * @param id The id the display should use when sending events on the MessageBus. Defaults to DEVICE_ID_DISPLAY.
+         *
+         */
+        MicroBitDisplay(NRFLowLevelTimer& t, const MatrixMap &map, uint16_t id = DEVICE_ID_DISPLAY);
 
         /**
          * Destructor.
