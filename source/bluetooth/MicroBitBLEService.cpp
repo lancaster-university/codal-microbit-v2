@@ -54,6 +54,8 @@ MicroBitBLEService::MicroBitBLEService() :
     bs_uuid_type(0),
     bs_service_handle(0)
 {
+    bs_service_uuid.type = 0;
+    bs_service_uuid.uuid = 0;
     MicroBitBLEServices::getShared()->AddService( this);
 }
 
@@ -67,9 +69,10 @@ MicroBitBLEService::~MicroBitBLEService()
 void MicroBitBLEService::RegisterBaseUUID( const uint8_t *bytes16UUID)
 {
     ble_uuid128_t uuid128;
-    for ( int i = 0; i < 16; i++)
+    for ( int i = 0; i < 16; i++) {
         uuid128.uuid128[i] = bytes16UUID[ 15 - i];
-    
+    }
+
     MICROBIT_BLE_ECHK( sd_ble_uuid_vs_add( &uuid128, &bs_uuid_type));
     
     MICROBIT_DEBUG_DMESG( "MicroBitBLEService::RegisterBaseUUID bs_uuid_type = %d", (int) bs_uuid_type);
@@ -78,12 +81,10 @@ void MicroBitBLEService::RegisterBaseUUID( const uint8_t *bytes16UUID)
 
 void MicroBitBLEService::CreateService( uint16_t uuid)
 {
-    ble_uuid_t serviceUUID;
+    bs_service_uuid.uuid = uuid;
+    bs_service_uuid.type = bs_uuid_type;
     
-    serviceUUID.uuid = uuid;
-    serviceUUID.type = bs_uuid_type;
-
-    MICROBIT_BLE_ECHK( sd_ble_gatts_service_add( BLE_GATTS_SRVC_TYPE_PRIMARY, &serviceUUID, &bs_service_handle));
+    MICROBIT_BLE_ECHK( sd_ble_gatts_service_add( BLE_GATTS_SRVC_TYPE_PRIMARY, &bs_service_uuid, &bs_service_handle));
     
     MICROBIT_DEBUG_DMESG( "MicroBitBLEService::CreateService( %x) = %d", (unsigned int) uuid, (int) bs_service_handle);
 }
@@ -141,6 +142,10 @@ void MicroBitBLEService::CreateCharacteristic(
           (int) charHandles( idx)->sccd);
 }
 
+ble_uuid_t MicroBitBLEService::getServiceUUID()
+{
+    return bs_service_uuid;
+}
 
 microbit_gaphandle_t MicroBitBLEService::getConnectionHandle()
 {
