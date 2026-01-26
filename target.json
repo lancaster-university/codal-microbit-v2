@@ -60,8 +60,8 @@
     "libraries":[
         {
             "name":"codal-core",
-            "url":"https://github.com/lancaster-university/codal-core",
-            "branch":"master",
+            "url":"https://github.com/thomasjball/codal-core",
+            "branch":"1bc6d4d10c47f4fe34e2a54004530d5071e892d4",
             "type":"git"
         },
         {
