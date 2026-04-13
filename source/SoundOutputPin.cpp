@@ -190,7 +190,7 @@ void SoundOutputPin::update()
   */
 void SoundOutputPin::updateOutputBuffer(bool all)
 {
-    target_disable_irq();
+    target_disable_irqn(PWM1_IRQn);
 
     uint8_t *bufferEnd = outputBuffer.getBytes() + outputBuffer.length();
     uint8_t *endPosition = all ? bufferEnd : outputBuffer.getBytes() + min(outputBuffer.length(), (int) ((1000.0f / SOUND_OUTPUT_PIN_SAMPLE_RATE) * (timeOfLastUpdate - timeOfLastPull)));
@@ -232,7 +232,7 @@ void SoundOutputPin::updateOutputBuffer(bool all)
     _periodUs = periodUs;
     _value = value;
 
-    target_enable_irq();
+    target_enable_irqn(PWM1_IRQn);
 }
 
 /**
