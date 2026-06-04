@@ -28,6 +28,7 @@ DEALINGS IN THE SOFTWARE.
   * A LEDMatrix represents the LED matrix array on the micro:bit.
   */
 #include "NRF52LedMatrix.h"
+#include "MicroBitAccessibleDisplay.h"
 #include "NRF52Pin.h"
 #include "CodalDmesg.h"
 #include "ErrorNo.h"
@@ -49,18 +50,23 @@ static void display_irq(uint16_t mask)
  * The display is initially blank.
  *
  * @param displayTimer The NRF52 timer to use to driver the LEDMatrix display.
+ * @param accessibleDisplay The MicroBitAccessibleDisplay instance to use to drive the accessibility display.
  * @param map The mapping information that relates pin inputs/outputs to physical screen coordinates.
  * @param id The id the display should use when sending events on the MessageBus. Defaults to DEVICE_ID_DISPLAY.
  * @param mode The DisplayMode to use. Default: DISPLAY_MODE_BLACK_AND_WHITE.
  */
 NRF52LEDMatrix::NRF52LEDMatrix(NRFLowLevelTimer &displayTimer, const MatrixMap &map, uint16_t id, DisplayMode mode) : Display(map.width, map.height, id), matrixMap(map), timer(displayTimer)
 {
+    accessibleDisplay = NULL;
     rotation = MATRIX_DISPLAY_ROTATION_0;
     enabled = false;
     strobeRow = 0;
     instance = this;
     lightLevel = 0;
     this->mode = mode;
+
+    // Set up a default WS2812B accessibility display
+    setAccessibilityDisplay(* (NRF52Pin *)map.accessibility);
 
     // Validate that we can deliver the requested display.
     if (matrixMap.columns <= NRF52_LED_MATRIX_MAXIMUM_COLUMNS)
@@ -74,6 +80,22 @@ NRF52LEDMatrix::NRF52LEDMatrix(NRFLowLevelTimer &displayTimer, const MatrixMap &
     }
 }
 
+/**
+ * Configures an optional WS2812B driven accesibility display for this NRF52LedMatrix.
+ *
+ * @param pin A reference to the pin object to drive the display from
+ * @param numberOfLeds The total number of LEDs to drive. Defaults to 25
+ */
+void NRF52LEDMatrix::setAccessibilityDisplay(NRF52Pin &pin, const uint16_t numberOfLeds)
+{
+    if (this->accessibleDisplay != NULL)
+    {
+        delete this->accessibleDisplay;
+        this->accessibleDisplay = NULL;
+    }
+
+    this->accessibleDisplay = new MicroBitAccessibleDisplay(pin, numberOfLeds);
+}
 /**
  * Configures the mode of the display.
  *
@@ -104,7 +126,7 @@ void NRF52LEDMatrix::setDisplayMode(DisplayMode mode)
     }
 
     // Determine the number of timeslots we'll need.
-    timeslots = matrixMap.rows;
+    timeslots = matrixMap.rows + 1;
 
     if (mode == DISPLAY_MODE_BLACK_AND_WHITE_LIGHT_SENSE || mode == DISPLAY_MODE_GREYSCALE_LIGHT_SENSE)
         timeslots++;
@@ -218,12 +240,21 @@ void NRF52LEDMatrix::render()
 {
     uint8_t *screenBuffer = image.getBitmap();
     uint32_t value;
+    uint16_t index;
 
     if (strobeRow < matrixMap.rows)
     {
         // We just completed a normal diplay strobe. 
         // Turn off the LED drive to the row that was completed.
         matrixMap.rowPins[strobeRow]->setDigitalValue(0);
+    }
+    else if (strobeRow == NRF52_LED_MATRIX_NEOPIXEL_TIMESLOT)
+    {
+        timer.setCompare(0, timerPeriod);
+
+        // Restore the hardware configuration into LED drive mode.
+        status |= NRF52_LEDMATRIX_STATUS_RESET;
+        setDisplayMode(mode);
     }
     else
     {
@@ -252,21 +283,23 @@ void NRF52LEDMatrix::render()
             switch ( this->rotation)
             {
               case MATRIX_DISPLAY_ROTATION_0:
-                value = screenBuffer[ p->y * width + p->x];
+                index = p->y * width + p->x;
                 break;
               case MATRIX_DISPLAY_ROTATION_90:
-                value = screenBuffer[ p->x * width + width - 1 - p->y];
+                index = p->x * width + width - 1 - p->y;
                 break;
               case MATRIX_DISPLAY_ROTATION_180:
-                value = screenBuffer[ (height - 1 - p->y) * width + width - 1 - p->x];
+                index = (height - 1 - p->y) * width + width - 1 - p->x;
                 break;
               case MATRIX_DISPLAY_ROTATION_270:
-                value = screenBuffer[ ( height - 1 - p->x) * width + p->y];
+                index = ( height - 1 - p->x) * width + p->y;
                 break;
               default:
-                value = screenBuffer[ p->y * width + p->x];
+                index = p->y * width + p->x;
                 break;
             }
+
+            value = screenBuffer[index];
 
             // Clip pixels to full or zero brightness if in black and white mode.
             if (mode == DISPLAY_MODE_BLACK_AND_WHITE || mode == DISPLAY_MODE_BLACK_AND_WHITE_LIGHT_SENSE)
@@ -274,6 +307,11 @@ void NRF52LEDMatrix::render()
 
             value = value * quantum;
             timer.timer->CC[column+1] = value;
+
+            // Update the accessibiity neopixel buffer for this pixel.
+            // We do this here in the display strobe, as this gives us a more consistent timing.
+            if (accessibleDisplay)
+                accessibleDisplay->set_pixel(index, value);
 
             // Set the initial polarity of the column output to HIGH if the pixel brightness is >0. LOW otherwise.
             if (value)
@@ -286,6 +324,26 @@ void NRF52LEDMatrix::render()
 
         // Enable the drive pin, and start the timer.
         matrixMap.rowPins[strobeRow]->setDigitalValue(1);
+    }
+    else if(strobeRow == NRF52_LED_MATRIX_NEOPIXEL_TIMESLOT)
+    {
+        for (int col = 0; col < matrixMap.columns; col++)
+        {
+            NRF_GPIOTE->CONFIG[gpiote[col]] = 0;
+            timer.timer->CC[col + 1] = timerPeriod * NRF52_LED_MATRIX_LIGHTSENSE_STROBES;
+            matrixMap.rowPins[col]->setDigitalValue(0);
+        }
+
+        // Put all pins into high impedance mode.
+        for (int row = 0; row < matrixMap.rows; row++)
+            matrixMap.columnPins[row]->getDigitalValue();
+
+        // Update the accessibility display
+        if (accessibleDisplay)
+            accessibleDisplay->update();
+
+        // We don't need a full period here, just long enough to ensure the accessibility display has updated
+        timer.setCompare(0, 10);
     }
     else
     {
