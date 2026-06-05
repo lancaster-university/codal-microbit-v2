@@ -79,7 +79,7 @@ MicroBit::MicroBit() :
     storage(internalFlash, 0),
     ledRowPins{&io.row1, &io.row2, &io.row3, &io.row4, &io.row5},
     ledColPins{&io.col1, &io.col2, &io.col3, &io.col4, &io.col5},
-    ledMatrixMap{ 5, 5, 5, 5, (Pin**)ledRowPins, (Pin**)ledColPins, (Pin *)&io.col4, ledMatrixPositions},
+    ledMatrixMap{ 5, 5, 5, 5, (Pin**)ledRowPins, (Pin**)ledColPins, (Pin *)&io.P12, ledMatrixPositions},
     display(displayTimer, ledMatrixMap),
     buttonA(io.P5, DEVICE_ID_BUTTON_A, DEVICE_BUTTON_ALL_EVENTS, ACTIVE_LOW, PullMode::None),
     buttonB(io.P11, DEVICE_ID_BUTTON_B, DEVICE_BUTTON_ALL_EVENTS, ACTIVE_LOW, PullMode::None),
