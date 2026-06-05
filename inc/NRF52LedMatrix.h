@@ -78,6 +78,7 @@ namespace codal
 
         public:
         bool                accessibilityEnabled = false;
+        NRF52Pin            *accessibilityPin = NULL;
         WS2812B             *ws = NULL;         // WS2812B accessibility interface
         NRF52PWM            *pwm = NULL;        // Dedicated PWM generator to use for accessibilty WS2812B
         ManagedBuffer       accessibilityBuf;   // WS2812B buffer used to stream pixel data.
@@ -86,7 +87,7 @@ namespace codal
         /**
          * Enable accessibility mode
          */
-        void enableAccessibility();
+        void enableAccessibility(bool enable = true);
 
         /**
          * Configures an optional WS2812B driven accesibility display for this NRF52LedMatrix.

@@ -63,6 +63,8 @@ NRF52LEDMatrix::NRF52LEDMatrix(NRFLowLevelTimer &displayTimer, const MatrixMap &
     lightLevel = 0;
     this->mode = mode;
 
+    this->enableAccessibility();
+
     // Validate that we can deliver the requested display.
     if (matrixMap.columns <= NRF52_LED_MATRIX_MAXIMUM_COLUMNS)
     {
@@ -444,8 +446,10 @@ int NRF52LEDMatrix::setSleep(bool doSleep)
  */
 void NRF52LEDMatrix::setAccessibilityDisplay(NRF52Pin &pin, const uint16_t numberOfLeds)
 {
-    //pwm->connectPin(pin, 0);
-    //accessibilityBuf = ManagedBuffer(numberOfLeds * 3);
+    accessibilityPin = &pin;
+
+    if (accessibilityBuf.length() != numberOfLeds * 3)
+        accessibilityBuf = ManagedBuffer(numberOfLeds * 3);
 }
 
 /**
@@ -483,9 +487,9 @@ void NRF52LEDMatrix::setAccessibilityBaseColour(uint8_t red, uint8_t green, uint
 /**
  * Enable accessibility mode
  */
-void NRF52LEDMatrix::enableAccessibility()
+void NRF52LEDMatrix::enableAccessibility(bool enable)
 {
-    this->accessibilityEnabled = true;
+    this->accessibilityEnabled = enable;
 }
 
 /**
@@ -493,6 +497,8 @@ void NRF52LEDMatrix::enableAccessibility()
  */
 void NRF52LEDMatrix::updateAccessibilityDisplay()
 {
+    static bool wasEnabled = false;
+
     if (this->accessibilityEnabled)
     {
         if (pwm == NULL)
@@ -504,13 +510,20 @@ void NRF52LEDMatrix::updateAccessibilityDisplay()
             pwm->setDecoderMode(PWM_DECODER_LOAD_Common);
             pwm->setSampleRate(WS2812B_PWM_FREQ);
 
+            accessibilityPin = (NRF52Pin *) matrixMap.accessibility;
             accessibilityBuf = ManagedBuffer(25 * 3);
         }
-        else
-        {
-            pwm->connectPin(* (NRF52Pin *)matrixMap.accessibility, 0);
-            ws->playAsync(accessibilityBuf);
-        }
+
+        wasEnabled = true;
+        pwm->connectPin(*accessibilityPin, 0);
+        ws->playAsync(accessibilityBuf);
+    }
+    else if (wasEnabled)
+    {
+        accessibilityBuf.fill(0);
+        pwm->connectPin(*accessibilityPin, 0);
+        ws->playAsync(accessibilityBuf);
+        wasEnabled = false;
     }
 }
 
