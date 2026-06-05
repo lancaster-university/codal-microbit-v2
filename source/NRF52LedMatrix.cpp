@@ -321,7 +321,7 @@ void NRF52LEDMatrix::render()
 
         // We can calculate the period of time it will take the PWM to clock out the data in microseconds using:
         // (300 + 32 * numberOfPixels). he timer is a 16Mhz timer however so we multiple by 16 to get a tickcount.
-        timer.setCompare(0, 16 * (300 + 10 * accessibilityBuf.length()));
+        timer.setCompare(0, 16 * (150 + 10 * accessibilityBuf.length()));
     }
     else
     {
