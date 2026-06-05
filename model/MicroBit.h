@@ -47,7 +47,6 @@ DEALINGS IN THE SOFTWARE.
 #include "NRF52TouchSensor.h"
 
 #include "MicroBitIO.h"
-#include "MicroBitAccessibleDisplay.h"
 #include "MicroBitDisplay.h"
 #include "CodalFiber.h"
 #include "MessageBus.h"

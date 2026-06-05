@@ -28,7 +28,6 @@ DEALINGS IN THE SOFTWARE.
   * A LEDMatrix represents the LED matrix array on the micro:bit.
   */
 #include "NRF52LedMatrix.h"
-#include "MicroBitAccessibleDisplay.h"
 #include "NRF52Pin.h"
 #include "CodalDmesg.h"
 #include "ErrorNo.h"
@@ -57,16 +56,12 @@ static void display_irq(uint16_t mask)
  */
 NRF52LEDMatrix::NRF52LEDMatrix(NRFLowLevelTimer &displayTimer, const MatrixMap &map, uint16_t id, DisplayMode mode) : Display(map.width, map.height, id), matrixMap(map), timer(displayTimer)
 {
-    accessibleDisplay = NULL;
     rotation = MATRIX_DISPLAY_ROTATION_0;
     enabled = false;
     strobeRow = 0;
     instance = this;
     lightLevel = 0;
     this->mode = mode;
-
-    // Set up a default WS2812B accessibility display
-    setAccessibilityDisplay(* (NRF52Pin *)map.accessibility);
 
     // Validate that we can deliver the requested display.
     if (matrixMap.columns <= NRF52_LED_MATRIX_MAXIMUM_COLUMNS)
@@ -80,22 +75,6 @@ NRF52LEDMatrix::NRF52LEDMatrix(NRFLowLevelTimer &displayTimer, const MatrixMap &
     }
 }
 
-/**
- * Configures an optional WS2812B driven accesibility display for this NRF52LedMatrix.
- *
- * @param pin A reference to the pin object to drive the display from
- * @param numberOfLeds The total number of LEDs to drive. Defaults to 25
- */
-void NRF52LEDMatrix::setAccessibilityDisplay(NRF52Pin &pin, const uint16_t numberOfLeds)
-{
-    if (this->accessibleDisplay != NULL)
-    {
-        delete this->accessibleDisplay;
-        this->accessibleDisplay = NULL;
-    }
-
-    this->accessibleDisplay = new MicroBitAccessibleDisplay(pin, numberOfLeds);
-}
 /**
  * Configures the mode of the display.
  *
@@ -310,8 +289,7 @@ void NRF52LEDMatrix::render()
 
             // Update the accessibiity neopixel buffer for this pixel.
             // We do this here in the display strobe, as this gives us a more consistent timing.
-            if (accessibleDisplay)
-                accessibleDisplay->set_pixel(index, value);
+            setAccessibilityPixel(index, value);
 
             // Set the initial polarity of the column output to HIGH if the pixel brightness is >0. LOW otherwise.
             if (value)
@@ -339,11 +317,11 @@ void NRF52LEDMatrix::render()
             matrixMap.columnPins[row]->getDigitalValue();
 
         // Update the accessibility display
-        if (accessibleDisplay)
-            accessibleDisplay->update();
+        updateAccessibilityDisplay();
 
-        // We don't need a full period here, just long enough to ensure the accessibility display has updated
-        timer.setCompare(0, 10);
+        // We can calculate the period of time it will take the PWM to clock out the data in microseconds using:
+        // (300 + 32 * numberOfPixels). he timer is a 16Mhz timer however so we multiple by 16 to get a tickcount.
+        timer.setCompare(0, 16 * (300 + 10 * accessibilityBuf.length()));
     }
     else
     {
@@ -456,6 +434,84 @@ int NRF52LEDMatrix::setSleep(bool doSleep)
     }
    
     return DEVICE_OK;
+}
+
+/**
+ * Configures an optional WS2812B driven accesibility display for this NRF52LedMatrix.
+ *
+ * @param pin A reference to the pin object to drive the display from
+ * @param numberOfLeds The total number of LEDs to drive. Defaults to 25
+ */
+void NRF52LEDMatrix::setAccessibilityDisplay(NRF52Pin &pin, const uint16_t numberOfLeds)
+{
+    //pwm->connectPin(pin, 0);
+    //accessibilityBuf = ManagedBuffer(numberOfLeds * 3);
+}
+
+/**
+ * Sets or clears the pixel at the given location on an attached accessibility display.
+ *
+ * @param index Zero based index of the pixel to change.
+ * @param value 8 bit brightness data for that pixel.
+ */
+void NRF52LEDMatrix::setAccessibilityPixel(uint16_t index, uint8_t value)
+{
+    if (index >= accessibilityBuf.length())
+        return;
+
+    // WS2812B wire order is Green, Red, Blue. We store in this order to avoid having to reorder when we send.
+    accessibilityBuf[index * 3 + 0] = (accessibilityColour.green / 255.0) * value;
+    accessibilityBuf[index * 3 + 1] = (accessibilityColour.red / 255.0) * value;
+    accessibilityBuf[index * 3 + 2] = (accessibilityColour.blue / 255.0) * value;
+}
+
+/**
+ * Define the pixel colour to use for WS2812B attached accessibilty display.
+ * Accessibility needs may require colours other than red for usability.
+ *
+ * @param red The red component of the colour to use.
+ * @param green The red component of the colour to use.
+ * @param blue The red component of the colour to use.
+ */
+void NRF52LEDMatrix::setAccessibilityBaseColour(uint8_t red, uint8_t green, uint8_t blue)
+{
+    accessibilityColour.red = red;
+    accessibilityColour.green = green;
+    accessibilityColour.blue = blue;
+}
+
+/**
+ * Enable accessibility mode
+ */
+void NRF52LEDMatrix::enableAccessibility()
+{
+    this->accessibilityEnabled = true;
+}
+
+/**
+ * Refresh the attached WS2812B accessibility display.
+ */
+void NRF52LEDMatrix::updateAccessibilityDisplay()
+{
+    if (this->accessibilityEnabled)
+    {
+        if (pwm == NULL)
+        {
+            ws = new WS2812B();
+            pwm = new NRF52PWM(NRF_PWM3, *ws, WS2812B_PWM_FREQ);
+
+            pwm->setStreamingMode(true, false);
+            pwm->setDecoderMode(PWM_DECODER_LOAD_Common);
+            pwm->setSampleRate(WS2812B_PWM_FREQ);
+
+            accessibilityBuf = ManagedBuffer(25 * 3);
+        }
+        else
+        {
+            pwm->connectPin(* (NRF52Pin *)matrixMap.accessibility, 0);
+            ws->playAsync(accessibilityBuf);
+        }
+    }
 }
 
 /**

@@ -27,7 +27,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "CodalConfig.h"
 #include "LEDMatrix.h"
-#include "MicroBitAccessibleDisplay.h"
+#include "neopixel.h"
 #include "NRFLowLevelTimer.h"
 
 #define NRF52_LED_MATRIX_CLOCK_FREQUENCY        16000000            // Frequency of underlying hardware clock (must b 1MHz, 2Mhz 4Mhz, 8Mhz or 16MHz)
@@ -46,6 +46,16 @@ DEALINGS IN THE SOFTWARE.
 
 namespace codal
 {
+    // Generic represetation of a colour.
+    // Migrate this to codal-core at some point...
+    class Colour
+    {
+        public:
+        uint8_t        red;
+        uint8_t        green;
+        uint8_t        blue;
+    };
+
     /**
      * Class definition for an optimised LEDMatrix driver using nrf52 PPI and GPIOTE hardware.
      */
@@ -67,8 +77,47 @@ namespace codal
         int8_t              ppi[NRF52_LED_MATRIX_MAXIMUM_COLUMNS];               // PPI channels used by output columns.
 
         public:
+        bool                accessibilityEnabled = false;
+        WS2812B             *ws = NULL;         // WS2812B accessibility interface
+        NRF52PWM            *pwm = NULL;        // Dedicated PWM generator to use for accessibilty WS2812B
+        ManagedBuffer       accessibilityBuf;   // WS2812B buffer used to stream pixel data.
+        Colour              accessibilityColour;// The colour to use as the base colour for the WS2812B accessibility interface.
 
-        MicroBitAccessibleDisplay *accessibleDisplay; // Reference to the accessibility display. Initially NULL.
+        /**
+         * Enable accessibility mode
+         */
+        void enableAccessibility();
+
+        /**
+         * Configures an optional WS2812B driven accesibility display for this NRF52LedMatrix.
+         *
+         * @param pin A reference to the pin object to drive the display from
+         * @param numberOfLeds The total number of LEDs to drive. Defaults to 25
+         */
+        void setAccessibilityDisplay(NRF52Pin &pin, const uint16_t numberOfLeds = 25);
+
+        /**
+         * Sets or clears the pixel at the given location on an attached accessibility display.
+         *
+         * @param index Zero based index of the pixel to change.
+         * @param value 8 bit brightness data for that pixel.
+         */
+        void setAccessibilityPixel(uint16_t index, uint8_t value);
+
+        /**
+         * Define the pixel colour to use for WS2812B attached accessibilty display.
+         * Accessibility needs may require colours other than red for usability.
+         *
+         * @param red The red component of the colour to use.
+         * @param green The red component of the colour to use.
+         * @param blue The red component of the colour to use.
+         */
+	    void setAccessibilityBaseColour(uint8_t red, uint8_t green, uint8_t blue);
+
+        /**
+         * Refresh the attached WS2812B accessibility display.
+         */
+	    void updateAccessibilityDisplay();
 
         /**
          * Configure the next frame to be drawn.
@@ -87,14 +136,6 @@ namespace codal
          * @param mode The DisplayMode to use. Default: DISPLAY_MODE_BLACK_AND_WHITE.
          */
         NRF52LEDMatrix(NRFLowLevelTimer &displayTimer, const MatrixMap &map, uint16_t id = DEVICE_ID_DISPLAY, DisplayMode mode = DisplayMode::DISPLAY_MODE_BLACK_AND_WHITE);
-
-        /**
-         * Configures an optional WS2812B driven accesibility display for this NRF52LedMatrix.
-         *
-         * @param pin A reference to the pin object to drive the display from
-         * @param numberOfLeds The total number of LEDs to drive. Defaults to 25
-         */
-        void setAccessibilityDisplay(NRF52Pin &pin, const uint16_t numberOfLeds = 25);
 
          /**
          * Configures the mode of the display.
