@@ -116,7 +116,7 @@ int SoundEmojiSynthesizer::play(ManagedBuffer sound)
     // If a playout is already in progress, block until it has been scheduled.
     lock.wait();
 
-    target_disable_irq();
+    target_disable_irqn(PWM1_IRQn);
 
     // Store the requested sequence of sound effects.
     effectBuffer = sound;
@@ -125,7 +125,7 @@ int SoundEmojiSynthesizer::play(ManagedBuffer sound)
     // Generation will start the next time a pull() operation is called from downstream.
     nextSoundEffect();
 
-    target_enable_irq();
+    target_enable_irqn(PWM1_IRQn);
 
     // Perform on demand activiation if this is the first time this compoennt has been used.
     // Simply issue a pull request to start the process.
