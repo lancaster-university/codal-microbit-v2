@@ -474,11 +474,9 @@ void NRF52LEDMatrix::setAccessibilityPixel(uint16_t index, uint8_t value)
  * @param green The red component of the colour to use.
  * @param blue The red component of the colour to use.
  */
-void NRF52LEDMatrix::setAccessibilityBaseColour(uint8_t red, uint8_t green, uint8_t blue)
+void NRF52LEDMatrix::setAccessibilityBaseColour(Colour colour)
 {
-    accessibilityColour.red = red;
-    accessibilityColour.green = green;
-    accessibilityColour.blue = blue;
+    accessibilityColour = colour;
 }
 
 /**
