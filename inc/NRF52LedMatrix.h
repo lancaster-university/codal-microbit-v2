@@ -30,11 +30,11 @@ DEALINGS IN THE SOFTWARE.
 #include "neopixel.h"
 #include "NRFLowLevelTimer.h"
 
-#define NRF52_LED_MATRIX_CLOCK_FREQUENCY        16000000            // Frequency of underlying hardware clock (must b 1MHz, 2Mhz 4Mhz, 8Mhz or 16MHz)
-#define NRF52_LED_MATRIX_FREQUENCY              60                  // Frequency of the frame update for the display
-#define NRF52_LED_MATRIX_MAXIMUM_COLUMNS        5                   // The maximum number of LEDMatrix columns supported by the hardware.
-#define NRF52_LED_MATRIX_LIGHTSENSE_STROBES     4                   // Multiple of strobe period to use for light sense
-#define NRF52_LED_MATRIX_NEOPIXEL_TIMESLOT      5                   // Timeslot index reserved for accessibilty neopixel use
+#define NRF52_LED_MATRIX_CLOCK_FREQUENCY        16000000                               // Frequency of underlying hardware clock (must b 1MHz, 2Mhz 4Mhz, 8Mhz or 16MHz)
+#define NRF52_LED_MATRIX_FREQUENCY              60                                     // Frequency of the frame update for the display
+#define NRF52_LED_MATRIX_MAXIMUM_COLUMNS        5                                      // The maximum number of LEDMatrix columns supported by the hardware.
+#define NRF52_LED_MATRIX_LIGHTSENSE_STROBES     4                                      // Multiple of strobe period to use for light sense
+#define NRF52_LED_MATRIX_NEOPIXEL_TIMESLOT      (NRF52_LED_MATRIX_MAXIMUM_COLUMNS + 1) // Timeslot index reserved for accessibilty neopixel use
 
 
 // TODO: Replace this with a resource allocated version
