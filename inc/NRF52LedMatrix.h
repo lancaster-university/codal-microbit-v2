@@ -77,7 +77,7 @@ namespace codal
         int8_t              ppi[NRF52_LED_MATRIX_MAXIMUM_COLUMNS];               // PPI channels used by output columns.
 
         public:
-        bool                accessibilityEnabled = false;
+        bool                accessibilityEnabled = true;
         NRF52Pin            *accessibilityPin = NULL;
         WS2812B             *ws = NULL;         // WS2812B accessibility interface
         NRF52PWM            *pwm = NULL;        // Dedicated PWM generator to use for accessibilty WS2812B

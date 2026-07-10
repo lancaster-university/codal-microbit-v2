@@ -62,8 +62,6 @@ NRF52LEDMatrix::NRF52LEDMatrix(NRFLowLevelTimer &displayTimer, const MatrixMap &
     lightLevel = 0;
     this->mode = mode;
 
-    this->enableAccessibility();
-
     // Validate that we can deliver the requested display.
     if (matrixMap.columns <= NRF52_LED_MATRIX_MAXIMUM_COLUMNS)
     {
