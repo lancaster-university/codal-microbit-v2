@@ -49,7 +49,6 @@ static void display_irq(uint16_t mask)
  * The display is initially blank.
  *
  * @param displayTimer The NRF52 timer to use to driver the LEDMatrix display.
- * @param accessibleDisplay The MicroBitAccessibleDisplay instance to use to drive the accessibility display.
  * @param map The mapping information that relates pin inputs/outputs to physical screen coordinates.
  * @param id The id the display should use when sending events on the MessageBus. Defaults to DEVICE_ID_DISPLAY.
  * @param mode The DisplayMode to use. Default: DISPLAY_MODE_BLACK_AND_WHITE.
