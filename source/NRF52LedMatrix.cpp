@@ -470,9 +470,7 @@ void NRF52LEDMatrix::setAccessibilityPixel(uint16_t index, uint8_t value)
  * Define the pixel colour to use for WS2812B attached accessibilty display.
  * Accessibility needs may require colours other than red for usability.
  *
- * @param red The red component of the colour to use.
- * @param green The red component of the colour to use.
- * @param blue The red component of the colour to use.
+ * @param colour The pixel colour represented as a Colour type
  */
 void NRF52LEDMatrix::setAccessibilityBaseColour(Colour colour)
 {

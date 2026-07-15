@@ -36,7 +36,6 @@ DEALINGS IN THE SOFTWARE.
 #define NRF52_LED_MATRIX_LIGHTSENSE_STROBES     4                                      // Multiple of strobe period to use for light sense
 #define NRF52_LED_MATRIX_NEOPIXEL_TIMESLOT      (NRF52_LED_MATRIX_MAXIMUM_COLUMNS + 1) // Timeslot index reserved for accessibilty neopixel use
 
-
 // TODO: Replace this with a resource allocated version
 #define NRF52_LEDMATRIX_GPIOTE_CHANNEL_BASE     1
 #define NRF52_LEDMATRIX_PPI_CHANNEL_BASE        3
@@ -54,7 +53,10 @@ namespace codal
         uint8_t        red;
         uint8_t        green;
         uint8_t        blue;
+
+        static constexpr Colour RED() { return Colour{255, 0, 0}; }
     };
+
 
     /**
      * Class definition for an optimised LEDMatrix driver using nrf52 PPI and GPIOTE hardware.
@@ -79,10 +81,10 @@ namespace codal
         public:
         bool                accessibilityEnabled = true;
         NRF52Pin            *accessibilityPin = NULL;
-        WS2812B             *ws = NULL;         // WS2812B accessibility interface
-        NRF52PWM            *pwm = NULL;        // Dedicated PWM generator to use for accessibilty WS2812B
-        ManagedBuffer       accessibilityBuf;   // WS2812B buffer used to stream pixel data.
-        Colour              accessibilityColour;// The colour to use as the base colour for the WS2812B accessibility interface.
+        WS2812B             *ws = NULL;                          // WS2812B accessibility interface
+        NRF52PWM            *pwm = NULL;                         // Dedicated PWM generator to use for accessibilty WS2812B
+        ManagedBuffer       accessibilityBuf;                    // WS2812B buffer used to stream pixel data.
+        Colour              accessibilityColour = Colour::RED(); // The colour to use as the base colour for the WS2812B accessibility interface.
 
         /**
          * Enable accessibility mode
