@@ -104,7 +104,11 @@ void NRF52LEDMatrix::setDisplayMode(DisplayMode mode)
     }
 
     // Determine the number of timeslots we'll need.
-    timeslots = matrixMap.rows + 1;
+    timeslots = matrixMap.rows;
+    
+    if (DISABLED != accessibilityStatus) {
+        timeslots++;
+    }
 
     if (mode == DISPLAY_MODE_BLACK_AND_WHITE_LIGHT_SENSE || mode == DISPLAY_MODE_GREYSCALE_LIGHT_SENSE)
         timeslots++;
@@ -226,7 +230,7 @@ void NRF52LEDMatrix::render()
         // Turn off the LED drive to the row that was completed.
         matrixMap.rowPins[strobeRow]->setDigitalValue(0);
     }
-    else if (strobeRow == NRF52_LED_MATRIX_NEOPIXEL_TIMESLOT)
+    else if ((DISABLED != accessibilityStatus) && (strobeRow == NRF52_LED_MATRIX_NEOPIXEL_TIMESLOT))
     {
         timer.setCompare(0, timerPeriod);
 
@@ -302,7 +306,7 @@ void NRF52LEDMatrix::render()
         // Enable the drive pin, and start the timer.
         matrixMap.rowPins[strobeRow]->setDigitalValue(1);
     }
-    else if(strobeRow == NRF52_LED_MATRIX_NEOPIXEL_TIMESLOT)
+    else if((DISABLED != accessibilityStatus) && (strobeRow == NRF52_LED_MATRIX_NEOPIXEL_TIMESLOT))
     {
         for (int col = 0; col < matrixMap.columns; col++)
         {
@@ -482,7 +486,14 @@ void NRF52LEDMatrix::setAccessibilityBaseColour(Colour colour)
  */
 void NRF52LEDMatrix::enableAccessibility(bool enable)
 {
-    this->accessibilityEnabled = enable;
+    if (enable && (ENABLED != accessibilityStatus)) {
+        accessibilityStatus = ENABLED;
+        setDisplayMode(mode);
+    }
+    else if (!enable && (ENABLED == accessibilityStatus))
+    {
+        accessibilityStatus = PENDING_DISABLE;
+    }
 }
 
 /**
@@ -490,9 +501,7 @@ void NRF52LEDMatrix::enableAccessibility(bool enable)
  */
 void NRF52LEDMatrix::updateAccessibilityDisplay()
 {
-    static bool wasEnabled = false;
-
-    if (this->accessibilityEnabled)
+    if (ENABLED == accessibilityStatus)
     {
         if (pwm == NULL)
         {
@@ -507,16 +516,17 @@ void NRF52LEDMatrix::updateAccessibilityDisplay()
             accessibilityBuf = ManagedBuffer(25 * 3);
         }
 
-        wasEnabled = true;
         pwm->connectPin(*accessibilityPin, 0);
         ws->playAsync(accessibilityBuf);
     }
-    else if (wasEnabled)
+    else if (PENDING_DISABLE == accessibilityStatus)
     {
         accessibilityBuf.fill(0);
         pwm->connectPin(*accessibilityPin, 0);
         ws->playAsync(accessibilityBuf);
-        wasEnabled = false;
+
+        accessibilityStatus = DISABLED;
+        setDisplayMode(mode);
     }
 }
 

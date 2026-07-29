@@ -79,12 +79,19 @@ namespace codal
         int8_t              ppi[NRF52_LED_MATRIX_MAXIMUM_COLUMNS];               // PPI channels used by output columns.
 
         public:
-        bool                accessibilityEnabled = true;
+        enum AccessibilityStatus {
+         DISABLED,
+         PENDING_DISABLE,
+         ENABLED
+        };
+
+        AccessibilityStatus accessibilityStatus = ENABLED;
         NRF52Pin            *accessibilityPin = NULL;
         WS2812B             *ws = NULL;                          // WS2812B accessibility interface
         NRF52PWM            *pwm = NULL;                         // Dedicated PWM generator to use for accessibilty WS2812B
         ManagedBuffer       accessibilityBuf;                    // WS2812B buffer used to stream pixel data.
         Colour              accessibilityColour = Colour::RED(); // The colour to use as the base colour for the WS2812B accessibility interface.
+
 
         /**
          * Enable accessibility mode
