@@ -34,16 +34,17 @@ DEALINGS IN THE SOFTWARE.
 using namespace codal;
 
 #if ( MICROBIT_DMESG_LEVEL >= MICROBIT_DMESG_LEVEL_DEBUG)
+namespace codal {
 microbit_ble_ret_code_t microbit_ble_on_error( microbit_ble_ret_code_t err, const char *msg)
 {
     NRF_LOG_FLUSH();
     if ( err != NRF_SUCCESS)
     {
-        MICROBIT_DEBUG_DMESGN( "ERROR %x from ", (int)err);
-        MICROBIT_DEBUG_DMESG( msg);
+        MICROBIT_DEBUG_DMESGF( "ERROR %x from %s", (int)err, msg);
     }
     return err;
 }
+} // namespace codal
 #endif
 
 #endif // CONFIG_ENABLED(DEVICE_BLE)
