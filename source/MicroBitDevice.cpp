@@ -68,7 +68,21 @@ void MicroBitDevice::seedRandom()
 {
     uint32_t r = 0xBBC5EED;
 
-    if(!ble_running())
+    if (ble_running())
+    {
+#ifdef SOFTDEVICE_PRESENT
+        // If Bluetooth is enabled, we need to go through the Nordic software to safely do this.
+        uint8_t available_bytes = 0;
+        while (available_bytes < 4)
+            sd_rand_application_bytes_available_get(&available_bytes);
+
+        uint32_t random_value = 0;
+        uint32_t result = sd_rand_application_vector_get((uint8_t*)&random_value, sizeof(random_value));
+        if (result == NRF_SUCCESS)
+            r = random_value;
+#endif
+    }
+    else
     {
         // Start the Random number generator. No need to leave it running... I hope. :-)
         NRF_RNG->TASKS_START = 1;
