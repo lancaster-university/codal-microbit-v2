@@ -63,6 +63,7 @@ class MicroBitBLEService
 
     ~MicroBitBLEService();
 
+    ble_uuid_t getServiceUUID();
 
     protected:
     
@@ -140,6 +141,7 @@ class MicroBitBLEService
 
     uint8_t                     bs_uuid_type;
     microbit_servicehandle_t    bs_service_handle;
+    ble_uuid_t                  bs_service_uuid;
 
     static const uint8_t        bs_base_uuid[16];
 };

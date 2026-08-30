@@ -162,6 +162,19 @@ class MicroBitBLEManager : public CodalComponent
     void advertise();
 
     /**
+     * When called, the micro:bit will begin advertising the supplied service's complete UUID.
+     *
+     * @param serviceUUIDs Pointer to an array of service UUID structures to insert into the advertising data.
+     * @param service_count Count of service UUID structures to insert into the advertising data.
+     * @param service_list_complete Flag to indicate whether the service UUID array contains all available services.
+     * @param manufacturer_id Manufacturer ID to insert into Manfacturer Data value in the advertising data.
+     * @param manufacturer_data Array of Manfacturer Data bytes to insert into the advertising data.
+     * @param manufacturer_data_size Size of Manfacturer Data array.
+     */
+    void advertise(ble_uuid_t *serviceUUIDs, uint16_t service_count = 1, bool service_list_complete = true,
+          uint16_t manufacturer_id = 0, uint8_t *manufacturer_data = nullptr, uint16_t manufacturer_data_size = 0);
+
+    /**
      * Determines the number of devices currently bonded with this micro:bit.
      * @return The number of active bonds.
      */
