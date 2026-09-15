@@ -71,6 +71,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitPartialFlashingService.h"
 
 #include "CodalDmesg.h"
+#include "codal_target_hal.h"
 #include "nrf_log_backend_dmesg.h"
 
 using namespace codal;
@@ -1589,16 +1590,23 @@ static void microbit_dfu_evt_handler(ble_dfu_buttonless_evt_type_t event)
 
 void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 {
+    // We may be running in the SD fault context at a priority above the UARTE IRQ,
+    // so the interrupt-driven serial TX cannot make progress. Switch to the robust
+    // polled path so this dump prints at full speed.
+    target_disable_irq();
+
     NRF_LOG_FINAL_FLUSH();
 
 #if (DEVICE_DMESG_BUFFER_SIZE > 0)
+    codal_dmesg_flush();
+
     switch (id)
     {
         case NRF_FAULT_ID_SD_ASSERT:
-            DMESG("SOFTDEVICE: ASSERTION FAILED");
+            DMESGF("SOFTDEVICE: ASSERTION FAILED pc=%x info=%x", pc, info);
             break;
         case NRF_FAULT_ID_APP_MEMACC:
-            DMESG("SOFTDEVICE: INVALID MEMORY ACCESS");
+            DMESGF("SOFTDEVICE: INVALID MEMORY ACCESS pc=%x info=%x", pc, info);
             break;
         case NRF_FAULT_ID_SDK_ASSERT:
         {
@@ -1638,7 +1646,7 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
         }
     }
 
-    //DMESGF(""); // Uncomment to flush these DMESGs before the panic
+    codal_dmesg_flush();
 #endif // (DEVICE_DMESG_BUFFER_SIZE > 0)
 
     int panic;
