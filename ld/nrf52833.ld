@@ -142,6 +142,9 @@ SECTIONS
         __data_end__ = .;
     } > RAM
     __edata = .;
+
+    __StackSize = 0x800;    /* DEVICE_STACK_SIZE = 2048 */
+
     .bss :
     {
         . = ALIGN(4);
@@ -156,10 +159,19 @@ SECTIONS
         __end__ = .;
         end = __end__;
         *(.heap*);
-        ASSERT(. <= (ORIGIN(RAM) + LENGTH(RAM) - 0x800), "heap region overflowed into stack");
-        . += (ORIGIN(RAM) + LENGTH(RAM) - 0x800) - .;
+        ASSERT(. <= (ORIGIN(RAM) + LENGTH(RAM) - __StackSize), "heap region overflowed into stack");
+        . += (ORIGIN(RAM) + LENGTH(RAM) - __StackSize) - .;
     } > RAM
+
+    .stack (NOLOAD):
+    {
+        . += __StackSize;
+    } > RAM
+
     __StackTop = ORIGIN(RAM) + LENGTH(RAM);
+    __StackLimit = ORIGIN(RAM) + LENGTH(RAM) - __StackSize;
     PROVIDE(__stack = __StackTop);
+
+    /DISCARD/ : { *(.stack*) }
 }
 
