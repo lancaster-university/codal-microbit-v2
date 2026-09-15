@@ -27,13 +27,14 @@ DEALINGS IN THE SOFTWARE.
 
 #include "CodalConfig.h"
 #include "LEDMatrix.h"
+#include "neopixel.h"
 #include "NRFLowLevelTimer.h"
 
-#define NRF52_LED_MATRIX_CLOCK_FREQUENCY        16000000            // Frequency of underlying hardware clock (must b 1MHz, 2Mhz 4Mhz, 8Mhz or 16MHz)
-#define NRF52_LED_MATRIX_FREQUENCY              60                  // Frequency of the frame update for the display
-#define NRF52_LED_MATRIX_MAXIMUM_COLUMNS        5                   // The maximum number of LEDMatrix columns supported by the hardware.
-#define NRF52_LED_MATRIX_LIGHTSENSE_STROBES     4                   // Multiple of strobe period to use for light sense
-
+#define NRF52_LED_MATRIX_CLOCK_FREQUENCY        16000000                               // Frequency of underlying hardware clock (must b 1MHz, 2Mhz 4Mhz, 8Mhz or 16MHz)
+#define NRF52_LED_MATRIX_FREQUENCY              60                                     // Frequency of the frame update for the display
+#define NRF52_LED_MATRIX_MAXIMUM_COLUMNS        5                                      // The maximum number of LEDMatrix columns supported by the hardware.
+#define NRF52_LED_MATRIX_LIGHTSENSE_STROBES     4                                      // Multiple of strobe period to use for light sense
+#define NRF52_LED_MATRIX_NEOPIXEL_TIMESLOT      (NRF52_LED_MATRIX_MAXIMUM_COLUMNS + 1) // Timeslot index reserved for accessibilty neopixel use
 
 // TODO: Replace this with a resource allocated version
 #define NRF52_LEDMATRIX_GPIOTE_CHANNEL_BASE     1
@@ -44,6 +45,19 @@ DEALINGS IN THE SOFTWARE.
 
 namespace codal
 {
+    // Generic represetation of a colour.
+    // Migrate this to codal-core at some point...
+    class Colour
+    {
+        public:
+        uint8_t        red;
+        uint8_t        green;
+        uint8_t        blue;
+
+        static constexpr Colour RED() { return Colour{255, 0, 0}; }
+    };
+
+
     /**
      * Class definition for an optimised LEDMatrix driver using nrf52 PPI and GPIOTE hardware.
      */
@@ -65,6 +79,54 @@ namespace codal
         int8_t              ppi[NRF52_LED_MATRIX_MAXIMUM_COLUMNS];               // PPI channels used by output columns.
 
         public:
+        enum AccessibilityStatus {
+         DISABLED,
+         PENDING_DISABLE,
+         ENABLED
+        };
+
+        AccessibilityStatus accessibilityStatus = ENABLED;
+        NRF52Pin            *accessibilityPin = NULL;
+        WS2812B             *ws = NULL;                          // WS2812B accessibility interface
+        NRF52PWM            *pwm = NULL;                         // Dedicated PWM generator to use for accessibilty WS2812B
+        ManagedBuffer       accessibilityBuf;                    // WS2812B buffer used to stream pixel data.
+        Colour              accessibilityColour = Colour::RED(); // The colour to use as the base colour for the WS2812B accessibility interface.
+
+
+        /**
+         * Enable accessibility mode
+         */
+        void enableAccessibility(bool enable = true);
+
+        /**
+         * Configures an optional WS2812B driven accesibility display for this NRF52LedMatrix.
+         *
+         * @param pin A reference to the pin object to drive the display from
+         * @param numberOfLeds The total number of LEDs to drive. Defaults to 25
+         */
+        void setAccessibilityDisplay(NRF52Pin &pin, const uint16_t numberOfLeds = 25);
+
+        /**
+         * Sets or clears the pixel at the given location on an attached accessibility display.
+         *
+         * @param index Zero based index of the pixel to change.
+         * @param value 8 bit brightness data for that pixel.
+         */
+        void setAccessibilityPixel(uint16_t index, uint8_t value);
+
+        /**
+         * Define the pixel colour to use for WS2812B attached accessibilty display.
+         * Accessibility needs may require colours other than red for usability.
+         *
+         * @param colour The pixel colour represented as a Colour type
+         */
+	    void setAccessibilityBaseColour(Colour colour);
+
+        /**
+         * Refresh the attached WS2812B accessibility display.
+         */
+	    void updateAccessibilityDisplay();
+
         /**
          * Configure the next frame to be drawn.
          */

@@ -105,6 +105,10 @@ void NRF52LEDMatrix::setDisplayMode(DisplayMode mode)
 
     // Determine the number of timeslots we'll need.
     timeslots = matrixMap.rows;
+    
+    if (DISABLED != accessibilityStatus) {
+        timeslots++;
+    }
 
     if (mode == DISPLAY_MODE_BLACK_AND_WHITE_LIGHT_SENSE || mode == DISPLAY_MODE_GREYSCALE_LIGHT_SENSE)
         timeslots++;
@@ -218,12 +222,21 @@ void NRF52LEDMatrix::render()
 {
     uint8_t *screenBuffer = image.getBitmap();
     uint32_t value;
+    uint16_t index;
 
     if (strobeRow < matrixMap.rows)
     {
         // We just completed a normal diplay strobe. 
         // Turn off the LED drive to the row that was completed.
         matrixMap.rowPins[strobeRow]->setDigitalValue(0);
+    }
+    else if ((DISABLED != accessibilityStatus) && (strobeRow == NRF52_LED_MATRIX_NEOPIXEL_TIMESLOT))
+    {
+        timer.setCompare(0, timerPeriod);
+
+        // Restore the hardware configuration into LED drive mode.
+        status |= NRF52_LEDMATRIX_STATUS_RESET;
+        setDisplayMode(mode);
     }
     else
     {
@@ -252,21 +265,23 @@ void NRF52LEDMatrix::render()
             switch ( this->rotation)
             {
               case MATRIX_DISPLAY_ROTATION_0:
-                value = screenBuffer[ p->y * width + p->x];
+                index = p->y * width + p->x;
                 break;
               case MATRIX_DISPLAY_ROTATION_90:
-                value = screenBuffer[ p->x * width + width - 1 - p->y];
+                index = p->x * width + width - 1 - p->y;
                 break;
               case MATRIX_DISPLAY_ROTATION_180:
-                value = screenBuffer[ (height - 1 - p->y) * width + width - 1 - p->x];
+                index = (height - 1 - p->y) * width + width - 1 - p->x;
                 break;
               case MATRIX_DISPLAY_ROTATION_270:
-                value = screenBuffer[ ( height - 1 - p->x) * width + p->y];
+                index = ( height - 1 - p->x) * width + p->y;
                 break;
               default:
-                value = screenBuffer[ p->y * width + p->x];
+                index = p->y * width + p->x;
                 break;
             }
+
+            value = screenBuffer[index];
 
             // Clip pixels to full or zero brightness if in black and white mode.
             if (mode == DISPLAY_MODE_BLACK_AND_WHITE || mode == DISPLAY_MODE_BLACK_AND_WHITE_LIGHT_SENSE)
@@ -274,6 +289,10 @@ void NRF52LEDMatrix::render()
 
             value = value * quantum;
             timer.timer->CC[column+1] = value;
+
+            // Update the accessibiity neopixel buffer for this pixel.
+            // We do this here in the display strobe, as this gives us a more consistent timing.
+            setAccessibilityPixel(index, value);
 
             // Set the initial polarity of the column output to HIGH if the pixel brightness is >0. LOW otherwise.
             if (value)
@@ -286,6 +305,26 @@ void NRF52LEDMatrix::render()
 
         // Enable the drive pin, and start the timer.
         matrixMap.rowPins[strobeRow]->setDigitalValue(1);
+    }
+    else if((DISABLED != accessibilityStatus) && (strobeRow == NRF52_LED_MATRIX_NEOPIXEL_TIMESLOT))
+    {
+        for (int col = 0; col < matrixMap.columns; col++)
+        {
+            NRF_GPIOTE->CONFIG[gpiote[col]] = 0;
+            timer.timer->CC[col + 1] = timerPeriod * NRF52_LED_MATRIX_LIGHTSENSE_STROBES;
+            matrixMap.rowPins[col]->setDigitalValue(0);
+        }
+
+        // Put all pins into high impedance mode.
+        for (int row = 0; row < matrixMap.rows; row++)
+            matrixMap.columnPins[row]->getDigitalValue();
+
+        // Update the accessibility display
+        updateAccessibilityDisplay();
+
+        // We can calculate the period of time it will take the PWM to clock out the data in microseconds using:
+        // (300 + 32 * numberOfPixels). he timer is a 16Mhz timer however so we multiple by 16 to get a tickcount.
+        timer.setCompare(0, 16 * (150 + 10 * accessibilityBuf.length()));
     }
     else
     {
@@ -398,6 +437,97 @@ int NRF52LEDMatrix::setSleep(bool doSleep)
     }
    
     return DEVICE_OK;
+}
+
+/**
+ * Configures an optional WS2812B driven accesibility display for this NRF52LedMatrix.
+ *
+ * @param pin A reference to the pin object to drive the display from
+ * @param numberOfLeds The total number of LEDs to drive. Defaults to 25
+ */
+void NRF52LEDMatrix::setAccessibilityDisplay(NRF52Pin &pin, const uint16_t numberOfLeds)
+{
+    accessibilityPin = &pin;
+
+    if (accessibilityBuf.length() != numberOfLeds * 3)
+        accessibilityBuf = ManagedBuffer(numberOfLeds * 3);
+}
+
+/**
+ * Sets or clears the pixel at the given location on an attached accessibility display.
+ *
+ * @param index Zero based index of the pixel to change.
+ * @param value 8 bit brightness data for that pixel.
+ */
+void NRF52LEDMatrix::setAccessibilityPixel(uint16_t index, uint8_t value)
+{
+    if (index >= accessibilityBuf.length())
+        return;
+
+    // WS2812B wire order is Green, Red, Blue. We store in this order to avoid having to reorder when we send.
+    accessibilityBuf[index * 3 + 0] = (accessibilityColour.green / 255.0) * value;
+    accessibilityBuf[index * 3 + 1] = (accessibilityColour.red / 255.0) * value;
+    accessibilityBuf[index * 3 + 2] = (accessibilityColour.blue / 255.0) * value;
+}
+
+/**
+ * Define the pixel colour to use for WS2812B attached accessibilty display.
+ * Accessibility needs may require colours other than red for usability.
+ *
+ * @param colour The pixel colour represented as a Colour type
+ */
+void NRF52LEDMatrix::setAccessibilityBaseColour(Colour colour)
+{
+    accessibilityColour = colour;
+}
+
+/**
+ * Enable accessibility mode
+ */
+void NRF52LEDMatrix::enableAccessibility(bool enable)
+{
+    if (enable && (ENABLED != accessibilityStatus)) {
+        accessibilityStatus = ENABLED;
+        setDisplayMode(mode);
+    }
+    else if (!enable && (ENABLED == accessibilityStatus))
+    {
+        accessibilityStatus = PENDING_DISABLE;
+    }
+}
+
+/**
+ * Refresh the attached WS2812B accessibility display.
+ */
+void NRF52LEDMatrix::updateAccessibilityDisplay()
+{
+    if (ENABLED == accessibilityStatus)
+    {
+        if (pwm == NULL)
+        {
+            ws = new WS2812B();
+            pwm = new NRF52PWM(NRF_PWM3, *ws, WS2812B_PWM_FREQ);
+
+            pwm->setStreamingMode(true, false);
+            pwm->setDecoderMode(PWM_DECODER_LOAD_Common);
+            pwm->setSampleRate(WS2812B_PWM_FREQ);
+
+            accessibilityPin = (NRF52Pin *) matrixMap.accessibility;
+            accessibilityBuf = ManagedBuffer(25 * 3);
+        }
+
+        pwm->connectPin(*accessibilityPin, 0);
+        ws->playAsync(accessibilityBuf);
+    }
+    else if (PENDING_DISABLE == accessibilityStatus)
+    {
+        accessibilityBuf.fill(0);
+        pwm->connectPin(*accessibilityPin, 0);
+        ws->playAsync(accessibilityBuf);
+
+        accessibilityStatus = DISABLED;
+        setDisplayMode(mode);
+    }
 }
 
 /**

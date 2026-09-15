@@ -79,7 +79,7 @@ MicroBit::MicroBit() :
     storage(internalFlash, 0),
     ledRowPins{&io.row1, &io.row2, &io.row3, &io.row4, &io.row5},
     ledColPins{&io.col1, &io.col2, &io.col3, &io.col4, &io.col5},
-    ledMatrixMap{ 5, 5, 5, 5, (Pin**)ledRowPins, (Pin**)ledColPins, ledMatrixPositions},
+    ledMatrixMap{ 5, 5, 5, 5, (Pin**)ledRowPins, (Pin**)ledColPins, (Pin *)&io.P12, ledMatrixPositions},
     display(displayTimer, ledMatrixMap),
     buttonA(io.P5, DEVICE_ID_BUTTON_A, DEVICE_BUTTON_ALL_EVENTS, ACTIVE_LOW, PullMode::None),
     buttonB(io.P11, DEVICE_ID_BUTTON_B, DEVICE_BUTTON_ALL_EVENTS, ACTIVE_LOW, PullMode::None),
@@ -223,6 +223,7 @@ int MicroBit::init()
     NVIC_SetPriority(PWM0_IRQn, 5);           // General Purpose PWM on edge connector (servo, square wave sounds)
     NVIC_SetPriority(PWM1_IRQn, 4);           // PCM audio on speaker (high definition sound)
     NVIC_SetPriority(PWM2_IRQn, 3);           // Waveform Generation (neopixel)
+    NVIC_SetPriority(PWM3_IRQn, 2);           // Accessibility Waveform Generation (neopixel)
 
     NVIC_SetPriority(RADIO_IRQn, 4);          // Packet radio
     NVIC_SetPriority(UARTE0_UART0_IRQn, 2);   // Serial port
