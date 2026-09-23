@@ -47,6 +47,8 @@ list(APPEND SOURCE_FILES "${SOURCE_FILES2}")
 # find prebuilt libraries and objects
 RECURSIVE_FIND_FILE(LIB_OBJECT_FILES "${CMAKE_CURRENT_LIST_DIR}/lib" "*.o")
 RECURSIVE_FIND_FILE(LIB_ARCHIVE_FILES "${CMAKE_CURRENT_LIST_DIR}/lib" "*.a")
+RECURSIVE_FIND_FILE(APP_LIB_ARCHIVE_FILES "${CMAKE_CURRENT_LIST_DIR}/../../${CODAL_APP_SOURCE_DIR}" "*.a")
+message("APP_LIB_ARCHIVE_FILES = ${APP_LIB_ARCHIVE_FILES}")
 
 set(CMAKE_SYSTEM_PROCESSOR "armv7-m" PARENT_SCOPE)
 
@@ -63,6 +65,7 @@ target_link_libraries(
     codal-microbit-nrf5sdk
     ${LIB_OBJECT_FILES}
     ${LIB_ARCHIVE_FILES}
+    ${APP_LIB_ARCHIVE_FILES}
 )
 
 # expose it to parent cmake.
