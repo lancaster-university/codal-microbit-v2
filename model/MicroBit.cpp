@@ -70,7 +70,7 @@ MicroBit::MicroBit() :
     adc(adcTimer, 91),
     touchSensor(capTouchTimer),
     io(adc, touchSensor),
-    serial(io.usbTx, io.usbRx, NRF_UARTE0),
+    serial(io.usbTx, io.usbRx),
     _i2c(io.sda, io.scl),
     i2c(io.P20, io.P19),
     power(_i2c, io, systemTimer),
