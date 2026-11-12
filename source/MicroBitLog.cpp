@@ -55,7 +55,7 @@ static void writeNum(char *buf, uint32_t n)
 /**
  * Constructor.
  */
-MicroBitLog::MicroBitLog(MicroBitUSBFlashManager &flash, MicroBitPowerManager &power, NRF52Serial &serial) : flash(flash), power(power), serial(serial), cache(flash, CONFIG_MICROBIT_LOG_CACHE_BLOCK_SIZE, 4)
+MicroBitLog::MicroBitLog(MicroBitUSBFlashManager &flash, MicroBitPowerManager &power, Serial &serial) : flash(flash), power(power), serial(serial), cache(flash, CONFIG_MICROBIT_LOG_CACHE_BLOCK_SIZE, 4)
 {
     this->journalPages = 0;
     this->status = 0;

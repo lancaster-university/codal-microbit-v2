@@ -94,7 +94,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "MicroBitUSBFlashManager.h"
 #include "FSCache.h"
-#include "NRF52Serial.h"
+#include "Serial.h"
 #include "ManagedString.h"
 
 #ifndef CONFIG_MICROBIT_LOG_METADATA_SIZE
@@ -200,7 +200,7 @@ namespace codal
         private:
         MicroBitUSBFlashManager         &flash;             // Non-volatile memory controller to use for storage.
         MicroBitPowerManager            &power;             // To obtain the Interface chip firmware (DAPLink) version.
-        NRF52Serial                     &serial;            // Reference to serial port used for data mirroring.
+        Serial                          &serial;            // Reference to serial port used for data mirroring.
         FSCache                         cache;              // Write through RAM cache.
         uint32_t                        status;             // Status flags.
         FiberLock                       mutex;              // Mutual exclusion primitive to serialise APi calls.
@@ -230,7 +230,7 @@ namespace codal
         /**
          * Constructor.
          */
-        MicroBitLog(MicroBitUSBFlashManager &flash, MicroBitPowerManager &power, NRF52Serial &serial);
+        MicroBitLog(MicroBitUSBFlashManager &flash, MicroBitPowerManager &power, Serial &serial);
 
         /**
          * Destructor.

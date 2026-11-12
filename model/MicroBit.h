@@ -42,6 +42,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MultiButton.h"
 #include "NRF52Pin.h"
 #include "NRF52Serial.h"
+#include "NRF52SerialUART.h"
 #include "NRF52I2C.h"
 #include "NRF52ADC.h"
 #include "NRF52TouchSensor.h"
@@ -148,7 +149,7 @@ namespace codal
             NRF52ADC                    adc;
             NRF52TouchSensor            touchSensor;
             MicroBitIO                  io;
-            NRF52Serial                 serial;
+            NRF52SerialUART             serial;
             MicroBitI2C                 _i2c;                   //Internal I2C for motion sensors
             MicroBitI2C                 i2c;                    //External I2C for edge connector
             MicroBitPowerManager        power;
